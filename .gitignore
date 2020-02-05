@@ -1,0 +1,6 @@
+/vendor/
+/.idea
+*.txt.gz
+composer.lock
+*.err
+/Userscript/

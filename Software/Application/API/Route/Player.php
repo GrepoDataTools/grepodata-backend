@@ -1,0 +1,250 @@
+<?php
+
+namespace Grepodata\Application\API\Route;
+
+use Carbon\Carbon;
+use Exception;
+use Grepodata\Library\Controller\Indexer\IndexInfo;
+use Grepodata\Library\Elasticsearch\Search;
+use Grepodata\Library\Logger\Logger;
+use Grepodata\Library\Model\AllianceChanges;
+use Grepodata\Library\Model\PlayerHistory;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+
+class Player extends \Grepodata\Library\Router\BaseRoute
+{
+  public static function PlayerInfoGET()
+  {
+    $aParams = array();
+    try {
+      // Validate params
+      $aParams = self::validateParams(array('world','id'));
+
+      // Find model
+      $oPlayer = \Grepodata\Library\Controller\Player::firstOrFail($aParams['id'], $aParams['world']);
+      $aResponse = $oPlayer->getPublicFields();
+
+      // Attach alliance name
+      if (isset($aParams['a_name']) && ($aParams['a_name'] === true || $aParams['a_name'] === 'true')) {
+        $aResponse['alliance_name'] = '';
+        if ($aResponse['alliance_id'] != '') {
+          try {
+            $oAlliance = \Grepodata\Library\Controller\Alliance::firstOrFail($aResponse['alliance_id'], $aParams['world']);
+            $aResponse['alliance_name'] = $oAlliance->name;
+          } catch (ModelNotFoundException $e) {}//Ignore optional alliance name fail
+        }
+      }
+
+      return self::OutputJson($aResponse);
+
+    } catch (ModelNotFoundException $e) {
+      die(self::OutputJson(array(
+        'message'     => 'No player found for these parameters.',
+        'parameters'  => $aParams
+      ), 404));
+    }
+  }
+
+  public static function AllianceChangesGET()
+  {
+    $aParams = array();
+    try {
+      // Validate params
+      $aParams = self::validateParams(array('world','id'));
+
+      $From = 0;
+      $Size = 10;
+      if (isset($aParams['size']) && $aParams['size'] < 50) {
+        $Size = $aParams['size'];
+      }
+      if (isset($aParams['from']) && $aParams['from'] < 5000) {
+        $From = $aParams['from'];
+      }
+
+      // Find model
+      $aAllianceChanges = \Grepodata\Library\Controller\AllianceChanges::getChangesByPlayerId($aParams['id'], $aParams['world'], $From, $Size);
+
+      $aResponse = array(
+        'count' => \Grepodata\Library\Model\AllianceChanges::where('player_grep_id', '=', $aParams['id'], 'and')
+          ->where('world', '=', $aParams['world'])->count(),
+        'items' => array()
+      );
+      foreach ($aAllianceChanges as $oAllianceChange) {
+        $aChange = $oAllianceChange->getPublicFields();
+        $aChange['date'] = array(
+          'date' => $aChange['date']->format('Y-m-d H:i:s')
+        );
+        $aResponse['items'][] = $aChange;
+      }
+
+      return self::OutputJson($aResponse);
+
+    } catch (ModelNotFoundException $e) {
+      die(self::OutputJson(array(
+        'message'     => 'No changes found for these parameters.',
+        'parameters'  => $aParams
+      ), 404));
+    }
+  }
+
+  public static function PlayerHistoryGET()
+  {
+    $aParams = array();
+    try {
+      // Validate params
+      $aParams = self::validateParams(array('world','id'));
+
+      // Find model
+      $aPlayerHistories = \Grepodata\Library\Controller\PlayerHistory::getPlayerHistory($aParams['id'], $aParams['world'], 0);
+      $aResponse = array();
+      /** @var PlayerHistory $oPlayerHistory */
+      foreach ($aPlayerHistories as $oPlayerHistory) {
+        $aResponse[] = $oPlayerHistory->getPublicFields();
+      }
+//      $aResponse = array_reverse($aResponse);
+      return self::OutputJson($aResponse);
+
+    } catch (ModelNotFoundException $e) {
+      die(self::OutputJson(array(
+        'message'     => 'No player history found for these parameters.',
+        'parameters'  => $aParams
+      ), 404));
+    }
+  }
+
+  public static function PlayerHistoryRangeGET()
+  {
+    $aParams = array();
+    try {
+      // Validate params
+      $aParams = self::validateParams(array('world','id','from','to'));
+
+      if ($aParams['from'] > 90) $aParams['from'] = 0;
+      if ($aParams['to'] > 90) $aParams['to'] = 90;
+      
+      // Find model
+      $aPlayerHistories = \Grepodata\Library\Controller\PlayerHistory::getPlayerHistory($aParams['id'], $aParams['world'], $aParams['to']+1);
+      $aResponse = array();
+      $count = 0;
+      $last_date = '';
+      foreach ($aPlayerHistories as $oPlayerHistory) {
+        $count++;
+        if ($count > $aParams['from'] && $count < $aParams['to']) {
+          $aPlayer = $oPlayerHistory->getPublicFields();
+          $aResponse[] = $aPlayer;
+          $last_date = $aPlayer['date'];
+        }
+      }
+
+      // Add filler records for full range
+      try {
+        $LastDate = Carbon::createFromFormat("Y-m-d", $last_date);
+        while ($count < $aParams['to']) {
+          $count++;
+          $LastDate->subDay();
+          $aResponse[] = array(
+            'date' => $LastDate->toDateString(),
+            'alliance_id' => 0,
+            'alliance_name' => '',
+            'points' => 0,
+            'rank' => 0,
+            'att' => 0,
+            'def' => 0,
+            'towns' => 0
+          );
+        }
+      } catch (Exception $e) {}
+
+      return self::OutputJson($aResponse);
+
+    } catch (ModelNotFoundException $e) {
+      die(self::OutputJson(array(
+        'message'     => 'No player history found for these parameters.',
+        'parameters'  => $aParams
+      ), 404));
+    }
+  }
+
+  public static function SearchGET()
+  {
+    $aParams = array();
+    try {
+      // Validate params
+      $aParams = self::validateParams();
+
+      if (isset($aParams['index'])) {
+        $oIndex = IndexInfo::firstOrFail($aParams['index']);
+        $aParams['world'] = $oIndex->world;
+      }
+
+      if (isset($aParams['query']) && strlen($aParams['query']) > 30) {
+        throw new Exception("Search input exceeds limit: " . substr($aParams['query'], 0, 200));
+      }
+
+      $bBuildForm = true;
+      $bForceSql = false;
+      if (isset($aParams['sql']) && $aParams['sql']==='true') {
+        $bBuildForm = false;
+        $bForceSql = true;
+      }
+
+      $aParams['active'] = 'true';
+      try {
+        $aElasticsearchResults = Search::FindPlayers($aParams, $bBuildForm);
+      } catch (Exception $e) {
+        Logger::warning("ES Player search failed with message: " . $e->getMessage());
+      }
+
+      if (isset($aElasticsearchResults) && $aElasticsearchResults != false) {
+        $aResponse = $aElasticsearchResults;
+        if ($bForceSql === true) {
+          // if forceSql: search with ES but render results using SQL data
+          foreach ($aResponse['results'] as $i => $aResult) {
+            $oPlayer = \Grepodata\Library\Controller\Player::first($aResult['id'], $aResult['world']);
+            if ($oPlayer!=null&&$oPlayer!=false) {
+              $aResponse['results'][$i]['att'] = $oPlayer->att;
+              $aResponse['results'][$i]['def'] = $oPlayer->def;
+              $aResponse['results'][$i]['att_old'] = $oPlayer->att_old;
+              $aResponse['results'][$i]['def_old'] = $oPlayer->def_old;
+            }
+          }
+        }
+      } else {
+        // SQL fallback: Find model
+        $aPlayers = \Grepodata\Library\Controller\Player::search($aParams);
+        if ($aPlayers == null || sizeof($aPlayers) <= 0) throw new ModelNotFoundException();
+
+        // Format sql results
+        $aResponse = array(
+          'success' => true,
+          'count'   => sizeof($aPlayers),
+          'status'  => 'sql_fallback',
+          'results' => array(),
+        );
+        foreach ($aPlayers as $oPlayer) {
+          $aData = $oPlayer->getPublicFields();
+          $aData['id'] = $aData['grep_id']; unset($aData['grep_id']);
+          $aData['server'] = substr($aData['world'], 0, 2);
+
+          $aData['alliance_name'] = '';
+          if ($aData['alliance_id'] != '') {
+            try {
+              $oAlliance = \Grepodata\Library\Controller\Alliance::firstOrFail($aData['alliance_id'], $aData['world']);
+              if ($oAlliance !== null) $aData['alliance_name'] = $oAlliance->name;
+            } catch (ModelNotFoundException $e) {}//Ignore optional alliance name fail
+          }
+          
+          $aResponse['results'][] = $aData;
+        }
+      }
+
+      return self::OutputJson($aResponse);
+
+    } catch (Exception $e) {
+      die(self::OutputJson(array(
+        'message'     => 'No players found for these parameters.',
+        'parameters'  => $aParams
+      ), 404));
+    }
+  }
+}

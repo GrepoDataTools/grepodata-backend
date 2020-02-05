@@ -1,0 +1,24 @@
+{
+  "name": "grepodata-backend",
+  "version": "0.0.1",
+  "authors": [
+    {
+      "name": "GrepoData",
+      "email": "admin@grepodata.com"
+    }
+  ],
+  "require": {
+    "illuminate/database": "^5.2",
+    "symfony/routing": "^3.3",
+    "symfony/http-foundation": "^3.3",
+    "swiftmailer/swiftmailer": "^6.0",
+    "elasticsearch/elasticsearch": "^5.3",
+    "smarty/smarty": "^3.1",
+    "rbdwllr/reallysimplejwt": "^2.1"
+  },
+  "autoload": {
+    "psr-4": {
+      "Grepodata\\": "Software"
+    }
+  }
+}

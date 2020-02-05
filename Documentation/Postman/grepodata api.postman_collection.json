@@ -1,0 +1,1718 @@
+{
+	"info": {
+		"name": "grepodata api",
+		"_postman_id": "66fc3d68-31ae-045e-9462-b9567906da18",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Scoreboard",
+			"description": "",
+			"item": [
+				{
+					"name": "player scoreboard",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/scoreboard/player?world=nl16",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"scoreboard",
+								"player"
+							],
+							"query": [
+								{
+									"key": "world",
+									"value": "nl16",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "player scoreboard + date",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/scoreboard/player?world=nl53&date=2017-10-17",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"scoreboard",
+								"player"
+							],
+							"query": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"equals": true
+								},
+								{
+									"key": "date",
+									"value": "2017-10-17",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "alliance scoreboard",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/scoreboard/alliance?world=nl53",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"scoreboard",
+								"alliance"
+							],
+							"query": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "alliance scoreboard + date",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/scoreboard/alliance?world=nl53&date=2017-10-17",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"scoreboard",
+								"alliance"
+							],
+							"query": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"equals": true
+								},
+								{
+									"key": "date",
+									"value": "2017-10-17",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "world alliance changes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/world/changes?world=de89",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"world",
+								"changes"
+							],
+							"query": [
+								{
+									"key": "world",
+									"value": "de89",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "player diffs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/player/diffs?world=nl53",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"player",
+								"diffs"
+							],
+							"query": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Player",
+			"description": "",
+			"item": [
+				{
+					"name": "player info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/player/info?world=nl53&id=1283128",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"player",
+								"info"
+							],
+							"query": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"equals": true
+								},
+								{
+									"key": "id",
+									"value": "1283128",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "player conquests",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/conquest/player?world=nl53&id=1283128",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"conquest",
+								"player"
+							],
+							"query": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"equals": true
+								},
+								{
+									"key": "id",
+									"value": "1283128",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "player info with alliance name",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/player/info?world=nl53&id=1283128&a_name=true",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"player",
+								"info"
+							],
+							"query": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"equals": true
+								},
+								{
+									"key": "id",
+									"value": "1283128",
+									"equals": true
+								},
+								{
+									"key": "a_name",
+									"value": "true",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "player history",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/player/history?world=nl53&id=1283128",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"player",
+								"history"
+							],
+							"query": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"equals": true
+								},
+								{
+									"key": "id",
+									"value": "1283128",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "player towns",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/town/player?world=nl53&id=1283128",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"town",
+								"player"
+							],
+							"query": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"equals": true
+								},
+								{
+									"key": "id",
+									"value": "1283128",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "player history range",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/player/rangehistory?world=nl53&id=1283128&from=1&to=60",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"player",
+								"rangehistory"
+							],
+							"query": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"equals": true
+								},
+								{
+									"key": "id",
+									"value": "1283128",
+									"equals": true
+								},
+								{
+									"key": "from",
+									"value": "1",
+									"equals": true
+								},
+								{
+									"key": "to",
+									"value": "60",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "player changes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/player/changes?world=de89&id=8911509",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"player",
+								"changes"
+							],
+							"query": [
+								{
+									"key": "world",
+									"value": "de89",
+									"equals": true
+								},
+								{
+									"key": "id",
+									"value": "8911509",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Alliance",
+			"description": "",
+			"item": [
+				{
+					"name": "alliance conquests",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/conquest/alliance?world=nl53&id=27",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"conquest",
+								"alliance"
+							],
+							"query": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"equals": true
+								},
+								{
+									"key": "id",
+									"value": "27",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "alliance info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/alliance/info?world=nl53&id=27",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"alliance",
+								"info"
+							],
+							"query": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"equals": true
+								},
+								{
+									"key": "id",
+									"value": "27",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "alliance history",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/alliance/history?world=nl53&id=27",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"alliance",
+								"history"
+							],
+							"query": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"equals": true
+								},
+								{
+									"key": "id",
+									"value": "27",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "alliance members",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/alliance/members?world=nl53&id=27",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"alliance",
+								"members"
+							],
+							"query": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"equals": true
+								},
+								{
+									"key": "id",
+									"value": "27",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "alliance towns",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/town/alliance?world=nl53&id=27",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"town",
+								"alliance"
+							],
+							"query": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"equals": true
+								},
+								{
+									"key": "id",
+									"value": "27",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "alliance history range",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/alliance/rangehistory?world=nl53&id=27&from=2&to=40",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"alliance",
+								"rangehistory"
+							],
+							"query": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"equals": true
+								},
+								{
+									"key": "id",
+									"value": "27",
+									"equals": true
+								},
+								{
+									"key": "from",
+									"value": "2",
+									"equals": true
+								},
+								{
+									"key": "to",
+									"value": "40",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "alliance changes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/alliance/changes?world=de89&id=22",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"alliance",
+								"changes"
+							],
+							"query": [
+								{
+									"key": "world",
+									"value": "de89",
+									"equals": true
+								},
+								{
+									"key": "id",
+									"value": "22",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Search",
+			"description": "",
+			"item": [
+				{
+					"name": "player search",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/player/search?query=king",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"player",
+								"search"
+							],
+							"query": [
+								{
+									"key": "query",
+									"value": "king",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "alliance search",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/alliance/search?query=king",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"alliance",
+								"search"
+							],
+							"query": [
+								{
+									"key": "query",
+									"value": "king",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "player search filtered",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/player/search?query=king&max_points=9800000&min_points=10000",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"player",
+								"search"
+							],
+							"query": [
+								{
+									"key": "query",
+									"value": "king",
+									"equals": true
+								},
+								{
+									"key": "max_points",
+									"value": "9800000",
+									"equals": true
+								},
+								{
+									"key": "min_points",
+									"value": "10000",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "player ranking",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/ranking/player?world=nl53",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"ranking",
+								"player"
+							],
+							"query": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "alliance ranking",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/ranking/alliance?world=nl53",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"ranking",
+								"alliance"
+							],
+							"query": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "town search",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/town/search?query=king&index=asdn2589",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"town",
+								"search"
+							],
+							"query": [
+								{
+									"key": "query",
+									"value": "king",
+									"equals": true
+								},
+								{
+									"key": "index",
+									"value": "asdn2589",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "index player search",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/indexer/search/player?query=d&key=asdn2589",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"indexer",
+								"search",
+								"player"
+							],
+							"query": [
+								{
+									"key": "query",
+									"value": "d",
+									"equals": true
+								},
+								{
+									"key": "key",
+									"value": "asdn2589",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "index town search",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/indexer/search/town?query=te&key=asdn2589",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"indexer",
+								"search",
+								"town"
+							],
+							"query": [
+								{
+									"key": "query",
+									"value": "te",
+									"equals": true
+								},
+								{
+									"key": "key",
+									"value": "asdn2589",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "index island search",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/indexer/search/island?query=173399&key=jaegqam2",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"indexer",
+								"search",
+								"island"
+							],
+							"query": [
+								{
+									"key": "query",
+									"value": "173399",
+									"equals": true
+								},
+								{
+									"key": "key",
+									"value": "jaegqam2",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Indexer",
+			"description": "",
+			"item": [
+				{
+					"name": "add report",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "key",
+									"value": "asdn2589",
+									"description": "",
+									"type": "text"
+								},
+								{
+									"key": "type",
+									"value": "default",
+									"description": "",
+									"type": "text"
+								},
+								{
+									"key": "report_text",
+									"value": "56111 Willy Banter valt Phaidoon (Kleovoulos) aan op 09-11-17 om 11:33:06 77-0 Moraal: 48 % Geluk: 23 % Geen gevechtspunten ontvangen.  Ontvangen grondstoffen: 757 366 1257 22 Buit: 2380/2380 Er wordt een opstand ontketend. Aan de simulator toevoegen: Alle eenheden   Overlevende eenheden ",
+									"description": "",
+									"type": "text"
+								},
+								{
+									"key": "report_json",
+									"value": "{\"type\":\"DIV\",\"content\":[\"\\n\\n\",{\"type\":\"SCRIPT\",\"content\":[\"\\n \\/\\/<![CDATA[\\n $(document).ready(function () {\\n $.each(GameData.units, function (unit) {\\n $(\\\".unit_\\\" + unit).setPopup(unit);\\n });\\n\\n if (GameData.heroes) {\\n $.each(GameData.heroes, function (unit) {\\n $(\\\"div.unit_\\\" + unit).setPopup(unit);\\n });\\n }\\n \\n });\\n \\/\\/]]>\\n\"],\"attributes\":{\"type\":\"text\\/javascript\"}},\"\\n\\n\",{\"type\":\"DIV\",\"content\":[\"\\n \",{\"type\":\"IMG\",\"attributes\":{\"src\":\"\\/images\\/game\\/report\\/new.png\",\"alt\":\"\"}},\" \",{\"type\":\"SPAN\",\"content\":[\"\\n \",{\"type\":\"A\",\"content\":[\"56111 Willy Banter\"],\"attributes\":{\"href\":\"#eyJpZCI6MjA0NDQsIml4Ijo1NTgsIml5Ijo2MDYsInRwIjoidG93biIsIm5hbWUiOiI1NjExMSBXaWxseSBCYW50ZXIifQ==\",\"class\":\"gp_town_link\"}},\" valt \",{\"type\":\"A\",\"content\":[\"Phaidoon\"],\"attributes\":{\"href\":\"#eyJpZCI6MzQwMzksIml4Ijo1NDYsIml5Ijo2MTIsInRwIjoidG93biIsIm5hbWUiOiJQaGFpZG9vbiJ9\",\"class\":\"gp_town_link\"}},\" (\",{\"type\":\"A\",\"content\":[\"Kleovoulos\"],\"attributes\":{\"href\":\"#eyJuYW1lIjoiS2xlb3ZvdWxvcyIsImlkIjoxMjc3ODQ4fQ==\",\"class\":\"gp_player_link\"}},\") aan \"],\"attributes\":{\"class\":\"bold\"}},\"\\n \",{\"type\":\"SPAN\",\"content\":[\"\\n op 09-11-17 om 11:33:06 \"],\"attributes\":{\"class\":\"reports_date small\"}},\"\\n\\n \",{\"type\":\"DIV\",\"attributes\":{\"class\":\"clear\"}},\"\\n\"],\"attributes\":{\"class\":\"published_report_header bold\"}},\"\\n\\n\",{\"type\":\"DIV\",\"content\":[\"\\n \",{\"type\":\"DIV\",\"content\":[\"\\n \",{\"type\":\"DIV\",\"content\":[\"\\n \",{\"type\":\"DIV\",\"attributes\":{\"class\":\"clearfix\"}},\"\\n \",{\"type\":\"DIV\",\"content\":[\"\\n \"],\"attributes\":{\"class\":\"report_units_type\"}},\"\\n \",{\"type\":\"DIV\",\"content\":[\"\\n \",{\"type\":\"DIV\",\"content\":[\"\\n \",{\"type\":\"DIV\",\"content\":[\"\\n \",{\"type\":\"SPAN\",\"content\":[\"7\"],\"attributes\":{\"class\":\"place_unit_black bold\"}},\"\\n \",{\"type\":\"SPAN\",\"content\":[\"7\"],\"attributes\":{\"class\":\"place_unit_white bold\"}},\"\\n \"],\"attributes\":{\"style\":\"float: left;\",\"class\":\"report_unit report_side_attacker unit_harpy unit_icon40x40 harpy \"}},\"\\n \",{\"type\":\"SPAN\",\"content\":[\"-0\"],\"attributes\":{\"class\":\"report_losts\"}},\"\\n \"],\"attributes\":{\"class\":\"report_side_attacker_unit\"}},\"\\n \"],\"attributes\":{\"class\":\"report_units_type\"}},\"\\n \"],\"attributes\":{\"class\":\"report_units report_side_attacker\",\"data\":\"{\\\"hide_att_units\\\":false,\\\"hide_def_units\\\":false,\\\"hide_resources\\\":false}\"}},\"\\n \",{\"type\":\"DIV\",\"content\":[\"\\n \",{\"type\":\"TABLE\",\"content\":[\"\\n \",{\"type\":\"TBODY\",\"content\":[{\"type\":\"TR\",\"content\":[\"\\n \",{\"type\":\"TD\",\"content\":[\"\\n \",{\"type\":\"DIV\",\"attributes\":{\"class\":\"attack_type_img research research_icon take_over\"}},\"\\n \"]},\"\\n \"]},\"\\n \",{\"type\":\"TR\",\"content\":[\"\\n \",{\"type\":\"TD\",\"content\":[\"\\n \",{\"type\":\"TABLE\",\"content\":[\"\\n \",{\"type\":\"TBODY\",\"content\":[{\"type\":\"TR\",\"content\":[\"\\n \",{\"type\":\"TD\",\"content\":[\"\\n \",{\"type\":\"SPAN\",\"content\":[\" \"],\"attributes\":{\"class\":\"report_icon morale\"}},\"Moraal: 48 % \",{\"type\":\"SPAN\",\"content\":[\" \"],\"attributes\":{\"class\":\"report_icon luck\"}},\"Geluk: 23 % \"]},\"\\n \"]},\"\\n \"]}]},\"\\n \"]},\"\\n \"]},\"\\n \"]}],\"attributes\":{\"class\":\"report_details\"}},\"\\n\\n \",{\"type\":\"DIV\",\"content\":[\"\\n \",{\"type\":\"DIV\",\"content\":[\"\\n \",{\"type\":\"P\",\"content\":[\"Geen gevechtspunten ontvangen.\"]},\"\\n \"],\"attributes\":{\"id\":\"kill_points\"}},\"\\n \",{\"type\":\"DIV\",\"content\":[\"Ontvangen grondstoffen:\"],\"attributes\":{\"class\":\"small bold\"}},\"\\n \",{\"type\":\"SPAN\",\"content\":[\"757\"],\"attributes\":{\"class\":\"resource_wood_icon resource_count\"}},\"\\n \",{\"type\":\"SPAN\",\"content\":[\"366\"],\"attributes\":{\"class\":\"resource_stone_icon resource_count\"}},\"\\n \",{\"type\":\"SPAN\",\"content\":[\"1257\"],\"attributes\":{\"class\":\"resource_iron_icon resource_count\"}},\"\\n \",{\"type\":\"SPAN\",\"content\":[\"22\"],\"attributes\":{\"class\":\"resource_favor_icon resource_count\"}},\"\\n \",{\"type\":\"DIV\",\"attributes\":{\"class\":\"clear\"}},\"\\n \",{\"type\":\"HR\"},\"\\n \",{\"type\":\"SPAN\",\"content\":[\"Buit: 2380\\/2380\"],\"attributes\":{\"id\":\"load\",\"class\":\"bold\"}},\"\\n \",{\"type\":\"HR\"},\"\\n \",{\"type\":\"SPAN\",\"content\":[\"Er wordt een opstand ontketend.\"],\"attributes\":{\"class\":\"bold\"}},\"\\n \"],\"attributes\":{\"class\":\"resources\"}},\"\\n \"],\"attributes\":{\"class\":\"report_booty_bonus_fight small\"}},\"\\n \",{\"type\":\"DIV\",\"content\":[\"\\n \",{\"type\":\"DIV\",\"attributes\":{\"class\":\"clearfix\"}},\"\\n \",{\"type\":\"DIV\",\"content\":[\"\\n \"],\"attributes\":{\"class\":\"report_units_type\"}},\"\\n \",{\"type\":\"DIV\",\"content\":[\"\\n \"],\"attributes\":{\"class\":\"report_units_type\"}},\"\\n \"],\"attributes\":{\"class\":\"report_units report_side_defender\"}},\"\\n \",{\"type\":\"DIV\",\"attributes\":{\"style\":\"clear: both;\"}},\"\\n \"],\"attributes\":{\"class\":\"report_units_overview\"}},\"\\n \",{\"type\":\"DIV\",\"content\":[\"\\n \",{\"type\":\"SPAN\",\"content\":[\"Aan de simulator toevoegen:\"],\"attributes\":{\"style\":\"float: left; line-height: 24px;\"}},\"\\n \",{\"type\":\"A\",\"content\":[\"\\n\\t\\t\",{\"type\":\"SPAN\",\"content\":[{\"type\":\"SPAN\",\"content\":[\"\\n\\t\\t\",{\"type\":\"SPAN\",\"content\":[\"Alle eenheden\"],\"attributes\":{\"class\":\"middle\"}},\"\\n\\t\\t\"],\"attributes\":{\"class\":\"right\"}}],\"attributes\":{\"class\":\"left\"}},\"\\n\\t\\t\",{\"type\":\"SPAN\",\"attributes\":{\"style\":\"clear:both;\"}},\"\\n\\t\"],\"attributes\":{\"class\":\"button simulator all\",\"href\":\"#\",\"onclick\":\"if (GameData.buildings) { ReportViewer.insertAllUnitsToSimulator(true, true, 3674476); }\"}},\" \",{\"type\":\"A\",\"content\":[\"\\n\\t\\t\",{\"type\":\"SPAN\",\"content\":[{\"type\":\"SPAN\",\"content\":[\"\\n\\t\\t\",{\"type\":\"SPAN\",\"content\":[\"Overlevende eenheden\"],\"attributes\":{\"class\":\"middle\"}},\"\\n\\t\\t\"],\"attributes\":{\"class\":\"right\"}}],\"attributes\":{\"class\":\"left\"}},\"\\n\\t\\t\",{\"type\":\"SPAN\",\"attributes\":{\"style\":\"clear:both;\"}},\"\\n\\t\"],\"attributes\":{\"class\":\"button simulator surv\",\"href\":\"#\",\"onclick\":\"if (GameData.buildings) { ReportViewer.insertRemainingUnitsToSimulator(true, true, 3674476); }\"}},\" \",{\"type\":\"DIV\",\"attributes\":{\"style\":\"clear: both;\"}},\"\\n \",{\"type\":\"DIV\",\"content\":[\"{\\\"report_id\\\":3674476}\"],\"attributes\":{\"class\":\"report_data\",\"style\":\"display:none;\"}},\"\\n \",{\"type\":\"SCRIPT\",\"content\":[\"\\n $(document).ready(function () {\\n $('.unknown').tooltip('Het was helaas niet mogelijk om meer informatie over de resterende troepen te krijgen.');\\n $('td .fight_bonus_with_tooltip').tooltip('Schade aan de stadsmuur veroorzaakt door katapulten');\\n\\n ReportViewer.dates[3674476] = {\\\"result\\\":{\\\"att_units\\\":{\\\"3\\\":{\\\"had\\\":{\\\"harpy\\\":7},\\\"lost\\\":[]}},\\\"def_units\\\":{\\\"3\\\":{\\\"had\\\":[],\\\"lost\\\":[]}}},\\\"player_is_winner\\\":true,\\\"show_defender_units\\\":{\\\"ground\\\":true,\\\"naval\\\":true},\\\"remaining_units_att\\\":{\\\"sword\\\":0,\\\"slinger\\\":0,\\\"archer\\\":0,\\\"hoplite\\\":0,\\\"rider\\\":0,\\\"chariot\\\":0,\\\"catapult\\\":0,\\\"minotaur\\\":0,\\\"manticore\\\":0,\\\"zyklop\\\":0,\\\"harpy\\\":7,\\\"medusa\\\":0,\\\"centaur\\\":0,\\\"pegasus\\\":0,\\\"cerberus\\\":0,\\\"fury\\\":0,\\\"griffin\\\":0,\\\"calydonian_boar\\\":0,\\\"godsent\\\":0,\\\"big_transporter\\\":0,\\\"bireme\\\":0,\\\"attack_ship\\\":0,\\\"demolition_ship\\\":0,\\\"small_transporter\\\":0,\\\"trireme\\\":0,\\\"colonize_ship\\\":0,\\\"sea_monster\\\":0,\\\"militia\\\":0,\\\"cheiron\\\":0,\\\"ferkyon\\\":0,\\\"orpheus\\\":0,\\\"terylea\\\":0,\\\"andromeda\\\":0,\\\"odysseus\\\":0,\\\"democritus\\\":0,\\\"apheledes\\\":0,\\\"christopholus\\\":0,\\\"aristotle\\\":0,\\\"rekonos\\\":0,\\\"ylestres\\\":0,\\\"pariphaistes\\\":0,\\\"daidalos\\\":0,\\\"leonidas\\\":0,\\\"urephon\\\":0,\\\"zuretha\\\":0,\\\"hercules\\\":0,\\\"helen\\\":0,\\\"atalanta\\\":0,\\\"iason\\\":0,\\\"hector\\\":0,\\\"agamemnon\\\":0,\\\"deimos\\\":0,\\\"pelops\\\":0,\\\"themistokles\\\":0,\\\"medea\\\":0},\\\"remaining_units_def\\\":{\\\"sword\\\":0,\\\"slinger\\\":0,\\\"archer\\\":0,\\\"hoplite\\\":0,\\\"rider\\\":0,\\\"chariot\\\":0,\\\"catapult\\\":0,\\\"minotaur\\\":0,\\\"manticore\\\":0,\\\"zyklop\\\":0,\\\"harpy\\\":0,\\\"medusa\\\":0,\\\"centaur\\\":0,\\\"pegasus\\\":0,\\\"cerberus\\\":0,\\\"fury\\\":0,\\\"griffin\\\":0,\\\"calydonian_boar\\\":0,\\\"godsent\\\":0,\\\"big_transporter\\\":0,\\\"bireme\\\":0,\\\"attack_ship\\\":0,\\\"demolition_ship\\\":0,\\\"small_transporter\\\":0,\\\"trireme\\\":0,\\\"colonize_ship\\\":0,\\\"sea_monster\\\":0,\\\"militia\\\":0,\\\"cheiron\\\":0,\\\"ferkyon\\\":0,\\\"orpheus\\\":0,\\\"terylea\\\":0,\\\"andromeda\\\":0,\\\"odysseus\\\":0,\\\"democritus\\\":0,\\\"apheledes\\\":0,\\\"christopholus\\\":0,\\\"aristotle\\\":0,\\\"rekonos\\\":0,\\\"ylestres\\\":0,\\\"pariphaistes\\\":0,\\\"daidalos\\\":0,\\\"leonidas\\\":0,\\\"urephon\\\":0,\\\"zuretha\\\":0,\\\"hercules\\\":0,\\\"helen\\\":0,\\\"atalanta\\\":0,\\\"iason\\\":0,\\\"hector\\\":0,\\\"agamemnon\\\":0,\\\"deimos\\\":0,\\\"pelops\\\":0,\\\"themistokles\\\":0,\\\"medea\\\":0}};\\n ReportViewer.dates[3674476].attacker_units = {\\\"sword\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"slinger\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"archer\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"hoplite\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"rider\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"chariot\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"catapult\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"minotaur\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"manticore\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"zyklop\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"harpy\\\":{\\\"before\\\":7,\\\"losts\\\":0},\\\"medusa\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"centaur\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"pegasus\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"cerberus\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"fury\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"griffin\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"calydonian_boar\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"godsent\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"big_transporter\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"bireme\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"attack_ship\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"demolition_ship\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"small_transporter\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"trireme\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"colonize_ship\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"sea_monster\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"militia\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"cheiron\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"ferkyon\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"orpheus\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"terylea\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"andromeda\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"odysseus\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"democritus\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"apheledes\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"christopholus\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"aristotle\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"rekonos\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"ylestres\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"pariphaistes\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"daidalos\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"leonidas\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"urephon\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"zuretha\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"hercules\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"helen\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"atalanta\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"iason\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"hector\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"agamemnon\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"deimos\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"pelops\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"themistokles\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"medea\\\":{\\\"before\\\":0,\\\"losts\\\":0}};\\n\\t\\t\\t\\t \\t\\t\\t\\t\\tReportViewer.dates[3674476].defender_units = {\\\"sword\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"slinger\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"archer\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"hoplite\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"rider\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"chariot\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"catapult\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"minotaur\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"manticore\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"zyklop\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"harpy\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"medusa\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"centaur\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"pegasus\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"cerberus\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"fury\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"griffin\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"calydonian_boar\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"godsent\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"big_transporter\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"bireme\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"attack_ship\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"demolition_ship\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"small_transporter\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"trireme\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"colonize_ship\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"sea_monster\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"militia\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"cheiron\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"ferkyon\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"orpheus\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"terylea\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"andromeda\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"odysseus\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"democritus\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"apheledes\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"christopholus\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"aristotle\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"rekonos\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"ylestres\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"pariphaistes\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"daidalos\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"leonidas\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"urephon\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"zuretha\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"hercules\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"helen\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"atalanta\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"iason\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"hector\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"agamemnon\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"deimos\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"pelops\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"themistokles\\\":{\\\"before\\\":0,\\\"losts\\\":0},\\\"medea\\\":{\\\"before\\\":0,\\\"losts\\\":0}};\\n\\t\\t\\t\\t\\n $('.fight_report_classic.published .power_icon45x45').each(function (index, el) {\\n try {\\n var $el = $(el),\\n power_configuration = $el.data().powerConfiguration || {},\\n tooltip = TooltipFactory.createPowerTooltip($el.data().powerId, {}, power_configuration);\\n\\n $el.tooltip(tooltip, {width: 370});\\n } catch (e) {\\n debug();\\n }\\n });\\n });\\n \"],\"attributes\":{\"type\":\"text\\/javascript\"}},\"\\n \"]},\"\\n \"],\"attributes\":{\"style\":\"background: url(https:\\/\\/gpnl.innogamescdn.com\\/images\\/game\\/border\\/odd.png);\",\"class\":\"fight_report_classic published\"}},\"\\n\"],\"attributes\":{\"class\":\"bbcodes published_report\",\"id\":\"bb_codes_report_0e437564b7969f18e93126f320163d85\"}}",
+									"description": "",
+									"type": "text"
+								},
+								{
+									"key": "script_version",
+									"value": "1.0",
+									"description": "",
+									"type": "text"
+								},
+								{
+									"key": "report_poster",
+									"value": "test",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/indexer/addreport",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"indexer",
+								"addreport"
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "get index",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/indexer/getindex?key=asdn2589",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"indexer",
+								"getindex"
+							],
+							"query": [
+								{
+									"key": "key",
+									"value": "asdn2589",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "new index",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/indexer/resetowners?key=aaaa1111&mail=admin@grepodata.com",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"indexer",
+								"resetowners"
+							],
+							"query": [
+								{
+									"key": "key",
+									"value": "c1q9qe0z",
+									"equals": true
+								},
+								{
+									"key": "mail",
+									"value": "admin@grepodata.com",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "indexer player",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/indexer/player?key=asdn2589&id=997355",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"indexer",
+								"player"
+							],
+							"query": [
+								{
+									"key": "key",
+									"value": "asdn2589",
+									"equals": true
+								},
+								{
+									"key": "id",
+									"value": "997355",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "indexer alliance",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/indexer/alliance?key=asdn2589&id=304",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"indexer",
+								"alliance"
+							],
+							"query": [
+								{
+									"key": "key",
+									"value": "asdn2589",
+									"equals": true
+								},
+								{
+									"key": "id",
+									"value": "304",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "indexer town",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/indexer/town?key=asdn2589&id=10484",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"indexer",
+								"town"
+							],
+							"query": [
+								{
+									"key": "key",
+									"value": "asdn2589",
+									"equals": true
+								},
+								{
+									"key": "id",
+									"value": "10484",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "get stats",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/indexer/stats",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"indexer",
+								"stats"
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "reset owners",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/indexer/resetowners?key=aaaa1111&mail=admin@grepodata.com",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"indexer",
+								"resetowners"
+							],
+							"query": [
+								{
+									"key": "key",
+									"value": "aaaa1111",
+									"equals": true
+								},
+								{
+									"key": "mail",
+									"value": "admin@grepodata.com",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Index API",
+			"description": "",
+			"item": [
+				{
+					"name": "town",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/indexer/town?key=asdn2589&id=10484",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"indexer",
+								"town"
+							],
+							"query": [
+								{
+									"key": "key",
+									"value": "asdn2589",
+									"equals": true
+								},
+								{
+									"key": "id",
+									"value": "10484",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "active worlds",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Cookie",
+						"value": "XDEBUG_SESSION=PHPSTORM"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "world",
+							"value": "nl53",
+							"description": "",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{base}}/world/active",
+					"host": [
+						"{{base}}"
+					],
+					"path": [
+						"world",
+						"active"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "add message",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "name",
+							"value": "testnaan",
+							"description": "",
+							"type": "text"
+						},
+						{
+							"key": "mail",
+							"value": "admin@grepodata.com",
+							"description": "",
+							"type": "text"
+						},
+						{
+							"key": "message",
+							"value": "test bericht!¡²³¡²¤!!@#!@#",
+							"description": "",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{base}}/message/add",
+					"host": [
+						"{{base}}"
+					],
+					"path": [
+						"message",
+						"add"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		}
+	]
+}
