@@ -202,7 +202,7 @@ $oRouter->Add('newKey', new Route('/indexer/newkey', array(
   '_controller' => '\Grepodata\Application\API\Route\Indexer\Index',
   '_method'     => 'NewKeyRequest'
 )));
-$oRouter->Add('newKey', new Route('/indexer/cleanup', array(
+$oRouter->Add('cleanupRequest', new Route('/indexer/cleanup', array(
   '_controller' => '\Grepodata\Application\API\Route\Indexer\Index',
   '_method'     => 'CleanupRequest'
 )));

@@ -487,6 +487,11 @@ admin@grepodata.com',
             Logger::error("Unable to move all conquests for new index " . $oNewIndex->key_code . ". " . $e->getMessage());
           }
 
+          // Update owners record
+          $oIndexOwners = IndexOwners::firstOrNew($oIndex->key_code);
+          $oIndexOwners->key_code = $oNewIndex->key_code;
+          $oIndexOwners->save();
+
           // Update old index status
           $oIndex->moved_to_index = $oNewIndex->key_code;
           $oIndex->save();
