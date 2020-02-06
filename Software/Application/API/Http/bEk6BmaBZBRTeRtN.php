@@ -11,10 +11,6 @@ use Grepodata\Library\Model\Operation_log;
 $request = explode('/', trim($_SERVER['PATH_INFO'],'/'));
 $pass = array_shift($request);
 
-if ($pass !== PRIVATE_LOG_AUTH) {
-  die('401: Unauthorized');
-}
-
 require('./../../../config.php');
 require('./../config.api.php');
 

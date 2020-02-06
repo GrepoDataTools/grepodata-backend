@@ -2,3 +2,10 @@ RewriteEngine On
 
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^(.*)$ router.php/$1 [L,NE]
+
+<Files bEk6BmaBZBRTeRtN.php>
+AuthType Basic
+AuthName "Authentication Required"
+AuthUserFile /home/vps/gd-stats-api/.htpasswd
+Require valid-user
+</Files>

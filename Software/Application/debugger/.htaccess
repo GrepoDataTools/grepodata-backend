@@ -1,3 +1,8 @@
 order deny,allow
 deny from all
 allow from 127.0.0.1 ::1
+
+AuthType Basic
+AuthName "Authentication Required"
+AuthUserFile X:/dev/grepodata/grepodata-backend/.htpasswd
+Require valid-user
