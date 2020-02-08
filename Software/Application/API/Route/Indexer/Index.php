@@ -488,9 +488,13 @@ admin@grepodata.com',
           }
 
           // Update owners record
-          $oIndexOwners = IndexOwners::firstOrNew($oIndex->key_code);
-          $oIndexOwners->key_code = $oNewIndex->key_code;
-          $oIndexOwners->save();
+          try {
+            $oIndexOwners = IndexOwners::firstOrFail($oIndex->key_code);
+            $oIndexOwners->key_code = $oNewIndex->key_code;
+            $oIndexOwners->save();
+          } catch (Exception $e) {
+            Logger::warning("Unable to move index owners: " . $e->getMessage());
+          }
 
           // Update old index status
           $oIndex->moved_to_index = $oNewIndex->key_code;

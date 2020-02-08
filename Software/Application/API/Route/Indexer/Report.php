@@ -60,7 +60,7 @@ class Report extends \Grepodata\Library\Router\BaseRoute
 
       die(self::OutputJson($aResponse, 200));
     } catch (\Exception $e){
-      Logger::error('Error processing indexer add inbox report: ' . $e->getMessage());
+      Logger::error('Error retrieving latest indexer hashes: ' . $e->getMessage());
       die(self::OutputJson(array(), 200));
     }
   }

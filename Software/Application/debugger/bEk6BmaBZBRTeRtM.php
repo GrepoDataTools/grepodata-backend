@@ -4,9 +4,6 @@ namespace Grepodata\Application\debugger;
 
 use Grepodata\Library\Model\Indexer\Report;
 
-$request = explode('/', trim($_SERVER['PATH_INFO'],'/'));
-$pass = array_shift($request);
-
 function isLocalhost($whitelist = ['127.0.0.1', '::1']) {
   return in_array($_SERVER['REMOTE_ADDR'], $whitelist);
 }

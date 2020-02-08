@@ -8,12 +8,10 @@ use Grepodata\Library\Elasticsearch\Client;
 use Grepodata\Library\Model\CronStatus;
 use Grepodata\Library\Model\Operation_log;
 
-$request = explode('/', trim($_SERVER['PATH_INFO'],'/'));
-$pass = array_shift($request);
-
 require('./../../../config.php');
 require('./../config.api.php');
 
+error_reporting(0);
 error_reporting(0);
 
 session_start();
