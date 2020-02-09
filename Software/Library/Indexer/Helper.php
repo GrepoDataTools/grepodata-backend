@@ -102,6 +102,7 @@ class Helper
           .game_arrow_left {display: none !important;}
           .game_arrow_delete {display: none !important;}
           .published_report {margin: 0 !important;}
+          .game_list_footer {height: 16px !important; background-size: unset !important;}
         </style>
       </head>
       <body>
@@ -144,7 +145,7 @@ class Helper
     // Call wkhtmltoimage
     $imgName = "report_".$Hash.$oReport->index_code.".png";
     $imgFile = REPORT_DIRECTORY . $imgName;
-    $options = '--quality 94 --zoom 2 --transparent --load-media-error-handling ignore';
+    $options = '--quality 80 --width 800 --zoom 1 --transparent --load-media-error-handling ignore';
     $result = shell_exec("wkhtmltoimage $options $tempFile $imgFile 2>&1");
 
     // TODO: handle wkhtmltoimage result
