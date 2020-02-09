@@ -39,6 +39,7 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
   define('JWT_SECRET',     PRIVATE_JWT_SECRET);
 
   // Smarty dirs
+  define('PROJECTHOME_DIR', 'X:/dev/grepodata/grepodata-backend');
   $SourceDir = 'X:/dev/grepodata/grepodata-backend/';
   define('SMARTY_TEMPLATE_DIR', "$SourceDir/Software/Templates");
   define('SMARTY_COMPILE_DIR', "$SourceDir/Software/Templates/compiled");
@@ -82,6 +83,7 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
 
   // Smarty dirs
   $HomeDir = '/home/vps/grepodata/acceptance/grepodata-backend';
+  define('PROJECTHOME_DIR', $HomeDir);
   $SourceDir = $HomeDir . '/active/';
   $UserscriptDir = $HomeDir . '/Userscript';
   define('SMARTY_TEMPLATE_DIR', "$SourceDir/Software/Templates");
@@ -126,6 +128,7 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
 
   // Smarty dirs
   $HomeDir = '/home/vps/grepodata/production/grepodata-backend';
+  define('PROJECTHOME_DIR', $HomeDir);
   $SourceDir = $HomeDir . '/active/';
   $UserscriptDir = $HomeDir . '/Userscript';
   define('SMARTY_TEMPLATE_DIR', "$SourceDir/Software/Templates");

@@ -215,7 +215,7 @@ try {
 echo '<p>VPS2: ';
 if (!stristr(PHP_OS, "win")) {
   $path = realpath($_SERVER['DOCUMENT_ROOT']);
-  $version = substr($path, strlen('/home/vps/gd-stats-api/dist_'), strpos($path, '/Software/Application/') - strlen('/home/vps/gd-stats-api/dist_'));
+  $version = substr($path, strlen(PROJECTHOME_DIR.'/dist_'), strpos($path, '/Software/Application/') - strlen(PROJECTHOME_DIR.'/dist_'));
   $load = shell_exec("uptime");
   echo $version . ' ' . $load . '   ';
 } else {
