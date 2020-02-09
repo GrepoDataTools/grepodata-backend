@@ -44,8 +44,8 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
   define('SMARTY_COMPILE_DIR', "$SourceDir/Software/Templates/compiled");
   define('SMARTY_CACHE_DIR', "$SourceDir/Software/Templates/cache");
 
-  define('USERSCRIPT_DIRECTORY', "$SourceDir/Software/Templates/compiled");
-  define('DEBUGGER_DIRECTORY', "$SourceDir/Software/Application/debugger");
+  define('USERSCRIPT_DIRECTORY', $SourceDir."Software/Templates/compiled");
+  define('HASH2IMG_DIRECTORY', $SourceDir."Software/Application/debugger/temp");
 
 
 } else if ('ACCEPTANCE' === PRIVATE_DEV_MACHINE_NAME) {
@@ -79,14 +79,15 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
   define('JWT_SECRET',     PRIVATE_JWT_SECRET);
 
   // Smarty dirs
-  $SourceDir = '/home/vps/grepodata/acceptance/grepodata-backend/active/';
-  $UserscriptDir = '/home/vps/grepodata/acceptance/grepodata-backend/Userscript';
+  $HomeDir = '/home/vps/grepodata/acceptance/grepodata-backend';
+  $SourceDir = $HomeDir . '/active/';
+  $UserscriptDir = $HomeDir . '/Userscript';
   define('SMARTY_TEMPLATE_DIR', "$SourceDir/Software/Templates");
   define('SMARTY_COMPILE_DIR', "$UserscriptDir/smarty/compiled");
   define('SMARTY_CACHE_DIR', "$UserscriptDir/smarty/cache");
 
   define('USERSCRIPT_DIRECTORY', $UserscriptDir . '/v1');
-  define('DEBUGGER_DIRECTORY', "$SourceDir/Software/Application/debugger");
+  define('HASH2IMG_DIRECTORY', $HomeDir."/Temp/report2img/temp");
 
 
 } else if ('PRODUCTION' === PRIVATE_DEV_MACHINE_NAME) {
@@ -121,14 +122,15 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
   define('JWT_SECRET',     PRIVATE_JWT_SECRET);
 
   // Smarty dirs
-  $SourceDir = '/home/vps/grepodata/production/grepodata-backend/active/';
-  $UserscriptDir = '/home/vps/grepodata/production/grepodata-backend/Userscript';
+  $HomeDir = '/home/vps/grepodata/production/grepodata-backend';
+  $SourceDir = $HomeDir . '/active/';
+  $UserscriptDir = $HomeDir . '/Userscript';
   define('SMARTY_TEMPLATE_DIR', "$SourceDir/Software/Templates");
   define('SMARTY_COMPILE_DIR', "$UserscriptDir/smarty/compiled");
   define('SMARTY_CACHE_DIR', "$UserscriptDir/smarty/cache");
 
   define('USERSCRIPT_DIRECTORY', $UserscriptDir . '/v1');
-  define('DEBUGGER_DIRECTORY', "$SourceDir/Software/Application/debugger");
+  define('HASH2IMG_DIRECTORY', $HomeDir."/Temp/report2img/temp");
 
 
 } else {

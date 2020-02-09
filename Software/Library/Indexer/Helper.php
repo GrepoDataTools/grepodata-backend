@@ -130,17 +130,20 @@ class Helper
 
     // Build html
     $finalHtml = $dom->saveHTML($domx->document);
-    $tempFile = DEBUGGER_DIRECTORY . '/hash2img/temp_' . $Hash . '.html';
+    $tempFile = HASH2IMG_DIRECTORY . '/temp_' . $Hash . '.html';
+    if (!file_exists(HASH2IMG_DIRECTORY . 'game_local.css')) {
+      throw new \Exception("Missing hash2img working directory. check your configuration!");
+    }
     file_put_contents($tempFile, $finalHtml);
     if (!file_exists($tempFile)) {
-      throw new \Exception("Unable to create temp html file for report");
+      throw new \Exception("Unable to create temp html file for report. Check your permissions!");
     }
 
     // Call wkhtmltoimage
     $imgName = "report_".$Hash.$oReport->index_code.".png";
     $imgFile = REPORT_DIRECTORY . $imgName;
     $options = '--quality 94 --zoom 2 --transparent --load-media-error-handling ignore';
-    $result = shell_exec("wkhtmltoimage $options $tempFile $imgFile");
+    $result = shell_exec("wkhtmltoimage $options $tempFile $imgFile 2>&1");
 
     // TODO: handle wkhtmltoimage result
     Logger::warning("wkhtmltoimage result: " . json_encode($result));
