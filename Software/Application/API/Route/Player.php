@@ -186,9 +186,6 @@ class Player extends \Grepodata\Library\Router\BaseRoute
       if (isset($aParams['sql']) && $aParams['sql']==='true') {
         $bBuildForm = false;
         $bForceSql = true;
-        if (isset($aParams['query'])) {
-          $aParams['query'] = strtolower($aParams['query']);
-        }
       }
 
       $aParams['active'] = 'true';
