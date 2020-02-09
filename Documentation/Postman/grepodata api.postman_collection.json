@@ -241,6 +241,43 @@
 						"description": ""
 					},
 					"response": []
+				},
+				{
+					"name": "player diffs by hour",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/player/diffs?world=nl53",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"player",
+								"diffs"
+							],
+							"query": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
 				}
 			]
 		},
@@ -1364,7 +1401,7 @@
 							]
 						},
 						"url": {
-							"raw": "{{base}}/indexer/resetowners?key=aaaa1111&mail=admin@grepodata.com",
+							"raw": "{{base}}/indexer/resetowners?key=c1q9qe0z&mail=camielk@live.nl",
 							"host": [
 								"{{base}}"
 							],
@@ -1380,7 +1417,7 @@
 								},
 								{
 									"key": "mail",
-									"value": "admin@grepodata.com",
+									"value": "camielk@live.nl",
 									"equals": true
 								}
 							]
@@ -1562,7 +1599,7 @@
 							]
 						},
 						"url": {
-							"raw": "{{base}}/indexer/resetowners?key=aaaa1111&mail=admin@grepodata.com",
+							"raw": "{{base}}/indexer/resetowners?key=c1q9qe0z&mail=camielk@live.nl",
 							"host": [
 								"{{base}}"
 							],
@@ -1573,12 +1610,12 @@
 							"query": [
 								{
 									"key": "key",
-									"value": "aaaa1111",
+									"value": "c1q9qe0z",
 									"equals": true
 								},
 								{
 									"key": "mail",
-									"value": "admin@grepodata.com",
+									"value": "camielk@live.nl",
 									"equals": true
 								}
 							]
@@ -1610,23 +1647,241 @@
 							]
 						},
 						"url": {
-							"raw": "{{base}}/indexer/town?key=asdn2589&id=10484",
+							"raw": "{{base}}/indexer/api/town?key=jaegqam2&id=77",
 							"host": [
 								"{{base}}"
 							],
 							"path": [
 								"indexer",
+								"api",
 								"town"
 							],
 							"query": [
 								{
 									"key": "key",
-									"value": "asdn2589",
+									"value": "jaegqam2",
 									"equals": true
 								},
 								{
 									"key": "id",
-									"value": "10484",
+									"value": "77",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "auth",
+			"description": "",
+			"item": [
+				{
+					"name": "register",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "password",
+									"value": "testnaam",
+									"description": "",
+									"type": "text"
+								},
+								{
+									"key": "mail",
+									"value": "admin@grepodata.com",
+									"description": "",
+									"type": "text"
+								},
+								{
+									"key": "captcha",
+									"value": "null",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/auth/register",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "password",
+									"value": "testnaam",
+									"description": "",
+									"type": "text"
+								},
+								{
+									"key": "mail",
+									"value": "admin@grepodata.com",
+									"description": "",
+									"type": "text"
+								},
+								{
+									"key": "captcha",
+									"value": "null",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/auth/login",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Discord",
+			"description": "",
+			"item": [
+				{
+					"name": "get guild settings",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/discord/guild_settings?guild=550815465757343785",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"discord",
+								"guild_settings"
+							],
+							"query": [
+								{
+									"key": "guild",
+									"value": "550815465757343785",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "get report image by hash FORUM",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/discord/hash?guild=550815465757343785&hash=-954909707",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"discord",
+								"hash"
+							],
+							"query": [
+								{
+									"key": "guild",
+									"value": "550815465757343785",
+									"equals": true
+								},
+								{
+									"key": "hash",
+									"value": "-954909707",
+									"equals": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "get report image by hash INBOX",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "world",
+									"value": "nl53",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base}}/discord/hash?guild=550815465757343785&hash=1612542127",
+							"host": [
+								"{{base}}"
+							],
+							"path": [
+								"discord",
+								"hash"
+							],
+							"query": [
+								{
+									"key": "guild",
+									"value": "550815465757343785",
+									"equals": true
+								},
+								{
+									"key": "hash",
+									"value": "1612542127",
 									"equals": true
 								}
 							]
