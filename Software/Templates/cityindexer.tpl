@@ -30,11 +30,11 @@ let gd_w = unsafeWindow || window, $ = gd_w.jQuery || jQuery;
 let time_regex = /([0-5]\d)(:)([0-5]\d)(:)([0-5]\d)(?!.*([0-5]\d)(:)([0-5]\d)(:)([0-5]\d))/gm;
 
 // Set locale
-let translate = {ADD:'Index',SEND:'sending..',ADDED:'Indexed',VIEW:'View intel',STATS_LINK:'Show buttons that link to player/alliance statistics on grepodata.com',STATS_LINK_TITLE:'Link to statistics',CHECK_UPDATE:'Check for updates',ABOUT:'This tool allows you to easily collects enemy city intelligence and add them to your very own private index that can be shared with your alliance',INDEX_LIST:'You are currently contributing intel to the following indexes',COUNT_1:'You have contributed ',COUNT_2:' reports in this session',SHORTCUTS:'Keyboard shortcuts',SHORTCUTS_ENABLED:'Enable keyboard shortcuts',SHORTCUTS_INBOX_PREV:'Previous report (inbox)',SHORTCUTS_INBOX_NEXT:'Next report (inbox)',COLLECT_INTEL:'Collecting intel',COLLECT_INTEL_INBOX:'Forum (adds an "index+" button to inbox reports)',COLLECT_INTEL_FORUM:'Alliance forum (adds an "index+" button to alliance forum reports)',SHORTCUT_FUNCTION:'Function',SAVED:'Settings saved'};
+let translate = {ADD:'Index',SEND:'sending..',ADDED:'Indexed',VIEW:'View intel',STATS_LINK:'Show buttons that link to player/alliance statistics on grepodata.com',STATS_LINK_TITLE:'Link to statistics',CHECK_UPDATE:'Check for updates',ABOUT:'This tool allows you to easily collects enemy city intelligence and add them to your very own private index that can be shared with your alliance',INDEX_LIST:'You are currently contributing intel to the following indexes',COUNT_1:'You have contributed ',COUNT_2:' reports in this session',SHORTCUTS:'Keyboard shortcuts',SHORTCUTS_ENABLED:'Enable keyboard shortcuts',SHORTCUTS_INBOX_PREV:'Previous report (inbox)',SHORTCUTS_INBOX_NEXT:'Next report (inbox)',COLLECT_INTEL:'Collecting intel',COLLECT_INTEL_INBOX:'Forum (adds an "index+" button to inbox reports)',COLLECT_INTEL_FORUM:'Alliance forum (adds an "index+" button to alliance forum reports)',SHORTCUT_FUNCTION:'Function',SAVED:'Settings saved', SHARE:'Share report'};
 if ('undefined' !== typeof Game) {
   switch(Game.locale_lang.substring(0, 2)) {
     case 'nl':
-      translate = {ADD:'Indexeren',SEND:'bezig..',ADDED:'Geindexeerd',VIEW:'Intel bekijken',STATS_LINK:'Knoppen toevoegen die linken naar speler/alliantie statistieken op grepodata.com',STATS_LINK_TITLE:'Link naar statistieken',CHECK_UPDATE:'Controleer op updates',ABOUT:'Deze tool verzamelt informatie over vijandige steden in een handig overzicht. Rapporten kunnen geindexeerd worden in een unieke index die gedeeld kan worden met alliantiegenoten',INDEX_LIST:'Je draagt momenteel bij aan de volgende indexen',COUNT_1:'Je hebt al ',COUNT_2:' rapporten verzameld in deze sessie',SHORTCUTS:'Toetsenbord sneltoetsen',SHORTCUTS_ENABLED:'Sneltoetsen inschakelen',SHORTCUTS_INBOX_PREV:'Vorige rapport (inbox)',SHORTCUTS_INBOX_NEXT:'Volgende rapport (inbox)',COLLECT_INTEL:'Intel verzamelen',COLLECT_INTEL_INBOX:'Inbox (voegt een "index+" knop toe aan inbox rapporten)',COLLECT_INTEL_FORUM:'Alliantie forum (voegt een "index+" knop toe aan alliantie forum rapporten)',SHORTCUT_FUNCTION:'Functie',SAVED:'Instellingen opgeslagen'};
+      translate = {ADD:'Indexeren',SEND:'bezig..',ADDED:'Geindexeerd',VIEW:'Intel bekijken',STATS_LINK:'Knoppen toevoegen die linken naar speler/alliantie statistieken op grepodata.com',STATS_LINK_TITLE:'Link naar statistieken',CHECK_UPDATE:'Controleer op updates',ABOUT:'Deze tool verzamelt informatie over vijandige steden in een handig overzicht. Rapporten kunnen geindexeerd worden in een unieke index die gedeeld kan worden met alliantiegenoten',INDEX_LIST:'Je draagt momenteel bij aan de volgende indexen',COUNT_1:'Je hebt al ',COUNT_2:' rapporten verzameld in deze sessie',SHORTCUTS:'Toetsenbord sneltoetsen',SHORTCUTS_ENABLED:'Sneltoetsen inschakelen',SHORTCUTS_INBOX_PREV:'Vorige rapport (inbox)',SHORTCUTS_INBOX_NEXT:'Volgende rapport (inbox)',COLLECT_INTEL:'Intel verzamelen',COLLECT_INTEL_INBOX:'Inbox (voegt een "index+" knop toe aan inbox rapporten)',COLLECT_INTEL_FORUM:'Alliantie forum (voegt een "index+" knop toe aan alliantie forum rapporten)',SHORTCUT_FUNCTION:'Functie',SAVED:'Instellingen opgeslagen', SHARE:'Rapport delen'};
       break;
     default:
       break;
@@ -288,7 +288,76 @@ function parseInboxReport() {
           addToIndexFromInbox(reportHash, reportElement);
         }, false);
       }
-      footerElement.appendChild(addBtn);
+
+      let parentContainer = $(reportElement).closest('.gpwindow_frame').eq(0);
+      console.log(parentContainer);
+      if (!parentContainer.hasClass('gd-inbox-expanded-container')) {
+        parentContainer.height(parentContainer.height() + 24);
+        parentContainer.addClass('gd-inbox-expanded-container');
+      }
+
+      footerElement.style.height = '52px';
+      footerElement.style.backgroundSize = 'auto 100%';
+
+      let grepodataFooter = document.createElement('div');
+      grepodataFooter.setAttribute('id', 'gd_inbox_footer');
+      grepodataFooter.setAttribute('style', 'display: block; position: absolute; right: 2px; bottom: 0;');
+
+      grepodataFooter.appendChild(addBtn);
+
+      let shareBtn = document.createElement('a');
+      let shareInput = document.createElement('input');
+      let rightShareSpan = document.createElement('span');
+      let leftShareSpan = document.createElement('span');
+      let txtShareSpan = document.createElement('span');
+      shareInput.setAttribute('type', 'text');
+      shareInput.setAttribute('id', 'gd_share_rep_inp');
+      shareInput.setAttribute('style', 'float: right;');
+      txtShareSpan.setAttribute('id', 'gd_share_rep_txt');
+      txtShareSpan.setAttribute('class', 'middle');
+      rightShareSpan.setAttribute('class', 'right');
+      leftShareSpan.setAttribute('class', 'left');
+      leftShareSpan.appendChild(rightShareSpan);
+      rightShareSpan.appendChild(txtShareSpan);
+      shareBtn.appendChild(leftShareSpan);
+      shareBtn.setAttribute('href', '#');
+      shareBtn.setAttribute('id', 'gd_share_rep_');
+      shareBtn.setAttribute('class', 'button');
+      shareBtn.setAttribute('style', 'float: right;');
+
+      txtShareSpan.innerText = translate.SHARE;
+
+
+      shareBtn.addEventListener('click', () => {
+        if ($('#gd_share_rep_txt').get(0)) {
+          let content = '<b>To share this report on Discord, you need to do following:</b><br><ul>' +
+            '    <li>1. Install the GrepoData bot in your Discord server (<a href="https://grepodata.com/discord" target="_blank">link</a>).</li>' +
+            '    <li>2. Set your index with command <i>!gd index '+index_key+'</i></li>' +
+            '    <li>3. Insert the following code in your Discord server. The bot will then create the screenshot for you!' +
+            '    </ul><br/><input type="text" class="gd-copy-input-'+reportHash+'" value="'+ `!gd report ${reportHash}` + '"> <a href="#" class="gd-copy-command-'+reportHash+'">Copy to clipboard</a><span class="gd-copy-done-'+reportHash+'" style="display: none; float: right;"> Copied!</span>' +
+            '    <br /><br /><small>Thank you for using <a href="https://grepodata.com" target="_blank">GrepoData</a>!</small>';
+
+          Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG).setContent(content)
+          if (!reportFound) {
+            addToIndexFromInbox(reportHash, reportElement);
+          }
+
+          $(".gd-copy-command-"+reportHash).click(function(){
+            console.log('copy to clip');
+            $(".gd-copy-input-"+reportHash).select();
+            document.execCommand('copy');
+
+            $('.gd-copy-done-'+reportHash).get(0).style.display = 'block';
+            setTimeout(function () {
+              if($('.gd-copy-done-'+reportHash).get(0)){$('.gd-copy-done-'+reportHash).get(0).style.display = 'none';}
+            }, 3000);
+          });
+        }
+      });
+
+      grepodataFooter.appendChild(shareBtn)
+
+      footerElement.appendChild(grepodataFooter);
     }
 
     // Handle inbox keyboard shortcuts
@@ -445,6 +514,55 @@ function parseForumReport() {
           }
         }
 
+        let shareBtn = document.createElement('a');
+        let shareInput = document.createElement('input');
+        let rightShareSpan = document.createElement('span');
+        let leftShareSpan = document.createElement('span');
+        let txtShareSpan = document.createElement('span');
+        shareInput.setAttribute('type', 'text');
+        shareInput.setAttribute('id', 'gd_share_rep_inp');
+        shareInput.setAttribute('style', 'float: right;');
+        txtShareSpan.setAttribute('id', 'gd_share_rep_txt');
+        txtShareSpan.setAttribute('class', 'middle')
+        rightShareSpan.setAttribute('class', 'right');
+        leftShareSpan.setAttribute('class', 'left');
+        leftShareSpan.appendChild(rightShareSpan);
+        rightShareSpan.appendChild(txtShareSpan);
+        shareBtn.appendChild(leftShareSpan);
+        shareBtn.setAttribute('href', '#');
+        shareBtn.setAttribute('id', 'gd_share_rep_');
+        shareBtn.setAttribute('class', 'button');
+        shareBtn.setAttribute('style', 'float: right;');
+
+        txtShareSpan.innerText = translate.SHARE;
+
+
+        shareBtn.addEventListener('click', () => {
+          if ($('#gd_share_rep_txt').get(0)) {
+            let content = '<b>To share this report on Discord, you need to do following:</b><br><ul>' +
+              '    <li>1. Install the GrepoData bot in your Discord server (<a href="https://grepodata.com/discord" target="_blank">link</a>).</li>' +
+              '    <li>2. Set your index with command <i>!gd index '+index_key+'</i></li>' +
+              '    <li>3. Insert the following code in your Discord server. The bot will then create the screenshot for you!' +
+              '    </ul><br/><input type="text" class="gd-copy-input-'+reportHash+'" value="'+ `!gd report ${reportHash}` + '"> <a href="#" class="gd-copy-command-'+reportHash+'">Copy to clipboard</a><span class="gd-copy-done-'+reportHash+'" style="display: none; float: right;"> Copied!</span>' +
+              '    <br /><br /><small>Thank you for using <a href="https://grepodata.com" target="_blank">GrepoData</a>!</small>';
+
+            Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG).setContent(content);
+            if (!exists) {
+              addForumReportById($('#gd_index_f_' + reportId).attr('report_id'), $('#gd_index_f_' + reportId).attr('report_hash'));
+            }
+            $(".gd-copy-command-"+reportHash).click(function(){
+              console.log('copy to clip');
+              $(".gd-copy-input-"+reportHash).select();
+              document.execCommand('copy');
+
+              $('.gd-copy-done-'+reportHash).get(0).style.display = 'block';
+              setTimeout(function () {
+                if($('.gd-copy-done-'+reportHash).get(0)){$('.gd-copy-done-'+reportHash).get(0).style.display = 'none';}
+              }, 3000);
+            });
+          }
+        })
+
         if (reportHash == null) {
           reportHash = '';
         }
@@ -453,10 +571,13 @@ function parseForumReport() {
             '    <a href="#" id="gd_index_f_'+reportId+'" report_hash="'+reportHash+'" report_id="'+reportId+'" class="button rh'+reportHash+'" style="float: right;"><span class="left"><span class="right"><span id="gd_index_f_txt_'+reportId+'" class="middle">'+translate.ADD+' +</span></span></span></a>\n' +
             '    </div>');
         } else {
-          $(reportElement).append('<div class="gd_indexer_footer" style="height: 28px; margin-top: -28px;">\n' +
+          $(reportElement).append('<div class="gd_indexer_footer" style="background: url(https://gpnl.innogamescdn.com/images/game/border/odd.png); height: 28px;">\n' +
             '    <a href="#" id="gd_index_f_'+reportId+'" report_hash="'+reportHash+'" report_id="'+reportId+'" class="button rh'+reportHash+'" style="float: right;"><span class="left"><span class="right"><span id="gd_index_f_txt_'+reportId+'" class="middle">'+translate.ADD+' +</span></span></span></a>\n' +
             '    </div>');
         }
+
+        $(reportElement).find('.gd_indexer_footer').append(shareBtn);
+
 
         if (exists===true) {
           $('#gd_index_f_' + reportId).get(0).style.color = '#36cd5b';
