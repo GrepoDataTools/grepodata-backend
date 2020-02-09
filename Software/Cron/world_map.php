@@ -298,8 +298,8 @@ foreach ($worlds as $oWorld) {
       Logger::silly("Animation working directory: $world_path");
 
       //$animate_cmd = '-framerate '.$FramesPerSecond.' -video_size 1000x1000 -pattern_type glob -i "'.$world_path.'/map_*.png" -c:v libx264 -vf "fps=25,format=yuv420p" '.$world_path.'/temp.mp4 -y -nostdin';
-      //$animate_cmd = '-loop 1 -framerate '.$FramesPerSecond.' -i '.MAP_DIRECTORY.'mapbg.png -framerate '.$FramesPerSecond.' -pattern_type glob -i "'.$world_path.'/map_*.png" -filter_complex "overlay=(W-w)/2:(H-h)/2:shortest=1,format=yuv420p" -vcodec png '.$world_path.'/temp.mov -y -nostdin';
-      $animate_cmd = '-loop 1 -framerate '.$FramesPerSecond.' -i '.MAP_DIRECTORY.'mapbg.png -framerate '.$FramesPerSecond.' -pattern_type glob -i "'.$world_path.'/map_*.png" -filter_complex "overlay=(W-w)/2:(H-h)/2:shortest=1,format=yuv420p" -c:v libx264 '.$world_path.'/temp.mp4';
+      //$animate_cmd = '-loop 1 -framerate '.$FramesPerSecond.' -i '.TEMP_DIRECTORY.'mapbg.png -framerate '.$FramesPerSecond.' -pattern_type glob -i "'.$world_path.'/map_*.png" -filter_complex "overlay=(W-w)/2:(H-h)/2:shortest=1,format=yuv420p" -vcodec png '.$world_path.'/temp.mov -y -nostdin';
+      $animate_cmd = '-loop 1 -framerate '.$FramesPerSecond.' -i '.TEMP_DIRECTORY.'mapbg.png -framerate '.$FramesPerSecond.' -pattern_type glob -i "'.$world_path.'/map_*.png" -filter_complex "overlay=(W-w)/2:(H-h)/2:shortest=1,format=yuv420p" -c:v libx264 '.$world_path.'/temp.mp4';
       $default_cmd = '-y -nostdin -hide_banner -loglevel error'; // -y = overwrite old file, -nostdin = dont ask for input
       $Output = shell_exec("$ffmpeg_path $animate_cmd $default_cmd 2>&1");
       if ($Output!=null) {

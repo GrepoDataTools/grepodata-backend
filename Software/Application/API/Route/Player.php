@@ -202,10 +202,12 @@ class Player extends \Grepodata\Library\Router\BaseRoute
           foreach ($aResponse['results'] as $i => $aResult) {
             $oPlayer = \Grepodata\Library\Controller\Player::first($aResult['id'], $aResult['world']);
             if ($oPlayer!=null&&$oPlayer!=false) {
-              $aResponse['results'][$i]['att'] = $oPlayer->att;
-              $aResponse['results'][$i]['def'] = $oPlayer->def;
-              $aResponse['results'][$i]['att_old'] = $oPlayer->att_old;
-              $aResponse['results'][$i]['def_old'] = $oPlayer->def_old;
+              $aData = $oPlayer->getPublicFields();
+              foreach ($aData as $Field => $Value) {
+                if (!array_key_exists($Field, $aResponse['results'][$i])) {
+                  $aResponse['results'][$i][$Field] = $Value;
+                }
+              }
             }
           }
         }

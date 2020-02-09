@@ -32,8 +32,9 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
     )
   );
 
-  define('TEMP_DIRECTORY', 'X:/dev/grepodata/grepodata-backend/Temp/');
-  define('MAP_DIRECTORY', 'X:/dev/grepodata/grepodata-backend/Temp/');
+  define('TEMP_DIRECTORY',   'X:/dev/grepodata/grepodata-backend/Temp/');
+  define('MAP_DIRECTORY',    'X:/dev/grepodata/grepodata-backend/Temp/');
+  define('REPORT_DIRECTORY', 'X:/dev/grepodata/grepodata-backend/Temp/');
   define('CAPTCHA_SECRET', PRIVATE_CAPTCHA_KEY);
   define('JWT_SECRET',     PRIVATE_JWT_SECRET);
 
@@ -44,7 +45,51 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
   define('SMARTY_CACHE_DIR', "$SourceDir/Software/Templates/cache");
 
   define('USERSCRIPT_DIRECTORY', "$SourceDir/Software/Templates/compiled");
-} else {
+  define('DEBUGGER_DIRECTORY', "$SourceDir/Software/Application/debugger");
+
+
+} else if ('ACCEPTANCE' === PRIVATE_DEV_MACHINE_NAME) {
+  // ACCEPTANCE:
+  define('bDevelopmentMode', true);
+  $g_aConfiguration = array(
+    'mysql' => array(
+      'driver'    => 'mysql',
+      'host'      => 'localhost',
+      'database'  => PRIVATE_SQL_DATABASE,
+      'username'  => PRIVATE_SQL_USERNAME,
+      'password'  => PRIVATE_SQL_PASSWORD,
+      'charset'   => 'utf8',
+      'collation' => 'utf8_unicode_ci',
+      'prefix'    => '',
+    ),
+    'pushbullet' => array(
+      'token' => PRIVATE_PUSHBULLET_TOKEN,
+      'url'   => 'https://api.pushbullet.com/v2/pushes'
+    ),
+    'elasticsearch' => array(
+      'hosts'  => array(
+        'localhost:9200'
+      )
+    )
+  );
+  define('TEMP_DIRECTORY',   '/home/vps/grepodata/acceptance/grepodata-backend/Temp/');
+  define('MAP_DIRECTORY',    '/home/vps/grepodata/acceptance/grepodata-frontend/maps/');
+  define('REPORT_DIRECTORY', '/home/vps/grepodata/acceptance/grepodata-frontend/reports/');
+  define('CAPTCHA_SECRET', PRIVATE_CAPTCHA_KEY);
+  define('JWT_SECRET',     PRIVATE_JWT_SECRET);
+
+  // Smarty dirs
+  $SourceDir = '/home/vps/grepodata/acceptance/grepodata-backend/active/';
+  $UserscriptDir = '/home/vps/grepodata/acceptance/grepodata-backend/Userscript';
+  define('SMARTY_TEMPLATE_DIR', "$SourceDir/Software/Templates");
+  define('SMARTY_COMPILE_DIR', "$UserscriptDir/smarty/compiled");
+  define('SMARTY_CACHE_DIR', "$UserscriptDir/smarty/cache");
+
+  define('USERSCRIPT_DIRECTORY', $UserscriptDir . '/v1');
+  define('DEBUGGER_DIRECTORY', "$SourceDir/Software/Application/debugger");
+
+
+} else if ('PRODUCTION' === PRIVATE_DEV_MACHINE_NAME) {
   // PRODUCTION:
   define('bDevelopmentMode', false);
   $g_aConfiguration = array(
@@ -68,19 +113,26 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
       )
     )
   );
-  define('TEMP_DIRECTORY', '/home/vps/gd-stats-api/Temp/');
-  define('MAP_DIRECTORY',  '/home/vps/gd-frontend/maps/');
+  define('TEMP_DIRECTORY',   '/home/vps/grepodata/production/grepodata-backend/Temp/');
+  define('MAP_DIRECTORY',    '/home/vps/grepodata/production/grepodata-frontend/maps/');
+  define('REPORT_DIRECTORY', '/home/vps/grepodata/production/grepodata-frontend/reports/');
+
   define('CAPTCHA_SECRET', PRIVATE_CAPTCHA_KEY);
   define('JWT_SECRET',     PRIVATE_JWT_SECRET);
 
   // Smarty dirs
-  $SourceDir = '/home/vps/gd-stats-api/active/';
-  $UserscriptDir = '/home/vps/gd-stats-api/Userscript';
+  $SourceDir = '/home/vps/grepodata/production/grepodata-backend/active/';
+  $UserscriptDir = '/home/vps/grepodata/production/grepodata-backend/Userscript';
   define('SMARTY_TEMPLATE_DIR', "$SourceDir/Software/Templates");
   define('SMARTY_COMPILE_DIR', "$UserscriptDir/smarty/compiled");
   define('SMARTY_CACHE_DIR', "$UserscriptDir/smarty/cache");
 
   define('USERSCRIPT_DIRECTORY', $UserscriptDir . '/v1');
+  define('DEBUGGER_DIRECTORY', "$SourceDir/Software/Application/debugger");
+
+
+} else {
+  die("Unknown environment '$env'. make sure your config.private.php file is configured correctly");
 }
 
 define('MAIL_TRANSPORT_HOST', PRIVATE_MAIL_TRANSPORT_HOST);

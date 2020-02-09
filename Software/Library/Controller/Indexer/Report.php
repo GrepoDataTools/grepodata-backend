@@ -21,4 +21,14 @@ class Report
     return false;
   }
 
+  /**
+   * @param $Id
+   * @return \Grepodata\Library\Model\Indexer\Report
+   */
+  public static function firstById($Id)
+  {
+    return \Grepodata\Library\Model\Indexer\Report::where('id', '=', $Id)
+      ->firstOrFail();
+  }
+
 }

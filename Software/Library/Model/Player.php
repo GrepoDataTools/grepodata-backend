@@ -61,7 +61,7 @@ class Player extends Model
       'att_rank_date'   => $this->att_rank_date,
       'def_rank_date'   => $this->def_rank_date,
       'fight_rank_date' => $this->fight_rank_date,
-      'heatmap' => (is_null($this->heatmap)? array() : json_decode($this->heatmap)),
+      'heatmap' => (is_null($this->heatmap)? array() : json_decode($this->heatmap, true)),
     );
   }
 }

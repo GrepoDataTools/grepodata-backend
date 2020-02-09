@@ -151,6 +151,14 @@ $oRouter->Add('getIndexDiscord', new Route('/discord/get_index', array(
   '_controller' => '\Grepodata\Application\API\Route\Discord',
   '_method'     => 'GetIndex'
 )));
+$oRouter->Add('getSettingsDiscord', new Route('/discord/guild_settings', array(
+  '_controller' => '\Grepodata\Application\API\Route\Discord',
+  '_method'     => 'GetSettings'
+)));
+$oRouter->Add('getReportByHash', new Route('/discord/hash', array(
+  '_controller' => '\Grepodata\Application\API\Route\Discord',
+  '_method'     => 'GetReportByHash'
+)));
 
 // Ranking
 $oRouter->Add('playerRanking', new Route('/ranking/player', array(

@@ -127,7 +127,11 @@ $Index = IndexInfo::firstOrFail($Report->index_code);
 
 try {
 
-  echo Helper::JsonToHtml($Report);
+	$html = Helper::JsonToHtml($Report);
+  // Fix domain
+  $html = str_replace('https://gpnl.innogamescdn.com/images/game/', 'http://api-grepodata-com.debugger:8080/images/', $html);
+  $html = str_replace('https://gpnl.innogamescdn.com/', 'http://api-grepodata-com.debugger:8080/', $html);
+  echo $html;
 
 } catch (\Exception $e) {
   echo $e->getMessage();

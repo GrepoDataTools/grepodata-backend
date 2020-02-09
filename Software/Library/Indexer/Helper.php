@@ -2,7 +2,10 @@
 
 namespace Grepodata\Library\Indexer;
 
+use DOMDocument;
+use DOMXPath;
 use Grepodata\Library\Exception\ParserDefaultWarning;
+use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\Indexer\Report;
 
 class Helper
@@ -46,7 +49,7 @@ class Helper
     return $html;
   }
 
-  public static function JsonToHtml(Report $Report)
+  public static function JsonToHtml(Report $Report, $bMinimal=false)
   {
     $Json = json_decode($Report->report_json, true);
     $Type = $Report->type;
@@ -54,22 +57,103 @@ class Helper
 
     // Wrapper
     if ($Type === 'inbox') {
-      $html = '<div class="ui-dialog ui-widget ui-widget-content ui-corner-all ui-draggable js-window-main-container" tabindex="-1" style="outline: 0px; z-index: 1001; height: auto; width: 800px;left: 624px; display: block; position: relative;" role="dialog" aria-labelledby="ui-id-17">'.
+      $html = '<div class="ui-dialog ui-widget ui-widget-content ui-corner-all ui-draggable js-window-main-container" tabindex="-1" style="outline: 0px; z-index: 1001; height: auto; width: 800px;left: '.($bMinimal?'0':'624px').'; display: block; position: relative;" role="dialog" aria-labelledby="ui-id-17">'.
         '<div class="gpwindow_frame ui-dialog-content ui-widget-content" scrolltop="0" scrollleft="0" style="display: block; width: auto; min-height: 0px;">'.
         '<div id="gpwnd_1013" class="gpwindow_content">'.
         $innerhtml.
         '</div></div></div>';
     } else {
-      $html = '<div class="content" style="width: 50%;margin-left: 25%;">'.
+      $header = '<div class="content" style="width: 50%;margin-left: 25%;">';
+      if ($bMinimal) {
+        $header = '<div class="content" style="width: 800px">';
+      }
+      $html =
+        $header.
         $innerhtml.
         '</div>';
     }
 
-    // Fix domain
-    $html = str_replace('https://gpnl.innogamescdn.com/images/game/', 'http://api-grepodata-com.debugger:8080/images/', $html);
-    $html = str_replace('https://gpnl.innogamescdn.com/', 'http://api-grepodata-com.debugger:8080/', $html);
-
     return $html;
+  }
+
+  /**
+   * Render the report json, if available, into an image and return the url of the image
+   * @param Report $oReport
+   * @return string Image url
+   * @throws \Exception
+   */
+  public static function reportToImage(Report $oReport, $Hash)
+  {
+    $html = \Grepodata\Library\Indexer\Helper::JsonToHtml($oReport, true);
+
+    // Fix domain to local
+    $html = str_replace('https://gpnl.innogamescdn.com/images/game/', '../images/', $html);
+    $html = str_replace('https://gpnl.innogamescdn.com/', '../', $html);
+    $html = str_replace('http://api-grepodata-com.debugger:8080/', '../', $html);
+
+    $completeHtml = "
+    <html>
+      <head>
+        <meta charset=\"UTF-8\" />
+        <link rel=\"stylesheet\" type=\"text/css\" href=\"game_local.css\">
+        <script src=\"http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js\"></script>
+        <style>
+          .game_arrow_right {display: none !important;}
+          .game_arrow_left {display: none !important;}
+          .game_arrow_delete {display: none !important;}
+        </style>
+      </head>
+      <body>
+       $html
+      </body>
+    </html>";
+
+    libxml_use_internal_errors(true);
+    $dom = new DOMDocument();
+    $dom->loadHTML($completeHtml);
+    $domx = new DOMXPath($dom);
+
+    // Remove inbox footer contents except for the date
+    foreach($domx->query('//div[contains(attribute::class, "game_list_footer")]/*[not(contains(@id, "report_date"))]') as $e ) {
+      $e->parentNode->removeChild($e);
+    }
+
+    // remove forum index+ button
+    foreach($domx->query('//div[contains(attribute::class, "gd_indexer_footer")]') as $e ) {
+      $e->parentNode->removeChild($e);
+    }
+
+    // remove forum footer entirely
+    foreach($domx->query('//div[contains(attribute::class, "fight_report_classic")]/div[last()]') as $e ) {
+      $e->parentNode->removeChild($e);
+    }
+
+    // Build html
+    $finalHtml = $dom->saveHTML($domx->document);
+    $tempFile = DEBUGGER_DIRECTORY . '/hash2img/temp_' . $Hash . '.html';
+    file_put_contents($tempFile, $finalHtml);
+    if (!file_exists($tempFile)) {
+      throw new \Exception("Unable to create temp html file for report");
+    }
+
+    // Call wkhtmltoimage
+    $imgName = "report_".$Hash.$oReport->index_code.".png";
+    $imgFile = REPORT_DIRECTORY . $imgName;
+    $options = '--quality 94 --zoom 2 --transparent --load-media-error-handling ignore';
+    $result = shell_exec("wkhtmltoimage $options $tempFile $imgFile");
+
+    // TODO: handle wkhtmltoimage result
+    Logger::warning("wkhtmltoimage result: " . json_encode($result));
+    error_log("wkhtmltoimage result: " . json_encode($result));
+    $aErrors = libxml_get_errors();
+
+    try {
+      // try to cleanup temp html file
+      unlink($tempFile);
+    } catch (\Exception $e) {}
+
+    $url = "https://grepodata.com/r/" . $imgName;
+    return $url;
   }
 
   /**
