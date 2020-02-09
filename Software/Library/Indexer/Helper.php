@@ -101,6 +101,7 @@ class Helper
           .game_arrow_right {display: none !important;}
           .game_arrow_left {display: none !important;}
           .game_arrow_delete {display: none !important;}
+          .published_report {margin: 0 !important;}
         </style>
       </head>
       <body>
@@ -113,25 +114,26 @@ class Helper
     $dom->loadHTML($completeHtml);
     $domx = new DOMXPath($dom);
 
-    // Remove inbox footer contents except for the date
-    foreach($domx->query('//div[contains(attribute::class, "game_list_footer")]/*[not(contains(@id, "report_date"))]') as $e ) {
-      $e->parentNode->removeChild($e);
-    }
-
-    // remove forum index+ button
-    foreach($domx->query('//div[contains(attribute::class, "gd_indexer_footer")]') as $e ) {
-      $e->parentNode->removeChild($e);
-    }
-
-    // remove forum footer entirely
-    foreach($domx->query('//div[contains(attribute::class, "fight_report_classic")]/div[last()]') as $e ) {
-      $e->parentNode->removeChild($e);
+    if ($oReport->type === 'default') {
+      // remove forum index+ button
+      foreach($domx->query('//div[contains(attribute::class, "gd_indexer_footer")]') as $e ) {
+        $e->parentNode->removeChild($e);
+      }
+      // remove forum footer entirely
+      foreach($domx->query('//div[contains(attribute::class, "fight_report_classic")]/div[last()]') as $e ) {
+        $e->parentNode->removeChild($e);
+      }
+    } else if ($oReport->type === 'inbox') {
+      // Remove inbox footer contents except for the date
+      foreach($domx->query('//div[contains(attribute::class, "game_list_footer")]/*[not(contains(@id, "report_date"))]') as $e ) {
+        $e->parentNode->removeChild($e);
+      }
     }
 
     // Build html
     $finalHtml = $dom->saveHTML($domx->document);
     $tempFile = HASH2IMG_DIRECTORY . '/temp_' . $Hash . '.html';
-    if (!file_exists(HASH2IMG_DIRECTORY . 'game_local.css')) {
+    if (!file_exists(HASH2IMG_DIRECTORY . '/game_local.css')) {
       throw new \Exception("Missing hash2img working directory. check your configuration!");
     }
     file_put_contents($tempFile, $finalHtml);

@@ -74,7 +74,9 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
   );
   define('TEMP_DIRECTORY',   '/home/vps/grepodata/acceptance/grepodata-backend/Temp/');
   define('MAP_DIRECTORY',    '/home/vps/grepodata/acceptance/grepodata-frontend/maps/');
-  define('REPORT_DIRECTORY', '/home/vps/grepodata/acceptance/grepodata-frontend/reports/');
+//  define('REPORT_DIRECTORY', '/home/vps/grepodata/acceptance/grepodata-frontend/reports/');
+  define('REPORT_DIRECTORY', '/home/vps/gd-frontend/reports/'); // TODO frontend CI
+
   define('CAPTCHA_SECRET', PRIVATE_CAPTCHA_KEY);
   define('JWT_SECRET',     PRIVATE_JWT_SECRET);
 
@@ -116,7 +118,8 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
   );
   define('TEMP_DIRECTORY',   '/home/vps/grepodata/production/grepodata-backend/Temp/');
   define('MAP_DIRECTORY',    '/home/vps/grepodata/production/grepodata-frontend/maps/');
-  define('REPORT_DIRECTORY', '/home/vps/grepodata/production/grepodata-frontend/reports/');
+//  define('REPORT_DIRECTORY', '/home/vps/grepodata/production/grepodata-frontend/reports/');
+  define('REPORT_DIRECTORY', '/home/vps/gd-frontend/reports/'); // TODO frontend CI
 
   define('CAPTCHA_SECRET', PRIVATE_CAPTCHA_KEY);
   define('JWT_SECRET',     PRIVATE_JWT_SECRET);
