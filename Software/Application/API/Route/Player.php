@@ -192,6 +192,10 @@ class Player extends \Grepodata\Library\Router\BaseRoute
       }
 
       $aParams['active'] = 'true';
+      if ($bForceSql && isset($aParams['size'])) {
+        $OriginalSize = $aParams['size'];
+        $aParams['size'] += 10;
+      }
       try {
         $aElasticsearchResults = Search::FindPlayers($aParams, $bBuildForm);
       } catch (Exception $e) {
@@ -201,6 +205,8 @@ class Player extends \Grepodata\Library\Router\BaseRoute
       if (isset($aElasticsearchResults) && $aElasticsearchResults != false) {
         $aResponse = $aElasticsearchResults;
         if ($bForceSql === true) {
+          $aBestMatch = null;
+          $BestIndex = null;
           // if forceSql: search with ES but render results using SQL data
           foreach ($aResponse['results'] as $i => $aResult) {
             $oPlayer = \Grepodata\Library\Controller\Player::first($aResult['id'], $aResult['world']);
@@ -211,7 +217,21 @@ class Player extends \Grepodata\Library\Router\BaseRoute
                   $aResponse['results'][$i][$Field] = $Value;
                 }
               }
+              if (isset($aParams['query']) && $oPlayer->name === $aParams['query']) {
+                $aBestMatch = $aResponse['results'][$i];
+                $BestIndex = $i;
+              }
             }
+          }
+
+          // Push best match to front of results
+          if ($aBestMatch!=null) {
+            unset($aResponse['results'][$BestIndex]);
+            array_unshift($aResponse['results'], $aBestMatch);
+          }
+
+          if (isset($aParams['size']) && isset($OriginalSize)) {
+            $aResponse['results'] = array_slice($aResponse['results'], 0, $OriginalSize);
           }
         }
       } else {
