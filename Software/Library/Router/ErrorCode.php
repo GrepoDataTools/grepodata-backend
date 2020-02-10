@@ -18,21 +18,26 @@ class ErrorCode
   /**
    * die with a predefined error code
    * @param int $Code
+   * @param array $aExtraResponseData
    * @param int $HttpCode
    */
-  public static function code($Code = 1000, $HttpCode = 200)
+  public static function code($Code = 1000, $aExtraResponseData = array(), $HttpCode = 200)
   {
     $Message = constant('GD_ERROR_'.$Code);
     if (is_null($Message)) {
       $Message = GD_ERROR_0000;
     }
 
-    header('Content-Type: application/json', true, $HttpCode);
-    die(json_encode(array(
+    $aResponseData = array(
       'success' => false,
       'error_code' => $Code,
       'message' => $Message,
-    ), JSON_PRETTY_PRINT));
+    );
+    if (is_array($aExtraResponseData) && sizeof($aExtraResponseData)) {
+      array_merge($aResponseData, $aExtraResponseData);
+    }
+    header('Content-Type: application/json', true, $HttpCode);
+    die(json_encode($aResponseData, JSON_PRETTY_PRINT));
   }
 
   /**

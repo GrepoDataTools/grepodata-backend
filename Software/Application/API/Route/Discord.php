@@ -2,6 +2,8 @@
 
 namespace Grepodata\Application\API\Route;
 
+use Grepodata\Library\Controller\Indexer\CityInfo;
+use Grepodata\Library\Controller\Indexer\IndexInfo;
 use Grepodata\Library\Controller\Indexer\Report;
 use Grepodata\Library\Indexer\Helper;
 use Grepodata\Library\Logger\Logger;
@@ -155,6 +157,7 @@ class Discord extends \Grepodata\Library\Router\BaseRoute
       if ($oDiscord->index_key === null) {
         ErrorCode::code(5001); // index key required
       }
+      $oIndex = IndexInfo::firstOrFail($oDiscord->index_key);
 
       try {
         $oReportHash = \Grepodata\Library\Controller\Indexer\ReportId::firstByIndexByHash($oDiscord->index_key, $aParams['hash']);
@@ -183,8 +186,18 @@ class Discord extends \Grepodata\Library\Router\BaseRoute
 
       $aResponse = array(
         'success' => true,
-        'url' => $Url
+        'url' => $Url,
+        'index' => $oIndex->key_code,
+        'world' => $oIndex->world
       );
+
+      // Try to expand with info
+      try {
+        if (isset($oReport->city_id) && $oReport->city_id > 0) {
+          $oCity = CityInfo::getById($oReport->index_code, $oReport->city_id);
+          $aResponse['intel'] = $oCity->getPublicFields();
+        }
+      } catch (\Exception $e) {}
 
       return self::OutputJson($aResponse);
 

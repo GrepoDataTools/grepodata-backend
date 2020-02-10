@@ -39,6 +39,7 @@ class City extends Model
       'town_id'     => $this->town_id,
       'town_name'   => $this->town_name,
       'player_id'   => $this->player_id,
+      'player_name' => $this->player_name,
       'alliance_id' => $this->alliance_id,
       'date'        => $this->report_date,
       'parsed_date' => $this->parsed_date,
