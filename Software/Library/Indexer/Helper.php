@@ -150,8 +150,8 @@ class Helper
 
     // TODO: handle wkhtmltoimage result
     Logger::warning("wkhtmltoimage result: " . json_encode($result));
-    error_log("wkhtmltoimage result: " . json_encode($result));
-    $aErrors = libxml_get_errors();
+    //error_log("wkhtmltoimage result: " . json_encode($result));
+    //$aErrors = libxml_get_errors();
 
     try {
       // try to cleanup temp html file

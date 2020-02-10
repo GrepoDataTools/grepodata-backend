@@ -6,6 +6,7 @@ use Grepodata\Library\Controller\Indexer\Report;
 use Grepodata\Library\Indexer\Helper;
 use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\Indexer\ReportId;
+use Grepodata\Library\Router\ErrorCode;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class Discord extends \Grepodata\Library\Router\BaseRoute
@@ -149,38 +150,42 @@ class Discord extends \Grepodata\Library\Router\BaseRoute
       $aParams = self::validateParams(array('guild', 'hash'));
 
       // Get settings
-      $oDiscord = \Grepodata\Library\Controller\Discord::firstOrFail($aParams['guild']);
+      $oDiscord = \Grepodata\Library\Controller\Discord::firstOrNew($aParams['guild']);
 
       if ($oDiscord->index_key === null) {
-        // TODO error codes
-        throw new \Exception("This guild has not set a default index");
+        ErrorCode::code(5001); // index key required
       }
 
       try {
         $oReportHash = \Grepodata\Library\Controller\Indexer\ReportId::firstByIndexByHash($oDiscord->index_key, $aParams['hash']);
       } catch (ModelNotFoundException $e) {
         // If this step fails, report has not been indexed yet
-        throw new \Exception("No report found for hash ". $aParams['hash'] . " in index " . $oDiscord->index_key);
+        ErrorCode::code(5003);
       }
 
       try {
         $oReport = Report::firstById($oReportHash->index_report_id);
       } catch (ModelNotFoundException $e) {
         // If this step fails, report has been indexed but we do not have the information about the report
-        throw new \Exception("Report has been indexed but we are unable to rebuild report for this hash (report info not found)");
+        ErrorCode::custom("Report has been indexed but we are unable to rebuild report for this hash (report info not found)", 5000);
       }
 
       if ($oReport->report_json == null || $oReport->report_json == '') {
         // if $oReport->report_json is empty, report html is not available and probably never will be
-        throw new \Exception("Report has been indexed but we are unable to rebuild report for this hash (lost html)");
+        ErrorCode::custom("Report has been indexed but we are unable to rebuild report for this hash (lost html)", 5000);
       }
 
-      $Url = Helper::reportToImage($oReport, $aParams['hash']);
+      try {
+        $Url = Helper::reportToImage($oReport, $aParams['hash']);
+      } catch (\Exception $e) {
+        ErrorCode::code(5004);
+      }
 
       $aResponse = array(
         'success' => true,
         'url' => $Url
       );
+
       return self::OutputJson($aResponse);
 
     } catch (\Exception $e) {
@@ -188,7 +193,7 @@ class Discord extends \Grepodata\Library\Router\BaseRoute
         'success'     => false,
         'message'     => 'Error creating image for these parameters: ' . $e->getMessage(),
         'parameters'  => $aParams
-      ), 404));
+      ), 500));
     }
   }
 }
