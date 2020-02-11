@@ -150,6 +150,7 @@ class Discord extends \Grepodata\Library\Router\BaseRoute
     try {
       // Validate params
       $aParams = self::validateParams(array('guild', 'hash'));
+      $oDiscord = \Grepodata\Library\Controller\Discord::firstOrNew($aParams['guild']);
 
       // Find hash
       try {
@@ -164,7 +165,6 @@ class Discord extends \Grepodata\Library\Router\BaseRoute
             ->firstOrFail();
         } else {
           // Old hash version: get required settings
-          $oDiscord = \Grepodata\Library\Controller\Discord::firstOrNew($aParams['guild']);
           if ($oDiscord->index_key === null) {
             ErrorCode::code(5001); // index key required
           }
@@ -203,7 +203,7 @@ class Discord extends \Grepodata\Library\Router\BaseRoute
 
       // Try to expand with info
       try {
-        if (isset($oReport->city_id) && $oReport->city_id > 0) {
+        if ($oDiscord->index_key === $oReport->index_code && isset($oReport->city_id) && $oReport->city_id > 0) {
           $oCity = CityInfo::getById($oReport->index_code, $oReport->city_id);
           $aResponse['intel'] = $oCity->getPublicFields();
         }
