@@ -73,7 +73,8 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
     )
   );
   define('TEMP_DIRECTORY',   '/home/vps/grepodata/acceptance/grepodata-backend/Temp/');
-  define('MAP_DIRECTORY',    '/home/vps/grepodata/acceptance/grepodata-frontend/maps/');
+//  define('MAP_DIRECTORY',    '/home/vps/grepodata/acceptance/grepodata-frontend/maps/');
+  define('MAP_DIRECTORY',    '/home/vps/gd-frontend/maps/'); // TODO frontend CI
 //  define('REPORT_DIRECTORY', '/home/vps/grepodata/acceptance/grepodata-frontend/reports/');
   define('REPORT_DIRECTORY', '/home/vps/gd-frontend/reports/'); // TODO frontend CI
 
@@ -117,7 +118,8 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
     )
   );
   define('TEMP_DIRECTORY',   '/home/vps/grepodata/production/grepodata-backend/Temp/');
-  define('MAP_DIRECTORY',    '/home/vps/grepodata/production/grepodata-frontend/maps/');
+//  define('MAP_DIRECTORY',    '/home/vps/grepodata/production/grepodata-frontend/maps/');
+  define('MAP_DIRECTORY',    '/home/vps/gd-frontend/maps/'); // TODO frontend CI
 //  define('REPORT_DIRECTORY', '/home/vps/grepodata/production/grepodata-frontend/reports/');
   define('REPORT_DIRECTORY', '/home/vps/gd-frontend/reports/'); // TODO frontend CI
 
