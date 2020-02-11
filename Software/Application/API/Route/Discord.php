@@ -162,7 +162,6 @@ class Discord extends \Grepodata\Library\Router\BaseRoute
             ->where('index_report_id', '>', 0)
             ->orderBy('id', 'desc')
             ->firstOrFail();
-          $oIndex = IndexInfo::firstOrFail($oReportHash->index_key);
         } else {
           // Old hash version: get required settings
           $oDiscord = \Grepodata\Library\Controller\Discord::firstOrNew($aParams['guild']);
@@ -175,6 +174,7 @@ class Discord extends \Grepodata\Library\Router\BaseRoute
         // If this step fails, report has not been indexed yet
         ErrorCode::code(5000);
       }
+      $oIndex = IndexInfo::firstOrFail($oReportHash->index_key);
 
       try {
         $oReport = Report::firstById($oReportHash->index_report_id);

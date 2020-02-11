@@ -103,6 +103,8 @@ class Helper
           .game_arrow_delete {display: none !important;}
           .published_report {margin: 0 !important;}
           .game_list_footer {height: 16px !important; background-size: unset !important;}
+          .game_border {margin: 2px !important;}
+          #report_game_body {width: 796px !important;}
         </style>
       </head>
       <body>
