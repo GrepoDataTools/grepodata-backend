@@ -151,24 +151,29 @@ class Discord extends \Grepodata\Library\Router\BaseRoute
       // Validate params
       $aParams = self::validateParams(array('guild', 'hash'));
 
-      // Get settings
-      $oDiscord = \Grepodata\Library\Controller\Discord::firstOrNew($aParams['guild']);
-
-//      if ($oDiscord->index_key === null) {
-//        ErrorCode::code(5001); // index key required
-//      }
-
+      // Find hash
       try {
-        $BestMatch = null;
-        /** @var ReportId $oReportHash */
-        $oReportHash = \Grepodata\Library\Model\Indexer\ReportId::where('report_id', '=', $aParams['hash'])
-          ->where('index_report_id', '>', 0)
-          ->orderBy('id', 'desc')
-          ->firstOrFail();
-        $oIndex = IndexInfo::firstOrFail($oReportHash->index_key);
+        if (strpos($aParams['hash'], 'r') === 0) {
+          // Use new hash version without required index key
+          $SearchHash = str_replace('r', '', $aParams['hash']);
+          $SearchHash = str_replace('m', '-', $SearchHash);
+          /** @var ReportId $oReportHash */
+          $oReportHash = \Grepodata\Library\Model\Indexer\ReportId::where('report_id', '=', $SearchHash)
+            ->where('index_report_id', '>', 0)
+            ->orderBy('id', 'desc')
+            ->firstOrFail();
+          $oIndex = IndexInfo::firstOrFail($oReportHash->index_key);
+        } else {
+          // Old hash version: get required settings
+          $oDiscord = \Grepodata\Library\Controller\Discord::firstOrNew($aParams['guild']);
+          if ($oDiscord->index_key === null) {
+            ErrorCode::code(5001); // index key required
+          }
+          $oReportHash = \Grepodata\Library\Controller\Indexer\ReportId::firstByIndexByHash($oDiscord->index_key, $aParams['hash']);
+        }
       } catch (ModelNotFoundException $e) {
         // If this step fails, report has not been indexed yet
-        ErrorCode::code(5003);
+        ErrorCode::code(5000);
       }
 
       try {

@@ -211,7 +211,7 @@ function parseInboxReport() {
       let dateElement = document.getElementById("report_date");
       let headerText = headerElement.innerText;
       let dateText = dateElement.innerText;
-      let hashText = headerText+dateText;
+      let hashText = headerText+dateText+index_key;
       let reportHash = hashText.report_hash();
 
       // Try to build report hash using town ids (robust against object name changes)
@@ -239,6 +239,7 @@ function parseInboxReport() {
           }
           if (ids.length === 2) {
             ids.push(dateText);
+            ids.push(index_key);
             let hashText = ids.join('');
             reportHash = hashText.report_hash();
           }
@@ -296,7 +297,7 @@ function parseInboxReport() {
         parentContainer.addClass('gd-inbox-expanded-container');
       }
 
-      footerElement.style.height = '52px';
+      footerElement.style.height = '48px';
       footerElement.style.backgroundSize = 'auto 100%';
 
       let grepodataFooter = document.createElement('div');
@@ -330,11 +331,11 @@ function parseInboxReport() {
 
       shareBtn.addEventListener('click', () => {
         if ($('#gd_share_rep_txt').get(0)) {
-          let content = '<b>To share this report on Discord, you need to do following:</b><br><ul>' +
+          let hashI = ('r' + reportHash).replace('-', 'm');
+          let content = '<b>Share this report on Discord:</b><br><ul>' +
             '    <li>1. Install the GrepoData bot in your Discord server (<a href="https://grepodata.com/discord" target="_blank">link</a>).</li>' +
-            '    <li>2. Set your index with command <i>!gd index '+index_key+'</i></li>' +
-            '    <li>3. Insert the following code in your Discord server. The bot will then create the screenshot for you!' +
-            '    </ul><br/><input type="text" class="gd-copy-input-'+reportHash+'" value="'+ `!gd report ${reportHash}` + '"> <a href="#" class="gd-copy-command-'+reportHash+'">Copy to clipboard</a><span class="gd-copy-done-'+reportHash+'" style="display: none; float: right;"> Copied!</span>' +
+            '    <li>2. Insert the following code in your Discord server.<br/>The bot will then create the screenshot for you!' +
+            '    </ul><br/><input type="text" class="gd-copy-input-'+reportHash+'" value="'+ `!gd report ${hashI}` + '"> <a href="#" class="gd-copy-command-'+reportHash+'">Copy to clipboard</a><span class="gd-copy-done-'+reportHash+'" style="display: none; float: right;"> Copied!</span>' +
             '    <br /><br /><small>Thank you for using <a href="https://grepodata.com" target="_blank">GrepoData</a>!</small>';
 
           Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG).setContent(content)
@@ -497,6 +498,7 @@ function parseForumReport() {
           // Combine intel and generate hash
           let reportText = dateText + headerText + reportContent;
           if (reportText!==null && reportText!=='') {
+            reportText = reportText + index_key;
             reportHash = reportText.report_hash();
           }
 
@@ -539,11 +541,11 @@ function parseForumReport() {
 
         shareBtn.addEventListener('click', () => {
           if ($('#gd_share_rep_txt').get(0)) {
-            let content = '<b>To share this report on Discord, you need to do following:</b><br><ul>' +
+			let hashI = ('r' + reportHash).replace('-', 'm');
+            let content = '<b>Share this report on Discord:</b><br><ul>' +
               '    <li>1. Install the GrepoData bot in your Discord server (<a href="https://grepodata.com/discord" target="_blank">link</a>).</li>' +
-              '    <li>2. Set your index with command <i>!gd index '+index_key+'</i></li>' +
-              '    <li>3. Insert the following code in your Discord server. The bot will then create the screenshot for you!' +
-              '    </ul><br/><input type="text" class="gd-copy-input-'+reportHash+'" value="'+ `!gd report ${reportHash}` + '"> <a href="#" class="gd-copy-command-'+reportHash+'">Copy to clipboard</a><span class="gd-copy-done-'+reportHash+'" style="display: none; float: right;"> Copied!</span>' +
+              '    <li>2. Insert the following code in your Discord server.<br/>The bot will then create the screenshot for you!' +
+              '    </ul><br/><input type="text" class="gd-copy-input-'+reportHash+'" value="'+ `!gd report ${hashI}` + '"> <a href="#" class="gd-copy-command-'+reportHash+'">Copy to clipboard</a><span class="gd-copy-done-'+reportHash+'" style="display: none; float: right;"> Copied!</span>' +
               '    <br /><br /><small>Thank you for using <a href="https://grepodata.com" target="_blank">GrepoData</a>!</small>';
 
             Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG).setContent(content);
