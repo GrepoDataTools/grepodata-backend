@@ -154,13 +154,18 @@ class Discord extends \Grepodata\Library\Router\BaseRoute
       // Get settings
       $oDiscord = \Grepodata\Library\Controller\Discord::firstOrNew($aParams['guild']);
 
-      if ($oDiscord->index_key === null) {
-        ErrorCode::code(5001); // index key required
-      }
-      $oIndex = IndexInfo::firstOrFail($oDiscord->index_key);
+//      if ($oDiscord->index_key === null) {
+//        ErrorCode::code(5001); // index key required
+//      }
 
       try {
-        $oReportHash = \Grepodata\Library\Controller\Indexer\ReportId::firstByIndexByHash($oDiscord->index_key, $aParams['hash']);
+        $BestMatch = null;
+        /** @var ReportId $oReportHash */
+        $oReportHash = \Grepodata\Library\Model\Indexer\ReportId::where('report_id', '=', $aParams['hash'])
+          ->where('index_report_id', '>', 0)
+          ->orderBy('id', 'desc')
+          ->firstOrFail();
+        $oIndex = IndexInfo::firstOrFail($oReportHash->index_key);
       } catch (ModelNotFoundException $e) {
         // If this step fails, report has not been indexed yet
         ErrorCode::code(5003);
