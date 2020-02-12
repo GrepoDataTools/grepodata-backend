@@ -146,13 +146,14 @@ class Helper
     }
 
     // Call wkhtmltoimage
-    $imgName = "report_".$Hash.$oReport->index_code.".png";
+    $imgName = "report_".$Hash."_".rand(1,1000000).".png";
+    $url = "https://grepodata.com/r/" . $imgName;
     $imgFile = REPORT_DIRECTORY . $imgName;
     $options = '--quality 80 --width 800 --zoom 1 --transparent --load-media-error-handling ignore';
     $result = shell_exec("wkhtmltoimage $options $tempFile $imgFile 2>&1");
 
     // TODO: handle wkhtmltoimage result
-    Logger::warning("wkhtmltoimage result: " . json_encode($result));
+    Logger::warning("wkhtmltoimage result [$url]: " . json_encode($result));
     //error_log("wkhtmltoimage result: " . json_encode($result));
     //$aErrors = libxml_get_errors();
 
@@ -161,7 +162,6 @@ class Helper
       unlink($tempFile);
     } catch (\Exception $e) {}
 
-    $url = "https://grepodata.com/r/" . $imgName;
     return $url;
   }
 
