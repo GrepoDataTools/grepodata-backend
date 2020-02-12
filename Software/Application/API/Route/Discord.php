@@ -197,7 +197,7 @@ class Discord extends \Grepodata\Library\Router\BaseRoute
       $aResponse = array(
         'success' => true,
         'url' => $Url,
-        'index' => $oIndex->key_code,
+        'index' => null,
         'world' => $oIndex->world
       );
 
@@ -206,6 +206,8 @@ class Discord extends \Grepodata\Library\Router\BaseRoute
         if ($oDiscord->index_key === $oReport->index_code && isset($oReport->city_id) && $oReport->city_id > 0) {
           $oCity = CityInfo::getById($oReport->index_code, $oReport->city_id);
           $aResponse['intel'] = $oCity->getPublicFields();
+          $aResponse['index'] = $oIndex->key_code;
+
         }
       } catch (\Exception $e) {}
 
