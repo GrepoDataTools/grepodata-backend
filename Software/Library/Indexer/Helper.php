@@ -90,6 +90,7 @@ class Helper
     $html = str_replace('https://gpnl.innogamescdn.com/images/game/', '../images/', $html);
     $html = str_replace('https://gpnl.innogamescdn.com/', '../', $html);
     $html = str_replace('http://api-grepodata-com.debugger:8080/', '../', $html);
+    $html = str_replace('src="/images/', 'src="../images/', $html);
 
     $completeHtml = "
     <html>
