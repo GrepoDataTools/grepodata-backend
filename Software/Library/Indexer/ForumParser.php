@@ -313,13 +313,12 @@ class ForumParser
       throw new ForumParserExceptionError("Invalid report class. report data does not contain published_report");
     }
 
-    // Navigate to report child
-    // TODO: what is causing this?
+    // Navigate to report child (If report is contained within a bold, underline or italic BBcode element, then each of these will add a layer of abstraction)
     $LoopCount = 0;
     if (count($aReportData['content']) < 3 && isset($aReportData['content'][0]['type'])) {
-      while ($aReportData['content'][0]['type'] === "B") {
+      while (in_array($aReportData['content'][0]['type'], array('B', 'U', 'I'))) {
         $LoopCount += 1;
-        if ($LoopCount > 3) {
+        if ($LoopCount >= 7) {
           throw new ForumParserExceptionError("Report data loop out of bounds");
         }
 
