@@ -147,7 +147,7 @@ class Helper
 
     // Call wkhtmltoimage
     $imgName = "report_".$Hash."_".rand(1,1000000).".png";
-    $url = "https://grepodata.com/r/" . $imgName;
+    $url = FRONTEND_URL . "/r/" . $imgName;
     $imgFile = REPORT_DIRECTORY . $imgName;
     $options = '--quality 80 --width 800 --zoom 1 --transparent --load-media-error-handling ignore';
     $result = shell_exec("wkhtmltoimage $options $tempFile $imgFile 2>&1");

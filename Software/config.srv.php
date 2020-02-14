@@ -47,7 +47,7 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
   define('USERSCRIPT_DIRECTORY', $SourceDir."Software/Templates/compiled");
   define('HASH2IMG_DIRECTORY', $SourceDir."Software/Application/debugger/temp");
 
-
+  define('FRONTEND_URL', 'http://localhost:4200');
 } else if ('ACCEPTANCE' === PRIVATE_DEV_MACHINE_NAME) {
   // ACCEPTANCE:
   define('bDevelopmentMode', true);
@@ -90,7 +90,7 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
   define('USERSCRIPT_DIRECTORY', $UserscriptDir . '/v1');
   define('HASH2IMG_DIRECTORY', $HomeDir."/Temp/report2img/temp");
 
-
+  define('FRONTEND_URL', 'https://grepodata.com');
 } else if ('PRODUCTION' === PRIVATE_DEV_MACHINE_NAME) {
   // PRODUCTION:
   define('bDevelopmentMode', false);
@@ -133,7 +133,7 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
   define('USERSCRIPT_DIRECTORY', $UserscriptDir . '/v1');
   define('HASH2IMG_DIRECTORY', $HomeDir."/Temp/report2img/temp");
 
-
+  define('FRONTEND_URL', 'https://grepodata.com');
 } else {
   die("Unknown environment '$env'. make sure your config.private.php file is configured correctly");
 }
