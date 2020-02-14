@@ -207,8 +207,8 @@ function parseInboxReport() {
     ) {
 
       // Build report hash using default method
-      let headerElement = document.getElementById("report_header");
-      let dateElement = document.getElementById("report_date");
+      let headerElement = reportElement.querySelector("#report_header");
+      let dateElement = footerElement.querySelector("#report_date");
       let headerText = headerElement.innerText;
       let dateText = dateElement.innerText;
       let hashText = headerText+dateText+index_key;
@@ -248,7 +248,6 @@ function parseInboxReport() {
         console.log(e);
       }
       console.log('Parsed inbox report with hash: ' + reportHash);
-
 
       // Add index button
       let addBtn = document.createElement('a');
@@ -291,18 +290,14 @@ function parseInboxReport() {
       }
 
       let parentContainer = $(reportElement).closest('.gpwindow_frame').eq(0);
-      console.log(parentContainer);
       if (!parentContainer.hasClass('gd-inbox-expanded-container')) {
         parentContainer.height(parentContainer.height() + 24);
         parentContainer.addClass('gd-inbox-expanded-container');
       }
 
-      footerElement.style.height = '48px';
-      footerElement.style.backgroundSize = 'auto 100%';
-
       let grepodataFooter = document.createElement('div');
       grepodataFooter.setAttribute('id', 'gd_inbox_footer');
-      grepodataFooter.setAttribute('style', 'display: block; position: absolute; right: 2px; bottom: 0;');
+      //grepodataFooter.setAttribute('style', 'display: block; position: absolute; right: 2px; bottom: 0;');
 
       grepodataFooter.appendChild(addBtn);
 
@@ -357,8 +352,23 @@ function parseInboxReport() {
       });
 
       grepodataFooter.appendChild(shareBtn)
-
       footerElement.appendChild(grepodataFooter);
+
+      // Figure out button placement..
+      let folderElement = footerElement.querySelector('#select_folder_id');
+      let footerWidth = footerElement.offsetWidth;
+      let dateWidth = dateElement.offsetWidth;
+      //let folderWidth = folderElement.offsetWidth;
+      //let availableWidth = footerWidth - dateWidth - folderWidth;
+      //footerElement.style.height = '47px';
+      footerElement.style.backgroundSize = 'auto 100%';
+      footerElement.style.paddingTop = '26px';
+      dateElement.style.marginTop = '-21px';
+      dateElement.style.position = 'absolute';
+      folderElement.style.marginTop = '-21px';
+      folderElement.style.marginLeft = (dateWidth + 5) + 'px';
+      folderElement.style.position = 'absolute';
+
     }
 
     // Handle inbox keyboard shortcuts
@@ -569,17 +579,19 @@ function parseForumReport() {
           reportHash = '';
         }
         if (bSpy === true) {
-          $(reportElement).append('<div class="gd_indexer_footer" style="background: #fff; height: 28px;">\n' +
+          $(reportElement).append('<div class="gd_indexer_footer" style="background: #fff; height: 28px; margin-top: -28px;">\n' +
             '    <a href="#" id="gd_index_f_'+reportId+'" report_hash="'+reportHash+'" report_id="'+reportId+'" class="button rh'+reportHash+'" style="float: right;"><span class="left"><span class="right"><span id="gd_index_f_txt_'+reportId+'" class="middle">'+translate.ADD+' +</span></span></span></a>\n' +
             '    </div>');
+			$(reportElement).find('.resources, .small').css("text-align","left");
         } else {
-          $(reportElement).append('<div class="gd_indexer_footer" style="background: url(https://gpnl.innogamescdn.com/images/game/border/odd.png); height: 28px;">\n' +
+          $(reportElement).append('<div class="gd_indexer_footer" style="background: url(https://gpnl.innogamescdn.com/images/game/border/odd.png); height: 28px; margin-top: -52px;">\n' +
             '    <a href="#" id="gd_index_f_'+reportId+'" report_hash="'+reportHash+'" report_id="'+reportId+'" class="button rh'+reportHash+'" style="float: right;"><span class="left"><span class="right"><span id="gd_index_f_txt_'+reportId+'" class="middle">'+translate.ADD+' +</span></span></span></a>\n' +
             '    </div>');
+			$(reportElement).find('.button, .simulator, .all').parent().css("padding-top", "24px");
+			$(reportElement).find('.button, .simulator, .all').siblings("span").css("margin-top", "-24px");
         }
 
         $(reportElement).find('.gd_indexer_footer').append(shareBtn);
-
 
         if (exists===true) {
           $('#gd_index_f_' + reportId).get(0).style.color = '#36cd5b';
