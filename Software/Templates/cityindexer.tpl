@@ -365,10 +365,12 @@ function parseInboxReport() {
       footerElement.style.paddingTop = '26px';
       dateElement.style.marginTop = '-21px';
       dateElement.style.position = 'absolute';
-      folderElement.style.marginTop = '-21px';
-      folderElement.style.marginLeft = (dateWidth + 5) + 'px';
-      folderElement.style.position = 'absolute';
 
+      if (folderElement !== null) {
+        folderElement.style.marginTop = '-21px';
+        folderElement.style.marginLeft = (dateWidth + 5) + 'px';
+        folderElement.style.position = 'absolute';
+      }
     }
 
     // Handle inbox keyboard shortcuts
