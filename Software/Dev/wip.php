@@ -11,7 +11,9 @@ use Grepodata\Library\Controller\World;
 
 //$LinkDataEncoded = '#eyJpZCI6MTI4MTIsIml4Ijo0NzUsIml5Ijo1MTcsInRwIjoidG93biIsIm5hbWUiOiJGYW5mYXJlIHZhbiBob25nZXIifQ==';
 //$LinkDataEncoded = '#eyJuYW1lIjoibWFpb3IiLCJpZCI6NDEyNDkwfQ==';
-$LinkDataEncoded = '#eyJpZCI6MjEzMDAsIml4Ijo0NzAsIml5Ijo1MTYsInRwIjoidG93biIsIm5hbWUiOiI0NS5BLjEgTGFzZXIifQ==';
+//$LinkDataEncoded = '#eyJpZCI6MjEzMDAsIml4Ijo0NzAsIml5Ijo1MTYsInRwIjoidG93biIsIm5hbWUiOiI0NS5BLjEgTGFzZXIifQ==';
+//$LinkDataEncoded = '#eyJuYW1lIjoiTmVsbHkxOTgwIiwiaWQiOjEzODkzMzZ9';
+$LinkDataEncoded = '#eyJpZCI6MTU1ODksIml4Ijo0NzIsIml5Ijo1MzYsInRwIjoidG93biIsIm5hbWUiOiJPQyA0NSBQZW5zcG9ueSJ9';
 $aLinkData = json_decode(base64_decode($LinkDataEncoded), true);
 $t=2;
 

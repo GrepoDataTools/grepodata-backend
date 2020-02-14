@@ -211,9 +211,9 @@ class Discord extends \Grepodata\Library\Router\BaseRoute
           $aResponse['index'] = $oIndex->key_code;
         } else {
           // Show BBcode only
-          preg_match_all('/#[a-zA-Z0-9]*==/m', $html, $matches, PREG_SET_ORDER, 0);
+          preg_match_all('/#[a-zA-Z0-9]{18,1000}={0,2}/m', $html, $matches, PREG_SET_ORDER, 0);
           foreach ($matches as $match) {
-            $aData = json_decode(base64_decode($match), true);
+            $aData = json_decode(base64_decode($match[0]), true);
             if (is_array($aData) && sizeof($aData)>0) {
               $aResponse['bb'][] = $aData;
             }
