@@ -90,7 +90,7 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
   define('USERSCRIPT_DIRECTORY', $UserscriptDir . '/v1');
   define('HASH2IMG_DIRECTORY', $HomeDir."/Temp/report2img/temp");
 
-  define('FRONTEND_URL', 'https://grepodata.com');
+  define('FRONTEND_URL', 'https://test.grepodata.com');
 } else if ('PRODUCTION' === PRIVATE_DEV_MACHINE_NAME) {
   // PRODUCTION:
   define('bDevelopmentMode', false);
