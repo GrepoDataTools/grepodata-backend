@@ -189,7 +189,8 @@ class Discord extends \Grepodata\Library\Router\BaseRoute
       }
 
       try {
-        $Url = Helper::reportToImage($oReport, $aParams['hash']);
+        $html = \Grepodata\Library\Indexer\Helper::JsonToHtml($oReport, true);
+        $Url = Helper::reportToImage($html, $oReport, $aParams['hash']);
       } catch (\Exception $e) {
         ErrorCode::code(5004);
       }
@@ -198,7 +199,8 @@ class Discord extends \Grepodata\Library\Router\BaseRoute
         'success' => true,
         'url' => $Url,
         'index' => null,
-        'world' => $oIndex->world
+        'world' => $oIndex->world,
+        'bb' => array()
       );
 
       // Try to expand with info
@@ -207,7 +209,15 @@ class Discord extends \Grepodata\Library\Router\BaseRoute
           $oCity = CityInfo::getById($oReport->index_code, $oReport->city_id);
           $aResponse['intel'] = $oCity->getPublicFields();
           $aResponse['index'] = $oIndex->key_code;
-
+        } else {
+          // Show BBcode only
+          preg_match_all('/#[a-zA-Z0-9]*==/m', $html, $matches, PREG_SET_ORDER, 0);
+          foreach ($matches as $match) {
+            $aData = json_decode(base64_decode($match), true);
+            if (is_array($aData) && sizeof($aData)>0) {
+              $aResponse['bb'][] = $aData;
+            }
+          }
         }
       } catch (\Exception $e) {}
 

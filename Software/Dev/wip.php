@@ -9,19 +9,25 @@ require(__DIR__ . '/../config.php');
 use Carbon\Carbon;
 use Grepodata\Library\Controller\World;
 
-$ScoreboardTime = Carbon::now();
-$ScoreboardTime->setTimezone('Europe/Istanbul');
-$Test = $ScoreboardTime->format('H:i:s');
+//$LinkDataEncoded = '#eyJpZCI6MTI4MTIsIml4Ijo0NzUsIml5Ijo1MTcsInRwIjoidG93biIsIm5hbWUiOiJGYW5mYXJlIHZhbiBob25nZXIifQ==';
+//$LinkDataEncoded = '#eyJuYW1lIjoibWFpb3IiLCJpZCI6NDEyNDkwfQ==';
+$LinkDataEncoded = '#eyJpZCI6MjEzMDAsIml4Ijo0NzAsIml5Ijo1MTYsInRwIjoidG93biIsIm5hbWUiOiI0NS5BLjEgTGFzZXIifQ==';
+$aLinkData = json_decode(base64_decode($LinkDataEncoded), true);
+$t=2;
 
-$String = Carbon::now()->toDateTimeString();
-
-$oWorld = \Grepodata\Library\Controller\World::getWorldById('nl66');
-
-$ServerTime = $oWorld->getServerTime();
-$Timestamp = $ServerTime->timestamp;
-
-$ConquestLowerTimeLimit = strtotime($oWorld->last_reset_time);
-$ConquestLowerTimeLimit2 = strtotime($oWorld->getLastUtcResetTime());
+//$ScoreboardTime = Carbon::now();
+//$ScoreboardTime->setTimezone('Europe/Istanbul');
+//$Test = $ScoreboardTime->format('H:i:s');
+//
+//$String = Carbon::now()->toDateTimeString();
+//
+//$oWorld = \Grepodata\Library\Controller\World::getWorldById('nl66');
+//
+//$ServerTime = $oWorld->getServerTime();
+//$Timestamp = $ServerTime->timestamp;
+//
+//$ConquestLowerTimeLimit = strtotime($oWorld->last_reset_time);
+//$ConquestLowerTimeLimit2 = strtotime($oWorld->getLastUtcResetTime());
 
 //\Grepodata\Library\Cron\Common::getAllActiveWorlds();
 //\Grepodata\Library\Cron\Common::getAllActiveWorlds(false);

@@ -21,7 +21,8 @@ $Id="1124570";
 $oReport = \Grepodata\Library\Model\Indexer\Report::where('id', '=', $Id)->first();
 
 try {
-  $url = \Grepodata\Library\Indexer\Helper::reportToImage($oReport, 'testing');
+  $html = \Grepodata\Library\Indexer\Helper::JsonToHtml($oReport, true);
+  $url = \Grepodata\Library\Indexer\Helper::reportToImage($html, $oReport, 'testing');
 } catch (Exception $e) {
   $t=2;
 }

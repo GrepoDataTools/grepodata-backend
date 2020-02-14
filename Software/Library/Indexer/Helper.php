@@ -78,14 +78,14 @@ class Helper
 
   /**
    * Render the report json, if available, into an image and return the url of the image
+   * @param $html
    * @param Report $oReport
+   * @param $Hash
    * @return string Image url
    * @throws \Exception
    */
-  public static function reportToImage(Report $oReport, $Hash)
+  public static function reportToImage($html, Report $oReport, $Hash)
   {
-    $html = \Grepodata\Library\Indexer\Helper::JsonToHtml($oReport, true);
-
     // Fix domain to local
     $html = str_replace('https://gpnl.innogamescdn.com/images/game/', '../images/', $html);
     $html = str_replace('https://gpnl.innogamescdn.com/', '../', $html);
