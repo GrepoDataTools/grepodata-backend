@@ -312,7 +312,7 @@ class ForumParser
     $bLocalFallback = false;
     if (!key_exists($Locale, self::format)) {
       // Use default locale as fallback: nl
-      Logger::error("ForumParser " . $Fingerprint . ": TODO add date format for locale " . $Locale . ". date example: " . $ReportDate);
+      Logger::warning("ForumParser " . $Fingerprint . ": TODO add date format for locale " . $Locale . ". date example: " . $ReportDate);
       $Locale = 'nl';
       $bLocalFallback = true;
     }
