@@ -205,10 +205,12 @@ class Discord extends \Grepodata\Library\Router\BaseRoute
 
       // Try to expand with info
       try {
-        if ($oDiscord->index_key === $oReport->index_code && isset($oReport->city_id) && $oReport->city_id > 0) {
-          $oCity = CityInfo::getById($oReport->index_code, $oReport->city_id);
-          $aResponse['intel'] = $oCity->getPublicFields();
+        if ($oDiscord->index_key === $oReport->index_code) {
           $aResponse['index'] = $oIndex->key_code;
+          if (isset($oReport->city_id) && $oReport->city_id > 0) {
+            $oCity = CityInfo::getById($oReport->index_code, $oReport->city_id);
+            $aResponse['intel'] = $oCity->getPublicFields();
+          }
         } else {
           // Show BBcode only
           preg_match_all('/#[a-zA-Z0-9]{18,1000}={0,2}/m', $html, $matches, PREG_SET_ORDER, 0);
