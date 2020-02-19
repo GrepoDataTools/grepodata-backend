@@ -135,6 +135,9 @@ class InboxParser
         // use current time as fallback
         $oDate = new Carbon();
       } else {
+        if (is_array($ReportDateString)) {
+          $ReportDateString = Helper::getTextContent($ReportDateString);
+        }
         $oDate = Carbon::createFromFormat($Format, $ReportDateString);
         if ($oDate == null) {
           throw new InboxParserExceptionError("Parsed date is null");
