@@ -17,11 +17,11 @@ let time_regex = /([0-5]\d)(:)([0-5]\d)(:)([0-5]\d)(?!.*([0-5]\d)(:)([0-5]\d)(:)
 let gd_icon = "url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAXCAYAAAAV1F8QAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAYdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjAuNvyMY98AAAG0SURBVEhLYwACASA2AGIHGmGQ2SA7GGzf7oj4//5g7v/3B7L+vz+U///NVv//r9ZY/3+7K/b/683e/9/tSSTIf7M9DGhGzv8PR4r/v9uX9v/D0TKw+MdTzf9BdoAsSnm13gnEoQn+dLYLRKcAMUPBm62BYMH/f/9QFYPMfL3JE0QXQCzaFkIziz6d60FYBApvdIt07AJQ+ORgkJlfrs2DW1T9ar0jxRZJ7JkDxshiIDPf744B0dUgiwrebA8l2iJsBuISB5l5q58dREOC7u3OKJpZdHmKEsKi1xvdybIIpAamDpdFbze5ISzClrypZdGLZboIiz6d7cRrES4DibHozdYghEWfL0ygmUVvtwcjLPpwuJBmFj1ZpImw6N3uBNpZNE8ByaK9KXgtIheDzHy12gJuUfG7falYLSIHI5sBMvPlCiMQXQy2CFQPoVtEDQwy88VScByBLSqgpUVQH0HjaH8GWJAWGFR7A2mwRSkfjlUAM1bg/9cbXMAVFbhaBib5N9uCwGxQdU2ID662T9aDMag5AKrOQVX9u73JIIvANSyoPl8CxOdphEFmg9sMdGgFMQgAAH4W0yWXhEbUAAAAAElFTkSuQmCC')";
 
 // Set locale
-let translate = {ADD:'Index',SEND:'sending..',ADDED:'Indexed',VIEW:'View intel',STATS_LINK:'Show buttons that link to player/alliance statistics on grepodata.com',STATS_LINK_TITLE:'Link to statistics',CHECK_UPDATE:'Check for updates',ABOUT:'This tool allows you to easily collects enemy city intelligence and add them to your very own private index that can be shared with your alliance',INDEX_LIST:'You are currently contributing intel to the following indexes',COUNT_1:'You have contributed ',COUNT_2:' reports in this session',SHORTCUTS:'Keyboard shortcuts',SHORTCUTS_ENABLED:'Enable keyboard shortcuts',SHORTCUTS_INBOX_PREV:'Previous report (inbox)',SHORTCUTS_INBOX_NEXT:'Next report (inbox)',COLLECT_INTEL:'Collecting intel',COLLECT_INTEL_INBOX:'Forum (adds an "index+" button to inbox reports)',COLLECT_INTEL_FORUM:'Alliance forum (adds an "index+" button to alliance forum reports)',SHORTCUT_FUNCTION:'Function',SAVED:'Settings saved', SHARE:'Share report'};
+let translate = {ADD:'Index',SEND:'sending..',ADDED:'Indexed',VIEW:'View intel',STATS_LINK:'Show buttons that link to player/alliance statistics on grepodata.com',STATS_LINK_TITLE:'Link to statistics',CHECK_UPDATE:'Check for updates',ABOUT:'This tool allows you to easily collects enemy city intelligence and add them to your very own private index that can be shared with your alliance',INDEX_LIST:'You are currently contributing intel to the following indexes',COUNT_1:'You have contributed ',COUNT_2:' reports in this session',SHORTCUTS:'Keyboard shortcuts',SHORTCUTS_ENABLED:'Enable keyboard shortcuts',SHORTCUTS_INBOX_PREV:'Previous report (inbox)',SHORTCUTS_INBOX_NEXT:'Next report (inbox)',COLLECT_INTEL:'Collecting intel',COLLECT_INTEL_INBOX:'Forum (adds an "index+" button to inbox reports)',COLLECT_INTEL_FORUM:'Alliance forum (adds an "index+" button to alliance forum reports)',SHORTCUT_FUNCTION:'Function',SAVED:'Settings saved', SHARE:'Share'};
 if ('undefined' !== typeof Game) {
   switch(Game.locale_lang.substring(0, 2)) {
     case 'nl':
-      translate = {ADD:'Indexeren',SEND:'bezig..',ADDED:'Geindexeerd',VIEW:'Intel bekijken',STATS_LINK:'Knoppen toevoegen die linken naar speler/alliantie statistieken op grepodata.com',STATS_LINK_TITLE:'Link naar statistieken',CHECK_UPDATE:'Controleer op updates',ABOUT:'Deze tool verzamelt informatie over vijandige steden in een handig overzicht. Rapporten kunnen geindexeerd worden in een unieke index die gedeeld kan worden met alliantiegenoten',INDEX_LIST:'Je draagt momenteel bij aan de volgende indexen',COUNT_1:'Je hebt al ',COUNT_2:' rapporten verzameld in deze sessie',SHORTCUTS:'Toetsenbord sneltoetsen',SHORTCUTS_ENABLED:'Sneltoetsen inschakelen',SHORTCUTS_INBOX_PREV:'Vorige rapport (inbox)',SHORTCUTS_INBOX_NEXT:'Volgende rapport (inbox)',COLLECT_INTEL:'Intel verzamelen',COLLECT_INTEL_INBOX:'Inbox (voegt een "index+" knop toe aan inbox rapporten)',COLLECT_INTEL_FORUM:'Alliantie forum (voegt een "index+" knop toe aan alliantie forum rapporten)',SHORTCUT_FUNCTION:'Functie',SAVED:'Instellingen opgeslagen', SHARE:'Rapport delen'};
+      translate = {ADD:'Indexeren',SEND:'bezig..',ADDED:'Geindexeerd',VIEW:'Intel bekijken',STATS_LINK:'Knoppen toevoegen die linken naar speler/alliantie statistieken op grepodata.com',STATS_LINK_TITLE:'Link naar statistieken',CHECK_UPDATE:'Controleer op updates',ABOUT:'Deze tool verzamelt informatie over vijandige steden in een handig overzicht. Rapporten kunnen geindexeerd worden in een unieke index die gedeeld kan worden met alliantiegenoten',INDEX_LIST:'Je draagt momenteel bij aan de volgende indexen',COUNT_1:'Je hebt al ',COUNT_2:' rapporten verzameld in deze sessie',SHORTCUTS:'Toetsenbord sneltoetsen',SHORTCUTS_ENABLED:'Sneltoetsen inschakelen',SHORTCUTS_INBOX_PREV:'Vorige rapport (inbox)',SHORTCUTS_INBOX_NEXT:'Volgende rapport (inbox)',COLLECT_INTEL:'Intel verzamelen',COLLECT_INTEL_INBOX:'Inbox (voegt een "index+" knop toe aan inbox rapporten)',COLLECT_INTEL_FORUM:'Alliantie forum (voegt een "index+" knop toe aan alliantie forum rapporten)',SHORTCUT_FUNCTION:'Functie',SAVED:'Instellingen opgeslagen', SHARE:'Delen'};
       break;
     default:
       break;
@@ -243,6 +243,7 @@ function parseInboxReport() {
       addBtn.setAttribute('style', styleStr);
       let txtSpan = document.createElement('span');
       txtSpan.setAttribute('id', 'gd_index_rep_txt');
+      txtSpan.setAttribute('style', 'min-width: 50px;');
 
       let reportFound = false;
       for (let j = 0; j < reportsFoundInbox.length; j++) {
@@ -296,6 +297,7 @@ function parseInboxReport() {
       shareInput.setAttribute('style', 'float: right;');
       txtShareSpan.setAttribute('id', 'gd_share_rep_txt');
       txtShareSpan.setAttribute('class', 'middle');
+      txtShareSpan.setAttribute('style', 'min-width: 50px;');
       rightShareSpan.setAttribute('class', 'right');
       leftShareSpan.setAttribute('class', 'left');
       leftShareSpan.appendChild(rightShareSpan);
@@ -519,7 +521,8 @@ function parseForumReport() {
         shareInput.setAttribute('id', 'gd_share_rep_inp');
         shareInput.setAttribute('style', 'float: right;');
         txtShareSpan.setAttribute('id', 'gd_share_rep_txt');
-        txtShareSpan.setAttribute('class', 'middle')
+        txtShareSpan.setAttribute('class', 'middle');
+        txtShareSpan.setAttribute('style', 'min-width: 50px;');
         rightShareSpan.setAttribute('class', 'right');
         leftShareSpan.setAttribute('class', 'left');
         leftShareSpan.appendChild(rightShareSpan);
@@ -563,12 +566,12 @@ function parseForumReport() {
         }
         if (bSpy === true) {
           $(reportElement).append('<div class="gd_indexer_footer" style="background: #fff; height: 28px; margin-top: -28px;">\n' +
-            '    <a href="#" id="gd_index_f_'+reportId+'" report_hash="'+reportHash+'" report_id="'+reportId+'" class="button rh'+reportHash+'" style="float: right;"><span class="left"><span class="right"><span id="gd_index_f_txt_'+reportId+'" class="middle">'+translate.ADD+' +</span></span></span></a>\n' +
+            '    <a href="#" id="gd_index_f_'+reportId+'" report_hash="'+reportHash+'" report_id="'+reportId+'" class="button rh'+reportHash+'" style="float: right;"><span class="left"><span class="right"><span id="gd_index_f_txt_'+reportId+'" class="middle" style="min-width: 50px;">'+translate.ADD+' +</span></span></span></a>\n' +
             '    </div>');
 			$(reportElement).find('.resources, .small').css("text-align","left");
         } else {
           $(reportElement).append('<div class="gd_indexer_footer" style="background: url(https://gpnl.innogamescdn.com/images/game/border/odd.png); height: 28px; margin-top: -52px;">\n' +
-            '    <a href="#" id="gd_index_f_'+reportId+'" report_hash="'+reportHash+'" report_id="'+reportId+'" class="button rh'+reportHash+'" style="float: right;"><span class="left"><span class="right"><span id="gd_index_f_txt_'+reportId+'" class="middle">'+translate.ADD+' +</span></span></span></a>\n' +
+            '    <a href="#" id="gd_index_f_'+reportId+'" report_hash="'+reportHash+'" report_id="'+reportId+'" class="button rh'+reportHash+'" style="float: right;"><span class="left"><span class="right"><span id="gd_index_f_txt_'+reportId+'" class="middle" style="min-width: 50px;">'+translate.ADD+' +</span></span></span></a>\n' +
             '    </div>');
 			$(reportElement).find('.button, .simulator, .all').parent().css("padding-top", "24px");
 			$(reportElement).find('.button, .simulator, .all').siblings("span").css("margin-top", "-24px");
