@@ -6,6 +6,7 @@ use Grepodata\Library\Controller\User;
 use Grepodata\Library\Indexer\IndexBuilder;
 use Grepodata\Library\Mail\Client;
 use Grepodata\Library\Router\BaseRoute;
+use Grepodata\Library\Router\ErrorCode;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class Authentication extends \Grepodata\Library\Router\BaseRoute
@@ -185,6 +186,11 @@ admin@grepodata.com',
 
     // Verify token
     $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+
+    // Check confirmation status
+    if ($oUser->is_confirmed==false) {
+      ErrorCode::code(3010, array(), 403);
+    }
 
     // Renew login token
     $jwt = \Grepodata\Library\Router\Authentication::generateJWT($oUser);

@@ -58,7 +58,7 @@ class Authentication
   private static function invalidJWT()
   {
     die(BaseRoute::OutputJson(array(
-      'message'     => 'Invalid JWT.'
+      'message'     => 'Invalid access token.'
     ), 401));
   }
 }

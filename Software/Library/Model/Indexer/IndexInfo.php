@@ -8,6 +8,7 @@ use \Illuminate\Database\Eloquent\Model;
  * @property mixed key_code
  * @property mixed world
  * @property mixed mail
+ * @property mixed created_by_user
  * @property mixed new_report
  * @property mixed status
  * @property mixed csa

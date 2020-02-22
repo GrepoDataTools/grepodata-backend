@@ -6,6 +6,11 @@ namespace Grepodata\Library\Router;
 define('GD_ERROR_0000', 'Undefined error code');
 define('GD_ERROR_1000', 'Unable to handle request');
 
+// Authentication
+define('GD_ERROR_3000', 'Unable to handle authentication request');
+define('GD_ERROR_3001', 'Invalid credentials');
+define('GD_ERROR_3010', 'Email address is still unconfirmed. Confirm your email address to continue.');
+
 // Discord
 define('GD_ERROR_5000', 'Unable to handle discord request');
 define('GD_ERROR_5001', 'This guild has not set a default index key required for this request');

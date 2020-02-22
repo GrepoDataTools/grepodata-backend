@@ -731,17 +731,23 @@ admin@grepodata.com',
     $aParams = array();
     try {
       // Validate params
-      $aParams = self::validateParams(array('world', 'mail', 'captcha'));
+      $aParams = self::validateParams(array('world', 'access_token', 'captcha'));
 
       // Validate captcha
       if (!bDevelopmentMode) {
         BaseRoute::verifyCaptcha($aParams['captcha']);
       }
 
+      // Verify token
+      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+
       // New index
-      $oIndex = IndexBuilder::buildNewIndex($aParams['world'], $aParams['mail']);
+      $oIndex = IndexBuilder::buildNewIndex($aParams['world'], $oUser->id);
       if ($oIndex !== false && $oIndex !== null) {
         //Logger::error('https://grepodata.com/indexer/' . $oIndex->key_code);
+
+        $oIndex->created_by_user = $oUser->id;
+
         try {
           IndexOverview::buildIndexOverview($oIndex);
         } catch (\Exception $e) {
