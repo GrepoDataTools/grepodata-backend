@@ -20,6 +20,18 @@ class ReportId
     return false;
   }
 
+  /**
+   * @param $Hash
+   * @param $Index
+   * @return \Grepodata\Library\Model\Indexer\ReportId
+   */
+  public static function getByHashIndex($Hash, $Index)
+  {
+    return \Grepodata\Library\Model\Indexer\ReportId::where('index_key', '=', $Index, 'and')
+      ->where('report_id', '=', $Hash)
+      ->first();
+  }
+
   public static function latestByIndexKeyByPlayer($Index, $Player, $Limit = 50)
   {
     return \Grepodata\Library\Model\Indexer\ReportId::where('index_key', '=', $Index, 'and')

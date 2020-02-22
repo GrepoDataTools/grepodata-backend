@@ -20,8 +20,8 @@ define('INNO_DATA_ALLIANCE_ATT',  'alliance_kills_att.txt.gz');
 define('INNO_DATA_ALLIANCE_DEF',  'alliance_kills_def.txt.gz');
 define('INNO_DATA_CONQUERS',      'conquers.txt.gz');
 
-define('USERSCRIPT_VERSION',      '3.7.1');
-define('USERSCRIPT_UPDATE_INFO',  'You can now share reports using the GrepoData Discord bot (+bugfixes)');
+define('USERSCRIPT_VERSION',      '3.8.0');
+define('USERSCRIPT_UPDATE_INFO',  'Dynamic userscript loading: you will now always have the latest version');
 
 define('DEFAULT_SERVER',  'nl');
 define('DEFAULT_WORLD',   'nl75');

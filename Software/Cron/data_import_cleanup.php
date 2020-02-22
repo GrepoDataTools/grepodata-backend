@@ -130,14 +130,17 @@ try {
 // Index report info
 try {
   Logger::debugInfo("Processing indexer report info records");
+
 //  $LogsDeleted = Report::where('city_id', '>', '0', 'and')
-//    ->where('report_json', '!=', '')
-//    ->where('created_at', '<', Carbon::now()->subDays(14))
+//    ->where('report_json', '!=', '', 'and')
+//    ->where('updated_at', '<', Carbon::now()->subDays(7))
 //    ->update(['report_json' => '', 'report_info' => '']);
+
   $LogsDeleted = Report::where('city_id', '>', '0', 'and')
-    ->where('report_json', '!=', '')
+    ->where('report_info', '!=', '', 'and')
     ->where('created_at', '<', Carbon::now()->subDays(14))
     ->update(['report_info' => '']);
+
   Logger::debugInfo("Updated " . $LogsDeleted . " old report info records.");
 } catch (\Exception $e) {
   Logger::error("CRITICAL: Error cleaning indexer report info records: " . $e->getMessage());

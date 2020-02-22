@@ -9,14 +9,11 @@ use Grepodata\Library\Exception\ForumParserExceptionWarning;
 use Grepodata\Library\Exception\InboxParserExceptionDebug;
 use Grepodata\Library\Exception\InboxParserExceptionError;
 use Grepodata\Library\Exception\InboxParserExceptionWarning;
-use Grepodata\Library\Indexer\DefaultReportParser;
-use Grepodata\Library\Indexer\DEReportParser;
-use Grepodata\Library\Indexer\ENReportParser;
 use Grepodata\Library\Indexer\ForumParser;
-use Grepodata\Library\Indexer\FRReportParser;
 use Grepodata\Library\Indexer\InboxParser;
 use Grepodata\Library\Indexer\Validator;
 use Grepodata\Library\Logger\Logger;
+use Illuminate\Support\Facades\Log;
 
 class Report extends \Grepodata\Library\Router\BaseRoute
 {
@@ -81,12 +78,38 @@ class Report extends \Grepodata\Library\Router\BaseRoute
 //      }
 
       foreach ($aParams['key'] as $Key) {
+        // Get data
+        $ReportInfo = preg_replace('/\s+/', ' ', $aParams['report_text']);
+        $ReportInfo = substr($ReportInfo, 0, 500);
+        $Fingerprint = md5($ReportInfo);
+        $ReportPoster = $aParams['report_poster'];
+        $ReportPosterAllyId = $aParams['report_poster_ally_id'];
+        $ScriptVersion = $aParams['script_version'];
+        $ReportRaw = $aParams['report_json'];
+        $ReportJson = json_encode($ReportRaw);
+
         // check if report already exists
-        $ReportId = $aParams['report_hash'];
+        $ReportHash = $aParams['report_hash'];
         $ReportPosterId = $aParams['report_poster_id'];
-        if (ReportId::exists($ReportId, $ReportPosterId, $Key)){
+
+        $ReportId = ReportId::getByHashIndex($ReportHash, $Key);
+        if ($ReportId !== null) {
+          // Update HTML for existing report
+          try {
+            $Report = \Grepodata\Library\Controller\Indexer\Report::firstById($ReportId->index_report_id);
+            if ($Report->report_json == '' || $Report->report_json == null) {
+              $Report->report_json = $ReportJson;
+            }
+            if ($Report->report_info == '' || $Report->report_info == null) {
+              $Report->report_info = $ReportInfo;
+            }
+            $Report->save();
+          } catch (\Exception $e) {
+            Logger::warning("Error updating html for report hash: $ReportHash and key: $Key");
+          }
           continue;
         }
+        $ReportId = $ReportHash;
 
         // Validate index
         $bValidIndex = false;
@@ -105,19 +128,9 @@ class Report extends \Grepodata\Library\Router\BaseRoute
           }
         }
 
-        $ReportInfo = preg_replace('/\s+/', ' ', $aParams['report_text']);
-        $ReportInfo = substr($ReportInfo, 0, 500);
-        $Fingerprint = md5($ReportInfo);
-
         // Add report
-        $ReportPoster = $aParams['report_poster'];
-        $ReportPosterAllyId = $aParams['report_poster_ally_id'];
-        $ScriptVersion = $aParams['script_version'];
-        $ReportRaw = $aParams['report_json'];
-        $ReportJson = json_encode($ReportRaw);
-
         $City_id = 0;
-        $LogPrefix = 'Unable to parse inbox report with id ' . $ReportId . ' [index '.$oIndex->key_code.' - poster '.$ReportPosterId.' - v'.$ScriptVersion.']';
+        $LogPrefix = 'Unable to parse inbox report with id ' . $ReportHash . ' [index '.$oIndex->key_code.' - poster '.$ReportPosterId.' - v'.$ScriptVersion.']';
         $Debug = false;
         $Explain = null;
         try {
@@ -160,7 +173,7 @@ class Report extends \Grepodata\Library\Router\BaseRoute
         $oReport->save();
 
         $oReportId = new \Grepodata\Library\Model\Indexer\ReportId();
-        $oReportId->report_id = $ReportId;
+        $oReportId->report_id = $ReportHash;
         $oReportId->player_id = $ReportPosterId;
         $oReportId->index_key = $Key;
         $oReportId->index_report_id = (isset($oReport->id)?$oReport->id:0);
@@ -210,11 +223,33 @@ class Report extends \Grepodata\Library\Router\BaseRoute
           }
         }
 
+        $ReportPoster = $aParams['report_poster'];
+        $ScriptVersion = $aParams['script_version'];
+        $ReportRaw = $aParams['report_json'];
+        $ReportJson = json_encode($ReportRaw);
+
+        $ReportInfo = preg_replace('/\s+/', ' ', $aParams['report_text']);
+        $ReportInfo = substr($ReportInfo, 0, 500);
+
         // check duplicates
         $bCheckFingerprint = false;
         if (isset($_POST['report_hash'])) {
           $Hash = $_POST['report_hash'];
-          if (ReportId::exists($Hash, 0, $Key)) {
+          $ReportId = ReportId::getByHashIndex($Hash, $Key);
+          if ($ReportId !== null) {
+            // Update HTML for existing report
+            try {
+              $Report = \Grepodata\Library\Controller\Indexer\Report::firstById($ReportId->index_report_id);
+              if ($Report->report_json==''||$Report->report_json==null) {
+                $Report->report_json = $ReportJson;
+              }
+              if ($Report->report_info==''||$Report->report_info==null) {
+                $Report->report_info = $ReportInfo;
+              }
+              $Report->save();
+            } catch (\Exception $e) {
+              Logger::warning("Error updating html for report hash: $Hash and key: $Key");
+            }
             continue;
           } else {
             $oReportId = new \Grepodata\Library\Model\Indexer\ReportId();
@@ -296,9 +331,6 @@ class Report extends \Grepodata\Library\Router\BaseRoute
           continue;
         }
 
-        $ReportInfo = preg_replace('/\s+/', ' ', $aParams['report_text']);
-        $ReportInfo = substr($ReportInfo, 0, 500);
-
         // Check if report already exists
         $Fingerprint = md5($ReportInfo);
         if (\Grepodata\Library\Controller\Indexer\Report::exists($Fingerprint, $Key)) {
@@ -309,11 +341,6 @@ class Report extends \Grepodata\Library\Router\BaseRoute
         }
 
         // Add report
-        $ReportPoster = $aParams['report_poster'];
-        $ScriptVersion = $aParams['script_version'];
-        $ReportRaw = $aParams['report_json'];
-        $ReportJson = json_encode($ReportRaw);
-
         $City_id = 0;
         $LogPrefix = 'Unable to parse forum report with fingerprint ' . $Fingerprint . ' [index '.$oIndex->key_code.' - v'.$ScriptVersion.' - '.$lang.']';
         try {

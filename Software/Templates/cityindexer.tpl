@@ -1,33 +1,20 @@
 {literal}
-// ==UserScript==
-// @name         grepodata city indexer {/literal}{$key}{literal}
-// @namespace    grepodata
-// @version      {/literal}{$version}{literal}
-// @author       grepodata.com
-// @updateURL    https://api.grepodata.com/userscript/cityindexer_{/literal}{$encrypted}{literal}.user.js
-// @downloadURL	 https://api.grepodata.com/userscript/cityindexer_{/literal}{$encrypted}{literal}.user.js
-// @description  The grepodata city indexer script allows you to collect enemy reports from your alliance forum and add them to your unique enemy city index.
-// @include      http://{/literal}{$world}{literal}.grepolis.com/game/*
-// @include      https://{/literal}{$world}{literal}.grepolis.com/game/*
-// @include      https://grepodata.com*
-// @exclude      view-source://*
-// @icon         https://grepodata.com/assets/images/grepodata_icon.ico
-// @copyright	   2016+, grepodata
-// ==/UserScript==
-
-// Stop Greasemonkey execution. Only Tampermonkey can run this script
-if ('undefined' === typeof GM_info.script.author) {
-  throw new Error("Stopped greasemonkey execution for grepodata city indexer. Please use Tampermonkey instead");
-}
-
 // Script parameters
 let gd_version = "{/literal}{$version}{literal}";
 let index_key = "{/literal}{$key}{literal}";
 let index_hash = "{/literal}{$encrypted}{literal}";
 
-// Variables
-let gd_w = unsafeWindow || window, $ = gd_w.jQuery || jQuery;
+// Globals
+if (window.jQuery) {
+} else {
+    var script = document.createElement('script');
+    script.src = 'https://code.jquery.com/jquery-2.1.4.min.js';
+    script.type = 'text/javascript';
+    document.getElementsByTagName('head')[0].appendChild(script);
+}
+let gd_w = window;
 let time_regex = /([0-5]\d)(:)([0-5]\d)(:)([0-5]\d)(?!.*([0-5]\d)(:)([0-5]\d)(:)([0-5]\d))/gm;
+let gd_icon = "url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAXCAYAAAAV1F8QAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAYdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjAuNvyMY98AAAG0SURBVEhLYwACASA2AGIHGmGQ2SA7GGzf7oj4//5g7v/3B7L+vz+U///NVv//r9ZY/3+7K/b/683e/9/tSSTIf7M9DGhGzv8PR4r/v9uX9v/D0TKw+MdTzf9BdoAsSnm13gnEoQn+dLYLRKcAMUPBm62BYMH/f/9QFYPMfL3JE0QXQCzaFkIziz6d60FYBApvdIt07AJQ+ORgkJlfrs2DW1T9ar0jxRZJ7JkDxshiIDPf744B0dUgiwrebA8l2iJsBuISB5l5q58dREOC7u3OKJpZdHmKEsKi1xvdybIIpAamDpdFbze5ISzClrypZdGLZboIiz6d7cRrES4DibHozdYghEWfL0ygmUVvtwcjLPpwuJBmFj1ZpImw6N3uBNpZNE8ByaK9KXgtIheDzHy12gJuUfG7falYLSIHI5sBMvPlCiMQXQy2CFQPoVtEDQwy88VScByBLSqgpUVQH0HjaH8GWJAWGFR7A2mwRSkfjlUAM1bg/9cbXMAVFbhaBib5N9uCwGxQdU2ID662T9aDMag5AKrOQVX9u73JIIvANSyoPl8CxOdphEFmg9sMdGgFMQgAAH4W0yWXhEbUAAAAAElFTkSuQmCC')";
 
 // Set locale
 let translate = {ADD:'Index',SEND:'sending..',ADDED:'Indexed',VIEW:'View intel',STATS_LINK:'Show buttons that link to player/alliance statistics on grepodata.com',STATS_LINK_TITLE:'Link to statistics',CHECK_UPDATE:'Check for updates',ABOUT:'This tool allows you to easily collects enemy city intelligence and add them to your very own private index that can be shared with your alliance',INDEX_LIST:'You are currently contributing intel to the following indexes',COUNT_1:'You have contributed ',COUNT_2:' reports in this session',SHORTCUTS:'Keyboard shortcuts',SHORTCUTS_ENABLED:'Enable keyboard shortcuts',SHORTCUTS_INBOX_PREV:'Previous report (inbox)',SHORTCUTS_INBOX_NEXT:'Next report (inbox)',COLLECT_INTEL:'Collecting intel',COLLECT_INTEL_INBOX:'Forum (adds an "index+" button to inbox reports)',COLLECT_INTEL_FORUM:'Alliance forum (adds an "index+" button to alliance forum reports)',SHORTCUT_FUNCTION:'Function',SAVED:'Settings saved', SHARE:'Share report'};
@@ -40,8 +27,6 @@ if ('undefined' !== typeof Game) {
       break;
   }
 }
-
-let gd_icon = "url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAXCAYAAAAV1F8QAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAYdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjAuNvyMY98AAAG0SURBVEhLYwACASA2AGIHGmGQ2SA7GGzf7oj4//5g7v/3B7L+vz+U///NVv//r9ZY/3+7K/b/683e/9/tSSTIf7M9DGhGzv8PR4r/v9uX9v/D0TKw+MdTzf9BdoAsSnm13gnEoQn+dLYLRKcAMUPBm62BYMH/f/9QFYPMfL3JE0QXQCzaFkIziz6d60FYBApvdIt07AJQ+ORgkJlfrs2DW1T9ar0jxRZJ7JkDxshiIDPf744B0dUgiwrebA8l2iJsBuISB5l5q58dREOC7u3OKJpZdHmKEsKi1xvdybIIpAamDpdFbze5ISzClrypZdGLZboIiz6d7cRrES4DibHozdYghEWfL0ygmUVvtwcjLPpwuJBmFj1ZpImw6N3uBNpZNE8ByaK9KXgtIheDzHy12gJuUfG7falYLSIHI5sBMvPlCiMQXQy2CFQPoVtEDQwy88VScByBLSqgpUVQH0HjaH8GWJAWGFR7A2mwRSkfjlUAM1bg/9cbXMAVFbhaBib5N9uCwGxQdU2ID662T9aDMag5AKrOQVX9u73JIIvANSyoPl8CxOdphEFmg9sMdGgFMQgAAH4W0yWXhEbUAAAAAElFTkSuQmCC')";
 
 // report info is converted to a 32 bit hash to be used as unique id
 String.prototype.report_hash = function() {
@@ -323,7 +308,6 @@ function parseInboxReport() {
 
       txtShareSpan.innerText = translate.SHARE;
 
-
       shareBtn.addEventListener('click', () => {
         if ($('#gd_share_rep_txt').get(0)) {
           let hashI = ('r' + reportHash).replace('-', 'm');
@@ -334,9 +318,7 @@ function parseInboxReport() {
             '    <br /><br /><small>Thank you for using <a href="https://grepodata.com" target="_blank">GrepoData</a>!</small>';
 
           Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG).setContent(content)
-          if (!reportFound) {
-            addToIndexFromInbox(reportHash, reportElement);
-          }
+          addToIndexFromInbox(reportHash, reportElement);
 
           $(".gd-copy-command-"+reportHash).click(function(){
             console.log('copy to clip');
@@ -561,9 +543,8 @@ function parseForumReport() {
               '    <br /><br /><small>Thank you for using <a href="https://grepodata.com" target="_blank">GrepoData</a>!</small>';
 
             Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG).setContent(content);
-            if (!exists) {
-              addForumReportById($('#gd_index_f_' + reportId).attr('report_id'), $('#gd_index_f_' + reportId).attr('report_hash'));
-            }
+            addForumReportById($('#gd_index_f_' + reportId).attr('report_id'), $('#gd_index_f_' + reportId).attr('report_hash'));
+
             $(".gd-copy-command-"+reportHash).click(function(){
               console.log('copy to clip');
               $(".gd-copy-input-"+reportHash).select();
@@ -1041,7 +1022,7 @@ function enableCityIndex(key) {
     console.log('Grepodata city indexer '+index_key+' active. (version: '+gd_version+')');
     readSettings();
     setTimeout(function() {loadIndexHashlist(false);}, 2000);
-    $.Observer(gd_w.GameEvents.game.load).subscribe('GREPODATA', function (e, data) {
+    //$.Observer(gd_w.GameEvents.game.load).subscribe('GREPODATA', function (e, data) {
       $(document).ajaxComplete(function (e, xhr, opt) {
         let url = opt.url.split("?"), action = "";
         if (typeof(url[1]) !== "undefined" && typeof(url[1].split(/&/)[1]) !== "undefined") {
@@ -1074,7 +1055,7 @@ function enableCityIndex(key) {
             break;
         }
       });
-    });
+    //});
 
     // settings btn
     $('.gods_area').append('<div class="btn_settings circle_button gd_settings_icon" style="right: 0px; top: 95px; z-index: 10;">\n' +
