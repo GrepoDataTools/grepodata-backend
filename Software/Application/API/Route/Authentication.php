@@ -12,13 +12,6 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
 {
   public static function RegisterPOST()
   {
-    //TODO: TEMP
-    if (!bDevelopmentMode) {
-      die(self::OutputJson(array(
-        'message'     => 'Unauthorized.',
-      ), 401));
-    }
-
     // Validate params
     $aParams = self::validateParams(array('mail', 'password', 'captcha'));
 
@@ -88,13 +81,6 @@ admin@grepodata.com',
 
   public static function LoginPOST()
   {
-    //TODO: TEMP
-    if (!bDevelopmentMode) {
-      die(self::OutputJson(array(
-        'message'     => 'Unauthorized.',
-      ), 401));
-    }
-
     // Validate params
     $aParams = self::validateParams(array('mail', 'password', 'captcha'));
 
@@ -194,13 +180,6 @@ admin@grepodata.com',
 
   public static function VerifyPOST()
   {
-    //TODO: TEMP
-    if (!bDevelopmentMode) {
-      die(self::OutputJson(array(
-        'message'     => 'Unauthorized.',
-      ), 401));
-    }
-
     // Validate params
     $aParams = self::validateParams(array('access_token'));
 
@@ -221,13 +200,6 @@ admin@grepodata.com',
 
   public static function ForgotPOST()
   {
-    //TODO: TEMP
-    if (!bDevelopmentMode) {
-      die(self::OutputJson(array(
-        'message'     => 'Unauthorized.',
-      ), 401));
-    }
-
     // Validate params
     $aParams = self::validateParams(array('mail', 'captcha'));
 
@@ -242,13 +214,6 @@ admin@grepodata.com',
     } catch (ModelNotFoundException $e) {
       die(self::OutputJson(array(
         'message'     => 'Unknown email address.'
-      ), 401));
-    }
-
-    // TODO: TEMP
-    if (!in_array($oUser->email, ['admin@grepodata.com'])) {
-      die(self::OutputJson(array(
-        'message'     => 'Unauthorized.',
       ), 401));
     }
 

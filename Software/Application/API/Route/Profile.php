@@ -10,23 +10,9 @@ class Profile extends BaseRoute
 {
   public static function IndexesGET()
   {
-    //TODO: TEMP
-    if (!bDevelopmentMode) {
-      die(self::OutputJson(array(
-        'message'     => 'Unauthorized.',
-      ), 401));
-    }
-
     // Validate params
     $aParams = self::validateParams(array('access_token'));
     $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
-
-    // TODO: TEMP
-    if (!in_array($oUser->email, ['admin@grepodata.com'])) {
-      die(self::OutputJson(array(
-        'message'     => 'Unauthorized.',
-      ), 401));
-    }
 
     $aResponse = array();
     $aIndexesRaw = \Grepodata\Library\Controller\Indexer\IndexInfo::allByMail($oUser->email);
