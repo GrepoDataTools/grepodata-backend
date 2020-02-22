@@ -26,6 +26,7 @@ class InboxParser
     'no' => array('date_format' => 'd.m.Y H:i:s'),
     'fr' => array('date_format' => 'd/m/Y H:i:s'),
     'es' => array('date_format' => 'd/m/Y H:i:s'),
+    'gr' => array('date_format' => 'd/m/Y H:i:s'),
     'pt' => array('date_format' => 'd/m/Y H:i:s'),
     'dk' => array('date_format' => 'd/m/Y H:i:s'),
     'ar' => array('date_format' => 'd/m/Y H:i:s'),
