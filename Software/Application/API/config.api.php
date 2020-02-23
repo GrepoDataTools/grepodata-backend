@@ -33,6 +33,11 @@ $oRouter->Add('forgot', new Route('/auth/reset', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
   '_method'     => 'Forgot'
 )));
+//Reset password
+$oRouter->Add('changepassword', new Route('/auth/changepassword', array(
+  '_controller' => '\Grepodata\Application\API\Route\Authentication',
+  '_method'     => 'ChangePassword'
+)));
 
 
 // PROFILE

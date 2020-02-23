@@ -83,7 +83,7 @@ admin@grepodata.com',
     ResponseCode::success($aResponseData);
   }
 
-  public static function RequestNewConfirmMail()
+  public static function RequestNewConfirmMailPOST()
   {
     // Validate params
     $aParams = self::validateParams(array('access_token'));
@@ -335,7 +335,7 @@ You are receiving this message because a request was made to recover your accoun
 <br/>
 Please click on the following link to reset your password:<br/>
 <br/>
-<a href="https://grepodata.com/auth/forgot/'.$Token.'">'.$Token.'</a><br/>
+<a href="https://grepodata.com/auth/reset/'.$Token.'">'.$Token.'</a><br/>
 <br/>
 If you did not request this email, someone else may have entered your email address into our password recovery form.<br/>
 You can ignore this email if you no longer wish to reset your password.<br/>

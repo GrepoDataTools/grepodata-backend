@@ -24,7 +24,7 @@ class BaseRoute
     // Get params
     $aParams = array();
     if (self::$oRequestContext->getMethod() == 'GET') $aParams = self::getGetVars();
-    else if (self::$oRequestContext->getMethod() == 'POST') $aParams = self::getPostVars($aParamNames);
+    else if (self::$oRequestContext->getMethod() == 'POST') $aParams = self::getPostVars();
 
     // Validate
     $aInvalidParams = array();
@@ -54,13 +54,9 @@ class BaseRoute
     return $aVars;
   }
 
-  private static function getPostVars($aParamNames)
+  private static function getPostVars()
   {
-    $aVars = array();
-    foreach ($aParamNames as $ParamName) {
-      if (isset($_POST[$ParamName])) $aVars[$ParamName] = $_POST[$ParamName];
-    }
-    return $aVars;
+    return $_POST;
 
   }
 }
