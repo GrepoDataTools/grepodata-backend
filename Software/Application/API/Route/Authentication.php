@@ -2,11 +2,13 @@
 
 namespace Grepodata\Application\API\Route;
 
+use Grepodata\Library\Controller\Indexer\IndexInfo;
 use Grepodata\Library\Controller\User;
 use Grepodata\Library\Indexer\IndexBuilder;
+use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Mail\Client;
 use Grepodata\Library\Router\BaseRoute;
-use Grepodata\Library\Router\ErrorCode;
+use Grepodata\Library\Router\ResponseCode;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class Authentication extends \Grepodata\Library\Router\BaseRoute
@@ -23,16 +25,12 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
 
     try {
       if (User::GetUserByMail($aParams['mail'])) {
-        die(self::OutputJson(array(
-          'message'     => 'Email address is already in use.'
-        ), 401));
+        ResponseCode::errorCode(3030, array(), 409);
       }
     } catch (ModelNotFoundException $e) {}
 
     if (strlen($aParams['password']) < 8) {
-      die(self::OutputJson(array(
-        'message'     => 'Password is not strong enough. Your password should be at least 8 characters.'
-      ), 401));
+      ResponseCode::errorCode(3031, array(), 422);
     }
 
     // Encrypt pass
@@ -45,39 +43,142 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
     $jwt = \Grepodata\Library\Router\Authentication::generateJWT($oUser);
 
     // Create confirmation link
-    $Token = md5(IndexBuilder::generateIndexKey(32) . time());
+    $Token = bin2hex(random_bytes(16));
     $oUser->token = $Token;
     $oUser->save();
 
     // Send confirmation email
-    $Result = Client::SendMail(
-      'admin@grepodata.com',
-      $oUser->email,
-      'Grepodata account confirmation',
-      'Hi,<br/>
+    if (!bDevelopmentMode) {
+      try {
+        $Result = Client::SendMail(
+          'admin@grepodata.com',
+          $oUser->email,
+          'Grepodata account confirmation',
+          'Hi,<br/>
 <br/>
 You are receiving this message because an account was created for your email address on grepodata.com.<br/>
 <br/>
 Please click on the following link to confirm your account:<br/>
 <br/>
-<a href="https://grepodata.com/confirm/'.$Token.'">'.$Token.'</a><br/>
+<a href="https://api.grepodata.com/auth/confirm?token='.$Token.'">https://api.grepodata.com/auth/confirm?token='.$Token.'</a><br/>
 <br/>
 If you did not request this email, someone else may have entered your email address into our account registration form.<br/>
 You can ignore this email if you no longer wish to create an account for our website.<br/>
 <br/>
 Sincerely,<br/>
 admin@grepodata.com',
-      null,
-      true);
+          null,
+          true);
+      } catch (\Exception $e) {
+        Logger::error("Error sending confirmation link for new user (uid".$oUser->id.")");
+      }
+    }
 
     // Response
-    $aResponse = array(
+    $aResponseData = array(
       'status'        => 'User created',
       'access_token'  => $jwt,
-      'result'        => ($Result >= 1 ? true : false)
+      'email_sent'    => (isset($Result)&&$Result>=1 ? true : false)
     );
+    ResponseCode::success($aResponseData);
+  }
 
-    return self::OutputJson($aResponse);
+  public static function RequestNewConfirmMail()
+  {
+    // Validate params
+    $aParams = self::validateParams(array('access_token'));
+    $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+
+    // Create confirmation link
+    if ($oUser->token != null) {
+      $Token = $oUser->token;
+    } else {
+      $Token = bin2hex(random_bytes(16));
+      $oUser->token = $Token;
+      $oUser->save();
+    }
+
+    // Send confirmation email
+    if (!bDevelopmentMode) {
+      try {
+        $Result = Client::SendMail(
+          'admin@grepodata.com',
+          $oUser->email,
+          'Grepodata account confirmation',
+          'Hi,<br/>
+<br/>
+You are receiving this message because an account was created for your email address on grepodata.com.<br/>
+<br/>
+Please click on the following link to confirm your account:<br/>
+<br/>
+<a href="https://api.grepodata.com/auth/confirm?token='.$Token.'">https://api.grepodata.com/auth/confirm?token='.$Token.'</a><br/>
+<br/>
+If you did not request this email, someone else may have entered your email address into our account registration form.<br/>
+You can ignore this email if you no longer wish to create an account for our website.<br/>
+<br/>
+Sincerely,<br/>
+admin@grepodata.com',
+          null,
+          true);
+      } catch (\Exception $e) {
+        Logger::error("Error sending confirmation link for new user (uid".$oUser->id.")");
+      }
+    }
+
+    // Response
+    $aResponseData = array(
+      'status'        => 'Confirmation requested',
+      'access_token'  => $aParams['access_token'],
+      'email_sent'    => (isset($Result)&&$Result>=1 ? true : false)
+    );
+    ResponseCode::success($aResponseData);
+  }
+
+  public static function ConfirmMailGET()
+  {
+    try {
+      // Validate params
+      $aParams = self::validateParams(array('token'));
+
+      try {
+        $oUser = User::GetUserByToken($aParams['token']);
+      } catch (ModelNotFoundException $e) {
+        header("Location: ".FRONTEND_URL."/auth/profile");
+        die();
+      }
+
+      if ($oUser->is_confirmed == true) {
+        // Already confirmed
+        header("Location: ".FRONTEND_URL."/auth/profile");
+        die();
+      }
+
+      $oUser->is_confirmed = true;
+      $oUser->token = null;
+      $oUser->save();
+
+      // transfer old indexes
+      try {
+        $oIndexes = IndexInfo::allByMail($oUser->email);
+        foreach ($oIndexes as $oIndex) {
+          try {
+            $oIndex->created_by_user = $oUser->id;
+            $oIndex->save();
+          } catch (\Exception $e) {
+            Logger::error("Error transfering old index (".$oIndex->key_code.") ownership to new user: ". $e->getMessage());
+          }
+        }
+      } catch (\Exception $e) {
+        Logger::error("Error transfering old indexes to new user (uid ".$oUser->id."): ". $e->getMessage());
+      }
+
+      // Redirect to profile
+      header("Location: ".FRONTEND_URL."/auth/profile");
+      die();
+    } catch (\Exception $e) {
+      header("Location: ".FRONTEND_URL."/auth/profile");
+      die();
+    }
   }
 
   public static function LoginPOST()
@@ -94,17 +195,13 @@ admin@grepodata.com',
     try {
       $oUser = User::GetUserByMail($aParams['mail']);
     } catch (ModelNotFoundException $e) {
-      die(self::OutputJson(array(
-        'message'     => 'Unknown email address.'
-      ), 401));
+      ResponseCode::errorCode(3004, array(), 401);
     }
 
     // verify password
     $bValid = password_verify($aParams['password'], $oUser->passphrase);
     if ($bValid === false) {
-      die(self::OutputJson(array(
-        'message'     => 'Invalid password.'
-      ), 401));
+      ResponseCode::errorCode(3005, array(), 401);
     }
 
     // Login token
@@ -115,8 +212,7 @@ admin@grepodata.com',
       'status'        => 'User login',
       'access_token'  => $jwt
     );
-
-    return self::OutputJson($aResponse);
+    ResponseCode::success($aResponse);
   }
 
   public static function ScriptLinkPOST()
@@ -179,6 +275,10 @@ admin@grepodata.com',
     // TODO userscript: if a 200 is returned by API: Script goes to active-linked mode => happy indexing!
   }
 
+  /**
+   * Verify the access_token and renew if valid
+   * Returns 401 status code if token is invalid
+   */
   public static function VerifyPOST()
   {
     // Validate params
@@ -187,23 +287,21 @@ admin@grepodata.com',
     // Verify token
     $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
 
-    // Check confirmation status
-    if ($oUser->is_confirmed==false) {
-      ErrorCode::code(3010, array(), 403);
-    }
-
     // Renew login token
     $jwt = \Grepodata\Library\Router\Authentication::generateJWT($oUser);
 
     // Response
-    $aResponse = array(
+    $aResponseData = array(
       'status'        => 'Renew token',
-      'access_token'  => $jwt
+      'access_token'  => $jwt,
+      'is_confirmed'  => ($oUser->is_confirmed==true?true:false)
     );
-
-    return self::OutputJson($aResponse);
+    ResponseCode::success($aResponseData);
   }
 
+  /**
+   * Send a password reset link to the user
+   */
   public static function ForgotPOST()
   {
     // Validate params
@@ -218,13 +316,11 @@ admin@grepodata.com',
     try {
       $oUser = User::GetUserByMail($aParams['mail']);
     } catch (ModelNotFoundException $e) {
-      die(self::OutputJson(array(
-        'message'     => 'Unknown email address.'
-      ), 401));
+      ResponseCode::errorCode(3004, array(), 401);
     }
 
-    // Create confirmation link
-    $Token = md5(IndexBuilder::generateIndexKey(32) . time());
+    // Create new user token
+    $Token = bin2hex(random_bytes(16));
     $oUser->token = $Token;
     $oUser->save();
 
@@ -239,7 +335,7 @@ You are receiving this message because a request was made to recover your accoun
 <br/>
 Please click on the following link to reset your password:<br/>
 <br/>
-<a href="https://grepodata.com/forgot/'.$Token.'">'.$Token.'</a><br/>
+<a href="https://grepodata.com/auth/forgot/'.$Token.'">'.$Token.'</a><br/>
 <br/>
 If you did not request this email, someone else may have entered your email address into our password recovery form.<br/>
 You can ignore this email if you no longer wish to reset your password.<br/>
@@ -256,5 +352,53 @@ admin@grepodata.com',
     );
 
     return self::OutputJson($aResponse);
+  }
+
+  /**
+   * Change the user password
+   */
+  public static function ChangePasswordPOST()
+  {
+    // Validate params
+    $aParams = self::validateParams(array('captcha'));
+
+    // Validate captcha
+    if (!bDevelopmentMode) {
+      BaseRoute::verifyCaptcha($aParams['captcha']);
+    }
+
+    if (isset($aParams['token'])) {
+      // Change using token
+      $oUser = \Grepodata\Library\Router\Authentication::verifyAccountToken($aParams['token']);
+
+    } else if (isset($aParams['access_token'])) {
+      // Change using access_token and old password
+      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+
+      // Check old password
+      if (!isset($aParams['old_password'])) {
+        ResponseCode::errorCode(1010, array('fields' => array('old_password')), 400);
+      }
+      $bValidOldPassword = password_verify($aParams['old_password'], $oUser->passphrase);
+      if ($bValidOldPassword == false) {
+        ResponseCode::errorCode(3005, array(), 401);
+      }
+
+    } else {
+      ResponseCode::errorCode(1010, array('fields' => array('token OR access_token')), 400);
+    }
+
+    // Check new password
+    if (!isset($aParams['new_password'])) {
+      ResponseCode::errorCode(1010, array('fields' => array('new_password')), 400);
+    }
+    $oUser->passphrase = password_hash($aParams['new_password'], PASSWORD_BCRYPT);
+    $oUser->save();
+
+    // Response
+    $aResponse = array(
+      'status' => 'Password changed'
+    );
+    ResponseCode::success($aResponse);
   }
 }

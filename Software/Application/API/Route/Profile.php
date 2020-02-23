@@ -5,7 +5,7 @@ namespace Grepodata\Application\API\Route;
 use Grepodata\Library\Controller\Indexer\IndexOverview;
 use Grepodata\Library\Model\Indexer\IndexInfo;
 use Grepodata\Library\Router\BaseRoute;
-use Grepodata\Library\Router\ErrorCode;
+use Grepodata\Library\Router\ResponseCode;
 
 class Profile extends BaseRoute
 {
@@ -16,7 +16,7 @@ class Profile extends BaseRoute
     $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
 
     if ($oUser->is_confirmed==false) {
-      ErrorCode::code(3010, array(), 403);
+      ResponseCode::errorCode(3010, array(), 403);
     }
 
     $aResponse = array();

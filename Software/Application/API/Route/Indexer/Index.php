@@ -700,6 +700,7 @@ admin@grepodata.com',
       if ($oIndexOverview == null) throw new ModelNotFoundException();
 
       $aResponse = array(
+        'is_admin'          => false,
         'world'             => $oIndexOverview['world'],
         'total_reports'     => $oIndexOverview['total_reports'],
         'spy_reports'       => $oIndexOverview['spy_reports'],
@@ -715,6 +716,13 @@ admin@grepodata.com',
         'players_indexed'   => json_decode(urldecode($oIndexOverview['players_indexed'])),
         'latest_intel'      => json_decode(urldecode($oIndexOverview['latest_intel'])),
       );
+
+      if (isset($aParams['access_token'])) {
+        $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token'], false);
+        if ($oUser!=false && $oUser->is_confirmed==true && $oIndex->created_by_user == $oUser->id) {
+          $aResponse['is_admin'] = true;
+        }
+      }
 
       return self::OutputJson($aResponse);
 

@@ -16,6 +16,16 @@ class User
   }
 
   /**
+   * @param $Token
+   * @return \Grepodata\Library\Model\User
+   */
+  public static function GetUserByToken($Token)
+  {
+    return \Grepodata\Library\Model\User::where('token', '=', $Token)
+      ->firstOrFail();
+  }
+
+  /**
    * @param $Id
    * @return \Grepodata\Library\Model\User
    */
