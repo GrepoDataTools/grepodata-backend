@@ -316,7 +316,13 @@ class ForumParser
     $bLocalFallback = false;
     if (!key_exists($Locale, self::format)) {
       // Use default locale as fallback: nl
-      Logger::error("ForumParser " . $Fingerprint . ": TODO add date format for locale " . $Locale . ". date example: " . $ReportDate);
+      $numberCount = preg_match_all( "/[0-9]/", $ReportDate);
+      if ($numberCount > 6) {
+        // Should contain date
+        Logger::error("ForumParser " . $Fingerprint . ": TODO add date format for locale " . $Locale . ". date example: " . $ReportDate);
+      } else {
+        Logger::warning("ForumParser " . $Fingerprint . ": TODO add date format for locale " . $Locale . ". date example: " . $ReportDate);
+      }
       $Locale = 'nl';
       $bLocalFallback = true;
     }
