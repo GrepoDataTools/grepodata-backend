@@ -105,7 +105,7 @@ class Report extends \Grepodata\Library\Router\BaseRoute
             }
             $Report->save();
           } catch (\Exception $e) {
-            Logger::warning("Error updating html for report hash: $ReportHash and key: $Key");
+            Logger::warning("Error updating html for inbox report with hash: $ReportHash and key: $Key; " . $e->getMessage());
           }
           continue;
         }
@@ -248,7 +248,7 @@ class Report extends \Grepodata\Library\Router\BaseRoute
               }
               $Report->save();
             } catch (\Exception $e) {
-              Logger::warning("Error updating html for report hash: $Hash and key: $Key");
+              Logger::warning("Error updating html for forum report with hash: $Hash and key: $Key; " . $e->getMessage());
             }
             continue;
           } else {

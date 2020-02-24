@@ -153,7 +153,7 @@ class Helper
     $result = shell_exec("wkhtmltoimage $options $tempFile $imgFile 2>&1");
 
     // TODO: handle wkhtmltoimage result
-    Logger::warning("wkhtmltoimage result [$url]: " . json_encode($result));
+    Logger::debugInfo("wkhtmltoimage result [$url]: " . json_encode($result));
     //error_log("wkhtmltoimage result: " . json_encode($result));
     //$aErrors = libxml_get_errors();
 
