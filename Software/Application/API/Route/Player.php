@@ -188,6 +188,10 @@ class Player extends \Grepodata\Library\Router\BaseRoute
         $bForceSql = true;
       }
 
+      if (isset($aParams['query'])) {
+        $aParams['query'] = strtolower($aParams['query']);
+      }
+
       $aParams['active'] = 'true';
       if ($bForceSql && isset($aParams['size'])) {
         $OriginalSize = $aParams['size'];
