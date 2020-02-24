@@ -188,6 +188,10 @@ class Player extends \Grepodata\Library\Router\BaseRoute
         $bForceSql = true;
       }
 
+      if (isset($aParams['query'])) {
+        $aParams['query'] = strtolower($aParams['query']);
+      }
+
       $aParams['active'] = 'true';
       if ($bForceSql && isset($aParams['size'])) {
         $OriginalSize = $aParams['size'];
@@ -196,7 +200,7 @@ class Player extends \Grepodata\Library\Router\BaseRoute
       try {
         $aElasticsearchResults = Search::FindPlayers($aParams, $bBuildForm);
       } catch (Exception $e) {
-        Logger::warning("ES Player search failed with message: " . $e->getMessage());
+        Logger::warning("ES Player search failed with message: " . $e->getMessage() . ". params: " . json_encode($aParams));
       }
 
       if (isset($aElasticsearchResults) && $aElasticsearchResults != false) {
