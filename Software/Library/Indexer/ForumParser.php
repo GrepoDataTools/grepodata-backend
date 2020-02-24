@@ -79,6 +79,10 @@ class ForumParser
       'day' => 'd.m.y', 'day_regex' => '/[0-9]{2}[.]{1}[0-9]{2}[.]{1}[0-9]{2}/',
       'time' => 'H:i:s', 'time_regex' => '/[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2}(?!.*[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2})/',
     ),
+    'pl' => array(
+      'day' => 'd.m.y', 'day_regex' => '/[0-9]{2}[.]{1}[0-9]{2}[.]{1}[0-9]{2}/',
+      'time' => 'H:i:s', 'time_regex' => '/[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2}(?!.*[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2})/',
+    ),
     'ar' => array(
       'day' => 'd/m/y', 'day_regex' => '/[0-9]{2}[\/]{1}[0-9]{2}[\/]{1}[0-9]{2}/',
       'time' => 'H:i:s', 'time_regex' => '/[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2}(?!.*[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2})/',
@@ -312,7 +316,7 @@ class ForumParser
     $bLocalFallback = false;
     if (!key_exists($Locale, self::format)) {
       // Use default locale as fallback: nl
-      Logger::warning("ForumParser " . $Fingerprint . ": TODO add date format for locale " . $Locale . ". date example: " . $ReportDate);
+      Logger::error("ForumParser " . $Fingerprint . ": TODO add date format for locale " . $Locale . ". date example: " . $ReportDate);
       $Locale = 'nl';
       $bLocalFallback = true;
     }
