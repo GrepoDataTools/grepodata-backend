@@ -868,11 +868,17 @@ function loadCityIndex(key) {
 
     function loadTownIntel(id) {
         try {
+            indexes = [index_key];
+            if (gd_w.gdIndexScript.length > 1) {
+                indexes = gd_w.gdIndexScript;
+            }
+            indexes = JSON.stringify(indexes)
+
             $('.info_tab_content_' + id).empty();
             $('.info_tab_content_' + id).append('Loading intel..');
             $.ajax({
                 method: "get",
-                url: "https://api.grepodata.com/indexer/api/town?key=" + index_key + "&id=" + id
+                url: "https://api.grepodata.com/indexer/api/town?keys=" + indexes + "&id=" + id
             }).error(function (err) {
                 $('.info_tab_content_' + id).empty();
                 $('.info_tab_content_' + id).append('<div style="text-align: center"><br/><br/>' +

@@ -113,8 +113,9 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
       $aInputKeys = array();
       if (isset($aParams['key'])) {
         $aInputKeys[] = $aParams['key'];
-      } else if (isset($aParams['keys']) && is_array($aParams['keys'])) {
-        $aInputKeys = $aParams['keys'];
+      } else if (isset($aParams['keys'])) {
+        $aKeys = json_decode($aParams['keys']);
+        $aInputKeys = $aKeys;
       } else {
         die(self::OutputJson(array(
           'message' => 'Bad request! Invalid or missing fields.',
