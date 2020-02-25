@@ -68,6 +68,20 @@ class CityInfo
   }
 
   /**
+   * @param $Keys array list of Index identifiers
+   * @param $Id int Town identifier
+   * @return Collection
+   */
+  public static function allByTownIdByKeys($Keys, $Id)
+  {
+    return \Grepodata\Library\Model\Indexer\City::whereIn('index_key', $Keys, 'and')
+      ->where('town_id', '=', $Id, 'and')
+      ->whereNull('soft_deleted')
+      ->orderBy('created_at', 'asc')
+      ->get();
+  }
+
+  /**
    * @param $Key string Index identifier
    * @param $Name
    * @return Collection

@@ -10,6 +10,7 @@ use Grepodata\Library\Controller\World;
 use Grepodata\Library\Indexer\Validator;
 use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\Indexer\City;
+use Grepodata\Library\Model\Indexer\IndexInfo;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class IndexApi extends \Grepodata\Library\Router\BaseRoute
@@ -107,26 +108,45 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
     $aParams = array();
     try {
       // Validate params
-      $aParams = self::validateParams(array('key'));
+      $aParams = self::validateParams();
 
-      // Validate index with rerouting
-      $bValidIndex = false;
-      $oIndex = null;
-      $Attempts = 0;
-      while (!$bValidIndex && $Attempts <= 50) {
-        $Attempts += 1;
-        $oIndex = Validator::IsValidIndex($aParams['key']);
-        if ($oIndex === null || $oIndex === false) {
-          die(self::OutputJson(array(
-            'message'     => 'Unauthorized index key. Please enter the correct index key. You will be banned after 10 incorrect attempts.',
-          ), 401));
-        }
-        if (isset($oIndex->moved_to_index) && $oIndex->moved_to_index !== null && $oIndex->moved_to_index != '') {
-          $aParams['key'] = $oIndex->moved_to_index; // redirect to new index
-        } else {
-          $bValidIndex = true;
-        }
+      $aInputKeys = array();
+      if (isset($aParams['key'])) {
+        $aInputKeys[] = $aParams['key'];
+      } else if (isset($aParams['keys']) && is_array($aParams['keys'])) {
+        $aInputKeys = $aParams['keys'];
+      } else {
+        die(self::OutputJson(array(
+          'message' => 'Bad request! Invalid or missing fields.',
+          'fields'  => 'Missing: key or keys'
+        ), 400));
       }
+
+      /** @var IndexInfo[] $aIndexList */
+      $aIndexList = array();
+      foreach ($aInputKeys as $Key) {
+        // Validate indexes with rerouting
+        $SearchKey = $Key;
+        $bValidIndex = false;
+        $oIndex = null;
+        $Attempts = 0;
+        while (!$bValidIndex && $Attempts <= 30) {
+          $Attempts += 1;
+          $oIndex = Validator::IsValidIndex($SearchKey);
+          if ($oIndex === null || $oIndex === false) {
+            die(self::OutputJson(array(
+              'message'     => 'Unauthorized index key. Please enter the correct index key. You will be banned after 10 incorrect attempts.',
+            ), 401));
+          }
+          if (isset($oIndex->moved_to_index) && $oIndex->moved_to_index !== null && $oIndex->moved_to_index != '') {
+            $SearchKey = $oIndex->moved_to_index; // redirect to new index
+          } else {
+            $bValidIndex = true;
+          }
+        }
+        $aIndexList[] = $oIndex;
+      }
+      $oPrimaryIndex = $aIndexList[0];
 
       if (isset($aParams['id']) && $aParams['id'] != '') {
         // Get by id
@@ -137,7 +157,7 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
         } catch (Exception $e) {}
       } elseif (isset($aParams['name']) && $aParams['name'] != '') {
         // Get by name
-        $aTowns = CityInfo::allByName($oIndex->key_code, $aParams['name']);
+        $aTowns = CityInfo::allByName($oPrimaryIndex->key_code, $aParams['name']);
         if (!is_null($aTowns) && sizeof($aTowns) > 0) {
           /** @var City $oTown */
           $oTown = $aTowns[0];
@@ -154,10 +174,14 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
 
       // World
       /** @var \Grepodata\Library\Model\World $oWorld */
-      $oWorld = World::getWorldById($oIndex->world);
+      $oWorld = World::getWorldById($oPrimaryIndex->world);
 
       // Find cities
-      $aCities = CityInfo::allByTownId($aParams['key'], $aParams['id']);
+      $aRawKeys = array();
+      foreach ($aIndexList as $oIndex) {
+        $aRawKeys[] = $oIndex->key_code;
+      }
+      $aCities = CityInfo::allByTownIdByKeys($aRawKeys, $aParams['id']);
       if ($aCities === null || sizeof($aCities) <= 0) {
         throw new ModelNotFoundException();
       }
@@ -165,6 +189,7 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
       $oNow = Carbon::now();
       $aResponse = array();
       $bHasIntel = false;
+      $aDuplicateCheck = array();
       /** @var City $oCity */
       foreach ($aCities as $oCity) {
         if ($oCity->soft_deleted != null) {
@@ -188,9 +213,15 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
         }
         $aResponse['alliance_id'] = $oCity->alliance_id;
 
-        $aRecord = CityInfo::formatAsTownIntel($oCity, $oWorld, $aResponse['buildings']);
+        $citystring = "_".$oCity->town_id.$oCity->parsed_date.$oCity->land_units.$oCity->sea_units.$oCity->mythical_units.$oCity->fireships.$oCity->buildings;
+        $cityhash = md5($citystring);
+        if (!in_array($cityhash, $aDuplicateCheck)) {
+          $aDuplicateCheck[] = $cityhash;
 
-        $aResponse['intel'][] = $aRecord;
+          $aRecord = CityInfo::formatAsTownIntel($oCity, $oWorld, $aResponse['buildings']);
+
+          $aResponse['intel'][] = $aRecord;
+        }
       }
 
       if ($bHasIntel === false) {

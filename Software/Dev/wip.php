@@ -7,7 +7,10 @@ if (PHP_SAPI !== 'cli') {
 require(__DIR__ . '/../config.php');
 
 use Carbon\Carbon;
+use Grepodata\Library\Controller\Indexer\CityInfo;
 use Grepodata\Library\Controller\World;
+
+$aCities = CityInfo::allByTownIdByKeys(array('5be6zv1s'), 10043);
 
 //$LinkDataEncoded = '#eyJpZCI6MTI4MTIsIml4Ijo0NzUsIml5Ijo1MTcsInRwIjoidG93biIsIm5hbWUiOiJGYW5mYXJlIHZhbiBob25nZXIifQ==';
 //$LinkDataEncoded = '#eyJuYW1lIjoibWFpb3IiLCJpZCI6NDEyNDkwfQ==';

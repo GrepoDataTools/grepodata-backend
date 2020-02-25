@@ -13,13 +13,11 @@
 // ==/UserScript==
 
 (function() {
-	//setTimeout(function(){
-		var CustomStyleJS = document.createElement('script');
-		CustomStyleJS.type = 'text/javascript';
-		CustomStyleJS.src = 'https://api.grepodata.com/v2/userscript/cityindexer_{/literal}{$encrypted}{literal}.js';
-		document.getElementsByTagName("head")[0].appendChild(CustomStyleJS);
-		console.log("Added GrepoData City Indexer ({/literal}{$key}{literal}) via Tampermonkey");
-	//}, 500);
+    var CustomStyleJS = document.createElement('script');
+    CustomStyleJS.type = 'text/javascript';
+    CustomStyleJS.src = 'https://api.grepodata.com/v2/userscript/cityindexer_{/literal}{$encrypted}{literal}.js';
+    document.getElementsByTagName("head")[0].appendChild(CustomStyleJS);
+    console.log("Added GrepoData City Indexer ({/literal}{$key}{literal}) via Tampermonkey");
 })();
 
 {/literal}
