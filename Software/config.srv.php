@@ -44,7 +44,6 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
   define('SMARTY_COMPILE_DIR', "$SourceDir/Software/Templates/compiled");
   define('SMARTY_CACHE_DIR', "$SourceDir/Software/Templates/cache");
 
-  define('USERSCRIPT_LOADER', $SourceDir."Software/Templates/compiled");
   define('USERSCRIPT_INDEXER', $SourceDir."Software/Templates/compiled");
   define('HASH2IMG_DIRECTORY', $SourceDir."Software/Application/debugger/temp");
 
@@ -88,8 +87,7 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
   define('SMARTY_COMPILE_DIR', "$UserscriptDir/smarty/compiled");
   define('SMARTY_CACHE_DIR', "$UserscriptDir/smarty/cache");
 
-  define('USERSCRIPT_LOADER', $UserscriptDir . '/v1');
-  define('USERSCRIPT_INDEXER', $UserscriptDir . '/v2');
+  define('USERSCRIPT_INDEXER', $UserscriptDir . '/v1');
   define('HASH2IMG_DIRECTORY', $HomeDir."/Temp/report2img/temp");
 
   define('FRONTEND_URL', 'https://test.grepodata.com');
@@ -132,8 +130,7 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
   define('SMARTY_COMPILE_DIR', "$UserscriptDir/smarty/compiled");
   define('SMARTY_CACHE_DIR', "$UserscriptDir/smarty/cache");
 
-  define('USERSCRIPT_LOADER', $UserscriptDir . '/v1');
-  define('USERSCRIPT_INDEXER', $UserscriptDir . '/v2');
+  define('USERSCRIPT_INDEXER', $UserscriptDir . '/v1');
   define('HASH2IMG_DIRECTORY', $HomeDir."/Temp/report2img/temp");
 
   define('FRONTEND_URL', 'https://grepodata.com');
