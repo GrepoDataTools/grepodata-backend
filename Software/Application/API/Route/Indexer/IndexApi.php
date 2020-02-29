@@ -214,7 +214,8 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
         }
         $aResponse['alliance_id'] = $oCity->alliance_id;
 
-        $citystring = "_".$oCity->town_id.$oCity->parsed_date.$oCity->land_units.$oCity->sea_units.$oCity->mythical_units.$oCity->fireships.$oCity->buildings;
+        //$citystring = "_".$oCity->town_id.$oCity->parsed_date.$oCity->land_units.$oCity->sea_units.$oCity->mythical_units.$oCity->fireships.$oCity->buildings;
+        $citystring = "_".$oCity->town_id.$oCity->parsed_date;
         $cityhash = md5($citystring);
         if (!in_array($cityhash, $aDuplicateCheck)) {
           $aDuplicateCheck[] = $cityhash;

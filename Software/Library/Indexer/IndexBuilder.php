@@ -64,18 +64,8 @@ class IndexBuilder
         $oSmarty->assign('encrypted', $Encrypted);
         $oSmarty->assign('version', $version);
         $Script = $oSmarty->fetch('cityindexer.tpl');
-        $Result = file_put_contents(USERSCRIPT_INDEXER . '/cityindexer_'.$Encrypted.'.js', $Script);
+        $Result = file_put_contents(USERSCRIPT_INDEXER . '/cityindexer_'.$Encrypted.'.user.js', $Script);
         if (!$Result) throw new \Exception();
-
-        // Script loader
-        $oSmartyLoader = new \Grepodata\Library\Helper\Smarty();
-        $oSmartyLoader->assign('world', $world);
-        $oSmartyLoader->assign('key', $key);
-        $oSmartyLoader->assign('encrypted', $Encrypted);
-        $oSmartyLoader->assign('version', $version);
-        $ScriptLoader = $oSmartyLoader->fetch('loadscript.tpl');
-        $ResultLoader = file_put_contents(USERSCRIPT_LOADER . '/cityindexer_'.$Encrypted.'.user.js', $ScriptLoader);
-        if (!$ResultLoader) throw new \Exception();
 
         return true;
       } catch (\Exception $e) {
