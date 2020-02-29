@@ -64,7 +64,7 @@ class IndexBuilder
         $oSmarty->assign('encrypted', $Encrypted);
         $oSmarty->assign('version', $version);
         $Script = $oSmarty->fetch('cityindexer.tpl');
-        $Result = file_put_contents(USERSCRIPT_INDEXER . '/cityindexer_'.$Encrypted.'.js', $Script);
+        $Result = file_put_contents(USERSCRIPT_INDEXER . '/cityindexer_'.$Encrypted.'.user.js', $Script);
         if (!$Result) throw new \Exception();
 
         return true;
