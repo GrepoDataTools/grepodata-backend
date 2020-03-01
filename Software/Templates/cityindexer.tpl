@@ -15,7 +15,13 @@
 // @grant        none
 // ==/UserScript==
 
-(function() {
+(function() { try {
+    // Stop Greasemonkey execution. Only Tampermonkey can run this script
+    if ('undefined' === typeof GM_info.script.author) {
+        //alert("You installed the GrepoData city indexer using Greasemonkey. This does not work. Please install it using Tampermonkey and remove the script from your Greasemonkey plugin.");
+        throw new Error("Stopped greasemonkey execution for grepodata city indexer. Please use Tampermonkey instead");
+    }
+
     // Script parameters
     var gd_version = "{/literal}{$version}{literal}";
     var index_key = "{/literal}{$key}{literal}";
@@ -1308,7 +1314,7 @@
         if (gd_w['gd'+world] === undefined) gd_w['gd'+world] = {};
         enableCityIndex(index_key, gd_w['gd'+world]);
     }
-
+} catch(error) { console.error("GrepoData City Indexer crashed (please report a screenshot of this error to admin@grepodata.com): ", error); }
 })();
 
 {/literal}
