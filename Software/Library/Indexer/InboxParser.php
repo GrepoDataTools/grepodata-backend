@@ -219,6 +219,9 @@ class InboxParser
 
       // Player
       $ReceiverPlayer = $ReportReceiver["content"][3]["content"][1] ?? null;
+      if ($ReceiverPlayer == null || (isset($ReceiverPlayer['type']) && $ReceiverPlayer['type'] == 'SPAM')) {
+        $ReceiverPlayer = $ReportReceiver["content"][3]["content"][2] ?? null;
+      }
       if ($ReceiverPlayer !== null && isset($ReceiverPlayer['attributes']['href'])) {
         $LinkDataEncoded = $ReceiverPlayer['attributes']['href'];
         $aLinkData = json_decode(base64_decode($LinkDataEncoded), true);
