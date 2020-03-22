@@ -21,8 +21,8 @@ if (PHP_SAPI !== 'cli') {
 
 require(__DIR__ . '/../config.php');
 
-$Server = 'tr';
-$timezone = 'Europe/Istanbul';
+$Server = 'zz';
+$timezone = 'Europe/Amsterdam';
 
 Logger::enableDebug();
 Logger::debugInfo("Started '.$Server.' import");
