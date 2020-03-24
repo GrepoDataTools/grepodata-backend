@@ -33,6 +33,7 @@ class InboxParser
     'br' => array('date_format' => 'd/m/Y H:i:s'),
     'it' => array('date_format' => 'd/m/Y H:i:s'),
     'hu' => array('date_format' => 'Y/m/d H:i:s'), // 2020/01/15 17:55:24
+    'zz' => array('date_format' => 'Y/m/d H:i:s'),
   );
   const land_units = array('sword', 'slinger', 'archer', 'hoplite', 'rider', 'chariot', 'catapult', 'godsent', 'militia');
   const myth_units = array(

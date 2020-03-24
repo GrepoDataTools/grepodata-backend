@@ -64,7 +64,7 @@ foreach ($aRows as $aColumns) {
   $oWorld->name = $Name;
   $oWorld->stopped = 1;
   $oWorld->feature_level = 0;
-  $oWorld->grep_server_time = $oWorld->getServerTime();
+  $oWorld->grep_server_time = $oWorld->getLastUtcResetTime();
   $oWorld->last_reset_time = $oWorld->getLastUtcResetTime();
   $oWorld->etag = "A";
   $oWorld->save();
