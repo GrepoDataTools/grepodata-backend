@@ -74,7 +74,7 @@
             SHORTCUTS_INBOX_PREV: 'Previous report (inbox)',
             SHORTCUTS_INBOX_NEXT: 'Next report (inbox)',
             COLLECT_INTEL: 'Collecting intel',
-            COLLECT_INTEL_INBOX: 'Forum (adds an "index+" button to inbox reports)',
+            COLLECT_INTEL_INBOX: 'Inbox (adds an "index+" button to inbox reports)',
             COLLECT_INTEL_FORUM: 'Alliance forum (adds an "index+" button to alliance forum reports)',
             SHORTCUT_FUNCTION: 'Function',
             SAVED: 'Settings saved',
@@ -113,6 +113,10 @@
         }
 
         // Listen for game events
+        if (world.substring(0, 2) === 'gr' && gd_settings.inbox === true) {
+            // Scan for inbox reports
+            setInterval(parseInboxReport, 500);
+        }
         $(document).ajaxComplete(function (e, xhr, opt) {
             var url = opt.url.split("?"), action = "";
             if (typeof(url[1]) !== "undefined" && typeof(url[1].split(/&/)[1]) !== "undefined") {
