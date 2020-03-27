@@ -112,11 +112,15 @@
             }
         }
 
+		// Scan for inbox reports
+		function parseInbox() {
+			if (gd_settings.inbox === true) {
+				parseInboxReport();
+			}
+		}
+		setInterval(parseInbox, 500);
+
         // Listen for game events
-        if (world.substring(0, 2) === 'gr' && gd_settings.inbox === true) {
-            // Scan for inbox reports
-            setInterval(parseInboxReport, 500);
-        }
         $(document).ajaxComplete(function (e, xhr, opt) {
             var url = opt.url.split("?"), action = "";
             if (typeof(url[1]) !== "undefined" && typeof(url[1].split(/&/)[1]) !== "undefined") {
@@ -125,9 +129,7 @@
             switch (action) {
                 case "/report/view":
                     // Parse reports straight from inbox
-                    if (gd_settings.inbox === true) {
-                        parseInboxReport();
-                    }
+                    parseInbox();
                     break;
                 case "/town_info/info":
                     viewTownIntel(xhr);
