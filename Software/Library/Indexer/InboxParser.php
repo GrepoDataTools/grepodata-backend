@@ -278,11 +278,15 @@ class InboxParser
         $ReportScript = str_replace("\n", "", $ReportScript);
         $ReportScript = str_replace("\"", '"', $ReportScript);
 
-        $att_units = substr($ReportScript, strpos($ReportScript, "ReportViewer.dates["));
-        $att_units = substr($att_units, strpos($att_units, '{"result":{'));
-        $att_units = substr($att_units, 0, strpos($att_units, "ReportViewer.dates[")-1);
+        $report_units_json = substr($ReportScript, strpos($ReportScript, "ReportViewer.dates["));
+        $report_units_json = substr($report_units_json, strpos($report_units_json, '{"result":{'));
+        $report_units_json = substr($report_units_json, 0, strpos($report_units_json, "ReportViewer.dates[")-1);
+        $report_units_json = trim($report_units_json);
+        if (substr($report_units_json, -1) == ';') {
+          $report_units_json = substr($report_units_json, 0, -1);
+        }
 
-        $aUnits = json_decode($att_units, true);
+        $aUnits = json_decode($report_units_json, true);
         if ($aUnits == null || $aUnits == false || !isset($aUnits['result'])) {
           throw new InboxParserExceptionWarning("unable to parse units");
         }
