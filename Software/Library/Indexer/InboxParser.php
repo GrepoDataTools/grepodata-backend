@@ -261,23 +261,6 @@ class InboxParser
         $bPlayerIsReceiver = true;
       }
 
-      // Try using friendly flag color
-      if (!$bPlayerIsSender && !$bPlayerIsReceiver) {
-        $ReportSenderImg = $ReportHeaderContent["content"][1]["content"][1];
-        if (strpos(json_encode($ReportSenderImg), '#FFBB00') !== false) {
-          $bPlayerIsSender = true;
-        }
-
-        $ReportReceiverImg = $ReportHeaderContent["content"][5]["content"][1];
-        if (strpos(json_encode($ReportReceiverImg), '#FFBB00') !== false) {
-          $bPlayerIsReceiver = true;
-        }
-
-        if ((!$bPlayerIsSender && !$bPlayerIsReceiver) || ($bPlayerIsSender && $bPlayerIsReceiver)) {
-          throw new InboxParserExceptionWarning("Unable to identify report owner by flag color");
-        }
-      }
-
       // === Report content
       $ReportType = "friendly_attack";
       $aBuildings = array();
@@ -348,6 +331,23 @@ class InboxParser
             throw new InboxParserExceptionWarning("inbox report owner not found");
           }
         }
+
+//        // Try using friendly flag color
+//        if (!$bPlayerIsSender && !$bPlayerIsReceiver) {
+//          $ReportSenderImg = $ReportHeaderContent["content"][1]["content"][1];
+//          if (strpos(json_encode($ReportSenderImg), '#FFBB00') !== false) {
+//            $bPlayerIsSender = true;
+//          }
+//
+//          $ReportReceiverImg = $ReportHeaderContent["content"][5]["content"][1];
+//          if (strpos(json_encode($ReportReceiverImg), '#FFBB00') !== false) {
+//            $bPlayerIsReceiver = true;
+//          }
+//
+//          if ((!$bPlayerIsSender && !$bPlayerIsReceiver) || ($bPlayerIsSender && $bPlayerIsReceiver)) {
+//            throw new InboxParserExceptionWarning("Unable to identify report owner by flag color");
+//          }
+//        }
 
         if ($bPlayerIsSender) {
           $aCityUnits = $aCityUnitsDef;
