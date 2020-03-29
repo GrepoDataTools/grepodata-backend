@@ -616,6 +616,8 @@ class InboxParser
           $ParsedDate->addHour();
           $oCity->parsed_date = $ParsedDate;
           $bSaved = $oCity->save();
+        } else {
+          throw new \Exception("Unable to save City record with error: " . $e->getMessage());
         }
       }
 
