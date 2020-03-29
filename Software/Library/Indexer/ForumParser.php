@@ -256,7 +256,21 @@ class ForumParser
       $oCity->fireships   = $Fireships;
       $oCity->type        = 'forum';
 
-      if ($oCity->save()) {
+      $bSaved = false;
+      try {
+        $bSaved = $oCity->save();
+      }
+      catch (\Exception $e) {
+        if (strpos($e->getMessage(), 'Incorrect datetime value') !== false) {
+          // Add an hour and try again to account for EU daylight saving time
+          $ParsedDate = $aCityInfo['parsed_date'];
+          $ParsedDate->addHour();
+          $oCity->parsed_date = $ParsedDate;
+          $bSaved = $oCity->save();
+        }
+      }
+
+      if ($bSaved) {
         return array(
           'id' => $oCity->id,
           'debug' => (isset($aCityInfo['print_debug']) && $aCityInfo['print_debug'] === true ? true : false)

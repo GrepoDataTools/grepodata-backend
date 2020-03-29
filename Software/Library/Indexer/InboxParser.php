@@ -602,7 +602,20 @@ class InboxParser
       if (isset($Fireships)) {$oCity->fireships = $Fireships;}
       $oCity->type        = 'inbox';
 
-      if ($oCity->save()) {
+      $bSaved = false;
+      try {
+        $bSaved = $oCity->save();
+      }
+      catch (\Exception $e) {
+        if (strpos($e->getMessage(), 'Incorrect datetime value') !== false) {
+          // Add an hour and try again to account for EU daylight saving time
+          $ParsedDate->addHour();
+          $oCity->parsed_date = $ParsedDate;
+          $bSaved = $oCity->save();
+        }
+      }
+
+      if ($bSaved) {
         return $oCity->id;
       } else {
         throw new InboxParserExceptionWarning("Unable to save City record: " . $oCity->toJson());
