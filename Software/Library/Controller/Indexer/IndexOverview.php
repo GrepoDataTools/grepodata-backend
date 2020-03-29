@@ -52,6 +52,7 @@ class IndexOverview
 
   /**
    * @param $oIndex \Grepodata\Library\Model\Indexer\IndexInfo
+   * @throws \Exception
    */
   public static function buildIndexOverview($oIndex)
   {
@@ -318,7 +319,21 @@ class IndexOverview
     $oIndexOverview->enemy_attacks      = $numAttacked;
     $oIndexOverview->friendly_attacks   = $numAttacking;
     $oIndexOverview->max_version        = $v;
-    $oIndexOverview->save();
+
+    try {
+      $oIndexOverview->save();
+    }
+    catch (\Exception $e) {
+      if (strpos($e->getMessage(), 'Incorrect datetime value') !== false) {
+        // Add an hour and try again to account for EU daylight saving time
+        $LatestUpdate->addHour();
+        $oIndexOverview->latest_report = $LatestUpdate;
+        $oIndexOverview->save();
+      } else {
+        throw new \Exception("Unable to save index overview with error: " . $e->getMessage());
+      }
+    }
+
 
   }
 
