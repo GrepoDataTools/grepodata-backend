@@ -32,67 +32,69 @@ foreach ($aServers as $Server) {
   // Check new world
   $oWorld = World::getLatestByServer($Server);
 
-  if ($oWorld == null || sizeof($oWorld) <= 0) {
+  if ($oWorld == null || $oWorld == false) {
     Logger::error("Server detector was unable to get latest world for server " . $Server);
     continue;
   }
 
   // Increment world id
-  $WorldNum = substr($oWorld->grep_id, 2);
-  $WorldNum++;
-  $WorldNum = $Server . $WorldNum;
-  Logger::debugInfo("Checking new world with id: " . $WorldNum);
+  $PreviousWorldNum = substr($oWorld->grep_id, 2);
+  for ($i = 1; $i < 4; $i++) {
+    $WorldNum = $PreviousWorldNum + $i;
+    $WorldNum = $Server . $WorldNum;
+    Logger::debugInfo("Checking new world with id: " . $WorldNum);
 
-  // Test endpoint
-  if (InnoData::testEndpoint($WorldNum)) {
-    $aPlayerData = InnoData::loadPlayerData($WorldNum);
-    if (count($aPlayerData) <= 5) {
-      Logger::warning("New world has less then 5 players. skipping new world.");
-      continue;
-    }
-    unset($aPlayerData);
+    // Test endpoint
+    if (InnoData::testEndpoint($WorldNum)) {
+      $aPlayerData = InnoData::loadPlayerData($WorldNum);
+      if (count($aPlayerData) <= 5) {
+        Logger::warning("New world has less then 5 players. skipping new world.");
+        continue;
+      }
+      unset($aPlayerData);
 
-    // new world!
-    Logger::error("New world detected: " . $WorldNum);
-    $oNewWorld = new \Grepodata\Library\Model\World();
-    $oNewWorld->grep_id = $WorldNum;
-    $oNewWorld->php_timezone = $oWorld->php_timezone;
-    $oNewWorld->name = $WorldNum;
-    $oNewWorld->stopped = 1;
-    $oNewWorld->last_reset_time = $oWorld->last_reset_time;
-    $oNewWorld->grep_server_time = $oWorld->grep_server_time;
-    $oNewWorld->etag = $oWorld->etag;
-    $oNewWorld->save();
-
-    // Handle imports for new world
-    try {
-      Logger::debugInfo('Starting daily import for new world.');
-      if (Daily::DataImportDaily($oNewWorld) !== true) {
-        throw new \Exception("Daily import failed for new world.");
-      }
-      Logger::debugInfo('Daily import completed. Starting hourly import for new world.');
-      if (Hourly::DataImportHourly($oNewWorld, true) !== true) {
-        throw new \Exception("Hourly import failed for new world.");
-      }
-      Logger::debugInfo('Hourly import completed. Starting towns import for new world.');
-      if (Towns::DataImportTowns($oNewWorld) !== true) {
-        throw new \Exception("Towns import failed for new world.");
-      }
-      Logger::debugInfo('Towns import completed. Starting islands import for new world.');
-      if (Towns::DataImportIslands($oNewWorld) !== true) {
-        throw new \Exception("Islands import failed for new world.");
-      }
-      Logger::debugInfo('Towns import completed. Starting elasticsearch import for new world.');
-      if (Elasticsearch::DataImportElasticsearch($oNewWorld) !== true) {
-        throw new \Exception("Elasticsearch import failed for new world.");
-      }
-
-      // Done
-      Logger::error('Successful import of new world. Opening world status.');
-      $oNewWorld->stopped = 0;
+      // new world!
+      Logger::error("New world detected: " . $WorldNum);
+      $oNewWorld = new \Grepodata\Library\Model\World();
+      $oNewWorld->grep_id = $WorldNum;
+      $oNewWorld->php_timezone = $oWorld->php_timezone;
+      $oNewWorld->name = $WorldNum;
+      $oNewWorld->stopped = 1;
+      $oNewWorld->last_reset_time = $oWorld->last_reset_time;
+      $oNewWorld->grep_server_time = $oWorld->grep_server_time;
+      $oNewWorld->etag = $oWorld->etag;
       $oNewWorld->save();
-    } catch (\Exception $e) {
-      Logger::error('New world import failed with status: '. $e->getMessage());
+
+      // Handle imports for new world
+      try {
+        Logger::debugInfo('Starting daily import for new world.');
+        if (Daily::DataImportDaily($oNewWorld) !== true) {
+          throw new \Exception("Daily import failed for new world.");
+        }
+        Logger::debugInfo('Daily import completed. Starting hourly import for new world.');
+        if (Hourly::DataImportHourly($oNewWorld, true) !== true) {
+          throw new \Exception("Hourly import failed for new world.");
+        }
+        Logger::debugInfo('Hourly import completed. Starting towns import for new world.');
+        if (Towns::DataImportTowns($oNewWorld) !== true) {
+          throw new \Exception("Towns import failed for new world.");
+        }
+        Logger::debugInfo('Towns import completed. Starting islands import for new world.');
+        if (Towns::DataImportIslands($oNewWorld) !== true) {
+          throw new \Exception("Islands import failed for new world.");
+        }
+        Logger::debugInfo('Towns import completed. Starting elasticsearch import for new world.');
+        if (Elasticsearch::DataImportElasticsearch($oNewWorld) !== true) {
+          throw new \Exception("Elasticsearch import failed for new world.");
+        }
+
+        // Done
+        Logger::error('Successful import of new world. Opening world status.');
+        $oNewWorld->stopped = 0;
+        $oNewWorld->save();
+      } catch (\Exception $e) {
+        Logger::error('New world import failed with status: '. $e->getMessage());
+      }
     }
   }
 
