@@ -141,7 +141,11 @@ class InboxParser
         if (is_array($ReportDateString)) {
           $ReportDateString = Helper::getTextContent($ReportDateString);
         }
-        $oDate = Carbon::createFromFormat($Format, $ReportDateString);
+        try {
+          $oDate = Carbon::createFromFormat($Format, $ReportDateString);
+        } catch (\Exception $e) {
+          throw new InboxParserExceptionWarning("Error creating inbox date: " . $e->getMessage());
+        }
         if ($oDate == null) {
           throw new InboxParserExceptionError("Parsed date is null");
         }
