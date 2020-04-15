@@ -349,6 +349,7 @@
                     && reportText.indexOf('support_report_cities') < 0
                     && reportText.indexOf('big_horizontal_report_separator') < 0
                     && reportText.indexOf('report_town_bg_attack_spot') < 0
+                    && (reportText.indexOf('/images/game/towninfo/support.png') < 0 || reportText.indexOf('/images/game/towninfo/support.png') < 0)
                     && (reportText.indexOf('/images/game/towninfo/attack.png') >= 0
                         || reportText.indexOf('/images/game/towninfo/espionage') >= 0
                         || reportText.indexOf('/images/game/towninfo/breach.png') >= 0
@@ -540,29 +541,36 @@
                         folderElement.style.marginLeft = (dateWidth + 5) + 'px';
                         folderElement.style.position = 'absolute';
                     }
+
+                    // Handle inbox keyboard shortcuts
+                    document.removeEventListener('keyup', inboxNavShortcut);
+                    document.addEventListener('keyup', inboxNavShortcut);
                 }
 
-                // Handle inbox keyboard shortcuts
-                document.addEventListener('keyup', function (e) {
-                    if (gd_settings.keys_enabled === true && !['textarea', 'input'].includes(e.srcElement.tagName.toLowerCase()) && reportElement !== null) {
-                        switch (e.key) {
-                            case gd_settings.key_inbox_prev:
-                                var prev = reportElement.getElementsByClassName('last_report game_arrow_left');
-                                if (prev.length === 1 && prev[0] != null) {
-                                    prev[0].click();
-                                }
-                                break;
-                            case gd_settings.key_inbox_next:
-                                var next = reportElement.getElementsByClassName('next_report game_arrow_right');
-                                if (next.length === 1 && next[0] != null) {
-                                    next[0].click();
-                                }
-                                break;
-                            default:
-                                break;
+            }
+        }
+
+        function inboxNavShortcut(e) {
+            var reportElement = document.getElementById("report_report");
+            if (gd_settings.keys_enabled === true && !['textarea', 'input'].includes(e.srcElement.tagName.toLowerCase()) && reportElement !== null) {
+                switch (e.key) {
+                    case gd_settings.key_inbox_prev:
+                        var prev = reportElement.getElementsByClassName('last_report game_arrow_left');
+                        if (prev.length === 1 && prev[0] != null) {
+                            document.removeEventListener('keyup', inboxNavShortcut);
+                            prev[0].click();
                         }
-                    }
-                });
+                        break;
+                    case gd_settings.key_inbox_next:
+                        var next = reportElement.getElementsByClassName('next_report game_arrow_right');
+                        if (next.length === 1 && next[0] != null) {
+                            document.removeEventListener('keyup', inboxNavShortcut);
+                            next[0].click();
+                        }
+                        break;
+                    default:
+                        break;
+                }
             }
         }
 

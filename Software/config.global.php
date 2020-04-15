@@ -20,8 +20,8 @@ define('INNO_DATA_ALLIANCE_ATT',  'alliance_kills_att.txt.gz');
 define('INNO_DATA_ALLIANCE_DEF',  'alliance_kills_def.txt.gz');
 define('INNO_DATA_CONQUERS',      'conquers.txt.gz');
 
-define('USERSCRIPT_VERSION',      '3.9.0');
-define('USERSCRIPT_UPDATE_INFO',  'Intel from multiple indexes is now combined when viewing town intel (combines all currently active indexes).');
+define('USERSCRIPT_VERSION',      '3.9.1');
+define('USERSCRIPT_UPDATE_INFO',  'Bugfix for keyboard shortcuts in inbox.');
 
 define('DEFAULT_SERVER',  'nl');
 define('DEFAULT_WORLD',   'nl75');
