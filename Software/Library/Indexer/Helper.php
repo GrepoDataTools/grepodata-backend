@@ -152,9 +152,14 @@ class Helper
     $options = '--quality 80 --width 800 --zoom 1 --transparent --load-media-error-handling ignore';
     $result = shell_exec("wkhtmltoimage $options $tempFile $imgFile 2>&1");
 
+    $wkhtmlresult = json_encode($result);
+    if (strpos($wkhtmlresult, 'Failed to load file') >= 0) {
+      Logger::warning("wkhtmltoimage result [$url]: " . json_encode($result));
+    } else {
+      Logger::silly("wkhtmltoimage result [$url]: " . json_encode($result));
+    }
+
     // TODO: handle wkhtmltoimage result
-    Logger::warning("wkhtmltoimage result [$url]: " . json_encode($result));
-    //error_log("wkhtmltoimage result: " . json_encode($result));
     //$aErrors = libxml_get_errors();
 
     try {

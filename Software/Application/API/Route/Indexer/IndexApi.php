@@ -153,7 +153,7 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
         // Get by id
         try {
           if (isset($_SERVER["HTTP_REFERER"]) && strpos($_SERVER["HTTP_REFERER"], 'grepolis.com')!==false) {
-            Logger::silly("Get town intel: https://grepodata.com/indexer/town/" . $aParams['key'] . "/".$oIndex->world."/" . $aParams['id'] . ". Referer: " . $_SERVER["HTTP_REFERER"]);
+            Logger::silly("Get town intel: https://grepodata.com/indexer/town/" . $aInputKeys[0] . "/".$oIndex->world."/" . $aParams['id'] . ". Referer: " . $_SERVER["HTTP_REFERER"]);
           }
         } catch (Exception $e) {}
       } elseif (isset($aParams['name']) && $aParams['name'] != '') {
