@@ -103,9 +103,10 @@ class Helper
           .game_arrow_left {display: none !important;}
           .game_arrow_delete {display: none !important;}
           .published_report {margin: 0 !important;}
-          .game_list_footer {height: 16px !important; background-size: unset !important;}
+          .game_list_footer {height: 16px !important; background-size: unset !important; padding-top: 3px !important;}
           .game_border {margin: 2px !important;}
           #report_game_body {width: 796px !important;}
+          #report_date {margin: 0 !important;}
         </style>
       </head>
       <body>
@@ -153,8 +154,8 @@ class Helper
     $result = shell_exec("wkhtmltoimage $options $tempFile $imgFile 2>&1");
 
     $wkhtmlresult = json_encode($result);
-    if (strpos($wkhtmlresult, 'Failed to load file') >= 0) {
-      Logger::warning("wkhtmltoimage result [$url]: " . json_encode($result));
+    if (strpos($wkhtmlresult, 'Failed to load file') !== false) {
+      Logger::warning("wkhtmltoimagez result [$url]: " . json_encode($result));
     } else {
       Logger::silly("wkhtmltoimage result [$url]: " . json_encode($result));
     }
