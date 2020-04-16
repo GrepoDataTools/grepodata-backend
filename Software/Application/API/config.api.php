@@ -292,6 +292,10 @@ $oRouter->Add('indexaddnote', new Route('/indexer/addnote', array(
   '_controller' => '\Grepodata\Application\API\Route\Indexer\IndexApi',
   '_method'     => 'AddNote'
 )));
+$oRouter->Add('indexdelnote', new Route('/indexer/delnote', array(
+  '_controller' => '\Grepodata\Application\API\Route\Indexer\IndexApi',
+  '_method'     => 'DeleteNote'
+)));
 
 // old:
 $oRouter->Add('resetOwners', new Route('/indexer/resetowners', array(

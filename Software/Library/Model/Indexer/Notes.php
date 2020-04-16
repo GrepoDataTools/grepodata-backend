@@ -18,6 +18,7 @@ class Notes extends Model
   public function getPublicFields()
   {
     return array(
+      'id'        => $this->id,
       'town_id'   => $this->town_id,
       'index_key' => $this->index_key,
       'poster_name' => $this->poster_name,

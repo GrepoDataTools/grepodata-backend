@@ -20,4 +20,17 @@ class Notes
       ->get();
   }
 
+  /**
+   * @param $Keys array list of Index identifiers
+   * @param $PosterName string name of poster
+   * @return Collection|\Grepodata\Library\Model\Indexer\Notes[]
+   */
+  public static function allByKeysByPoster($Keys, $PosterName)
+  {
+    return \Grepodata\Library\Model\Indexer\Notes::whereIn('index_key', $Keys, 'and')
+      ->where('poster_name', '=', $PosterName)
+      ->orderBy('id', 'desc')
+      ->get();
+  }
+
 }

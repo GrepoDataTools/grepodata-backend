@@ -170,6 +170,45 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
     }
   }
 
+  public static function DeleteNoteGET()
+  {
+    $aParams = array();
+    try {
+      // Validate params
+      $aParams = self::validateParams('date', 'poster_name', 'message');
+
+      $aInputKeys = array();
+      if (isset($aParams['key'])) {
+        $aInputKeys[] = $aParams['key'];
+      } else if (isset($aParams['keys'])) {
+        $aKeys = json_decode($aParams['keys']);
+        $aInputKeys = $aKeys;
+      } else {
+        die(self::OutputJson(array(
+          'message' => 'Bad request! Invalid or missing fields.',
+          'fields'  => 'Missing: key or keys'
+        ), 400));
+      }
+
+      // Find notes
+      $aNotes = Notes::allByKeysByPoster($aInputKeys, $aParams['poster_name']);
+
+      foreach ($aNotes as $oNote) {
+        if ($oNote->created_at->format('d-m-y H:i') == $aParams['date'] && $oNote->message == $aParams['message']) {
+          $oNote->delete();
+        }
+      }
+
+      return self::OutputJson(array('success' => true));
+
+    } catch (Exception $e) {
+      die(self::OutputJson(array(
+        'message'     => 'Unable to delete note.',
+        'parameters'  => $aParams
+      ), 404));
+    }
+  }
+
   public static function GetTownGET()
   {
     $aParams = array();
@@ -297,9 +336,16 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
 
       // Find notes
       $aNotes = Notes::allByTownIdByKeys($aRawKeys, $aParams['id']);
+      $aDuplicates = array();
       foreach ($aNotes as $Note) {
         $bHasIntel = true;
-        $aResponse['notes'][] = $Note->getPublicFields();
+        $aNote = $Note->getPublicFields();
+        $aNote['date'] = $Note->created_at->format('d-m-y H:i');
+        $uid = $Note->town_id . $aNote['date'] . $Note->message;
+        if (!in_array($uid, $aDuplicates)) {
+          $aResponse['notes'][] = $aNote;
+          $aDuplicates[] = $uid;
+        }
       }
 
       if ($bHasIntel === false) {
