@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Exception;
 use Grepodata\Library\Controller\Indexer\CityInfo;
 use Grepodata\Library\Controller\Indexer\IndexOverview;
+use Grepodata\Library\Controller\Indexer\Notes;
 use Grepodata\Library\Controller\World;
 use Grepodata\Library\Indexer\Validator;
 use Grepodata\Library\Logger\Logger;
@@ -103,6 +104,72 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
     }
   }
 
+  public static function AddNoteGET()
+  {
+    $aParams = array();
+    try {
+      // Validate params
+      $aParams = self::validateParams('town_id', 'poster_name', 'poster_id', 'message');
+
+      $aInputKeys = array();
+      if (isset($aParams['key'])) {
+        $aInputKeys[] = $aParams['key'];
+      } else if (isset($aParams['keys'])) {
+        $aKeys = json_decode($aParams['keys']);
+        $aInputKeys = $aKeys;
+      } else {
+        die(self::OutputJson(array(
+          'message' => 'Bad request! Invalid or missing fields.',
+          'fields'  => 'Missing: key or keys'
+        ), 400));
+      }
+
+      /** @var IndexInfo[] $aIndexList */
+      $aIndexList = array();
+      foreach ($aInputKeys as $Key) {
+        // Validate indexes with rerouting
+        $SearchKey = $Key;
+        $bValidIndex = false;
+        $oIndex = null;
+        $Attempts = 0;
+        while (!$bValidIndex && $Attempts <= 30) {
+          $Attempts += 1;
+          $oIndex = Validator::IsValidIndex($SearchKey);
+          if ($oIndex === null || $oIndex === false) {
+            die(self::OutputJson(array(
+              'message'     => 'Unauthorized index key. Please enter the correct index key. You will be banned after 10 incorrect attempts.',
+            ), 401));
+          }
+          if (isset($oIndex->moved_to_index) && $oIndex->moved_to_index !== null && $oIndex->moved_to_index != '') {
+            $SearchKey = $oIndex->moved_to_index; // redirect to new index
+          } else {
+            $bValidIndex = true;
+          }
+        }
+        $aIndexList[] = $oIndex;
+      }
+
+      // Save note to each index
+      foreach ($aIndexList as $oIndex) {
+        $oNote = new \Grepodata\Library\Model\Indexer\Notes();
+        $oNote->index_key = $oIndex->key_code;
+        $oNote->town_id = $aParams['town_id'];
+        $oNote->poster_id = $aParams['poster_id'];
+        $oNote->poster_name = $aParams['poster_name'];
+        $oNote->message = $aParams['message'];
+        $oNote->save();
+      }
+
+      return self::OutputJson(array('success' => true));
+
+    } catch (Exception $e) {
+      die(self::OutputJson(array(
+        'message'     => 'Unable to add note.',
+        'parameters'  => $aParams
+      ), 404));
+    }
+  }
+
   public static function GetTownGET()
   {
     $aParams = array();
@@ -187,6 +254,7 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
         throw new ModelNotFoundException();
       }
 
+      // Parse cities
       $oNow = Carbon::now();
       $aResponse = array();
       $bHasIntel = false;
@@ -208,6 +276,7 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
           $aResponse['player_id'] = $oCity->player_id;
           $aResponse['player_name'] = $oCity->player_name;
           $aResponse['intel'] = array();
+          $aResponse['notes'] = array();
           $aResponse['buildings'] = array();
           $aResponse['latest_version'] = USERSCRIPT_VERSION;
           $aResponse['update_message'] = USERSCRIPT_UPDATE_INFO;
@@ -224,6 +293,13 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
 
           $aResponse['intel'][] = $aRecord;
         }
+      }
+
+      // Find notes
+      $aNotes = Notes::allByTownIdByKeys($aRawKeys, $aParams['id']);
+      foreach ($aNotes as $Note) {
+        $bHasIntel = true;
+        $aResponse['notes'][] = $Note->getPublicFields();
       }
 
       if ($bHasIntel === false) {

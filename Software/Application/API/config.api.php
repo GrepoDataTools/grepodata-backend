@@ -288,6 +288,10 @@ $oRouter->Add('indexapiundo', new Route('/indexer/undodelete', array(
   '_controller' => '\Grepodata\Application\API\Route\Indexer\IndexApi',
   '_method'     => 'DeleteUndo'
 )));
+$oRouter->Add('indexaddnote', new Route('/indexer/addnote', array(
+  '_controller' => '\Grepodata\Application\API\Route\Indexer\IndexApi',
+  '_method'     => 'AddNote'
+)));
 
 // old:
 $oRouter->Add('resetOwners', new Route('/indexer/resetowners', array(
