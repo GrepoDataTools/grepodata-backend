@@ -349,7 +349,7 @@
                     && reportText.indexOf('support_report_cities') < 0
                     && reportText.indexOf('big_horizontal_report_separator') < 0
                     && reportText.indexOf('report_town_bg_attack_spot') < 0
-                    && (reportText.indexOf('/images/game/towninfo/support.png') < 0 || reportText.indexOf('/images/game/towninfo/support.png') < 0)
+                    && (reportText.indexOf('/images/game/towninfo/support.png') < 0 || reportText.indexOf('flagpole ghost_town') < 0)
                     && (reportText.indexOf('/images/game/towninfo/attack.png') >= 0
                         || reportText.indexOf('/images/game/towninfo/espionage') >= 0
                         || reportText.indexOf('/images/game/towninfo/breach.png') >= 0
