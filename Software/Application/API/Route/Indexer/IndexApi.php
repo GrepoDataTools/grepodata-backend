@@ -7,6 +7,8 @@ use Exception;
 use Grepodata\Library\Controller\Indexer\CityInfo;
 use Grepodata\Library\Controller\Indexer\IndexOverview;
 use Grepodata\Library\Controller\Indexer\Notes;
+use Grepodata\Library\Controller\Player;
+use Grepodata\Library\Controller\Town;
 use Grepodata\Library\Controller\World;
 use Grepodata\Library\Indexer\Validator;
 use Grepodata\Library\Logger\Logger;
@@ -289,9 +291,6 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
         $aRawKeys[] = $oIndex->key_code;
       }
       $aCities = CityInfo::allByTownIdByKeys($aRawKeys, $aParams['id']);
-      if ($aCities === null || sizeof($aCities) <= 0) {
-        throw new ModelNotFoundException();
-      }
 
       // Parse cities
       $oNow = Carbon::now();
@@ -348,8 +347,30 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
         }
       }
 
-      if ($bHasIntel === false) {
-        throw new ModelNotFoundException("All intel was deleted");
+      $aResponse['has_intel'] = $bHasIntel;
+      if ($bHasIntel == false) {
+        $aResponse['world'] = $oPrimaryIndex->world;
+        $aResponse['intel'] = array();
+        $aResponse['notes'] = array();
+        $aResponse['buildings'] = array();
+        $aResponse['latest_version'] = USERSCRIPT_VERSION;
+        $aResponse['update_message'] = USERSCRIPT_UPDATE_INFO;
+
+        if (isset($aParams['id'])) {
+          $aResponse['town_id'] = $aParams['id'];
+          $oTown = Town::firstById($oPrimaryIndex->world, $aParams['id']);
+          if ($oTown !== false) {
+            $aResponse['name'] = $oTown->name;
+            if ($oTown->player_id > 0) {
+              $aResponse['player_id'] = $oTown->player_id;
+              $oPlayer = Player::firstById($oPrimaryIndex->world, $oTown->player_id);
+              if ($oPlayer !== false) {
+                $aResponse['player_name'] = $oPlayer->name;
+                $aResponse['alliance_id'] = $oPlayer->alliance_id;
+              }
+            }
+          }
+        }
       }
 
       try {
