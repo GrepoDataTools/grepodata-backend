@@ -79,7 +79,7 @@ class Towns
         $aPrevious = null;
 
         if ($aPreviousData != false) {
-          $aPrevious = $aPreviousData[$aData['grep_id']];
+          $aPrevious = $aPreviousData[$aData['grep_id']] ?? null;
         }
 
         if ($aPrevious == null) {

@@ -158,7 +158,7 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
         $oNote->town_id = $aParams['town_id'];
         $oNote->poster_id = $aParams['poster_id'];
         $oNote->poster_name = $aParams['poster_name'];
-        $oNote->message = $aParams['message'];
+        $oNote->message = substr($aParams['message'], 0, 500);
         $oNote->save();
       }
 
@@ -309,7 +309,6 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
 
         if (empty($aResponse)) {
           $aResponse['world'] = $oIndex->world;
-          $aResponse['name'] = $oCity->town_name;
           $aResponse['town_id'] = $oCity->town_id;
           $aResponse['player_id'] = $oCity->player_id;
           $aResponse['player_name'] = $oCity->player_name;
@@ -320,6 +319,7 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
           $aResponse['update_message'] = USERSCRIPT_UPDATE_INFO;
         }
         $aResponse['alliance_id'] = $oCity->alliance_id;
+        $aResponse['name'] = $oCity->town_name;
 
         //$citystring = "_".$oCity->town_id.$oCity->parsed_date.$oCity->land_units.$oCity->sea_units.$oCity->mythical_units.$oCity->fireships.$oCity->buildings;
         $citystring = "_".$oCity->town_id.$oCity->parsed_date;
@@ -348,10 +348,10 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
       }
 
       $aResponse['has_intel'] = $bHasIntel;
-      if ($bHasIntel == false) {
+      if ($bHasIntel == false || !isset($aResponse['intel'])) {
         $aResponse['world'] = $oPrimaryIndex->world;
-        $aResponse['intel'] = array();
-        $aResponse['notes'] = array();
+        $aResponse['intel'] = $aResponse['intel'] ?? array();
+        $aResponse['notes'] = $aResponse['notes'] ?? array();
         $aResponse['buildings'] = array();
         $aResponse['latest_version'] = USERSCRIPT_VERSION;
         $aResponse['update_message'] = USERSCRIPT_UPDATE_INFO;

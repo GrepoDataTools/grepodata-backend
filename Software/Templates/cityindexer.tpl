@@ -48,6 +48,7 @@
             forum: true,
             stats: true,
             keys_enabled: true,
+			cmdoverview: false,
             key_inbox_prev: '[',
             key_inbox_next: ']',
         };
@@ -62,6 +63,7 @@
             SEND: 'sending..',
             ADDED: 'Indexed',
             VIEW: 'View intel',
+            TOWN_INTEL: 'Town intelligence',
             STATS_LINK: 'Show buttons that link to player/alliance statistics on grepodata.com',
             STATS_LINK_TITLE: 'Link to statistics',
             CHECK_UPDATE: 'Check for updates',
@@ -78,7 +80,9 @@
             COLLECT_INTEL_FORUM: 'Alliance forum (adds an "index+" button to alliance forum reports)',
             SHORTCUT_FUNCTION: 'Function',
             SAVED: 'Settings saved',
-            SHARE: 'Share'
+            SHARE: 'Share',
+			CMD_OVERVIEW_TITLE: 'Enhanced command overview (BETA)',
+			CMD_OVERVIEW_INFO: 'Enhance your command overview with unit intelligence from your enemy city index. Note: this is a new feature, currently still in development. Please contact us if you have feedback.',
         };
         if ('undefined' !== typeof Game) {
             switch (Game.locale_lang.substring(0, 2)) {
@@ -88,6 +92,7 @@
                         SEND: 'bezig..',
                         ADDED: 'Geindexeerd',
                         VIEW: 'Intel bekijken',
+                        TOWN_INTEL: 'Stad intel',
                         STATS_LINK: 'Knoppen toevoegen die linken naar speler/alliantie statistieken op grepodata.com',
                         STATS_LINK_TITLE: 'Link naar statistieken',
                         CHECK_UPDATE: 'Controleer op updates',
@@ -104,7 +109,9 @@
                         COLLECT_INTEL_FORUM: 'Alliantie forum (voegt een "index+" knop toe aan alliantie forum rapporten)',
                         SHORTCUT_FUNCTION: 'Functie',
                         SAVED: 'Instellingen opgeslagen',
-                        SHARE: 'Delen'
+                        SHARE: 'Delen',
+						CMD_OVERVIEW_TITLE: 'Uitgebreid beveloverzicht (BETA)',
+						CMD_OVERVIEW_INFO: 'Voeg troepen intel uit je city index toe aan het beveloverzicht. Let op: dit is een nieuwe feature, momenteel nog in ontwikkeling. Contacteer ons als je feedback hebt.',
                     };
                     break;
                 default:
@@ -112,13 +119,13 @@
             }
         }
 
-		// Scan for inbox reports
-		function parseInbox() {
-			if (gd_settings.inbox === true) {
-				parseInboxReport();
-			}
-		}
-		setInterval(parseInbox, 500);
+        // Scan for inbox reports
+        function parseInbox() {
+            if (gd_settings.inbox === true) {
+                parseInboxReport();
+            }
+        }
+        setInterval(parseInbox, 500);
 
         // Listen for game events
         $(document).ajaxComplete(function (e, xhr, opt) {
@@ -127,6 +134,10 @@
                 action = url[0].substr(5) + "/" + url[1].split(/&/)[1].substr(7);
             }
             switch (action) {
+				case "/town_overviews/command_overview":
+                    if (gd_settings.cmdoverview === true) {
+						enhanceCommandOverview(xhr);
+					}
                 case "/report/view":
                     // Parse reports straight from inbox
                     parseInbox();
@@ -162,10 +173,140 @@
                     if (!('stats' in result)) {
                         result.stats = true;
                     }
+                    if (!('cmdoverview' in result)) {
+                        result.cmdoverview = false;
+                    }
                     gd_settings = result;
                 }
             }
         }
+
+		// Enhance command overview
+		var parsedCommands = {};
+		function enhanceCommandOverview(xhr) {
+			var commandList = $('#command_overview').get(0);
+			var commands = $(commandList).find('li');
+			commands.each(function (c) {
+				try {
+					var command_id = this.id;
+					if (parsedCommands[command_id] && parsedCommands[command_id].is_enemy) {
+						enhanceCommand(command_id);
+					} else {
+						//var id = command_id.match(/\d+/)[0];
+						//var arrival_time = $(this).find('.eta-arrival-'+id).get(0).innerText.match(/([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]/)[0];
+						var cmd_units = $(this).find('.command_overview_units');
+						if (cmd_units.length != 0) {
+							parsedCommands[command_id] = {is_enemy: false};
+						} else {
+							var cmd_span = $(this).find('.cmd_span').get(0);
+							var cmd_ents = $(cmd_span).find('a');
+							if (cmd_ents.length == 4) {
+								var prev_town = null;
+								var cmd_town = null;
+								var cmd_player = null;
+								cmd_ents.each(function (t) {
+									var hash = this.hash;
+									var data = decodeHashToJson(hash);
+									if (this.className == 'gp_town_link') {
+										prev_town = data;
+									} else if (this.className == 'gp_player_link' && prev_town != null) {
+										if (Game.player_id != data.id) {
+											cmd_town = prev_town;
+											cmd_player = data;
+										}
+									}
+								});
+								parsedCommands[command_id] = {town: cmd_town, player: cmd_player, is_enemy: true};
+								enhanceCommand(command_id);
+							}
+						}
+					}
+				} catch (e) {
+					console.error("Unable to parse command: ", e);
+				}
+			});
+		}
+
+		function enhanceCommand(id, force=false) {
+			var cmd = parsedCommands[id];
+			var cmd_units = document.getElementById('gd_cmd_units_'+id);
+			if (!cmd_units || force) {
+				if (cmd_units && force) {
+					$('#gd_cmd_units_'+id).remove();
+				}
+				if (townIntelHistory[cmd.town.id]) {
+					// we have some town data in memory, lets show it\
+					var intel = townIntelHistory[cmd.town.id]
+					//var units = '<div class="command_overview_units">' +
+					//    '<div class="place_unit unit_archer unit_icon25x25 archer ">' +
+					//        '<span class="place_unit_black bold">55</span>' +
+					//        '<span class="place_unit_white bold">55</span>' +
+					//    '</div></div>';
+
+					if (intel.has_intel) {
+						var unitHtml = '<div id="gd_cmd_units_'+id+'" class="command_overview_units">';
+						for (var i = 0; i < Object.keys(intel.units).length; i++) {
+							var unit = intel.units[i];
+							var size = 10;
+							switch (Math.max(unit.count.toString().length, unit.killed.toString().length)) {
+								case 1:
+								case 2:
+									size = 11;
+									break;
+								case 3:
+									size = 10;
+									break;
+								case 4:
+									size = 8;
+									break;
+								case 5:
+									size = 6;
+									break;
+								default:
+									size = 10;
+							}
+							unitHtml = unitHtml +
+								'<div class="unit_icon25x25 ' + unit.name + '" style="overflow: unset; font-size: ' + size + 'px; text-shadow: 1px 1px 3px #000; color: #fff; font-weight: 700; border: 1px solid #626262; padding: 10px 0 0 0; line-height: 13px; height: 15px; text-align: right; margin-right: 2px;">' +
+								unit.count + '</div>';
+						}
+						unitHtml = unitHtml + '</div>';
+						$('#'+id).prepend(unitHtml);
+					} else {
+						var units = '<div id="gd_cmd_units_'+id+'" class="command_overview_units" style="margin-top: 14px;"><span style="font-size: 10px;">no intel</span></div>';
+						$('#'+id).prepend(units);
+					}
+
+				} else {
+					// show a shortcut to town intel
+					var units = '<div id="gd_cmd_units_'+id+'" class="command_overview_units" style="margin-top: 14px;"><a id="gd_cmd_intel_'+id+'" style="font-size: 10px;">'+translate.VIEW+' >></a></div>';
+					$('#'+id).prepend(units);
+				}
+
+				$('#gd_cmd_units_'+id).click(function () {
+					loadTownIntel(cmd.town.id, cmd.town.name, cmd.player.name, id);
+				});
+
+			}
+
+		}
+
+		// Decode entity hash
+		function decodeHashToJson(hash) {
+			// Remove hashtag prefix
+			if (hash.slice(0, 1) === '#') {
+				hash = hash.slice(1);
+			}
+			// Remove trailing =
+			for (var g = 0; g < 10; g++) {
+				if (hash.slice(hash.length - 1) === '=') {
+					hash = hash.slice(0, hash.length - 1)
+				}
+			}
+
+			var data = atob(hash);
+			var json = JSON.parse(data);
+			return json;
+		}
 
         // settings btn
         var gdsettings = false;
@@ -372,20 +513,7 @@
                             var ids = [];
                             for (var m = 0; m < towns.length; m++) {
                                 var href = towns[m].getElementsByTagName("a")[0].getAttribute("href");
-
-                                // Remove hashtag prefix
-                                if (href.slice(0, 1) === '#') {
-                                    href = href.slice(1);
-                                }
-                                // Remove trailing =
-                                for (var g = 0; g < 10; g++) {
-                                    if (href.slice(href.length - 1) === '=') {
-                                        href = href.slice(0, href.length - 1)
-                                    }
-                                }
-
-                                var townData = atob(href);
-                                var townJson = JSON.parse(townData);
+								var townJson = decodeHashToJson(href);
                                 ids.push(townJson.id);
                             }
                             if (ids.length === 2) {
@@ -557,14 +685,12 @@
                     case gd_settings.key_inbox_prev:
                         var prev = reportElement.getElementsByClassName('last_report game_arrow_left');
                         if (prev.length === 1 && prev[0] != null) {
-                            document.removeEventListener('keyup', inboxNavShortcut);
                             prev[0].click();
                         }
                         break;
                     case gd_settings.key_inbox_next:
                         var next = reportElement.getElementsByClassName('next_report game_arrow_right');
                         if (next.length === 1 && next[0] != null) {
-                            document.removeEventListener('keyup', inboxNavShortcut);
                             next[0].click();
                         }
                         break;
@@ -647,19 +773,7 @@
                                     var ids = [];
                                     for (var m = 0; m < towns.length; m++) {
                                         var href = towns[m].getAttribute("href");
-                                        // Remove hashtag prefix
-                                        if (href.slice(0, 1) === '#') {
-                                            href = href.slice(1);
-                                        }
-                                        // Remove trailing =
-                                        for (var g = 0; g < 10; g++) {
-                                            if (href.slice(href.length - 1) === '=') {
-                                                href = href.slice(0, href.length - 1)
-                                            }
-                                        }
-
-                                        var townData = atob(href);
-                                        var townJson = JSON.parse(townData);
+                                        var townJson = decodeHashToJson(href);
                                         ids.push(townJson.id);
                                     }
                                     if (ids.length === 2) {
@@ -806,7 +920,9 @@
                 });
                 settingsHtml = settingsHtml + '</p>' + (count > 0 ? '<p>' + translate.COUNT_1 + count + translate.COUNT_2 + '.</p>' : '') +
                     '<p id="gd_s_saved" style="display: none; position: absolute; left: 50px; margin: 0;"><strong>' + translate.SAVED + ' ✓</strong></p> ' +
-                    '<br/><hr>\n';
+                    '<br/>\n';
+
+				settingsHtml = settingsHtml + '<div style="max-height: 340px; overflow-y: scroll; background: #FFEECA; border: 2px solid #d0be97;">';
 
                 // Forum intel settings
                 settingsHtml += '\t\t\t<p style="margin-bottom: 10px; margin-left: 10px;"><strong>' + translate.COLLECT_INTEL + '</strong></p>\n' +
@@ -819,9 +935,16 @@
                     '\t\t\t<br><br><hr>\n';
 
                 // Stats link
-                settingsHtml += '\t\t\t<p style="margin-bottom: 10px; margin-left: 10px;"><strong>' + translate.STATS_LINK_TITLE + '</strong> <img style="background: ' + gd_icon + '; margin-top: -4px; position: absolute; margin-left: 10px; height: 23px; width: 26px; float: left;"/></p>\n' +
+                settingsHtml += '\t\t\t<p style="margin-bottom: 10px; margin-left: 10px;"><strong>' + translate.STATS_LINK_TITLE + '</strong> <img style="background: ' + gd_icon + '; margin-top: -8px; margin-left: 10px; height: 23px; width: 26px;"/></p>\n' +
                     '\t\t\t<div style="margin-left: 30px;" class="checkbox_new stats_gd_enabled' + (gd_settings.stats === true ? ' checked' : '') + '">\n' +
                     '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.STATS_LINK + '</div>\n' +
+                    '\t\t\t</div>\n' +
+                    '\t\t\t<br><br><hr>\n';
+
+                // Command overview
+                settingsHtml += '\t\t\t<p style="margin-bottom: 10px; margin-left: 10px;"><strong>' + translate.CMD_OVERVIEW_TITLE + '</strong></p>\n' +
+                    '\t\t\t<div style="margin-left: 30px;" class="checkbox_new cmdoverview_gd_enabled' + (gd_settings.cmdoverview === true ? ' checked' : '') + '">\n' +
+                    '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.CMD_OVERVIEW_INFO + '</div>\n' +
                     '\t\t\t</div>\n' +
                     '\t\t\t<br><br><hr>\n';
 
@@ -835,10 +958,10 @@
                     '\t\t\t\t<tr><td>' + translate.SHORTCUTS_INBOX_PREV + '</td><td>' + gd_settings.key_inbox_prev + '</td></tr>\n' +
                     '\t\t\t\t<tr><td>' + translate.SHORTCUTS_INBOX_NEXT + '</td><td>' + gd_settings.key_inbox_next + '</td></tr>\n' +
                     '\t\t\t</table></div>\n' +
-                    '\t\t\t<br/><hr>\n';
+                    '\t\t\t<br/>';
 
                 // Footer
-                settingsHtml += '\t\t\t<a href="https://grepodata.com/indexer/' + index_key + '" target="_blank">' + translate.VIEW + '</a>\n' +
+                settingsHtml += '</div>' +
                     '<p style="font-style: italic; font-size: 10px; float: right; margin:0px;">GrepoData city indexer v' + gd_version + ' [<a href="https://api.grepodata.com/userscript/cityindexer_' + index_hash + '.user.js" target="_blank">' + translate.CHECK_UPDATE + '</a>]</p>' +
                     '\t\t</div>\n' +
                     '    </div>\n' +
@@ -870,6 +993,9 @@
                 });
                 $(".stats_gd_enabled").click(function () {
                     settingsCbx('stats', !gd_settings.stats);
+                });
+                $(".cmdoverview_gd_enabled").click(function () {
+                    settingsCbx('cmdoverview', !gd_settings.cmdoverview);
                 });
                 $(".keys_enabled_gd_enabled").click(function () {
                     settingsCbx('keys_enabled', !gd_settings.keys_enabled);
@@ -905,31 +1031,85 @@
             localStorage.setItem('gd_city_indexer_s', JSON.stringify(gd_settings));
         }
 
-        function loadTownIntel(id) {
+		var townIntelHistory = {}
+		var openIntelWindows = {};
+        function loadTownIntel(id, town_name, player_name, cmd_id=0) {
             try {
+                var content_id = player_name + id;
+                content_id = content_id.split(' ').join('_');
+				if (openIntelWindows[content_id]) {
+					try {
+						openIntelWindows[content_id].close();
+					} catch (e) {console.log("unable to close window", e);}
+				}
+                var intel_window = Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG,
+                    '<a target="_blank" href="https://grepodata.com/indexer/town/'+index_key+'/'+world+'/'+id+'" class="write_message" style="background: ' + gd_icon + '"></a>&nbsp;&nbsp;' + translate.TOWN_INTEL + ': ' + town_name + ' (' + player_name + ')',
+                    {position: ["center", 110], minimizable: true});
+                intel_window.setWidth(600);
+                intel_window.setHeight(570);
+				openIntelWindows[content_id] = intel_window;
+
+                // Content
+                var content =
+                    //'<div id="dio_comparison" style="margin-bottom:5px; font-style:italic;"><div class="box_content hack"></div></div>'+
+                    '<div class="gdintel_'+content_id+'" style="width: 600px; height: 400px;">Loading intel..</div>';
+                intel_window.setContent(content);
+
+                // Menu bar
+                //var titlebar_content =
+                //	// Title tabs
+                //	'<div class="menu_wrapper closable" style="left: 108px;"><ul id="gd_intel_menu+'+content_id+'" class="menu_inner" style="">' +
+                //	'<li><a class="submenu_link notes" href="#"><span class="left"><span class="right"><span class="middle">' +
+                //	'<span class="tab_icon icon_small townicon_sh"></span><span class="tab_label">Notes</span>' +
+                //	'</span></span></span></a></li>' +
+                //	'<li><a class="submenu_link old_intel" href="#"><span class="left"><span class="right"><span class="middle">' +
+                //	'<span class="tab_icon icon_small townicon_di"></span><span class="tab_label">Old intel</span>' +
+                //	'</span></span></span></a></li>' +
+                //	'<li><a class="submenu_link intel active" href="#"><span class="left"><span class="right"><span class="middle">' +
+                //	'<span class="tab_icon icon_small townicon_so"></span><span class="tab_label">Town intelligence</span>' +
+                //	'</span></span></span></a></li>' +
+                //	'</ul></div';
+                //var window_root = $('.gdintel_'+content_id).parent().parent().parent().get(0);
+                //var titlebar = window_root.getElementsByClassName('ui-dialog-titlebar')[0];
+                //$(titlebar).append(titlebar_content);
+
                 indexes = [index_key];
                 if (globals.gdIndexScript.length > 1) {
                     indexes = globals.gdIndexScript;
                 }
-                indexes = JSON.stringify(indexes)
+                indexes = JSON.stringify(indexes);
 
-                $('.info_tab_content_' + id).empty();
-                $('.info_tab_content_' + id).append('Loading intel..');
                 $.ajax({
                     method: "get",
                     url: "https://api.grepodata.com/indexer/api/town?keys=" + indexes + "&id=" + id
                 }).error(function (err) {
-                    $('.info_tab_content_' + id).empty();
-                    $('.info_tab_content_' + id).append('<div style="text-align: center"><br/><br/>' +
+                    $('.gdintel_'+content_id).empty();
+                    $('.gdintel_'+content_id).append('<div style="text-align: center"><br/><br/>' +
                         'You have not yet collected any intelligence about this town.<br/>Index more reports about this town.<br/><br/>' +
                         '<a href="https://grepodata.com/indexer/' + index_key + '" target="_blank" style="">Index homepage: ' + index_key + '</a></div>');
                 }).done(function (b) {
                     try {
-                        $('.info_tab_content_' + id).css("max-height", '100%');
-                        $('.info_tab_content_' + id).css("height", '100%');
-                        var tooltips = [];
+                        //$('.gdintel_'+content_id).css("max-height", '100%');
+                        //$('.gdintel_'+content_id).css("height", '100%');
+                        var unitHeight = 275;
+                        var notesHeight = 150;
 
-                        $('.info_tab_content_' + id).empty();
+						console.log(b);
+						console.log(b.intel);
+                        if (b.intel==null || b.intel.length <= 0) {
+                            unitHeight = 150;
+                            notesHeight = 275;
+							townIntelHistory[id] = {has_intel: false}
+                        } else {
+							townIntelHistory[id] = {has_intel: true, units: b.intel[0].units}
+						}
+						if (cmd_id != 0) {
+							enhanceCommand(cmd_id, true);
+						}
+
+                        // Intel content
+                        var tooltips = [];
+                        $('.gdintel_'+content_id).empty();
 
                         // Version check
                         if (b.hasOwnProperty('latest_version') && b.latest_version != null && b.latest_version.toString() !== gd_version) {
@@ -937,14 +1117,16 @@
                                 '<div class="gd-update-available" style=" background: #b93b3b; color: #fff; text-align: center; border-radius: 10px; padding-bottom: 2px;">' +
                                 'New userscript version available: ' +
                                 '<a href="https://api.grepodata.com/userscript/cityindexer_' + index_hash + '.user.js" class="gd-ext-ref" target="_blank" ' +
-                                'style="color: #c5ecdb; text-decoration: underline;">Update now!</a></div>';
-                            $('.info_tab_content_' + id).append(updateHtml);
+                                'style="color: #ffffff; text-decoration: underline;">Update now!</a></div>';
+                            $('.gdintel_'+content_id).append(updateHtml);
                             $('.gd-update-available').tooltip((b.hasOwnProperty('update_message') ? b.update_message : b.latest_version));
+                            unitHeight -= 18;
                         }
 
                         // Buildings
-                        var build = '<div class="gd_build_' + id + '" style="padding: 5px 0;">';
+                        var build = '<div class="gd_build_' + id + '" style="padding-bottom: 4px;">';
                         var date = '';
+                        var hasBuildings = false;
                         for (var j = 0; j < Object.keys(b.buildings).length; j++) {
                             var name = Object.keys(b.buildings)[j];
                             var value = b.buildings[name].level.toString();
@@ -955,26 +1137,35 @@
                                     '<div style="position: absolute; top: 17px; margin-left: 8px; z-index: 10; color: #fff; font-size: 12px; font-weight: 700; text-shadow: 1px 1px 3px #000;">' + value + '</div>' +
                                     '</div>';
                             }
+                            if (name != 'wall') {
+                                hasBuildings = true;
+                            }
                         }
                         build = build + '</div>';
-                        $('.info_tab_content_' + id).append(build);
-                        $('.gd_build_' + id).tooltip('Buildings as of: ' + date);
+                        if (hasBuildings == true) {
+                            $('.gdintel_'+content_id).append(build);
+                            $('.gd_build_' + id).tooltip('Buildings as of: ' + date);
+                            unitHeight -= 40;
+                        }
 
+                        // Units table
                         var table =
                             '<div class="game_border" style="max-height: 100%;">\n' +
                             '   <div class="game_border_top"></div><div class="game_border_bottom"></div><div class="game_border_left"></div><div class="game_border_right"></div>\n' +
                             '   <div class="game_border_corner corner1"></div><div class="game_border_corner corner2"></div><div class="game_border_corner corner3"></div><div class="game_border_corner corner4"></div>\n' +
                             '   <div class="game_header bold">\n' +
-                            'Town intel for: ' + b.name + '<a href="https://grepodata.com/indexer/' + index_key + '" class="gd-ext-ref" target="_blank" style="float: right; color: #fff; text-decoration: underline;">Enemy city index: ' + index_key + '</a>\n' +
+                            'Town intel for: ' + b.name + '<a href="https://grepodata.com/indexer/' + index_key + '" class="gd-ext-ref" target="_blank" style="float: right; color: #fff; text-decoration: underline;">Index: ' + index_key + '</a>\n' +
                             '   </div>\n' +
-                            '   <div style="height: 280px;">' +
-                            '     <ul class="game_list" style="display: block; width: 100%; height: 280px; overflow-x: hidden; overflow-y: auto;">\n';
+                            '   <div style="height: '+unitHeight+'px;">' +
+                            '     <ul class="game_list" style="display: block; width: 100%; height: '+unitHeight+'px; overflow-x: hidden; overflow-y: auto;">\n';
+                        var bHasIntel = false;
                         for (var j = 0; j < Object.keys(b.intel).length; j++) {
                             var intel = b.intel[j];
                             var row = '';
 
                             // Type
                             if (intel.type != null && intel.type != '') {
+                                bHasIntel = true;
                                 var typeUrl = '';
                                 var tooltip = '';
                                 var flip = true;
@@ -1088,35 +1279,170 @@
                             var rowHeader = '<li class="' + (j % 2 === 0 ? 'odd' : 'even') + '" style="display: inherit; width: 100%; padding: 0 0 ' + (killed ? '0' : '4px') + ' 0;">';
                             table = table + rowHeader + row + '</li>\n';
                         }
-                        table = table + '</div></ul></div>';
-                        $('.info_tab_content_' + id).append(table);
+
+                        if (bHasIntel == false) {
+                            table = table + '<li class="even" style="display: inherit; width: 100%;"><div style="text-align: center;">' +
+                                '<strong>No unit intellgence available</strong><br/>' +
+                                'You have not yet indexed any reports about this town.<br/><br/>' +
+                                '<span style="font-style: italic;">note: intel about your allies (index contributors) is hidden by default</span></div></li>\n';
+                        }
+
+                        table = table + '</ul></div></div>';
+                        $('.gdintel_'+content_id).append(table);
                         for (var j = 0; j < tooltips.length; j++) {
                             $('.intel-type-' + id + '-' + j).tooltip(tooltips[j]);
                         }
 
+                        // notes
+                        var notesHtml =
+                            '<div class="game_border" style="max-height: 100%; margin-top: 10px;">\n' +
+                            '   <div class="game_border_top"></div><div class="game_border_bottom"></div><div class="game_border_left"></div><div class="game_border_right"></div>\n' +
+                            '   <div class="game_border_corner corner1"></div><div class="game_border_corner corner2"></div><div class="game_border_corner corner3"></div><div class="game_border_corner corner4"></div>\n' +
+                            '   <div class="game_header bold">\n' +
+                            'Notes for: ' + b.name + '\n' +
+                            '   </div>\n' +
+                            '   <div style="height: '+notesHeight+'px;">' +
+                            '     <ul class="game_list" style="display: block; width: 100%; height: '+notesHeight+'px; overflow-x: hidden; overflow-y: auto;">\n';
+                        notesHtml = notesHtml + '<li class="even" style="display: inherit; width: 100%;" id="gd_new_note_'+content_id+'">' +
+                            '<div style="display: inline-block; width: 40%; padding-left: 1%;"><strong>Add note: </strong><img alt="" src="/images/game/icons/player.png" style="padding-right: 2px;">'+Game.player_name+'</div>' +
+                            '<div style="display: inline-block; width: 45%;"><input id="gd_note_input_'+content_id+'" type="text" placeholder="Add a note about this town" style="width: 100%;"></div>' +
+                            '<div style="display: inline-block; width: 10%; padding-left: 2%;"><div id="gd_adding_note_'+content_id+'" style="display: none;">Saving..</div><div id="gd_add_note_'+content_id+'" gd-town-id="'+id+'" class="button_new" style="top: -1px;"><div class="left"></div><div class="right"></div><div class="caption js-caption">Add<div class="effect js-effect"></div></div></div></div>' +
+                            '</li>\n';
+                        var bHasNotes = false;
+                        for (var j = 0; j < Object.keys(b.notes).length; j++) {
+                            var note = b.notes[j];
+                            var row = '';
+                            bHasNotes = true;
+
+                            row = row + '<div style="display: table-cell; padding: 0 7px; width: 200px;"><img alt="" src="/images/game/icons/player.png" style="float: left; padding-right: 2px;">'+note.poster_name+'<br/>'+note.date+'</div>';
+                            //row = row + '<div style="display: table-cell; padding: 0 7px;"><img alt="" src="/images/game/icons/player.png" style="float: left; padding-right: 2px;">'+note.poster_name+'</div>';
+                            row = row + '<div style="display: table-cell; padding: 0 7px; width: 300px; vertical-align: middle;"><strong>'+note.message+'</strong></div>';
+
+                            if (Game.player_name == note.poster_name) {
+                                row = row + '<div style="display: table-cell; float: right; margin-top: -25px; margin-right: 5px;"><a class="gd_del_note_'+content_id+'" gd-note-id="'+note.id+'" gd-note-date="'+note.date+'" gd-note-content="'+escape(note.message)+'" style="float: right;">Delete</a></div>';
+                            } else {
+                                row = row + '<div style="display:"></div>';
+                            }
+
+                            var rowHeader = '<li class="' + (j % 2 === 0 ? 'odd' : 'even') + '" style="display: inherit; width: 100%; padding: 0 0 ' + (killed ? '0' : '4px') + ' 0;">';
+                            notesHtml = notesHtml + rowHeader + row + '</li>\n';
+                        }
+
+                        if (bHasNotes == false) {
+                            notesHtml = notesHtml + '<li class="odd" style="display: inherit; width: 100%;"><div style="text-align: center;">' +
+                                'There are no notes for this town' +
+                                '</div></li>\n';
+                        }
+
+                        notesHtml = notesHtml + '</ul></div></div>';
+                        $('.gdintel_'+content_id).append(notesHtml);
+
+                        // Add note
+                        $('#gd_add_note_'+content_id).click(function () {
+                            var town_id = $('#gd_add_note_'+content_id).attr('gd-town-id');
+                            var note = $('#gd_note_input_'+content_id).val().split('<').join(' ').split('>').join(' ');
+                            if (note != '') {
+                                $('.gd_note_error_msg').hide();
+                                if (note.length > 500) {
+                                    $('#gd_new_note_'+content_id).after('<li class="even gd_note_error_msg" style="display: inherit; width: 100%;" id="gd_new_note_'+content_id+'">'+
+                                        '<div style="text-align: center;"><strong>Note is too long.</strong> A note can have a maximum of 500 characters.</div>' +
+                                        '</li>\n');
+                                } else {
+                                    $('#gd_add_note_'+content_id).hide();
+                                    $('#gd_adding_note_'+content_id).show();
+                                    $('#gd_note_input_'+content_id).prop('disabled',true);
+                                    saveNewNote(town_id, note, content_id);
+                                }
+                            }
+                        });
+
+                        // Del note
+                        $('.gd_del_note_'+content_id).click(function () {
+                            var note_id = $(this).attr('gd-note-id');
+                            var note_date = $(this).attr('gd-note-date');
+                            var note_text = $(this).attr('gd-note-content');
+                            $(this).hide();
+                            $(this).after('<p style="margin: 0;">Note deleted</p>');
+                            saveDelNote(note_date, note_text);
+                        });
+
                         var world = Game.world_id;
                         var exthtml =
                             '<div style="display: list-item" class="gd-ext-ref">' +
-                            (b.player_id != null && b.player_id != 0 ? '   <a href="https://grepodata.com/indexer/player/' + index_key + '/' + world + '/' + b.player_id + '" target="_blank" style="float: left;"><img alt="" src="/images/game/icons/player.png" style="float: left; padding-right: 2px;">(' + b.player_name + ') Show player intel</a>' : '') +
+                            (b.player_id != null && b.player_id != 0 ? '   <a href="https://grepodata.com/indexer/player/' + index_key + '/' + world + '/' + b.player_id + '" target="_blank" style="float: left;"><img alt="" src="/images/game/icons/player.png" style="float: left; padding-right: 2px;">Show player intel (' + b.player_name + ')</a>' : '') +
                             (b.alliance_id != null && b.alliance_id != 0 ? '   <a href="https://grepodata.com/indexer/alliance/' + index_key + '/' + world + '/' + b.alliance_id + '" target="_blank" style="float: right;"><img alt="" src="/images/game/icons/ally.png" style="float: left; padding-right: 2px;">Show alliance intel</a>' : '') +
                             '</div>';
-                        $('.info_tab_content_' + id).append(exthtml);
+                        $('.gdintel_'+content_id).append(exthtml);
                         $('.gd-ext-ref').tooltip('Opens in new tab');
 
                     } catch (u) {
-                        console.log(u);
-                        $('.info_tab_content_' + id).empty();
-                        $('.info_tab_content_' + id).append('<div style="text-align: center"><br/><br/>' +
+                        console.error("Error rendering town intel", u);
+                        $('.gdintel_'+content_id).empty();
+                        $('.gdintel_'+content_id).append('<div style="text-align: center"><br/><br/>' +
                             'No intel available at the moment.<br/>Index some new reports about this town to collect intel.<br/><br/>' +
                             '<a href="https://grepodata.com/indexer/' + index_key + '" target="_blank" style="">Index homepage: ' + index_key + '</a></div>');
                     }
                 });
             } catch (w) {
                 console.log(w);
-                $('.info_tab_content_' + id).empty();
-                $('.info_tab_content_' + id).append('<div style="text-align: center"><br/><br/>' +
+                $('.gdintel_'+content_id).empty();
+                $('.gdintel_'+content_id).append('<div style="text-align: center"><br/><br/>' +
                     'No intel available at the moment.<br/>Index some new reports about this town to collect intel.<br/><br/>' +
                     '<a href="https://grepodata.com/indexer/' + index_key + '" target="_blank" style="">Index homepage: ' + index_key + '</a></div>');
+            }
+        }
+
+        function saveNewNote(town_id, note, content_id) {
+            try {
+                indexes = [index_key];
+                if (globals.gdIndexScript.length > 1) {
+                    indexes = globals.gdIndexScript;
+                }
+                indexes = JSON.stringify(indexes);
+
+                $.ajax({
+                    method: "get",
+                    url: "https://api.grepodata.com/indexer/addnote?keys=" + indexes + "&town_id=" + town_id + "&message=" + note + "&poster_name=" + Game.player_name + "&poster_id=" + Game.player_id
+                }).error(function (err) {
+                    console.log("Error saving note: ", err);
+                    $('#gd_new_note_'+content_id).after('<li class="even gd_note_error_msg" style="display: inherit; width: 100%;" id="gd_new_note_'+content_id+'">'+
+                        '<div style="display: table-cell; padding: 0 7px;"><strong>Error saving note.</strong> please try again later or contact us if this error persists.</div>' +
+                        '</li>\n');
+                    $('#gd_add_note_'+content_id).show();
+                    $('#gd_adding_note_'+content_id).hide();
+                    $('#gd_note_input_'+content_id).prop('disabled',false);
+                }).done(function (b) {
+                    $('#gd_new_note_'+content_id).after('<li class="even" style="display: inherit; width: 100%;" id="gd_new_note_'+content_id+'">'+
+                        '<div style="display: table-cell; padding: 0 7px; width: 200px;"><img alt="" src="/images/game/icons/player.png" style="float: left; padding-right: 2px;">'+Game.player_name+'<br/>just now</div>'+
+                        '<div style="display: table-cell; padding: 0 7px;"><strong>'+note+'</strong></div></li>\n');
+                    $('#gd_note_input_'+content_id).val('');
+                    $('#gd_add_note_'+content_id).show();
+                    $('#gd_adding_note_'+content_id).hide();
+                    $('#gd_note_input_'+content_id).prop('disabled',false);
+                });
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function saveDelNote(date, note) {
+            try {
+                indexes = [index_key];
+                if (globals.gdIndexScript.length > 1) {
+                    indexes = globals.gdIndexScript;
+                }
+                indexes = JSON.stringify(indexes);
+
+                $.ajax({
+                    method: "get",
+                    url: "https://api.grepodata.com/indexer/delnote?keys=" + indexes + "&date=" + date + "&message=" + note + "&poster_name=" + Game.player_name
+                }).error(function (err) {
+                    console.log("Error deleting note: ", err);
+                }).done(function (b) {
+                    console.log("Note deleted: ", b);
+                });
+            } catch (e) {
+                console.error(e);
             }
         }
 
@@ -1186,11 +1512,19 @@
                 }
             }
 
-            // Handle click
+            // Handle click:  view intel
             $('#gd_index_town_' + town_id).click(function () {
-                var panel_root = $('.info_tab_content_' + town_id).parent().parent().parent().get(0);
-                panel_root.getElementsByClassName('active')[0].classList.remove('active');
-                loadTownIntel(town_id);
+                var town_name = town_id;
+                var player_name = '';
+                try {
+                    panel_root = $('.info_tab_content_' + town_id).parent().parent().parent().get(0);
+                    town_name = panel_root.getElementsByClassName('ui-dialog-title')[0].innerText;
+                    player_name = panel_root.getElementsByClassName('gp_player_link')[0].innerText;
+                } catch (e) {
+                    console.log(e);
+                }
+                //panel_root.getElementsByClassName('active')[0].classList.remove('active');
+                loadTownIntel(town_id, town_name, player_name);
             });
         }
 
