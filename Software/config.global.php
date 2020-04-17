@@ -24,4 +24,4 @@ define('USERSCRIPT_VERSION',      '4.0.0');
 define('USERSCRIPT_UPDATE_INFO',  'You can now add notes to towns. Added intel to command overview (still a work in progress; enable it in the grepodata settings if you want to try it out)');
 
 define('DEFAULT_SERVER',  'nl');
-define('DEFAULT_WORLD',   'nl75');
+define('DEFAULT_WORLD',   'nl79');

@@ -191,6 +191,12 @@ class CityInfo
       $aCityFields['date'] = $aCityFields['sort_date']->format('d-m-y H:i:s');
     }
 
+    $DaysAgo = 0;
+    try {
+      $oNow = Carbon::now();
+      $DaysAgo = $aCityFields['sort_date']->diff($oNow)->days;
+    } catch (Exception $e) {}
+
     $Wall = '';
     if ($oCity->report_type !== "attack_on_conquest") {
       $Build = $oCity->buildings;
@@ -221,6 +227,7 @@ class CityInfo
 
     // build info list
     $aUnits = array();
+    $UnitCost = 0;
     foreach ($aCityFields['land'] as $Name => $Value) {
       $UnitName = "";
       foreach (self::land_units as $ForumName => $FixedName) {
@@ -232,7 +239,11 @@ class CityInfo
       if ($UnitName === "") {
         $UnitName = $Name;
       }
-      $aUnits[] = self::ParseValue($UnitName, $Value);
+      $aUnit = self::ParseValue($UnitName, $Value);
+      if (isset($aUnit['count']) && $aUnit['count']!='?') {
+        $UnitCost += $aUnit['count'];
+      }
+      $aUnits[] = $aUnit;
     }
     foreach ($aCityFields['air'] as $Name => $Value) {
       $UnitName = "";
@@ -245,10 +256,18 @@ class CityInfo
       if ($UnitName === "") {
         $UnitName = $Name;
       }
-      $aUnits[] = self::ParseValue($UnitName, $Value);
+      $aUnit = self::ParseValue($UnitName, $Value);
+      if (isset($aUnit['count']) && $aUnit['count']!='?') {
+        $UnitCost += $aUnit['count'] * 4;
+      }
+      $aUnits[] = $aUnit;
     }
     if (isset($aCityFields['fireships']) && $aCityFields['fireships'] !== null && $aCityFields['fireships'] !== "") {
-      $aUnits[] = self::ParseValue(self::fireship, $aCityFields['fireships']);
+      $aUnit = self::ParseValue(self::fireship, $aCityFields['fireships']);
+      if (isset($aUnit['count']) && $aUnit['count']!='?') {
+        $UnitCost += $aUnit['count'] * 3;
+      }
+      $aUnits[] = $aUnit;
     }
     foreach ($aCityFields['sea'] as $Name => $Value) {
       $UnitName = "";
@@ -261,9 +280,20 @@ class CityInfo
       if ($UnitName === "") {
         $UnitName = $Name;
       }
-      $aUnits[] = self::ParseValue($UnitName, $Value);
+      $aUnit = self::ParseValue($UnitName, $Value);
+      if (isset($aUnit['count']) && $aUnit['count']!='?') {
+        $UnitCost += $aUnit['count'] * 2;
+      }
+      $aUnits[] = $aUnit;
     }
 
+    // Calc intel cost (higher is better)
+    $IntelCost = $UnitCost * (1-(min(($DaysAgo+1)*5, 90)/100));
+    if ($aCityFields['type'] == 'enemy_attack' || $aCityFields['type'] == 'support') {
+      $IntelCost *= 100; // We care a lot more about this information
+    }
+
+    // Format response
     $aFormatted = array(
       'id'        => $oCity->id,
       'deleted'   => $aCityFields['deleted'] || false,
@@ -275,6 +305,7 @@ class CityInfo
       'wall'    => $Wall,
       'hero'    => strtolower($aCityFields['hero']),
       'god'     => $aCityFields['god'],
+      'cost'    => (int) $IntelCost
     );
     return $aFormatted;
   }
