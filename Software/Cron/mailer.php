@@ -19,7 +19,7 @@ Logger::enableDebug();
 Logger::debugInfo("Started mailer");
 
 $Start = Carbon::now();
-Common::markAsRunning(__FILE__, 24*60, false);
+Common::markAsRunning(__FILE__, 2*60, false);
 
 // process mail jobs
 $Count = 0;

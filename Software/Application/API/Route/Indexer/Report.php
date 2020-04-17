@@ -54,6 +54,10 @@ class Report extends \Grepodata\Library\Router\BaseRoute
       foreach ($aHashes as $Id) {
         $aResponse['f'][] = $Id->report_id;
       }
+      if (isset($aParams['filter'])) {
+        // TODO: parse filter
+        Logger::debugInfo("filter => key: ".$aParams['key'].", id: ".$aParams['player_id'].", value: ".$aParams['filter']);
+      }
 
       die(self::OutputJson($aResponse, 200));
     } catch (\Exception $e){

@@ -23,7 +23,7 @@ class Notes extends Model
       'index_key' => $this->index_key,
       'poster_name' => $this->poster_name,
       'poster_id'  => $this->poster_id,
-      'message'    => $this->message,
+      'message'    => json_decode($this->message, true),
       'created_at' => $this->created_at,
     );
   }

@@ -158,7 +158,7 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
         $oNote->town_id = $aParams['town_id'];
         $oNote->poster_id = $aParams['poster_id'];
         $oNote->poster_name = $aParams['poster_name'];
-        $oNote->message = substr($aParams['message'], 0, 500);
+        $oNote->message = json_encode(substr($aParams['message'], 0, 500));
         $oNote->save();
       }
 
@@ -195,8 +195,9 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
       // Find notes
       $aNotes = Notes::allByKeysByPoster($aInputKeys, $aParams['poster_name']);
 
+      $msg = json_encode($aParams['message']);
       foreach ($aNotes as $oNote) {
-        if ($oNote->created_at->format('d-m-y H:i') == $aParams['date'] && $oNote->message == $aParams['message']) {
+        if ($oNote->created_at->format('d-m-y H:i') == $aParams['date'] && $oNote->message == $msg) {
           $oNote->delete();
         }
       }
@@ -375,7 +376,7 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
 
       try {
         // Hide owner intel
-        $aOwners = IndexOverview::getOwnerAllianceIds($aParams['key']);
+        $aOwners = IndexOverview::getOwnerAllianceIds($oPrimaryIndex->key_code);
         if (isset($aResponse['alliance_id']) && $aResponse['alliance_id']!==null) {
           if (in_array($aResponse['alliance_id'], $aOwners)) {
             die(self::OutputJson(array(

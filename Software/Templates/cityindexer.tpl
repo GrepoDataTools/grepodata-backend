@@ -699,7 +699,6 @@
                             addToIndexFromInbox(reportHash, reportElement);
 
                             $(".gd-copy-command-" + reportHash).click(function () {
-                                console.log('copy to clip');
                                 $(".gd-copy-input-" + reportHash).select();
                                 document.execCommand('copy');
 
@@ -922,7 +921,6 @@
                                 addForumReportById($('#gd_index_f_' + reportId).attr('report_id'), $('#gd_index_f_' + reportId).attr('report_hash'));
 
                                 $(".gd-copy-command-" + reportHash).click(function () {
-                                    console.log('copy to clip');
                                     $(".gd-copy-input-" + reportHash).select();
                                     document.execCommand('copy');
 
@@ -1411,10 +1409,10 @@
                             '   </div>\n' +
                             '   <div style="height: '+notesHeight+'px;">' +
                             '     <ul class="game_list" style="display: block; width: 100%; height: '+notesHeight+'px; overflow-x: hidden; overflow-y: auto;">\n';
-                        notesHtml = notesHtml + '<li class="even" style="display: inherit; width: 100%;" id="gd_new_note_'+content_id+'">' +
-                            '<div style="display: inline-block; width: 40%; padding-left: 1%;"><strong>Add note: </strong><img alt="" src="/images/game/icons/player.png" style="padding-right: 2px;">'+Game.player_name+'</div>' +
-                            '<div style="display: inline-block; width: 45%;"><input id="gd_note_input_'+content_id+'" type="text" placeholder="Add a note about this town" style="width: 100%;"></div>' +
-                            '<div style="display: inline-block; width: 10%; padding-left: 2%;"><div id="gd_adding_note_'+content_id+'" style="display: none;">Saving..</div><div id="gd_add_note_'+content_id+'" gd-town-id="'+id+'" class="button_new" style="top: -1px;"><div class="left"></div><div class="right"></div><div class="caption js-caption">Add<div class="effect js-effect"></div></div></div></div>' +
+                        notesHtml = notesHtml + '<li class="even" style="display: flex; justify-content: space-around; align-items: center;" id="gd_new_note_'+content_id+'">' +
+                            '<div style=""><strong>Add note: </strong><img alt="" src="/images/game/icons/player.png" style="vertical-align: top; padding-right: 2px;">'+Game.player_name+'</div>' +
+                            '<div style="width: '+(60 - Game.player_name.length)+'%;"><input id="gd_note_input_'+content_id+'" type="text" placeholder="Add a note about this town" style="width: 100%;"></div>' +
+                            '<div style=""><div id="gd_adding_note_'+content_id+'" style="display: none;">Saving..</div><div id="gd_add_note_'+content_id+'" gd-town-id="'+id+'" class="button_new" style="top: -1px;"><div class="left"></div><div class="right"></div><div class="caption js-caption">Add<div class="effect js-effect"></div></div></div></div>' +
                             '</li>\n';
                         var bHasNotes = false;
                         for (var j = 0; j < Object.keys(b.notes).length; j++) {
@@ -1472,7 +1470,7 @@
                         $('.gd_del_note_'+content_id).click(function () {
                             var note_id = $(this).attr('gd-note-id');
                             var note_date = $(this).attr('gd-note-date');
-                            var note_text = $(this).attr('gd-note-content');
+                            var note_text = unescape($(this).attr('gd-note-content'));
                             $(this).hide();
                             $(this).after('<p style="margin: 0;">Note deleted</p>');
                             saveDelNote(note_date, note_text);
@@ -1648,7 +1646,7 @@
             try {
                 $.ajax({
                     method: "get",
-                    url: "https://api.grepodata.com/indexer/getlatest?key=" + index_key + "&player_id=" + gd_w.Game.player_id
+                    url: "https://api.grepodata.com/indexer/getlatest?key=" + index_key + "&player_id=" + Game.player_id + "&filter=" + JSON.stringify(gd_settings)
                 }).done(function (b) {
                     try {
                         if (globals.reportsFoundForum === undefined) {
