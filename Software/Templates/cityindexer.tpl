@@ -1450,7 +1450,7 @@
                         // Add note
                         $('#gd_add_note_'+content_id).click(function () {
                             var town_id = $('#gd_add_note_'+content_id).attr('gd-town-id');
-                            var note = $('#gd_note_input_'+content_id).val().split('<').join(' ').split('>').join(' ');
+                            var note = $('#gd_note_input_'+content_id).val().split('<').join(' ').split('>').join(' ').split('#').join(' ');
                             if (note != '') {
                                 $('.gd_note_error_msg').hide();
                                 if (note.length > 500) {
