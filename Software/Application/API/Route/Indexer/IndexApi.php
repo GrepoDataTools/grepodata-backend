@@ -111,7 +111,7 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
     $aParams = array();
     try {
       // Validate params
-      $aParams = self::validateParams('town_id', 'poster_name', 'poster_id', 'message');
+      $aParams = self::validateParams(array('town_id', 'poster_name', 'poster_id', 'message'));
 
       $aInputKeys = array();
       if (isset($aParams['key'])) {
@@ -177,7 +177,7 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
     $aParams = array();
     try {
       // Validate params
-      $aParams = self::validateParams('date', 'poster_name', 'message');
+      $aParams = self::validateParams(array('date', 'poster_name', 'message'));
 
       $aInputKeys = array();
       if (isset($aParams['key'])) {
