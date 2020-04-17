@@ -1422,7 +1422,11 @@
                             var row = '';
                             bHasNotes = true;
 
-                            row = row + '<div style="display: table-cell; padding: 0 7px; width: 200px;"><img alt="" src="/images/game/icons/player.png" style="float: left; padding-right: 2px;">'+note.poster_name+'<br/>'+note.date+'</div>';
+                            row = row + '<div style="display: table-cell; padding: 0 7px; width: 200px;">' +
+								(note.poster_id > 0 ? '<a href="#'+getPlayerHash(note.poster_id, note.poster_name)+'" class="gp_player_link">': '') +
+								'<img alt="" src="/images/game/icons/player.png" style="padding-right: 2px; vertical-align: top;">' +
+								note.poster_name+(note.poster_id > 0 ?'</a>':'')+'<br/>'+note.date+
+								'</div>';
                             //row = row + '<div style="display: table-cell; padding: 0 7px;"><img alt="" src="/images/game/icons/player.png" style="float: left; padding-right: 2px;">'+note.poster_name+'</div>';
                             row = row + '<div style="display: table-cell; padding: 0 7px; width: 300px; vertical-align: middle;"><strong>'+note.message+'</strong></div>';
 

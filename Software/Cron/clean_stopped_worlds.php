@@ -47,7 +47,7 @@ foreach ($Worlds as $oWorld) {
   if (isset($argv[1]) && $argv[1]!=null && $argv[1]!='' && $argv[1]!=$oWorld->grep_id) continue;
 
   try {
-    Logger::error("Processing world data cleanup for world: " . $oWorld->grep_id);
+    Logger::warning("Processing world data cleanup for world: " . $oWorld->grep_id);
 
     // Elasticsearch players
     $aPlayers = \Grepodata\Library\Controller\Player::allActiveByWorld($oWorld->grep_id);

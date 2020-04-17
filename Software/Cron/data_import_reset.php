@@ -44,7 +44,7 @@ foreach ($aWorlds as $oWorld) {
         Logger::warning('Detected out of sync world: ' . $oWorld . '. Stopping world tomorrow');
       }
       if (strtotime("-3 day") > strtotime($oWorld->grep_server_time)) {
-        Logger::error('Stopping world: ' . $oWorld . '. 3+ days of no data!');
+        Logger::warning('Stopping world: ' . $oWorld . '. 3+ days of no data!');
         $oWorld->stopped = 1;
         $oWorld->save();
         continue;

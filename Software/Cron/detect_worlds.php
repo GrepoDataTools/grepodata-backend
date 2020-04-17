@@ -54,7 +54,7 @@ foreach ($aServers as $Server) {
       unset($aPlayerData);
 
       // new world!
-      Logger::error("New world detected: " . $WorldNum);
+      Logger::warning("New world detected: " . $WorldNum);
       $oNewWorld = new \Grepodata\Library\Model\World();
       $oNewWorld->grep_id = $WorldNum;
       $oNewWorld->php_timezone = $oWorld->php_timezone;
@@ -130,7 +130,7 @@ foreach ($aServers as $Server) {
         $Code = $Server . substr($WorldUrl, strrpos($WorldUrl, '/')+1);
 
         if ($oWorld->grep_id === $Code && !is_null($Name) && $Name != '') {
-          Logger::error("Found matching name for new world: $Code = $Name");
+          Logger::warning("Found matching name for new world: $Code = $Name");
           $oWorld->name = $Name;
           $oWorld->save();
           $bFound = true;

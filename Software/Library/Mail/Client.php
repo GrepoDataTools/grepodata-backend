@@ -44,7 +44,7 @@ class Client
 
       return $result;
     } catch (\Exception $e) {
-      Logger::error("Error sending mail with subject: ".$Subject.". Error: ".$e->getMessage());
+      Logger::warning("Error sending mail with subject: ".$Subject.". Error: ".$e->getMessage());
       try {
         if ($oMail !== null || $bCreateMailObject == true) {
           // Save new mail object

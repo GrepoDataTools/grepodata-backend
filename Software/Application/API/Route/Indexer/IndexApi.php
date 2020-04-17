@@ -392,6 +392,11 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
         return ($a['sort_date'] > $b['sort_date']) ? -1 : 1;
       });
 
+      // Give newest record a cost boost
+      if (sizeof($aResponse['intel'])>0) {
+        $aResponse['intel'][0]['cost'] *= 5;
+      }
+
       return self::OutputJson($aResponse);
 
     } catch (ModelNotFoundException $e) {
