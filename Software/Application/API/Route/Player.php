@@ -214,9 +214,9 @@ class Player extends \Grepodata\Library\Router\BaseRoute
             if ($oPlayer!=null&&$oPlayer!=false) {
               $aData = $oPlayer->getPublicFields();
               foreach ($aData as $Field => $Value) {
-                if (!array_key_exists($Field, $aResponse['results'][$i])) {
-                  $aResponse['results'][$i][$Field] = $Value;
-                }
+                //if (!array_key_exists($Field, $aResponse['results'][$i])) {
+                $aResponse['results'][$i][$Field] = $Value;
+                //}
               }
               if (isset($aParams['query']) && $oPlayer->name === $aParams['query']) {
                 $aBestMatch = $aResponse['results'][$i];
