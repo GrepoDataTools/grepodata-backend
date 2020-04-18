@@ -10,6 +10,8 @@ use \Illuminate\Database\Eloquent\Model;
  * @property mixed name
  * @property mixed points
  * @property mixed player_id
+ * @property mixed island_x
+ * @property mixed island_y
  */
 class Town extends Model
 {
@@ -24,6 +26,8 @@ class Town extends Model
       'name'        => $this->name,
       'points'      => $this->points,
       'player_id'   => $this->player_id,
+      'ix'          => $this->island_x,
+      'iy'          => $this->island_y,
     );
   }
 
@@ -33,6 +37,8 @@ class Town extends Model
       'grep_id'     => $this->grep_id,
       'name'        => $this->name,
       'points'      => $this->points,
+      'ix'          => $this->island_x,
+      'iy'          => $this->island_y,
     );
   }
 }

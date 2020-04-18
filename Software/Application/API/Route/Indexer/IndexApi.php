@@ -150,8 +150,11 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
         }
         $aIndexList[] = $oIndex;
       }
+      $PrimaryIndex = $aIndexList[0];
+      $oWorld = World::getWorldById($PrimaryIndex->world);
 
       // Save note to each index
+      $PrimaryId = 0;
       foreach ($aIndexList as $oIndex) {
         $oNote = new \Grepodata\Library\Model\Indexer\Notes();
         $oNote->index_key = $oIndex->key_code;
@@ -159,10 +162,29 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
         $oNote->poster_id = $aParams['poster_id'];
         $oNote->poster_name = $aParams['poster_name'];
         $oNote->message = json_encode(substr($aParams['message'], 0, 500));
+        if ($PrimaryId != 0) {
+          $oNote->note_id = $PrimaryId;
+        }
         $oNote->save();
+        if ($PrimaryId == 0) {
+          $PrimaryId = $oNote->id;
+          $oNote->note_id = $PrimaryId;
+          $oNote->save();
+        }
       }
 
-      return self::OutputJson(array('success' => true));
+      $aInsertedNote = array();
+      if (isset($oNote)) {
+        $aInsertedNote = $oNote->getPublicFields();
+        $Created = $oNote->created_at;
+        $Created->setTimezone($oWorld->php_timezone);
+        $aInsertedNote['date'] = $Created->format('d-m-y H:i');
+      }
+
+      return self::OutputJson(array(
+        'success' => true,
+        'note' => $aInsertedNote
+      ));
 
     } catch (Exception $e) {
       die(self::OutputJson(array(
@@ -177,7 +199,7 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
     $aParams = array();
     try {
       // Validate params
-      $aParams = self::validateParams(array('date', 'poster_name', 'message'));
+      $aParams = self::validateParams();
 
       $aInputKeys = array();
       if (isset($aParams['key'])) {
@@ -192,14 +214,41 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
         ), 400));
       }
 
-      // Find notes
-      $aNotes = Notes::allByKeysByPoster($aInputKeys, $aParams['poster_name']);
-
-      $msg = json_encode($aParams['message']);
-      foreach ($aNotes as $oNote) {
-        if ($oNote->created_at->format('d-m-y H:i') == $aParams['date'] && $oNote->message == $msg) {
-          $oNote->delete();
+      if (isset($aParams['note_id']) && isset($aParams['poster_name'])) {
+        // Delete by note id
+        $aNotes = Notes::allByKeysByNoteId($aInputKeys, $aParams['note_id']);
+        if (sizeof($aNotes) > 10) {
+          Logger::error("Note delete mismatch.  keys: " . json_encode($aInputKeys) . ", note_id: " . json_encode($aParams['note_id']));
+          throw new Exception("Note delete count mismatch");
         }
+        foreach ($aNotes as $oNote) {
+          if ($oNote->poster_name == $aParams['poster_name']) {
+            $oNote->delete();
+          }
+        }
+      }
+      else if (isset($aParams['date']) && isset($aParams['poster_name']) && isset($aParams['message'])) {
+        // Old delete method
+        $PrimaryIndex = $aInputKeys[0];
+        $oIndex = \Grepodata\Library\Controller\Indexer\IndexInfo::first($PrimaryIndex);
+        $oWorld = World::getWorldById($oIndex->world);
+
+        // Find notes
+        $aNotes = Notes::allByKeysByPoster($aInputKeys, $aParams['poster_name']);
+
+        $msg = json_encode($aParams['message']);
+        foreach ($aNotes as $oNote) {
+          $Created = $oNote->created_at;
+          $Created->setTimezone($oWorld->php_timezone);
+          if ($Created->format('d-m-y H:i') == $aParams['date'] && $oNote->message == $msg) {
+            $oNote->delete();
+          }
+        }
+      } else {
+        die(self::OutputJson(array(
+          'message' => 'Bad request! Invalid or missing fields.',
+          'fields'  => 'Missing: note_id OR date,poster_name,message'
+        ), 400));
       }
 
       return self::OutputJson(array('success' => true));
@@ -258,20 +307,21 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
       }
       $oPrimaryIndex = $aIndexList[0];
 
+      // World
+      /** @var \Grepodata\Library\Model\World $oWorld */
+      $oWorld = World::getWorldById($oPrimaryIndex->world);
+
+      $TownId = 0;
       if (isset($aParams['id']) && $aParams['id'] != '') {
         // Get by id
-        try {
-          if (isset($_SERVER["HTTP_REFERER"]) && strpos($_SERVER["HTTP_REFERER"], 'grepolis.com')!==false) {
-            Logger::silly("Get town intel: https://grepodata.com/indexer/town/" . $aInputKeys[0] . "/".$oIndex->world."/" . $aParams['id'] . ". Referer: " . $_SERVER["HTTP_REFERER"]);
-          }
-        } catch (Exception $e) {}
+        $TownId = $aParams['id'];
       } elseif (isset($aParams['name']) && $aParams['name'] != '') {
         // Get by name
         $aTowns = CityInfo::allByName($oPrimaryIndex->key_code, $aParams['name']);
         if (!is_null($aTowns) && sizeof($aTowns) > 0) {
-          /** @var City $oTown */
-          $oTown = $aTowns[0];
-          $aParams['id'] = $oTown->town_id;
+          /** @var City $oCity */
+          $oCity = $aTowns[0];
+          $TownId = $oCity->town_id;
         } else {
           throw new ModelNotFoundException();
         }
@@ -282,20 +332,36 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
         ), 400));
       }
 
-      // World
-      /** @var \Grepodata\Library\Model\World $oWorld */
-      $oWorld = World::getWorldById($oPrimaryIndex->world);
+      // Get town
+      $oTown = Town::firstById($oWorld->grep_id, $TownId);
+      if ($oTown == false || is_null($oTown)) {
+        throw new ModelNotFoundException();
+      }
 
       // Find cities
       $aRawKeys = array();
       foreach ($aIndexList as $oIndex) {
         $aRawKeys[] = $oIndex->key_code;
       }
-      $aCities = CityInfo::allByTownIdByKeys($aRawKeys, $aParams['id']);
+      $aCities = CityInfo::allByTownIdByKeys($aRawKeys, $TownId);
 
       // Parse cities
       $oNow = Carbon::now();
-      $aResponse = array();
+      $aResponse = array(
+        'world' => $oWorld->grep_id,
+        'town_id' => $TownId,
+        'name' => $oTown->name,
+        'ix' => $oTown->island_x,
+        'iy' => $oTown->island_y,
+        'player_id' => $oTown->player_id,
+        'alliance_id' => 0,
+        'player_name' => '',
+        'notes' => array(),
+        'buildings' => array(),
+        'intel' => array(),
+        'latest_version' => USERSCRIPT_VERSION,
+        'update_message' => USERSCRIPT_UPDATE_INFO,
+      );
       $bHasIntel = false;
       $aDuplicateCheck = array();
       /** @var City $oCity */
@@ -308,17 +374,9 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
         }
         $bHasIntel = true;
 
-        if (empty($aResponse)) {
-          $aResponse['world'] = $oIndex->world;
-          $aResponse['town_id'] = $oCity->town_id;
-          $aResponse['player_id'] = $oCity->player_id;
-          $aResponse['player_name'] = $oCity->player_name;
-          $aResponse['intel'] = array();
-          $aResponse['notes'] = array();
-          $aResponse['buildings'] = array();
-          $aResponse['latest_version'] = USERSCRIPT_VERSION;
-          $aResponse['update_message'] = USERSCRIPT_UPDATE_INFO;
-        }
+        // Override newest info
+        $aResponse['player_id'] = $oCity->player_id;
+        $aResponse['player_name'] = $oCity->player_name;
         $aResponse['alliance_id'] = $oCity->alliance_id;
         $aResponse['name'] = $oCity->town_name;
 
@@ -333,44 +391,29 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
           $aResponse['intel'][] = $aRecord;
         }
       }
+      $aResponse['has_intel'] = $bHasIntel;
 
-      // Find notes
-      $aNotes = Notes::allByTownIdByKeys($aRawKeys, $aParams['id']);
-      $aDuplicates = array();
-      foreach ($aNotes as $Note) {
-        $bHasIntel = true;
-        $aNote = $Note->getPublicFields();
-        $aNote['date'] = $Note->created_at->format('d-m-y H:i');
-        $uid = $Note->town_id . $aNote['date'] . $Note->message;
-        if (!in_array($uid, $aDuplicates)) {
-          $aResponse['notes'][] = $aNote;
-          $aDuplicates[] = $uid;
+      if ($bHasIntel == false) {
+        if ($oTown->player_id > 0) {
+          $oPlayer = Player::firstById($oPrimaryIndex->world, $oTown->player_id);
+          if ($oPlayer !== false) {
+            $aResponse['player_name'] = $oPlayer->name;
+            $aResponse['alliance_id'] = $oPlayer->alliance_id;
+          }
         }
       }
 
-      $aResponse['has_intel'] = $bHasIntel;
-      if ($bHasIntel == false || !isset($aResponse['intel'])) {
-        $aResponse['world'] = $oPrimaryIndex->world;
-        $aResponse['intel'] = $aResponse['intel'] ?? array();
-        $aResponse['notes'] = $aResponse['notes'] ?? array();
-        $aResponse['buildings'] = array();
-        $aResponse['latest_version'] = USERSCRIPT_VERSION;
-        $aResponse['update_message'] = USERSCRIPT_UPDATE_INFO;
-
-        if (isset($aParams['id'])) {
-          $aResponse['town_id'] = $aParams['id'];
-          $oTown = Town::firstById($oPrimaryIndex->world, $aParams['id']);
-          if ($oTown !== false) {
-            $aResponse['name'] = $oTown->name;
-            if ($oTown->player_id > 0) {
-              $aResponse['player_id'] = $oTown->player_id;
-              $oPlayer = Player::firstById($oPrimaryIndex->world, $oTown->player_id);
-              if ($oPlayer !== false) {
-                $aResponse['player_name'] = $oPlayer->name;
-                $aResponse['alliance_id'] = $oPlayer->alliance_id;
-              }
-            }
-          }
+      // Find notes
+      $aNotes = Notes::allByTownIdByKeys($aRawKeys, $TownId);
+      $aDuplicates = array();
+      foreach ($aNotes as $Note) {
+        $aNote = $Note->getPublicFields();
+        $Created = $Note->created_at;
+        $Created->setTimezone($oWorld->php_timezone);
+        $aNote['date'] = $Created->format('d-m-y H:i');
+        if (!in_array($Note->note_id, $aDuplicates)) {
+          $aResponse['notes'][] = $aNote;
+          $aDuplicates[] = $Note->note_id;
         }
       }
 

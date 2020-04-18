@@ -33,4 +33,17 @@ class Notes
       ->get();
   }
 
+  /**
+   * @param $Keys array list of Index identifiers
+   * @param $NoteId int note id
+   * @return Collection|\Grepodata\Library\Model\Indexer\Notes[]
+   */
+  public static function allByKeysByNoteId($Keys, $NoteId)
+  {
+    return \Grepodata\Library\Model\Indexer\Notes::whereIn('index_key', $Keys, 'and')
+      ->where('note_id', '=', $NoteId)
+      ->orderBy('id', 'desc')
+      ->get();
+  }
+
 }
