@@ -214,7 +214,7 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
         ), 400));
       }
 
-      if (isset($aParams['note_id']) && isset($aParams['poster_name'])) {
+      if (isset($aParams['note_id'])) {
         // Delete by note id
         $aNotes = Notes::allByKeysByNoteId($aInputKeys, $aParams['note_id']);
         if (sizeof($aNotes) > 10) {
@@ -222,7 +222,23 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
           throw new Exception("Note delete count mismatch");
         }
         foreach ($aNotes as $oNote) {
-          if ($oNote->poster_name == $aParams['poster_name']) {
+          $bDelete = false;
+          if (isset($aParams['poster_name']) && $oNote->poster_name == $aParams['poster_name']) {
+            $bDelete = true;
+          } elseif (isset($aParams['csa'])) {
+            // Validate csa
+            $oIndex = \Grepodata\Library\Controller\Indexer\IndexInfo::first($oNote->index_key);
+            if ($oIndex == false || !isset($oIndex->csa) || $oIndex->csa == null || $oIndex->csa == '' || $oIndex->csa != $aParams['csa']) {
+              die(self::OutputJson(array(
+                'success' => false,
+                'message' => 'Invalid csa token'
+              ), 200));
+            } else {
+              $bDelete = true;
+            }
+          }
+
+          if ($bDelete == true)  {
             $oNote->delete();
           }
         }

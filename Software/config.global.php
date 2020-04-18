@@ -21,7 +21,7 @@ define('INNO_DATA_ALLIANCE_DEF',  'alliance_kills_def.txt.gz');
 define('INNO_DATA_CONQUERS',      'conquers.txt.gz');
 
 define('USERSCRIPT_VERSION',      '4.0.0');
-define('USERSCRIPT_UPDATE_INFO',  'You can now add notes to towns. Added intel to command overview (still a work in progress; enable it in the grepodata settings if you want to try it out)');
+define('USERSCRIPT_UPDATE_INFO',  'You can now add notes to towns. Show intel into command overview (enable in options to use this). Added intel shortcut to context menu.');
 
 define('DEFAULT_SERVER',  'nl');
 define('DEFAULT_WORLD',   'nl79');

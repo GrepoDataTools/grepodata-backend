@@ -42,12 +42,15 @@
         // Globals
         var time_regex = /([0-5]\d)(:)([0-5]\d)(:)([0-5]\d)(?!.*([0-5]\d)(:)([0-5]\d)(:)([0-5]\d))/gm;
         var gd_icon = "url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAXCAYAAAAV1F8QAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAYdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjAuNvyMY98AAAG0SURBVEhLYwACASA2AGIHGmGQ2SA7GGzf7oj4//5g7v/3B7L+vz+U///NVv//r9ZY/3+7K/b/683e/9/tSSTIf7M9DGhGzv8PR4r/v9uX9v/D0TKw+MdTzf9BdoAsSnm13gnEoQn+dLYLRKcAMUPBm62BYMH/f/9QFYPMfL3JE0QXQCzaFkIziz6d60FYBApvdIt07AJQ+ORgkJlfrs2DW1T9ar0jxRZJ7JkDxshiIDPf744B0dUgiwrebA8l2iJsBuISB5l5q58dREOC7u3OKJpZdHmKEsKi1xvdybIIpAamDpdFbze5ISzClrypZdGLZboIiz6d7cRrES4DibHozdYghEWfL0ygmUVvtwcjLPpwuJBmFj1ZpImw6N3uBNpZNE8ByaK9KXgtIheDzHy12gJuUfG7falYLSIHI5sBMvPlCiMQXQy2CFQPoVtEDQwy88VScByBLSqgpUVQH0HjaH8GWJAWGFR7A2mwRSkfjlUAM1bg/9cbXMAVFbhaBib5N9uCwGxQdU2ID662T9aDMag5AKrOQVX9u73JIIvANSyoPl8CxOdphEFmg9sMdGgFMQgAAH4W0yWXhEbUAAAAAElFTkSuQmCC')";
+		var gd_icon_intel = "url('data:image/png;base64,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')";
+		var gd_icon_svg = '<svg aria-hidden="true" data-prefix="fas" data-icon="university" class="svg-inline--fa fa-university fa-w-16" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="color: #18bc9c; width: 18px;"><path fill="currentColor" d="M496 128v16a8 8 0 0 1-8 8h-24v12c0 6.627-5.373 12-12 12H60c-6.627 0-12-5.373-12-12v-12H24a8 8 0 0 1-8-8v-16a8 8 0 0 1 4.941-7.392l232-88a7.996 7.996 0 0 1 6.118 0l232 88A8 8 0 0 1 496 128zm-24 304H40c-13.255 0-24 10.745-24 24v16a8 8 0 0 0 8 8h464a8 8 0 0 0 8-8v-16c0-13.255-10.745-24-24-24zM96 192v192H60c-6.627 0-12 5.373-12 12v20h416v-20c0-6.627-5.373-12-12-12h-36V192h-64v192h-64V192h-64v192h-64V192H96z"></path></svg>';
 
         // Settings
         var gd_settings = {
             inbox: true,
             forum: true,
             stats: true,
+			context: true,
             keys_enabled: true,
             cmdoverview: false,
             key_inbox_prev: '[',
@@ -91,6 +94,8 @@
             SHARE: 'Share',
             CMD_OVERVIEW_TITLE: 'Enhanced command overview (BETA)',
             CMD_OVERVIEW_INFO: 'Enhance your command overview with unit intelligence from your enemy city index. Note: this is a new feature, currently still in development. Please contact us if you have feedback.',
+            CONTEXT_TITLE: 'Expand context menu',
+            CONTEXT_INFO: 'Add an intel shortcut to the town context menu. The shortcut opens the intel for this town.',
         };
         if ('undefined' !== typeof Game) {
             switch (Game.locale_lang.substring(0, 2)) {
@@ -120,6 +125,8 @@
                         SHARE: 'Delen',
                         CMD_OVERVIEW_TITLE: 'Uitgebreid beveloverzicht (BETA)',
                         CMD_OVERVIEW_INFO: 'Voeg troepen intel uit je city index toe aan het beveloverzicht. Let op: dit is een nieuwe feature, momenteel nog in ontwikkeling. Contacteer ons als je feedback hebt.',
+						CONTEXT_TITLE: 'Context menu uitbreiden',
+						CONTEXT_INFO: 'Voeg een intel snelkoppeling toe aan het context menu. De snelkoppeling verwijst naar de verzamelde intel van de stad.',
                     };
                     break;
                 default:
@@ -137,38 +144,45 @@
 
         // Listen for game events
         $(document).ajaxComplete(function (e, xhr, opt) {
-            var url = opt.url.split("?"), action = "";
-            if (typeof(url[1]) !== "undefined" && typeof(url[1].split(/&/)[1]) !== "undefined") {
-                action = url[0].substr(5) + "/" + url[1].split(/&/)[1].substr(7);
-            }
-            switch (action) {
-                case "/town_overviews/command_overview":
-                    if (gd_settings.cmdoverview === true) {
-                        enhanceCommandOverview(xhr);
-                    }
-                case "/report/view":
-                    // Parse reports straight from inbox
-                    parseInbox();
-                    break;
-                case "/town_info/info":
-                    viewTownIntel(xhr);
-                    break;
-                case "/message/view": // catch inbox previews
-                case "/message/preview": // catch inbox messages
-                case "/alliance_forum/forum": // catch forum messages
-                    // Parse reports from forum and messages
-                    if (gd_settings.forum === true) {
-                        setTimeout(parseForumReport, 200);
-                    }
-                    break;
-                case "/player/index":
-                    settings();
-                    break;
-                case "/player/get_profile_html":
-                case "/alliance/profile":
-                    linkToStats(action, opt);
-                    break;
-            }
+			try {
+				var url = opt.url.split("?"), action = "";
+				if (typeof(url[1]) !== "undefined" && typeof(url[1].split(/&/)[1]) !== "undefined") {
+					action = url[0].substr(5) + "/" + url[1].split(/&/)[1].substr(7);
+				}
+				if (verbose) {
+					console.log(action);
+				}
+				switch (action) {
+					case "/town_overviews/command_overview":
+						if (gd_settings.cmdoverview === true) {
+							enhanceCommandOverview(xhr);
+						}
+					case "/report/view":
+						// Parse reports straight from inbox
+						parseInbox();
+						break;
+					case "/town_info/info":
+						viewTownIntel(xhr);
+						break;
+					case "/message/view": // catch inbox previews
+					case "/message/preview": // catch inbox messages
+					case "/alliance_forum/forum": // catch forum messages
+						// Parse reports from forum and messages
+						if (gd_settings.forum === true) {
+							setTimeout(parseForumReport, 200);
+						}
+						break;
+					case "/player/index":
+						settings();
+						break;
+					case "/player/get_profile_html":
+					case "/alliance/profile":
+						linkToStats(action, opt);
+						break;
+				}
+			} catch (e) {
+				console.error(e);
+			}
         });
 
         function readSettingsCookie() {
@@ -181,6 +195,9 @@
                     if (!('stats' in result)) {
                         result.stats = true;
                     }
+                    if (!('context' in result)) {
+                        result.context = true;
+                    }
                     if (!('cmdoverview' in result)) {
                         result.cmdoverview = false;
                     }
@@ -188,6 +205,46 @@
                 }
             }
         }
+
+		// Expand context menu
+		$.Observer(GameEvents.map.town.click).subscribe('GD_CONTEXT', function (e, data) {
+			try {
+				if (gd_settings.context && data && data.id) {
+					if (!data.player_id || data.player_id != Game.player_id) {
+						expandContextMenu(data.id, (data.name?data.name:''), (data.player_name?data.player_name:''));
+					}
+				}
+			} catch (e) {
+				console.error(e);
+			}
+		});
+		$.Observer(GameEvents.map.context_menu.click).subscribe('GD_CONTEXT', function (e) {
+			try {
+				if (gd_settings.context && e.currentTarget && e.currentTarget.activeElement && e.currentTarget.activeElement.hash) {
+					var data = decodeHashToJson(e.currentTarget.activeElement.hash);
+					if (data.id && data.name) {
+						expandContextMenu(data.id, data.name, '');
+					}
+				}
+			} catch (e) {
+				console.error(e);
+			}
+		});
+		function expandContextMenu(town_id, town_name, player_name = '') {
+			var intelHtml = '<div id="gd_context_intel" class="context_icon" style="z-index: 4; background: ' + gd_icon_intel + ';">'+
+				'<div class="icon_caption"><div class="top"></div><div class="middle"></div><div class="bottom"></div><div class="caption">Intel</div></div></div>';
+			//var intelHtml = '<div id="gd_context_intel" class="context_icon" style="z-index: 4; background: ' + gd_icon + '; background-repeat: no-repeat; top: 19px; transform: scale(1.5);">'+
+				//'<div class="icon_caption" style="transform: scale(.6); left: 41px; top: 15px; width: 60px;"><div class="top"></div><div class="middle"></div><div class="bottom"></div><div class="caption">Intel</div></div></div>';
+			var menuItems = $("#context_menu").find('.context_icon');
+			if (!menuItems || menuItems.length >= 5) {
+				$("#context_menu").append(intelHtml);
+				$("#gd_context_intel").animate({top: (menuItems.length>5?100:120)+'px'}, 120);
+				//$("#gd_context_intel").animate({left: '140px'}, 120);
+				$('#gd_context_intel').click(function() {
+					loadTownIntel(town_id, town_name, player_name);
+				});
+			}
+		}
 
         // Enhance command overview
         var parsedCommands = {};
@@ -383,7 +440,7 @@
         var gdsettings = false;
         $('.gods_area').append('<div class="btn_settings circle_button gd_settings_icon" style="right: 0px; top: 95px; z-index: 10;">\n' +
             '\t<div style="margin: 7px 0px 0px 4px; width: 24px; height: 24px;">\n' +
-            '\t<svg aria-hidden="true" data-prefix="fas" data-icon="university" class="svg-inline--fa fa-university fa-w-16" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="color: #18bc9c; width: 18px;"><path fill="currentColor" d="M496 128v16a8 8 0 0 1-8 8h-24v12c0 6.627-5.373 12-12 12H60c-6.627 0-12-5.373-12-12v-12H24a8 8 0 0 1-8-8v-16a8 8 0 0 1 4.941-7.392l232-88a7.996 7.996 0 0 1 6.118 0l232 88A8 8 0 0 1 496 128zm-24 304H40c-13.255 0-24 10.745-24 24v16a8 8 0 0 0 8 8h464a8 8 0 0 0 8-8v-16c0-13.255-10.745-24-24-24zM96 192v192H60c-6.627 0-12 5.373-12 12v20h416v-20c0-6.627-5.373-12-12-12h-36V192h-64v192h-64V192h-64v192h-64V192H96z"></path></svg>\n' +
+            '\t'+gd_icon_svg+'\n' +
             '\t</div>\n' +
             '<span class="indicator" id="gd_index_indicator" data-indicator-id="indexed" style="background: #182B4D;display: none;z-index: 10000; position: absolute;bottom: 18px;right: 0px;border: solid 1px #ffca4c; height: 12px;color: #fff;font-size: 9px;border-radius: 9px;padding: 0 3px 1px;line-height: 13px;font-weight: 400;">0</span>' +
             '</div>');
@@ -617,17 +674,28 @@
                     reportHash = hashText.report_hash();
                     console.log('Parsed inbox report with hash: ' + reportHash);
 
-                    // Add index button
+                    // Create index button
                     var addBtn = document.createElement('a');
+                    var txtSpan = document.createElement('span');
+                    var rightSpan = document.createElement('span');
+                    var leftSpan = document.createElement('span');
+                    txtSpan.innerText = translate.ADD + ' +';
+
                     addBtn.setAttribute('href', '#');
                     addBtn.setAttribute('id', 'gd_index_rep_');
                     addBtn.setAttribute('class', 'button gd_btn_index');
-                    var styleStr = 'float: right;';
-                    addBtn.setAttribute('style', styleStr);
-                    var txtSpan = document.createElement('span');
+                    addBtn.setAttribute('style', 'float: right;');
                     txtSpan.setAttribute('id', 'gd_index_rep_txt');
-                    txtSpan.setAttribute('style', 'min-width: 50px;');
+                    txtSpan.setAttribute('style', 'min-width: 50px; margin: 0 3px;');
+                    txtSpan.setAttribute('class', 'middle');
+                    rightSpan.setAttribute('class', 'right');
+                    leftSpan.setAttribute('class', 'left');
 
+                    rightSpan.appendChild(txtSpan);
+                    leftSpan.appendChild(rightSpan);
+                    addBtn.appendChild(leftSpan);
+
+					// Check if this report was already indexed
                     var reportFound = false;
                     for (var j = 0; j < globals.reportsFoundInbox.length; j++) {
                         if (globals.reportsFoundInbox[j] === reportHash) {
@@ -636,20 +704,9 @@
                     }
                     if (reportFound) {
                         addBtn.setAttribute('style', 'color: #36cd5b; float: right;');
+                        txtSpan.setAttribute('style', 'cursor: default;');
                         txtSpan.innerText = translate.ADDED + ' ✓';
                     } else {
-                        txtSpan.innerText = translate.ADD + ' +';
-                    }
-
-                    txtSpan.setAttribute('class', 'middle');
-                    var rightSpan = document.createElement('span');
-                    rightSpan.setAttribute('class', 'right');
-                    var leftSpan = document.createElement('span');
-                    leftSpan.setAttribute('class', 'left');
-                    rightSpan.appendChild(txtSpan);
-                    leftSpan.appendChild(rightSpan);
-                    addBtn.appendChild(leftSpan);
-                    if (!reportFound) {
                         addBtn.addEventListener('click', function () {
                             if ($('#gd_index_rep_txt').get(0)) {
                                 $('#gd_index_rep_txt').get(0).innerText = translate.SEND;
@@ -658,18 +715,7 @@
                         }, false);
                     }
 
-                    var parentContainer = $(reportElement).closest('.gpwindow_frame').eq(0);
-                    if (!parentContainer.hasClass('gd-inbox-expanded-container')) {
-                        parentContainer.height(parentContainer.height() + 24);
-                        parentContainer.addClass('gd-inbox-expanded-container');
-                    }
-
-                    var grepodataFooter = document.createElement('div');
-                    grepodataFooter.setAttribute('id', 'gd_inbox_footer');
-                    //grepodataFooter.setAttribute('style', 'display: block; position: absolute; right: 2px; bottom: 0;');
-
-                    grepodataFooter.appendChild(addBtn);
-
+					// Create share button
                     var shareBtn = document.createElement('a');
                     var shareInput = document.createElement('input');
                     var rightShareSpan = document.createElement('span');
@@ -680,7 +726,7 @@
                     shareInput.setAttribute('style', 'float: right;');
                     txtShareSpan.setAttribute('id', 'gd_share_rep_txt');
                     txtShareSpan.setAttribute('class', 'middle');
-                    txtShareSpan.setAttribute('style', 'min-width: 50px;');
+                    txtShareSpan.setAttribute('style', 'min-width: 50px; margin: 0 3px;');
                     rightShareSpan.setAttribute('class', 'right');
                     leftShareSpan.setAttribute('class', 'left');
                     leftShareSpan.appendChild(rightShareSpan);
@@ -719,25 +765,27 @@
                         }
                     });
 
+					// Create custom footer
+                    var grepodataFooter = document.createElement('div');
+                    grepodataFooter.setAttribute('id', 'gd_inbox_footer');
+                    grepodataFooter.appendChild(addBtn);
                     grepodataFooter.appendChild(shareBtn)
                     footerElement.appendChild(grepodataFooter);
 
-                    // Figure out button placement..
+                    // Set footer button placement
                     var folderElement = footerElement.querySelector('#select_folder_id');
-                    var footerWidth = footerElement.offsetWidth;
-                    var dateWidth = dateElement.offsetWidth;
-                    //var folderWidth = folderElement.offsetWidth;
-                    //var availableWidth = footerWidth - dateWidth - folderWidth;
-                    //footerElement.style.height = '47px';
                     footerElement.style.backgroundSize = 'auto 100%';
-                    footerElement.style.paddingTop = '26px';
-                    dateElement.style.marginTop = '-21px';
+                    footerElement.style.padding = '6px 0';
+                    dateElement.style.marginTop = '-4px';
+                    dateElement.style.marginLeft = '3px';
                     dateElement.style.position = 'absolute';
-
+                    dateElement.style.zIndex = '7';
+					dateElement.style.background = 'url(https://gpnl.innogamescdn.com/images/game/border/footer.png) repeat-x 0px -6px';
                     if (folderElement !== null) {
-                        folderElement.style.marginTop = '-21px';
-                        folderElement.style.marginLeft = (dateWidth + 5) + 'px';
                         folderElement.style.position = 'absolute';
+                        folderElement.style.marginTop = '12px';
+                        folderElement.style.marginLeft = '3px';
+                        folderElement.style.zIndex = '6';
                     }
 
                     // Handle inbox keyboard shortcuts
@@ -1004,7 +1052,7 @@
                     '\t\t\t<br><br><hr>\n';
 
                 // Stats link
-                settingsHtml += '\t\t\t<p style="margin-bottom: 10px; margin-left: 10px;"><strong>' + translate.STATS_LINK_TITLE + '</strong> <img style="background: ' + gd_icon + '; margin-top: -8px; margin-left: 10px; height: 23px; width: 26px;"/></p>\n' +
+                settingsHtml += '\t\t\t<p style="margin-left: 10px; display: inline-flex; height: 14px;"><strong>' + translate.STATS_LINK_TITLE + '</strong> <span style="background: '+gd_icon+'; width: 26px; height: 24px; margin-top: -5px; margin-left: 10px;"></span></p>\n' +
                     '\t\t\t<div style="margin-left: 30px;" class="checkbox_new stats_gd_enabled' + (gd_settings.stats === true ? ' checked' : '') + '">\n' +
                     '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.STATS_LINK + '</div>\n' +
                     '\t\t\t</div>\n' +
@@ -1014,6 +1062,13 @@
                 settingsHtml += '\t\t\t<p style="margin-bottom: 10px; margin-left: 10px;"><strong>' + translate.CMD_OVERVIEW_TITLE + '</strong></p>\n' +
                     '\t\t\t<div style="margin-left: 30px;" class="checkbox_new cmdoverview_gd_enabled' + (gd_settings.cmdoverview === true ? ' checked' : '') + '">\n' +
                     '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.CMD_OVERVIEW_INFO + '</div>\n' +
+                    '\t\t\t</div>\n' +
+                    '\t\t\t<br><br><hr>\n';
+
+                // Context menu
+                settingsHtml += '\t\t\t<p style="margin-left: 10px; display: inline-flex; height: 14px;"><strong>' + translate.CONTEXT_TITLE + '</strong> <span style="background: '+gd_icon_intel+'; width: 50px; height: 50px; transform: scale(0.6); margin-top: -18px;"></span></p>\n' +
+                    '\t\t\t<div style="margin-left: 30px;" class="checkbox_new context_gd_enabled' + (gd_settings.cmdoverview === true ? ' checked' : '') + '">\n' +
+                    '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.CONTEXT_INFO + '</div>\n' +
                     '\t\t\t</div>\n' +
                     '\t\t\t<br><br><hr>\n';
 
@@ -1066,6 +1121,9 @@
                 });
                 $(".cmdoverview_gd_enabled").click(function () {
                     settingsCbx('cmdoverview', !gd_settings.cmdoverview);
+                });
+                $(".context_gd_enabled").click(function () {
+                    settingsCbx('context', !gd_settings.context);
                 });
                 $(".keys_enabled_gd_enabled").click(function () {
                     settingsCbx('keys_enabled', !gd_settings.keys_enabled);
@@ -1155,7 +1213,7 @@
                 }
 				var intelUrl = 'https://grepodata.com/indexer/town/'+index_key+'/'+world+'/'+id;
                 var intel_window = Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG,
-                    '<a target="_blank" href="'+intelUrl+'" class="write_message" style="background: ' + gd_icon + '"></a>&nbsp;&nbsp;' + translate.TOWN_INTEL + ': ' + town_name + ' (' + player_name + ')',
+                    '<a target="_blank" href="'+intelUrl+'" class="write_message" style="background: ' + gd_icon + '"></a>&nbsp;&nbsp;' + translate.TOWN_INTEL + ': ' + town_name + (player_name!=''?(' (' + player_name + ')'):''),
                     {position: ["center", 110], minimizable: true});
                 intel_window.setWidth(600);
                 intel_window.setHeight(590);
