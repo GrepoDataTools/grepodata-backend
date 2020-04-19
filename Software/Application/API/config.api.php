@@ -315,6 +315,11 @@ $oRouter->Add('towninfo', new Route('/town', array(
   '_method'     => 'GetTownInfo'
 )));
 
+// status
+$oRouter->Add('analyticsindexer', new Route('/analytics/indexer', array(
+  '_controller' => '\Grepodata\Application\API\Route\Status',
+  '_method'     => 'IndexerUsage'
+)));
 
 
 /** TODO:

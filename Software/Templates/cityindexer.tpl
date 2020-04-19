@@ -155,7 +155,7 @@
 				switch (action) {
 					case "/town_overviews/command_overview":
 						if (gd_settings.cmdoverview === true) {
-							enhanceCommandOverview(xhr);
+							setTimeout(enhanceCommandOverview, 20);
 						}
 					case "/report/view":
 						// Parse reports straight from inbox
@@ -207,7 +207,7 @@
         }
 
 		// Expand context menu
-		$.Observer(GameEvents.map.town.click).subscribe('GD_CONTEXT', function (e, data) {
+		$.Observer(GameEvents.map.town.click).subscribe(async (e, data) => {
 			try {
 				if (gd_settings.context && data && data.id) {
 					if (!data.player_id || data.player_id != Game.player_id) {
@@ -218,7 +218,7 @@
 				console.error(e);
 			}
 		});
-		$.Observer(GameEvents.map.context_menu.click).subscribe('GD_CONTEXT', function (e) {
+		$.Observer(GameEvents.map.context_menu.click).subscribe(async (e) => {
 			try {
 				if (gd_settings.context && e.currentTarget && e.currentTarget.activeElement && e.currentTarget.activeElement.hash) {
 					var data = decodeHashToJson(e.currentTarget.activeElement.hash);
@@ -249,7 +249,7 @@
         // Enhance command overview
         var parsedCommands = {};
 		var bParsingEnabledTemp = true;
-        function enhanceCommandOverview(xhr = {}) {
+        function enhanceCommandOverview() {
 			// Add temp filter button to footer
             var gd_filter = document.getElementById('gd_cmd_filter');
 			if (!gd_filter) {
@@ -271,6 +271,9 @@
 
 			// Parse overview
 			if (bParsingEnabledTemp) {
+				//let movements = Object.values(MM.getModels().MovementsUnits);
+				//console.log(movements);
+
 				var commandList = $('#command_overview').get(0);
 				var commands = $(commandList).find('li');
 				var parseLimit = 100; // Limit number of parsed commands
@@ -317,6 +320,8 @@
 						console.error("Unable to parse command: ", e);
 					}
 				});
+
+				$('.gd_cmd_units').tooltip('Town intel (GrepoData index)');
 			}
         }
 

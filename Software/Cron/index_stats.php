@@ -57,8 +57,8 @@ foreach ($aIndex as $oIndex) {
     try {
 
       if ($oCity['report_type'] === 'spy') $Spy_count++;
-      else if ($oCity['report_type'] === 'friendly_attack') $Att_count++;
-      else $Def_count++;
+      else if (in_array($oCity['report_type'], array('friendly_attack', 'enemy_attack'))) $Att_count++;
+      else if ($oCity['report_type'] === 'support') $Def_count++;
 
       if (!in_array($oCity->town_id, $aFoundTowns)) {
         $aFoundTowns[] = $oCity->town_id;
