@@ -124,5 +124,39 @@ $oReport->title = "Indexer report error rate";
 $oReport->data = json_encode($aStats);
 $oReport->save();
 
+// Service
+$aStats = DB::select( DB::raw("
+select count(*) as count, date(created_at) as date 
+from Operation_log
+where created_at >= date_sub(curdate(), interval 1 year) 
+and level <= 2 
+group by date"
+));
+$oReport = DailyReport::firstOrNew(array('type' => 'indexer_generic_warning_rate'));
+$oReport->title = "GrepoData warning rate";
+$oReport->data = json_encode($aStats);
+$oReport->save();
+
+// Script version
+$aStats = DB::select( DB::raw("
+SELECT script_version, count(*) as count, date(created_at) as date 
+FROM `Index_report` 
+WHERE created_at >= date_sub(curdate(), interval 1 year) 
+GROUP BY date, script_version"
+));
+$aData = array();
+foreach ($aStats as $oStat) {
+  if (!isset($aData[$oStat->date])) {
+    $aData[$oStat->date] = array(
+      'date' => $oStat->date
+    );
+  }
+  $aData[$oStat->date][$oStat->script_version] = $oStat->count;
+}
+$oReport = DailyReport::firstOrNew(array('type' => 'indexer_script_version'));
+$oReport->title = "Indexer script version";
+$oReport->data = json_encode(array_values($aData));
+$oReport->save();
+
 Logger::debugInfo("Finished successful execution of daily reporter.");
 Common::endExecution(__FILE__, $Start);
