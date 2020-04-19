@@ -309,6 +309,11 @@ $oRouter->Add('captcha', new Route('/captcha', array(
   '_method'     => 'Verify'
 )));
 
+// Town
+$oRouter->Add('towninfo', new Route('/town', array(
+  '_controller' => '\Grepodata\Application\API\Route\Town',
+  '_method'     => 'GetTownInfo'
+)));
 
 
 
