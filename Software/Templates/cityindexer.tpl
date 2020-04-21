@@ -53,6 +53,7 @@
 			context: true,
             keys_enabled: true,
             cmdoverview: false,
+			departure_time: true,
             key_inbox_prev: '[',
             key_inbox_next: ']',
         };
@@ -92,7 +93,8 @@
             SHORTCUT_FUNCTION: 'Function',
             SAVED: 'Settings saved',
             SHARE: 'Share',
-            CMD_OVERVIEW_TITLE: 'Enhanced command overview (BETA)',
+            CMD_OVERVIEW_TITLE: 'Enhanced command overview',
+			CMD_DEPARTURE_INFO: 'Add the departure and travel time to incoming enemy attacks/support',
             CMD_OVERVIEW_INFO: 'Enhance your command overview with unit intelligence from your enemy city index. Note: this is a new feature, currently still in development. Please contact us if you have feedback.',
             CONTEXT_TITLE: 'Expand context menu',
             CONTEXT_INFO: 'Add an intel shortcut to the town context menu. The shortcut opens the intel for this town.',
@@ -123,10 +125,11 @@
                         SHORTCUT_FUNCTION: 'Functie',
                         SAVED: 'Instellingen opgeslagen',
                         SHARE: 'Delen',
-                        CMD_OVERVIEW_TITLE: 'Uitgebreid beveloverzicht (BETA)',
+                        CMD_OVERVIEW_TITLE: 'Uitgebreid beveloverzicht',
+						CMD_DEPARTURE_INFO: 'Voeg de vertrek en looptijd toe aan inkomende aanvallen/ondersteuning.',
                         CMD_OVERVIEW_INFO: 'Voeg troepen intel uit je city index toe aan het beveloverzicht. Let op: dit is een nieuwe feature, momenteel nog in ontwikkeling. Contacteer ons als je feedback hebt.',
 						CONTEXT_TITLE: 'Context menu uitbreiden',
-						CONTEXT_INFO: 'Voeg een intel snelkoppeling toe aan het context menu. De snelkoppeling verwijst naar de verzamelde intel van de stad.',
+						CONTEXT_INFO: 'Voeg een intel snelkoppeling toe aan het context menu als je op een stad klikt. De snelkoppeling verwijst naar de verzamelde intel van de stad.',
                     };
                     break;
                 default:
@@ -153,10 +156,6 @@
 					console.log(action);
 				}
 				switch (action) {
-					case "/town_overviews/command_overview":
-						if (gd_settings.cmdoverview === true) {
-							setTimeout(enhanceCommandOverview, 20);
-						}
 					case "/report/view":
 						// Parse reports straight from inbox
 						parseInbox();
@@ -179,6 +178,18 @@
 					case "/alliance/profile":
 						linkToStats(action, opt);
 						break;
+					case "/town_overviews/command_overview":
+						if (gd_settings.cmdoverview === true || gd_settings.departure_time === true) {
+							setTimeout(enhanceCommandOverview, 20);
+						}
+						break;
+					case "/command_info/info":
+						if (gd_settings.cmdoverview === true || gd_settings.departure_time === true) {
+							setTimeout(() => {
+								enhanceCommandInfoPanel(xhr, opt);
+							}, 20);
+						}
+						break;
 				}
 			} catch (e) {
 				console.error(e);
@@ -200,6 +211,9 @@
                     }
                     if (!('cmdoverview' in result)) {
                         result.cmdoverview = false;
+                    }
+                    if (!('departure_time' in result)) {
+                        result.departure_time = true;
                     }
                     gd_settings = result;
                 }
@@ -246,13 +260,149 @@
 			}
 		}
 
+		// Add command information to info panel
+		function enhanceCommandInfoPanel(xhr, opt) {
+			try {
+				var window_id = GPWindowMgr.getFocusedWindow().getID();
+				var gpwindow = $('#gpwnd_'+window_id);
+				if (!window_id) return;
+
+				var cmd_img = $(gpwindow).find('.command_icon_wrapper > img').get(0);
+				if (!cmd_img || (
+					cmd_img.src.indexOf('/support.png')<0
+					&& cmd_img.src.indexOf('/attack.png')<0
+					&& cmd_img.src.indexOf('/attack_sea.png')<0
+				)) return;
+
+				var data = JSON.parse(xhr.responseText);
+				if (!data.json.command_id) return;
+				var command_id = data.json.command_id;
+				//console.log("Enhancing command info panel: ", command_id);
+
+				var movement = false;
+				//if (command_id in parsedCommands) {
+				//	var command = parsedCommands[command_id];
+				//	movement = MM.getModels().MovementsUnits[command.movement_id];
+				//}
+				//if (!movement) {
+				// try to find in movements
+				let movements = Object.values(MM.getModels().MovementsUnits);
+				movements.map(m => {
+					if (m.attributes.command_id == command_id) {
+						movement = m;
+					}
+				});
+				//}
+				if (!movement) return;
+
+				if (verbose) console.log(movement);
+
+				// parse actual departure time
+				var departure = getDepartureTimeFromMovement(movement);
+				var renderIntel = movement.isIncommingMovement();
+				var town_id = movement.attributes.home_town_id;
+
+				// insert departure time
+				var departureElem = document.getElementById('gd_departure_'+command_id+'_wnd_'+window_id);
+				if (!departureElem && gd_settings.departure_time === true) {
+					var departureHtml = '<fieldset class="command_info_time">'+
+						'<legend>Departed at</legend>' + '<div class="arrival_time">'+departure.departure_readable+'</div>'+
+						'<div class="way_duration"><span id="gd_departure_'+command_id+'_wnd_'+window_id+'" class="arrival_at_countdown eta">travel time '+departure.runtime_readable+'</span></div>';
+
+					departureHtml = departureHtml + '<div style="display: inline-block; padding: 10px 0 0 14px;">'+
+						(movement.attributes.link_origin ? '<div style="display: inline-block;"><img alt="" src="/images/game/icons/town.png" style="padding-right: 2px; vertical-align: top;"> ' + movement.attributes.link_origin + '</div>' : '');
+
+					if (renderIntel) {
+						departureHtml = departureHtml + '<div id="gd_cmd_view_intel_' + window_id + '" town_id="' + town_id + '" class="button_new gdtvcmd' + town_id + '" style="display: inline-block; margin-left: 25px;">' +
+							'<div class="left"></div>' + '<div class="right"></div>' +
+							'<div class="caption js-caption">' + translate.VIEW + '<div class="effect js-effect"></div></div></div>';
+					}
+
+					departureHtml = departureHtml + '</div></fieldset>';
+					$(gpwindow).find('.command_info_time').after(departureHtml);
+
+					if (renderIntel) {
+						$('#gd_cmd_view_intel_' + window_id).click(function () {
+							var town_name = movement.attributes.town_name_origin;
+							loadTownIntel(town_id, town_name, '');
+						});
+					}
+				}
+
+				// TODO: list possible units in attack, taking into account the travel time and collected intel
+				//if (gd_settings.cmdoverview === true && renderIntel) {}
+
+			} catch(e) {console.error(e);}
+		}
+
+		function getDepartureTimeFromMovement(movement) {
+			var arrival_time = movement.attributes.arrival_at;
+			var visible_since = movement.attributes.cap_of_invisibility_effective_until;
+			var visible_runtime = arrival_time - visible_since;
+			var runtime_actual = Math.floor((visible_runtime / 0.9) * 1);
+			var departed_at = arrival_time - runtime_actual;
+			return {
+				arrival_time: arrival_time,
+				departure_time: departed_at,
+				departure_readable: getHumanReadableDateTime(departed_at),
+				runtime_readable: getHumanReadableRuntime(arrival_time, departed_at),
+			};
+		}
+
+		function getHumanReadableRuntime(arrival, departure) {
+			var diff = arrival - departure;
+			var hours = Math.floor(diff / 3600);
+			var residual = diff % 3600;
+			var minutes = Math.floor(residual / 60);
+			var seconds = residual % 60;
+
+			if (minutes < 10) {
+				minutes = '0' + minutes;
+			}
+			if (seconds < 10) {
+				seconds = '0' + seconds;
+			}
+			return hours + ':' + minutes + ':' + seconds;
+		}
+
+		function getHumanReadableDateTime(timestamp) {
+			var time = dateFromTimestamp(timestamp);
+			var hours = time.getUTCHours(),
+				minutes = time.getUTCMinutes(),
+				seconds = time.getUTCSeconds(),
+				day = time.getUTCDate(),
+				month = time.getUTCMonth() + 1,
+				year = time.getUTCFullYear();
+
+			if (hours < 10) {
+				hours = '0' + hours;
+			}
+			if (minutes < 10) {
+				minutes = '0' + minutes;
+			}
+			if (seconds < 10) {
+				seconds = '0' + seconds;
+			}
+			if (day < 10) {
+				day = '0' + day;
+			}
+			if (month < 10) {
+				month = '0' + month;
+			}
+			return day + '/' + month + '/' + year + ' ' + hours + ':' + minutes + ':' + seconds;
+		}
+
+		function dateFromTimestamp(timestamp) {
+			return new Date((timestamp + Game.server_gmt_offset) * 1000);
+		}
+
         // Enhance command overview
         var parsedCommands = {};
 		var bParsingEnabledTemp = true;
         function enhanceCommandOverview() {
 			// Add temp filter button to footer
             var gd_filter = document.getElementById('gd_cmd_filter');
-			if (!gd_filter) {
+			if ((!gd_filter) && gd_settings.cmdoverview === true) {
 				var commandFilters = $('#command_filter').get(0);
 				var filterHtml = '<div id="gd_cmd_filter" class="support_filter" style="background-image: '+gd_icon+'; width: 26px; height: 26px; '+(bParsingEnabledTemp?'':'opacity: 0.3;')+'"></div>';
 				$(commandFilters).find('> div').append(filterHtml);
@@ -271,69 +421,81 @@
 
 			// Parse overview
 			if (bParsingEnabledTemp) {
-				//let movements = Object.values(MM.getModels().MovementsUnits);
-				//console.log(movements);
-
 				var commandList = $('#command_overview').get(0);
 				var commands = $(commandList).find('li');
 				var parseLimit = 100; // Limit number of parsed commands
+				let movements = Object.values(MM.getModels().MovementsUnits);
 				commands.each(function (c) {
 					if (c>=parseLimit) {return}
 					try {
 						var command_id = this.id;
-						if (parsedCommands[command_id]) {
-							if (parsedCommands[command_id].is_enemy) {
-								enhanceCommand(command_id);
-							}
-						} else {
-							//var id = command_id.match(/\d+/)[0];
-							//var arrival_time = $(this).find('.eta-arrival-'+id).get(0).innerText.match(/([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]/)[0];
+						command_id = command_id.match(/\d+/)[0];
+						if (!(command_id in parsedCommands)) {
 							var cmd_units = $(this).find('.command_overview_units');
 							if (cmd_units.length != 0) {
-								parsedCommands[command_id] = {is_enemy: false};
+								parsedCommands[command_id] = {
+									is_enemy: false,
+									movement_id: 0
+								};
 							} else {
 								// Command is incoming enemy, parse ids
 								var cmd_span = $(this).find('.cmd_span').get(0);
-								var cmd_ents = $(cmd_span).find('a');
-								if (cmd_ents.length == 4) {
-									var prev_town = null;
-									var cmd_town = null;
-									var cmd_player = null;
-									cmd_ents.each(function (t) {
-										var hash = this.hash;
-										var data = decodeHashToJson(hash);
-										if (this.className == 'gp_town_link') {
-											prev_town = data;
-										} else if (this.className == 'gp_player_link' && prev_town != null) {
-											if (Game.player_id != data.id) {
-												cmd_town = prev_town;
-												cmd_player = data;
-											}
-										}
-									});
-									parsedCommands[command_id] = {town: cmd_town, player: cmd_player, is_enemy: true};
-									enhanceCommand(command_id);
+								var cmd_entities = $(cmd_span).find('a');
+								if (cmd_entities.length == 4) {
+									var command_info = {
+										source_town: decodeHashToJson(cmd_entities.get(0).hash),
+										source_player: decodeHashToJson(cmd_entities.get(1).hash),
+										target_town: decodeHashToJson(cmd_entities.get(2).hash),
+										target_player: decodeHashToJson(cmd_entities.get(3).hash),
+										is_enemy: true,
+										movement_id: 0
+									};
+									parsedCommands[command_id] = command_info;
 								}
 							}
+
+							movements.map(movement => {
+								if (command_id == movement.attributes.command_id) {
+									parsedCommands[command_id].movement_id = movement.id
+								}
+							});
 						}
+
+						enhanceCommand(command_id);
 					} catch (e) {
 						console.error("Unable to parse command: ", e);
 					}
 				});
 
 				$('.gd_cmd_units').tooltip('Town intel (GrepoData index)');
+
+				if (verbose) {
+					console.log("parsed commands: ", parsedCommands);
+				}
 			}
         }
 
         function enhanceCommand(id, force=false) {
             var cmd = parsedCommands[id];
+			var cmdInfoBox = $('#command_'+id).find('.cmd_info_box');
+
+			// Insert travel time
+			var departureElem = document.getElementById('gd-runtime-'+id);
+			if (!departureElem && gd_settings.departure_time === true && cmd.movement_id > 0) {
+				var movement = MM.getModels().MovementsUnits[cmd.movement_id];
+				var departure = getDepartureTimeFromMovement(movement);
+				var runtimeHtml = '<span id="gd-runtime-'+id+'" class="troops_arrive_at gd-runtime-'+id+'">(Travel time '+departure.runtime_readable+')</span>';
+				cmdInfoBox.append(runtimeHtml);
+				//$('#gd-runtime-'+id).tooltip('Departed at ' + departure.departure_readable);
+			}
+
+			// Insert intel
             var cmd_units = document.getElementById('gd_cmd_units_'+id);
-            if (!cmd_units || force) {
+            if ((!cmd_units || force) && gd_settings.cmdoverview === true && cmd.is_enemy === true) {
                 if (cmd_units && force) {
                     $('#gd_cmd_units_'+id).remove();
                 }
-				var cmdInfoBox = $('#'+id).find('.cmd_info_box');
-                var intel = townIntelHistory[cmd.town.id];
+                var intel = townIntelHistory[cmd.source_town.id];
                 if (typeof intel !== "undefined") {
                     // show town intel from memory
                     if ('u' in intel && Object.keys(intel.u).length > 0) {
@@ -343,7 +505,7 @@
 						var unitSpace = numUnits * 29;
 						var bUnitsFit = freeSpace > unitSpace;
 						if (!bUnitsFit) {
-							$('#'+id).height(45);
+							$('#command_'+id).height(45);
 						}
                         var unitHtml = '<div id="gd_cmd_units_'+id+'" class="command_overview_units gd_cmd_units" style="'+(bUnitsFit?'bottom: 3px; ':'margin-top: 18px; ')+'cursor: pointer; position: absolute; right: 0;">';
                         for (var i = 0; i < numUnits; i++) {
@@ -384,7 +546,7 @@
                 }
 
                 $('#gd_cmd_units_'+id).click(function () {
-                    loadTownIntel(cmd.town.id, cmd.town.name, cmd.player.name, id);
+                    loadTownIntel(cmd.source_town.id, cmd.source_town.name, cmd.source_player.name, id);
                 });
 
             }
@@ -629,7 +791,8 @@
                         || reportText.indexOf('/images/game/towninfo/breach.png') >= 0
                         || reportText.indexOf('/images/game/towninfo/attackSupport.png') >= 0
                         || reportText.indexOf('/images/game/towninfo/take_over.png') >= 0
-                        || reportText.indexOf('/images/game/towninfo/support.png') >= 0)
+                        || reportText.indexOf('/images/game/towninfo/support.png') >= 0
+					    || reportText.indexOf('power_icon86x86 wisdom') >= 0)
                 ) {
 
                     // Build report hash using default method
@@ -1048,7 +1211,7 @@
 
                 // Forum intel settings
                 settingsHtml += '\t\t\t<p style="margin-bottom: 10px; margin-left: 10px;"><strong>' + translate.COLLECT_INTEL + '</strong></p>\n' +
-                    '\t\t\t<div style="margin-left: 30px;" class="checkbox_new inbox_gd_enabled' + (gd_settings.inbox === true ? ' checked' : '') + '">\n' +
+                    '\t\t\t<div style="margin-left: 30px; margin-bottom: 10px;" class="checkbox_new inbox_gd_enabled' + (gd_settings.inbox === true ? ' checked' : '') + '">\n' +
                     '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.COLLECT_INTEL_INBOX + '</div>\n' +
                     '\t\t\t</div>\n' +
                     '\t\t\t<div style="margin-left: 30px;" class="checkbox_new forum_gd_enabled' + (gd_settings.forum === true ? ' checked' : '') + '">\n' +
@@ -1063,16 +1226,19 @@
                     '\t\t\t</div>\n' +
                     '\t\t\t<br><br><hr>\n';
 
-                // Command overview
+                // Command overview settings
                 settingsHtml += '\t\t\t<p style="margin-bottom: 10px; margin-left: 10px;"><strong>' + translate.CMD_OVERVIEW_TITLE + '</strong></p>\n' +
+					'\t\t\t<div style="margin-left: 30px; margin-bottom: 10px;" class="checkbox_new departure_time_gd_enabled' + (gd_settings.departure_time === true ? ' checked' : '') + '">\n' +
+                    '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.CMD_DEPARTURE_INFO + '</div>\n' +
+                    '\t\t\t</div>\n' +
                     '\t\t\t<div style="margin-left: 30px;" class="checkbox_new cmdoverview_gd_enabled' + (gd_settings.cmdoverview === true ? ' checked' : '') + '">\n' +
-                    '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.CMD_OVERVIEW_INFO + '</div>\n' +
+                    '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption"><strong>BETA: </strong>' + translate.CMD_OVERVIEW_INFO + '</div>\n' +
                     '\t\t\t</div>\n' +
                     '\t\t\t<br><br><hr>\n';
 
                 // Context menu
                 settingsHtml += '\t\t\t<p style="margin-left: 10px; display: inline-flex; height: 14px;"><strong>' + translate.CONTEXT_TITLE + '</strong> <span style="background: '+gd_icon_intel+'; width: 50px; height: 50px; transform: scale(0.6); margin-top: -18px;"></span></p>\n' +
-                    '\t\t\t<div style="margin-left: 30px;" class="checkbox_new context_gd_enabled' + (gd_settings.cmdoverview === true ? ' checked' : '') + '">\n' +
+                    '\t\t\t<div style="margin-left: 30px;" class="checkbox_new context_gd_enabled' + (gd_settings.context === true ? ' checked' : '') + '">\n' +
                     '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.CONTEXT_INFO + '</div>\n' +
                     '\t\t\t</div>\n' +
                     '\t\t\t<br><br><hr>\n';
@@ -1091,7 +1257,7 @@
 
                 // Footer
                 settingsHtml += '</div>' +
-					'<a href="https://grepodata.com/message" target="_blank">Contact us</a>' +
+					'<a href="https://grepodata.com/message" target="_blank">Contact</a>' +
                     '<p style="font-style: italic; font-size: 10px; float: right; margin:0px;">GrepoData city indexer v' + gd_version + ' [<a href="https://api.grepodata.com/userscript/cityindexer_' + index_hash + '.user.js" target="_blank">' + translate.CHECK_UPDATE + '</a>]</p>' +
                     '\t\t</div>\n' +
                     '    </div>\n' +
@@ -1126,6 +1292,9 @@
                 });
                 $(".cmdoverview_gd_enabled").click(function () {
                     settingsCbx('cmdoverview', !gd_settings.cmdoverview);
+                });
+                $(".departure_time_gd_enabled").click(function () {
+                    settingsCbx('departure_time', !gd_settings.departure_time);
                 });
                 $(".context_gd_enabled").click(function () {
                     settingsCbx('context', !gd_settings.context);
@@ -1347,6 +1516,7 @@
 						var typeUrl = '';
 						var tooltip = '';
 						var flip = true;
+						var isWisdom = false;
 						switch (intel.type) {
 							case 'enemy_attack':
 								typeUrl = '/images/game/towninfo/attack.png';
@@ -1365,6 +1535,10 @@
 								typeUrl = '/images/game/towninfo/support.png';
 								tooltip = 'Sent in support';
 								break;
+							case 'wisdom':
+								isWisdom = true
+								tooltip = 'Wisdom';
+								break;
 							case 'spy':
 								typeUrl = '/images/game/towninfo/espionage_2.67.png';
 								if (intel.silver != null && intel.silver != '') {
@@ -1374,17 +1548,21 @@
 							default:
 								typeUrl = '/images/game/towninfo/attack.png';
 						}
-						var typeHtml =
-							'<div style="position: absolute; height: 0px; margin-top: -5px; ' +
-							(flip ? '-moz-transform: scaleX(-1); -o-transform: scaleX(-1); -webkit-transform: scaleX(-1); transform: scaleX(-1); filter: FlipH; -ms-filter: "FlipH";' : '') +
-							'"><div style="background: url(' + typeUrl + ');\n' +
-							'    padding: 0;\n' +
-							'    height: 50px;\n' +
-							'    width: 50px;\n' +
-							'    position: relative;\n' +
-							'    display: inherit;\n' +
-							'    transform: scale(0.6, 0.6);-ms-transform: scale(0.6, 0.6);-webkit-transform: scale(0.6, 0.6);' +
-							'    box-shadow: 0px 0px 9px 0px #525252;" class="intel-type-' + id + '-' + j + '"></div></div>';
+						var typeHtml = '';
+						if (isWisdom == true) {
+							typeHtml = '<div><div class="power_icon45x45 wisdom intel-type-' + id + '-' + j + '" style="transform: scale(.8); margin-left: 2px; margin-top: -1px;"></div></div>';
+						} else {
+							typeHtml = '<div style="position: absolute; height: 0px; margin-top: -5px; ' +
+								(flip ? '-moz-transform: scaleX(-1); -o-transform: scaleX(-1); -webkit-transform: scaleX(-1); transform: scaleX(-1); filter: FlipH; -ms-filter: "FlipH";' : '') +
+								'"><div style="background: url(' + typeUrl + ');\n' +
+								'    padding: 0;\n' +
+								'    height: 50px;\n' +
+								'    width: 50px;\n' +
+								'    position: relative;\n' +
+								'    display: inherit;\n' +
+								'    transform: scale(0.6, 0.6);-ms-transform: scale(0.6, 0.6);-webkit-transform: scale(0.6, 0.6);' +
+								'    box-shadow: 0px 0px 9px 0px #525252;" class="intel-type-' + id + '-' + j + '"></div></div>';
+						}
 						row = row +
 							'<div style="display: table-cell; width: 50px;">' +
 							typeHtml +
@@ -1636,7 +1814,7 @@
                     if ('player_id' in json && action.search("/player") >= 0) {
                         // Add stats button to player profile
                         var player_id = json.player_id;
-                        var statsBtn = '<a target="_blank" href="https://grepodata.com/player/' + gd_w.Game.world_id + '/' + player_id + '" class="write_message" style="background: ' + gd_icon + '"></a>';
+                        var statsBtn = '<a target="_blank" href="https://grepodata.com/player?world=' + gd_w.Game.world_id + '&id=' + player_id + '" class="write_message" style="background: ' + gd_icon + '"></a>';
                         $('#player_buttons').filter(':first').append(statsBtn);
                     } else if ('alliance_id' in json && action.search("/alliance") >= 0) {
                         // Add stats button to alliance profile
@@ -1675,7 +1853,7 @@
                     var player_id = xhr.responseText.match(/player_id = [0-9]*,/g);
                     if (player_id != null && player_id.length > 0) {
                         player_id = player_id[0].substring(12, player_id[0].search(','));
-                        var statsBtn = '<a target="_blank" href="https://grepodata.com/player/' + gd_w.Game.world_id + '/' + player_id + '" class="write_message" style="background: ' + gd_icon + '"></a>';
+                        var statsBtn = '<a target="_blank" href="https://grepodata.com/player?world=' + gd_w.Game.world_id + '&id=' + player_id + '" class="write_message" style="background: ' + gd_icon + '"></a>';
                         $('.info_tab_content_' + town_id + ' > .game_inner_box > .game_border > ul.game_list > li.even > div.list_item_right').eq(1).append(statsBtn);
                         $('.info_tab_content_' + town_id + ' > .game_inner_box > .game_border > ul.game_list > li.even > div.list_item_right').css("min-width", "140px");
                     }

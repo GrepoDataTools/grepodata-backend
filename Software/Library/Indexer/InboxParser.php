@@ -61,6 +61,7 @@ class InboxParser
   {
     try {
       $oIndexInfo = \Grepodata\Library\Controller\Indexer\IndexInfo::firstOrFail($IndexKey);
+      $ReportText = json_encode($aReportData);
 
       // Find header
 //      $ReportHeaderText = $aReportData["content"][1]["content"][17]["content"];
@@ -82,10 +83,13 @@ class InboxParser
 
       $bSpy = false;
       $bSupport = false;
+      $bWisdom = false;
       if (strpos($ReportImage, "espionage") !== false) {
         $bSpy = true;
       } else if (strpos($ReportImage, "/images/game/towninfo/support.png") !== false) {
         $bSupport = true;
+      }  else if (strpos($ReportText, "power_icon86x86 wisdom") !== false) {
+        $bWisdom = true;
       } else if (
         strpos($ReportImage, "/images/game/towninfo/attack.png") === false
         && strpos($ReportImage, "/images/game/towninfo/breach.png") === false
@@ -165,50 +169,52 @@ class InboxParser
       $ParsedDate = $oDate;
 
       // === Sender
-      // Town
-      $SenderTown = $ReportSender["content"][1]["content"][1];
-      if ($SenderTown !== null && isset($SenderTown['attributes']['href'])) {
-        $LinkDataEncoded = $SenderTown['attributes']['href'];
-        $aLinkData = json_decode(base64_decode($LinkDataEncoded), true);
-        $SenderTownId = $aLinkData['id'];
-        $SenderTownName = $aLinkData['name'];
-      } else {
-        throw new InboxParserExceptionWarning("Sender town not found in report");
-      }
-
-      // Player
-      $SenderPlayer = $ReportSender["content"][3]["content"][1] ?? null;
-      if ($SenderPlayer !== null && isset($SenderPlayer['attributes']['href'])) {
-        $LinkDataEncoded = $SenderPlayer['attributes']['href'];
-        $aLinkData = json_decode(base64_decode($LinkDataEncoded), true);
-        $SenderPlayerId = $aLinkData['id'];
-        $SenderPlayerName = $aLinkData['name'];
-      } else {
-        throw new InboxParserExceptionWarning("Sender player not found in report");
-      }
-
-      // Alliance
-      $SenderAllianceId = 0;
-      $SenderAlliance = $ReportSender["content"][5]["content"][1] ?? null;
-      if ($SenderAlliance !== null && isset($SenderAlliance['attributes']['onclick'])) {
-        $Onclick = $SenderAlliance['attributes']['onclick'];
-        if (strpos($Onclick, 'allianceProfile') !== false) {
-          $OnclickSub = substr($Onclick, strrpos($Onclick, "',")+2);
-          $SenderAllianceId = substr($OnclickSub, 0, strlen($OnclickSub)-1);
-        }
-      }
-      if (($SenderAllianceId === 0 || !is_numeric($SenderAllianceId)) && !is_null($SenderPlayerId) && is_numeric($SenderPlayerId)) {
-        $oPlayer = Player::firstById($oIndexInfo->world, $SenderPlayerId);
-        if ($oPlayer !== null) {
-          $SenderAllianceId = $oPlayer->alliance_id;
-        } else {
-          $SenderAllianceId = 0;
-        }
-      }
-
       $bPlayerIsSender = false;
-      if ($PosterId === $SenderPlayerId || $ReportPoster === $SenderPlayerName) {
-        $bPlayerIsSender = true;
+      if ($bWisdom == false) {
+        // Town
+        $SenderTown = $ReportSender["content"][1]["content"][1];
+        if ($SenderTown !== null && isset($SenderTown['attributes']['href'])) {
+          $LinkDataEncoded = $SenderTown['attributes']['href'];
+          $aLinkData = json_decode(base64_decode($LinkDataEncoded), true);
+          $SenderTownId = $aLinkData['id'];
+          $SenderTownName = $aLinkData['name'];
+        } else {
+          throw new InboxParserExceptionWarning("Sender town not found in report");
+        }
+
+        // Player
+        $SenderPlayer = $ReportSender["content"][3]["content"][1] ?? null;
+        if ($SenderPlayer !== null && isset($SenderPlayer['attributes']['href'])) {
+          $LinkDataEncoded = $SenderPlayer['attributes']['href'];
+          $aLinkData = json_decode(base64_decode($LinkDataEncoded), true);
+          $SenderPlayerId = $aLinkData['id'];
+          $SenderPlayerName = $aLinkData['name'];
+        } else {
+          throw new InboxParserExceptionWarning("Sender player not found in report");
+        }
+
+        // Alliance
+        $SenderAllianceId = 0;
+        $SenderAlliance = $ReportSender["content"][5]["content"][1] ?? null;
+        if ($SenderAlliance !== null && isset($SenderAlliance['attributes']['onclick'])) {
+          $Onclick = $SenderAlliance['attributes']['onclick'];
+          if (strpos($Onclick, 'allianceProfile') !== false) {
+            $OnclickSub = substr($Onclick, strrpos($Onclick, "',") + 2);
+            $SenderAllianceId = substr($OnclickSub, 0, strlen($OnclickSub) - 1);
+          }
+        }
+        if (($SenderAllianceId === 0 || !is_numeric($SenderAllianceId)) && !is_null($SenderPlayerId) && is_numeric($SenderPlayerId)) {
+          $oPlayer = Player::firstById($oIndexInfo->world, $SenderPlayerId);
+          if ($oPlayer !== null) {
+            $SenderAllianceId = $oPlayer->alliance_id;
+          } else {
+            $SenderAllianceId = 0;
+          }
+        }
+
+        if ($PosterId === $SenderPlayerId || $ReportPoster === $SenderPlayerName) {
+          $bPlayerIsSender = true;
+        }
       }
 
       // === Receiver
@@ -240,15 +246,15 @@ class InboxParser
       } else {
         throw new InboxParserExceptionWarning("receiver player not found in report");
       }
-      
+
       // Alliance
       $ReceiverAllianceId = 0;
       $ReceiverAlliance = $ReportReceiver["content"][5]["content"][1] ?? null;
       if ($ReceiverAlliance !== null && isset($ReceiverAlliance['attributes']['onclick'])) {
         $Onclick = $ReceiverAlliance['attributes']['onclick'];
         if (strpos($Onclick, 'allianceProfile') !== false) {
-          $OnclickSub = substr($Onclick, strrpos($Onclick, "',")+2);
-          $ReceiverAllianceId = substr($OnclickSub, 0, strlen($OnclickSub)-1);
+          $OnclickSub = substr($Onclick, strrpos($Onclick, "',") + 2);
+          $ReceiverAllianceId = substr($OnclickSub, 0, strlen($OnclickSub) - 1);
         }
       }
       if (($ReceiverAllianceId === 0 || !is_numeric($ReceiverAllianceId)) && !is_null($ReceiverPlayerId) && is_numeric($ReceiverPlayerId)) {
@@ -261,7 +267,7 @@ class InboxParser
       }
 
       $bPlayerIsReceiver = false;
-      if ($PosterId === $ReceiverPlayerId || $ReportPoster === $ReceiverPlayerName) {
+      if ($PosterId === $ReceiverPlayerId || $ReportPoster === $ReceiverPlayerName || $bWisdom == true) {
         $bPlayerIsReceiver = true;
       }
 
@@ -272,7 +278,56 @@ class InboxParser
       $aSeaUnits = array();
       $aMythUnits = array();
 
-      if (!$bSpy && !$bSupport) {
+      if ($bWisdom == true) {
+        $ReportType = "wisdom";
+
+        // Troop intel
+        if (!isset($aSpyScript)||$aSpyScript==null) {
+          // might be needed but probably not, throw error for now
+          throw new InboxParserExceptionWarning("Inbox parser found no simulator script to retrieve units from wisdom.");
+        }
+
+        $aUnits = substr($aSpyScript, strpos($aSpyScript, '{"def":[],"att":{'));
+        $aUnits = substr($aUnits, strpos($aUnits, ',"att":{'));
+        $aUnits = '{' . substr($aUnits, 1, strpos($aUnits, '},"')) . '}';
+        $aUnits = json_decode($aUnits, true);
+
+        if (is_null($aUnits) || !key_exists('att', $aUnits) || !is_array($aUnits['att']) || sizeof($aUnits['att']) <= 0) {
+          // Failed parsing units
+          throw new InboxParserExceptionWarning("failed parsing wisdom units");
+        }
+
+        $bHasUnits = false;
+        foreach ($aUnits['att'] as $Unit => $Value) {
+          if ($Value <= 0) {
+            continue;
+          }
+          $bHasUnits = true;
+          if ($Unit == self::fireships) {
+            $Fireships = $Value;
+          } else if (in_array($Unit, self::land_units)) {
+            $aLandUnits[$Unit] = $Value;
+          } elseif (in_array($Unit, self::sea_units)) {
+            $aSeaUnits[$Unit] = $Value;
+          } elseif (in_array($Unit, self::heros)) {
+            $Hero = $Unit;
+          } else {
+            foreach (self::myth_units as $UnitGod => $Units) {
+              if (in_array($Unit, $Units)) {
+                $God = $UnitGod;
+                $aMythUnits[$Unit] = $Value;
+              }
+            }
+          }
+        }
+
+        if ($bHasUnits == false) {
+          // Failed parsing units
+          throw new InboxParserExceptionWarning("No units found in wisdom script");
+        }
+
+      }
+      else if (!$bSpy && !$bSupport) {
         if ($bPlayerIsReceiver) {
           $ReportType = "enemy_attack";
         }
@@ -587,7 +642,7 @@ class InboxParser
         }
       }
 
-      if ($bPlayerIsSender) {
+      if ($bWisdom == true || $bPlayerIsSender == true) {
         $TownId = $ReceiverTownId;
         $TownName = $ReceiverTownName;
         $PlayerId = $ReceiverPlayerId;
