@@ -142,7 +142,7 @@ class InnoData
         'name'              => urldecode($parts[2]),
         'island_x'          => $parts[3],
         'island_y'          => $parts[4],
-        //'number_on_island'  => $parts[5], // unused for now
+        'island_i'          => $parts[5], // number on island
         'points'            => $parts[6],
       );
     }
@@ -188,7 +188,10 @@ class InnoData
         'grep_id'  => $parts[0],
         'island_x' => $parts[1],
         'island_y' => $parts[2],
-//        'island_id' => $parts[3], // unused for now
+        'island_type' => $parts[3],
+//        'free_spots' => $parts[4], // unused for now
+//        'resource1' => $parts[5], // unused for now
+//        'resource2' => $parts[6], // unused for now
       );
     }
 

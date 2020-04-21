@@ -394,7 +394,7 @@ if ($aJobs !== false) {
 <div id="dashboard_div">
 	<!--Divs that will hold each control and chart-->
 	<div id="filter_div"></div>
-	<div id="chart_div" style="height: 350px;"></div>
+	<div id="chart_div" style="height: 350px; background: whitesmoke; margin-bottom: 5px;"></div>
 </div>
 
 

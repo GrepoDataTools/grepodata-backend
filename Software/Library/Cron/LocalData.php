@@ -142,7 +142,7 @@ class LocalData
           $aOutputData[$data[0]] = array(
             'player_id' => $data[1],
             'name'      => $data[2],
-            'points'    => isset($data[5]) ? $data[5] : 0,
+            'points'    => isset($data[6]) ? $data[6] : 0,
           );
         };
         break;

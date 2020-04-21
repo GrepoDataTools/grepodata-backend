@@ -9,6 +9,7 @@ use \Illuminate\Database\Eloquent\Model;
  * @property mixed grep_id
  * @property mixed island_x
  * @property mixed island_y
+ * @property mixed island_type
  */
 class Island extends Model
 {

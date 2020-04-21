@@ -12,6 +12,7 @@ use \Illuminate\Database\Eloquent\Model;
  * @property mixed player_id
  * @property mixed island_x
  * @property mixed island_y
+ * @property mixed island_i
  */
 class Town extends Model
 {

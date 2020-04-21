@@ -106,6 +106,22 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
     }
   }
 
+  public static function CalculateRuntimePOST()
+  {
+    $aParams = array();
+    try {
+      // Validate params
+      $aParams = self::validateParams(array('units', 'world', 'speed'));
+      die(self::OutputJson(array('speed' => $aParams['speed'], 'world' => $aParams['world']), 200));
+
+    } catch (Exception $e) {
+      die(self::OutputJson(array(
+        'message' => 'Unable to load unit runtime.',
+        'parameters' => $aParams
+      ), 404));
+    }
+  }
+
   public static function AddNoteGET()
   {
     $aParams = array();
