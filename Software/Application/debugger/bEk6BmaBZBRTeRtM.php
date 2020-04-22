@@ -101,6 +101,7 @@ error_reporting(0);
   {
     var query = document.getElementById('query').value;
     var level = document.getElementById('level').value;
+    var cityid = document.getElementById('cityid').value;
     var fingerprint = document.getElementById('fingerprint').value;
     var reporthash = document.getElementById('reporthash').value;
     var failed = document.getElementById('failed').checked;
@@ -110,7 +111,7 @@ error_reporting(0);
     } else {
       url += "?";
     }
-    url += "query="+query+"&level="+level+"&fingerprint="+fingerprint+"&reporthash="+reporthash+"&failed="+failed;
+    url += "query="+query+"&level="+level+"&fingerprint="+fingerprint+"&reporthash="+reporthash+"&failed="+failed+"&cityid="+cityid;
     window.location.href = url;
   }
 </script>
@@ -119,6 +120,7 @@ error_reporting(0);
 <input placeholder="by index key" id="query" type="text" name="text" onsubmit="search()" value="<?php echo $_GET['query'];?>"/>
 <input placeholder="by fingerprint" id="fingerprint" type="text" name="fingerprint" autocomplete="off" onsubmit="search()" value="<?php echo $_GET['fingerprint'];?>"/>
 <input placeholder="by report hash" id="reporthash" type="text" name="reporthash" autocomplete="off" onsubmit="search()" value="<?php echo $_GET['reporthash'];?>"/>
+<input placeholder="by city id" id="cityid" type="text" name="cityid" autocomplete="off" onsubmit="search()" value="<?php echo $_GET['cityid'];?>"/>
 <select id="level" name="level">
     <option value="all" <?php echo isset($_GET['level']) && $_GET['level'] == 'all' ? 'selected':''?>>All</option>
     <option value="default" <?php echo isset($_GET['level']) && $_GET['level'] == 'default' ? 'selected':''?>>Forum</option>
@@ -168,6 +170,9 @@ try {
     if (isset($_GET['query']) && $_GET['query'] != '') {
       $Reports->where('Index_report.index_code', '=', $_GET['query']);
     }
+    if (isset($_GET['cityid']) && $_GET['cityid'] != '') {
+      $Reports->where('Index_report.city_id', '=', $_GET['cityid']);
+    }
     if (isset($_GET['fingerprint']) && $_GET['fingerprint'] != '') {
       $Reports->where('Index_report.fingerprint', '=', $_GET['fingerprint']);
     }
@@ -176,7 +181,7 @@ try {
     }
   }
 
-  $Reports = $Reports->limit(500)->get();
+  $Reports = $Reports->limit(100)->get();
   if ($Reports !== false) {
     echo '<table style="width: 100%;">
         <tr>

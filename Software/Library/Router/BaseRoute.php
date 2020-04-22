@@ -33,7 +33,7 @@ class BaseRoute
     }
 
     if (!empty($aInvalidParams)) {
-      error_log(json_encode($aInvalidParams));
+      //error_log(json_encode($aInvalidParams));
       die(self::OutputJson(array(
         'message' => 'Bad request! Invalid or missing fields.',
         'fields'  => $aInvalidParams

@@ -289,7 +289,7 @@ class CityInfo
 
     // Calc intel cost (higher is better)
     $IntelCost = $UnitCost * (1-(min(($DaysAgo+1)*5, 90)/100));
-    if ($aCityFields['type'] == 'enemy_attack' || $aCityFields['type'] == 'support') {
+    if (in_array($aCityFields['type'], array('enemy_attack', 'wisdom', 'support'))) {
       $IntelCost *= 100; // We care a lot more about this information
     }
 

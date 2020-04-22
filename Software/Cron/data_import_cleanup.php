@@ -122,6 +122,9 @@ try {
   $LogsDeleted = Operation_log::where('level', '>', '2', 'and')
     ->where('created_at', '<', Carbon::now()->subDays(14))
     ->delete();
+  $LogsDeleted += Operation_log::where('level', '>', '1', 'and')
+    ->where('created_at', '<', Carbon::now()->subDays(90))
+    ->delete();
   Logger::debugInfo("Deleted " . $LogsDeleted . " old log records.");
 } catch (\Exception $e) {
   Logger::error("CRITICAL: Error cleaning old log messages. " . $e->getMessage());
@@ -136,12 +139,12 @@ try {
 //    ->where('updated_at', '<', Carbon::now()->subDays(7))
 //    ->update(['report_json' => '', 'report_info' => '']);
 
-  $LogsDeleted = Report::where('city_id', '>', '0', 'and')
+  $LogsDeleted = Report::where('city_id', '!=', '0', 'and')
     ->where('report_info', '!=', '', 'and')
     ->where('created_at', '<', Carbon::now()->subDays(14))
     ->update(['report_info' => '']);
 
-  $LogsDeleted += Report::where('city_id', '>', '0', 'and')
+  $LogsDeleted += Report::where('city_id', '!=', '0', 'and')
     ->where('report_json', '!=', '', 'and')
     ->where('created_at', '<', Carbon::now()->subDays(21))
     ->update(['report_json' => '']);

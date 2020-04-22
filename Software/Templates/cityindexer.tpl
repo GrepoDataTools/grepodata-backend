@@ -54,6 +54,7 @@
             keys_enabled: true,
             cmdoverview: false,
 			departure_time: true,
+			bug_reports: true,
             key_inbox_prev: '[',
             key_inbox_next: ']',
         };
@@ -98,6 +99,16 @@
             CMD_OVERVIEW_INFO: 'Enhance your command overview with unit intelligence from your enemy city index. Note: this is a new feature, currently still in development. Please contact us if you have feedback.',
             CONTEXT_TITLE: 'Expand context menu',
             CONTEXT_INFO: 'Add an intel shortcut to the town context menu. The shortcut opens the intel for this town.',
+			BUG_REPORTS: 'Upload anonymous bug reports to help improve our script.',
+			SETTINGS_OTHER: 'Miscellaneous settings',
+			RUNTIME: 'Travel time',
+			RUNTIME_DEPARTED: 'Departed at',
+			RUNTIME_CANCELABLE: 'Cancelable until',
+			INTEL_NOTE_TITLE: 'Notes',
+			INTEL_NOTE_NONE: 'There are no notes for this town',
+			INTEL_UNITS: 'Units',
+			INTEL_SHOW_PLAYER: 'Player intel',
+			INTEL_SHOW_ALLIANCE: 'Alliance intel',
         };
         if ('undefined' !== typeof Game) {
             switch (Game.locale_lang.substring(0, 2)) {
@@ -130,6 +141,16 @@
                         CMD_OVERVIEW_INFO: 'Voeg troepen intel uit je city index toe aan het beveloverzicht. Let op: dit is een nieuwe feature, momenteel nog in ontwikkeling. Contacteer ons als je feedback hebt.',
 						CONTEXT_TITLE: 'Context menu uitbreiden',
 						CONTEXT_INFO: 'Voeg een intel snelkoppeling toe aan het context menu als je op een stad klikt. De snelkoppeling verwijst naar de verzamelde intel van de stad.',
+						BUG_REPORTS: 'Anonieme bug reports uploaden om het script te verbeteren.',
+						SETTINGS_OTHER: 'Overige instellingen',
+						RUNTIME: 'Looptijd',
+						RUNTIME_DEPARTED: 'Verzonden om',
+						RUNTIME_CANCELABLE: 'Annuleerbaar tot',
+						INTEL_NOTE_TITLE: 'Notities',
+						INTEL_NOTE_NONE: 'Er zijn nog geen notities voor deze stad',
+						INTEL_UNITS: 'Eenheden',
+						INTEL_SHOW_PLAYER: 'Speler intel',
+                        INTEL_SHOW_ALLIANCE: 'Alliantie intel',
                     };
                     break;
                 default:
@@ -191,8 +212,8 @@
 						}
 						break;
 				}
-			} catch (e) {
-				console.error(e);
+			} catch (error) {
+                errorHandling(error, "handleAjaxCompleteObserver");
 			}
         });
 
@@ -215,6 +236,9 @@
                     if (!('departure_time' in result)) {
                         result.departure_time = true;
                     }
+                    if (!('bug_reports' in result)) {
+                        result.bugreports = true;
+                    }
                     gd_settings = result;
                 }
             }
@@ -228,8 +252,8 @@
 						expandContextMenu(data.id, (data.name?data.name:''), (data.player_name?data.player_name:''));
 					}
 				}
-			} catch (e) {
-				console.error(e);
+			} catch (error) {
+                errorHandling(error, "handleMapTownObserver");
 			}
 		});
 		$.Observer(GameEvents.map.context_menu.click).subscribe(async (e) => {
@@ -240,8 +264,8 @@
 						expandContextMenu(data.id, data.name, '');
 					}
 				}
-			} catch (e) {
-				console.error(e);
+			} catch (error) {
+                errorHandling(error, "handleContextMenuObserver");
 			}
 		});
 		function expandContextMenu(town_id, town_name, player_name = '') {
@@ -297,20 +321,26 @@
 
 				if (verbose) console.log(movement);
 
-				// parse actual departure time
-				var departure = getDepartureTimeFromMovement(movement);
 				var renderIntel = movement.isIncommingMovement();
 				var town_id = movement.attributes.home_town_id;
 
-				// insert departure time
+				// parse actual departure time
+				var departure = false;
+				if (movement.attributes.hasOwnProperty('cap_of_invisibility_effective_until')) {
+					departure = getDepartureTimeFromMovement(movement);
+				}
 				var departureElem = document.getElementById('gd_departure_'+command_id+'_wnd_'+window_id);
 				if (!departureElem && gd_settings.departure_time === true) {
 					var departureHtml = '<fieldset class="command_info_time">'+
-						'<legend>Departed at</legend>' + '<div class="arrival_time">'+departure.departure_readable+'</div>'+
-						'<div class="way_duration"><span id="gd_departure_'+command_id+'_wnd_'+window_id+'" class="arrival_at_countdown eta">travel time '+departure.runtime_readable+'</span></div>';
+						'<legend>'+translate.RUNTIME_DEPARTED+'</legend>';
 
-					departureHtml = departureHtml + '<div style="display: inline-block; padding: 10px 0 0 14px;">'+
-						(movement.attributes.link_origin ? '<div style="display: inline-block;"><img alt="" src="/images/game/icons/town.png" style="padding-right: 2px; vertical-align: top;"> ' + movement.attributes.link_origin + '</div>' : '');
+					if (departure != false) {
+						departureHtml = departureHtml + '<div class="arrival_time">'+departure.departure_readable+'</div>'+
+							'<div class="way_duration"><span id="gd_departure_'+command_id+'_wnd_'+window_id+'" class="arrival_at_countdown eta">'+translate.RUNTIME+' '+departure.runtime_readable+'</span></div>';
+					}
+
+					departureHtml = departureHtml + '<div style="display: inline-block; padding: 0 14px;">'+
+						(movement.attributes.link_origin ? '<div style="display: inline-block; margin-top: 12px;"><img alt="" src="/images/game/icons/town.png" style="padding-right: 2px; vertical-align: top;"> ' + movement.attributes.link_origin + '</div>' : '');
 
 					if (renderIntel) {
 						departureHtml = departureHtml + '<div id="gd_cmd_view_intel_' + window_id + '" town_id="' + town_id + '" class="button_new gdtvcmd' + town_id + '" style="display: inline-block; margin-left: 25px;">' +
@@ -332,7 +362,9 @@
 				// TODO: list possible units in attack, taking into account the travel time and collected intel
 				//if (gd_settings.cmdoverview === true && renderIntel) {}
 
-			} catch(e) {console.error(e);}
+			} catch (error) {
+                errorHandling(error, "enhanceCommandInfoPanel");
+			}
 		}
 
 		function getDepartureTimeFromMovement(movement) {
@@ -365,7 +397,7 @@
 			return hours + ':' + minutes + ':' + seconds;
 		}
 
-		function getHumanReadableDateTime(timestamp) {
+		function getHumanReadableDateTime(timestamp, includeDate = true) {
 			var time = dateFromTimestamp(timestamp);
 			var hours = time.getUTCHours(),
 				minutes = time.getUTCMinutes(),
@@ -389,7 +421,7 @@
 			if (month < 10) {
 				month = '0' + month;
 			}
-			return day + '/' + month + '/' + year + ' ' + hours + ':' + minutes + ':' + seconds;
+			return (includeDate?(day + '/' + month + '/' + year + ' '):'') + hours + ':' + minutes + ':' + seconds;
 		}
 
 		function dateFromTimestamp(timestamp) {
@@ -400,157 +432,179 @@
         var parsedCommands = {};
 		var bParsingEnabledTemp = true;
         function enhanceCommandOverview() {
-			// Add temp filter button to footer
-            var gd_filter = document.getElementById('gd_cmd_filter');
-			if ((!gd_filter) && gd_settings.cmdoverview === true) {
-				var commandFilters = $('#command_filter').get(0);
-				var filterHtml = '<div id="gd_cmd_filter" class="support_filter" style="background-image: '+gd_icon+'; width: 26px; height: 26px; '+(bParsingEnabledTemp?'':'opacity: 0.3;')+'"></div>';
-				$(commandFilters).find('> div').append(filterHtml);
+			try {
+				// Add temp filter button to footer
+				var gd_filter = document.getElementById('gd_cmd_filter');
+				if ((!gd_filter) && gd_settings.cmdoverview === true) {
+					var commandFilters = $('#command_filter').get(0);
+					var filterHtml = '<div id="gd_cmd_filter" class="support_filter" style="background-image: '+gd_icon+'; width: 26px; height: 26px; '+(bParsingEnabledTemp?'':'opacity: 0.3;')+'"></div>';
+					$(commandFilters).find('> div').append(filterHtml);
 
-				$('#gd_cmd_filter').click(function() {
-					bParsingEnabledTemp = !bParsingEnabledTemp;
-					if (!bParsingEnabledTemp) {
-						$('.gd_cmd_units').remove();
-						$(this).css({ opacity: 0.3 });
-					} else {
-						$(this).css({ opacity: 1 });
-						enhanceCommandOverview();
-					}
-				});
-			}
+					$('#gd_cmd_filter').click(function() {
+						bParsingEnabledTemp = !bParsingEnabledTemp;
+						if (!bParsingEnabledTemp) {
+							$('.gd_cmd_units').remove();
+							$(this).css({ opacity: 0.3 });
+						} else {
+							$(this).css({ opacity: 1 });
+							enhanceCommandOverview();
+						}
+					});
+				}
 
-			// Parse overview
-			if (bParsingEnabledTemp) {
-				var commandList = $('#command_overview').get(0);
-				var commands = $(commandList).find('li');
-				var parseLimit = 100; // Limit number of parsed commands
-				let movements = Object.values(MM.getModels().MovementsUnits);
-				commands.each(function (c) {
-					if (c>=parseLimit) {return}
-					try {
-						var command_id = this.id;
-						command_id = command_id.match(/\d+/)[0];
-						if (!(command_id in parsedCommands)) {
-							var cmd_units = $(this).find('.command_overview_units');
-							if (cmd_units.length != 0) {
-								parsedCommands[command_id] = {
-									is_enemy: false,
-									movement_id: 0
-								};
-							} else {
-								// Command is incoming enemy, parse ids
-								var cmd_span = $(this).find('.cmd_span').get(0);
-								var cmd_entities = $(cmd_span).find('a');
-								if (cmd_entities.length == 4) {
-									var command_info = {
-										source_town: decodeHashToJson(cmd_entities.get(0).hash),
-										source_player: decodeHashToJson(cmd_entities.get(1).hash),
-										target_town: decodeHashToJson(cmd_entities.get(2).hash),
-										target_player: decodeHashToJson(cmd_entities.get(3).hash),
-										is_enemy: true,
+				// Parse overview
+				if (bParsingEnabledTemp) {
+					var commandList = $('#command_overview');
+					var commands = $(commandList).find('li');
+					var parseLimit = 100; // Limit number of parsed commands
+					let movements = Object.values(MM.getModels().MovementsUnits);
+					commands.each(function (c) {
+						if (c>=parseLimit) {return}
+						try {
+							var command_id = this.id;
+							if (!command_id) {return}
+							command_id = command_id.replace(/[^\d]+/g, '')
+							if (!(command_id in parsedCommands)) {
+								var cmd_units = $(this).find('.command_overview_units');
+								if (cmd_units.length != 0) {
+									parsedCommands[command_id] = {
+										is_enemy: false,
 										movement_id: 0
 									};
-									parsedCommands[command_id] = command_info;
+								} else {
+									// Command is incoming enemy, parse ids
+									var cmd_span = $(this).find('.cmd_span').get(0);
+									var cmd_entities = $(cmd_span).find('a');
+									if (cmd_entities.length == 4) {
+										var command_info = {
+											source_town: decodeHashToJson(cmd_entities.get(0).hash),
+											source_player: decodeHashToJson(cmd_entities.get(1).hash),
+											target_town: decodeHashToJson(cmd_entities.get(2).hash),
+											target_player: decodeHashToJson(cmd_entities.get(3).hash),
+											is_enemy: true,
+											movement_id: 0
+										};
+										parsedCommands[command_id] = command_info;
+									}
 								}
+
+								movements.map(movement => {
+									if (command_id == movement.attributes.command_id) {
+										parsedCommands[command_id].movement_id = movement.id
+									}
+								});
 							}
 
-							movements.map(movement => {
-								if (command_id == movement.attributes.command_id) {
-									parsedCommands[command_id].movement_id = movement.id
-								}
-							});
+							enhanceCommand(command_id);
+						} catch (error) {
+							errorHandling(error, "enhanceCommandOverviewParseCommand");
 						}
+					});
 
-						enhanceCommand(command_id);
-					} catch (e) {
-						console.error("Unable to parse command: ", e);
+					$('.gd_cmd_units').tooltip('Town intel (GrepoData index)');
+
+					if (verbose) {
+						console.log("parsed commands: ", parsedCommands);
 					}
-				});
-
-				$('.gd_cmd_units').tooltip('Town intel (GrepoData index)');
-
-				if (verbose) {
-					console.log("parsed commands: ", parsedCommands);
 				}
+			} catch (error) {
+                errorHandling(error, "enhanceCommandOverview");
 			}
         }
 
         function enhanceCommand(id, force=false) {
-            var cmd = parsedCommands[id];
-			var cmdInfoBox = $('#command_'+id).find('.cmd_info_box');
+			try {
+				var cmd = parsedCommands[id];
+				var cmdInfoBox = $('#command_'+id).find('.cmd_info_box');
 
-			// Insert travel time
-			var departureElem = document.getElementById('gd-runtime-'+id);
-			if (!departureElem && gd_settings.departure_time === true && cmd.movement_id > 0) {
-				var movement = MM.getModels().MovementsUnits[cmd.movement_id];
-				var departure = getDepartureTimeFromMovement(movement);
-				var runtimeHtml = '<span id="gd-runtime-'+id+'" class="troops_arrive_at gd-runtime-'+id+'">(Travel time '+departure.runtime_readable+')</span>';
-				cmdInfoBox.append(runtimeHtml);
-				//$('#gd-runtime-'+id).tooltip('Departed at ' + departure.departure_readable);
-			}
-
-			// Insert intel
-            var cmd_units = document.getElementById('gd_cmd_units_'+id);
-            if ((!cmd_units || force) && gd_settings.cmdoverview === true && cmd.is_enemy === true) {
-                if (cmd_units && force) {
-                    $('#gd_cmd_units_'+id).remove();
-                }
-                var intel = townIntelHistory[cmd.source_town.id];
-                if (typeof intel !== "undefined") {
-                    // show town intel from memory
-                    if ('u' in intel && Object.keys(intel.u).length > 0) {
-						var cmdInfoWidth = cmdInfoBox.width();
-						var freeSpace = 770 - cmdInfoWidth - 60; // cmdWidth - cmdTextWidth - margin
-						var numUnits = Object.keys(intel.u).length;
-						var unitSpace = numUnits * 29;
-						var bUnitsFit = freeSpace > unitSpace;
-						if (!bUnitsFit) {
-							$('#command_'+id).height(45);
+				// Insert travel time
+				var departureElem = document.getElementById('gd-runtime-'+id);
+				if (!departureElem && gd_settings.departure_time === true && cmd.movement_id > 0) {
+					var movement = MM.getModels().MovementsUnits[cmd.movement_id];
+					var runtimeHtml = '<span id="gd-runtime-'+id+'" class="troops_arrive_at gd-runtime-'+id+'">(';
+					var bHasRuntime = false
+					if (movement.attributes.hasOwnProperty('cap_of_invisibility_effective_until')) {
+						bHasRuntime = true;
+						var departure = getDepartureTimeFromMovement(movement);
+						runtimeHtml = runtimeHtml + translate.RUNTIME + ' '+departure.runtime_readable;
+					}
+					if (movement.attributes.hasOwnProperty('cancelable_until') && movement.attributes.cancelable_until != null) {
+						var diff = movement.attributes.cancelable_until - Date.now() / 1000;
+						if (diff>0) {
+							var cancelable_until = getHumanReadableDateTime(movement.attributes.cancelable_until, false);
+							runtimeHtml = runtimeHtml + (bHasRuntime==true?', '+translate.RUNTIME_CANCELABLE.toLowerCase():translate.RUNTIME_CANCELABLE) + ' ' + cancelable_until;
 						}
-                        var unitHtml = '<div id="gd_cmd_units_'+id+'" class="command_overview_units gd_cmd_units" style="'+(bUnitsFit?'bottom: 3px; ':'margin-top: 18px; ')+'cursor: pointer; position: absolute; right: 0;">';
-                        for (var i = 0; i < numUnits; i++) {
-                            var unit = intel.u[i];
-                            var size = 10;
-                            switch (Math.max(unit.count.toString().length, unit.killed.toString().length)) {
-                                case 1:
-                                case 2:
-                                    size = 11;
-                                    break;
-                                case 3:
-                                    size = 10;
-                                    break;
-                                case 4:
-                                    size = 8;
-                                    break;
-                                case 5:
-                                    size = 6;
-                                    break;
-                                default:
-                                    size = 10;
-                            }
-                            unitHtml = unitHtml +
-                                '<div class="unit_icon25x25 ' + unit.name + '" style="overflow: unset; font-size: ' + size + 'px; text-shadow: 1px 1px 3px #000; color: #fff; font-weight: 700; border: 1px solid #626262; padding: 10px 0 0 0; line-height: 13px; height: 15px; text-align: right; margin-right: 2px;">' +
-                                unit.count + '</div>';
-                        }
-                        unitHtml = unitHtml + '</div>';
-                        cmdInfoBox.after(unitHtml);
-                    } else {
-                        var units = '<div id="gd_cmd_units_'+id+'" class="command_overview_units gd_cmd_units" style="margin-top: 14px; cursor: pointer;"><span style="font-size: 10px;">No intel > </span></div>';
-                        cmdInfoBox.after(units);
-                    }
+					}
+					runtimeHtml = runtimeHtml + ')</span>';
+					cmdInfoBox.append(runtimeHtml);
+					//$('#gd-runtime-'+id).tooltip('Departed at ' + departure.departure_readable);
+				}
 
-                } else {
-                    // show a shortcut to view town intel
-                    var units = '<div id="gd_cmd_units_'+id+'" class="command_overview_units gd_cmd_units" style="margin-top: 14px;"><a id="gd_cmd_intel_'+id+'" style="font-size: 10px;">Check intel > </a></div>';
-                    cmdInfoBox.after(units);
-                }
+				// Insert intel
+				var cmd_units = document.getElementById('gd_cmd_units_'+id);
+				if ((!cmd_units || force) && gd_settings.cmdoverview === true && cmd.is_enemy === true) {
+					if (cmd_units && force) {
+						$('#gd_cmd_units_'+id).remove();
+					}
+					var intel = townIntelHistory[cmd.source_town.id];
+					if (typeof intel !== "undefined") {
+						// show town intel from memory
+						if ('u' in intel && Object.keys(intel.u).length > 0) {
+							var cmdInfoWidth = cmdInfoBox.width();
+							var freeSpace = 770 - cmdInfoWidth - 60; // cmdWidth - cmdTextWidth - margin
+							var numUnits = Object.keys(intel.u).length;
+							var unitSpace = numUnits * 29;
+							var bUnitsFit = freeSpace > unitSpace;
+							if (!bUnitsFit) {
+								$('#command_'+id).height(45);
+							}
+							var unitHtml = '<div id="gd_cmd_units_'+id+'" class="command_overview_units gd_cmd_units" style="'+(bUnitsFit?'bottom: 3px; ':'margin-top: 18px; ')+'cursor: pointer; position: absolute; right: 0;">';
+							for (var i = 0; i < numUnits; i++) {
+								var unit = intel.u[i];
+								var size = 10;
+								switch (Math.max(unit.count.toString().length, unit.killed.toString().length)) {
+									case 1:
+									case 2:
+										size = 11;
+										break;
+									case 3:
+										size = 10;
+										break;
+									case 4:
+										size = 8;
+										break;
+									case 5:
+										size = 6;
+										break;
+									default:
+										size = 10;
+								}
+								unitHtml = unitHtml +
+									'<div class="unit_icon25x25 ' + unit.name + '" style="overflow: unset; font-size: ' + size + 'px; text-shadow: 1px 1px 3px #000; color: #fff; font-weight: 700; border: 1px solid #626262; padding: 10px 0 0 0; line-height: 13px; height: 15px; text-align: right; margin-right: 2px;">' +
+									unit.count + '</div>';
+							}
+							unitHtml = unitHtml + '</div>';
+							cmdInfoBox.after(unitHtml);
+						} else {
+							var units = '<div id="gd_cmd_units_'+id+'" class="command_overview_units gd_cmd_units" style="margin-top: 14px; cursor: pointer;"><span style="font-size: 10px;">No intel > </span></div>';
+							cmdInfoBox.after(units);
+						}
 
-                $('#gd_cmd_units_'+id).click(function () {
-                    loadTownIntel(cmd.source_town.id, cmd.source_town.name, cmd.source_player.name, id);
-                });
+					} else {
+						// show a shortcut to view town intel
+						var units = '<div id="gd_cmd_units_'+id+'" class="command_overview_units gd_cmd_units" style="margin-top: 14px;"><a id="gd_cmd_intel_'+id+'" style="font-size: 10px;">Check intel > </a></div>';
+						cmdInfoBox.after(units);
+					}
 
-            }
+					$('#gd_cmd_units_'+id).click(function () {
+						loadTownIntel(cmd.source_town.id, cmd.source_town.name, cmd.source_player.name, id);
+					});
 
+				}
+
+			} catch (error) {
+                errorHandling(error, "enhanceCommand");
+			}
         }
 
         // Decode entity hash
@@ -775,215 +829,224 @@
 
         // Inbox reports
         function parseInboxReport() {
-            var reportElement = document.getElementById("report_report");
-            if (reportElement != null) {
-                var footerElement = reportElement.getElementsByClassName("game_list_footer")[0];
-                var reportText = reportElement.outerHTML;
-                var footerText = footerElement.outerHTML;
-                if (footerText.indexOf('gd_index_rep_') < 0
-                    && reportText.indexOf('report_town_bg_quest') < 0
-                    && reportText.indexOf('support_report_cities') < 0
-                    && reportText.indexOf('big_horizontal_report_separator') < 0
-                    && reportText.indexOf('report_town_bg_attack_spot') < 0
-                    && (reportText.indexOf('/images/game/towninfo/support.png') < 0 || reportText.indexOf('flagpole ghost_town') < 0)
-                    && (reportText.indexOf('/images/game/towninfo/attack.png') >= 0
-                        || reportText.indexOf('/images/game/towninfo/espionage') >= 0
-                        || reportText.indexOf('/images/game/towninfo/breach.png') >= 0
-                        || reportText.indexOf('/images/game/towninfo/attackSupport.png') >= 0
-                        || reportText.indexOf('/images/game/towninfo/take_over.png') >= 0
-                        || reportText.indexOf('/images/game/towninfo/support.png') >= 0
-					    || reportText.indexOf('power_icon86x86 wisdom') >= 0)
-                ) {
+			try {
+				var reportElement = document.getElementById("report_report");
+				if (reportElement != null) {
+					var footerElement = reportElement.getElementsByClassName("game_list_footer")[0];
+					var reportText = reportElement.outerHTML;
+					var footerText = footerElement.outerHTML;
+					if (footerText.indexOf('gd_index_rep_') < 0
+						&& reportText.indexOf('report_town_bg_quest') < 0
+						&& reportText.indexOf('support_report_cities') < 0
+						&& reportText.indexOf('big_horizontal_report_separator') < 0
+						&& reportText.indexOf('report_town_bg_attack_spot') < 0
+						&& (reportText.indexOf('/images/game/towninfo/support.png') < 0 || reportText.indexOf('flagpole ghost_town') < 0)
+						&& (reportText.indexOf('/images/game/towninfo/attack.png') >= 0
+							|| reportText.indexOf('/images/game/towninfo/espionage') >= 0
+							|| reportText.indexOf('/images/game/towninfo/breach.png') >= 0
+							|| reportText.indexOf('/images/game/towninfo/attackSupport.png') >= 0
+							|| reportText.indexOf('/images/game/towninfo/take_over.png') >= 0
+							|| reportText.indexOf('/images/game/towninfo/support.png') >= 0
+							|| reportText.indexOf('power_icon86x86 wisdom') >= 0)
+					   ) {
 
-                    // Build report hash using default method
-                    var headerElement = reportElement.querySelector("#report_header");
-                    var dateElement = footerElement.querySelector("#report_date");
-                    var headerText = headerElement.innerText;
-                    var dateText = dateElement.innerText;
-                    var hashText = headerText + dateText;
+						// Build report hash using default method
+						var headerElement = reportElement.querySelector("#report_header");
+						var dateElement = footerElement.querySelector("#report_date");
+						var headerText = headerElement.innerText;
+						var dateText = dateElement.innerText;
+						var hashText = headerText + dateText;
 
-                    // Try to build report hash using town ids (robust against object name changes)
-                    try {
-                        var towns = headerElement.getElementsByClassName('town_name');
-                        if (towns.length === 2) {
-                            var ids = [];
-                            for (var m = 0; m < towns.length; m++) {
-                                var href = towns[m].getElementsByTagName("a")[0].getAttribute("href");
-                                var townJson = decodeHashToJson(href);
-                                ids.push(townJson.id);
-                            }
-                            if (ids.length === 2) {
-                                ids.push(dateText); // Add date to report info
-                                hashText = ids.join('');
-                            }
-                        }
-                    } catch (e) {
-                        console.log(e);
-                    }
+						// Try to build report hash using town ids (robust against object name changes)
+						try {
+							var towns = headerElement.getElementsByClassName('town_name');
+							if (towns.length === 2) {
+								var ids = [];
+								for (var m = 0; m < towns.length; m++) {
+									var href = towns[m].getElementsByTagName("a")[0].getAttribute("href");
+									var townJson = decodeHashToJson(href);
+									ids.push(townJson.id);
+								}
+								if (ids.length === 2) {
+									ids.push(dateText); // Add date to report info
+									hashText = ids.join('');
+								}
+							}
+						} catch (e) {
+							console.log(e);
+						}
 
-                    // Try to parse units and buildings
-                    var reportUnits = reportElement.getElementsByClassName('unit_icon40x40');
-                    var reportBuildings = reportElement.getElementsByClassName('report_unit');
-                    var reportContent = '';
-                    try {
-                        for (var u = 0; u < reportUnits.length; u++) {
-                            reportContent += reportUnits[u].outerHTML;
-                        }
-                        for (var u = 0; u < reportBuildings.length; u++) {
-                            reportContent += reportBuildings[u].outerHTML;
-                        }
-                    } catch (e) {
-                        console.log("Unable to parse inbox report units: ", e);
-                    }
-                    if (typeof reportContent === 'string' || reportContent instanceof String) {
-                        hashText += reportContent;
-                    }
+						// Try to parse units and buildings
+						var reportUnits = reportElement.getElementsByClassName('unit_icon40x40');
+						var reportBuildings = reportElement.getElementsByClassName('report_unit');
+						var reportContent = '';
+						try {
+							for (var u = 0; u < reportUnits.length; u++) {
+								reportContent += reportUnits[u].outerHTML;
+							}
+							for (var u = 0; u < reportBuildings.length; u++) {
+								reportContent += reportBuildings[u].outerHTML;
+							}
+						} catch (e) {
+							console.log("Unable to parse inbox report units: ", e);
+						}
+						if (typeof reportContent === 'string' || reportContent instanceof String) {
+							hashText += reportContent;
+						}
 
-                    reportHash = hashText.report_hash();
-                    console.log('Parsed inbox report with hash: ' + reportHash);
+						reportHash = hashText.report_hash();
+						if (verbose) console.log('Parsed inbox report with hash: ' + reportHash);
 
-                    // Create index button
-                    var addBtn = document.createElement('a');
-                    var txtSpan = document.createElement('span');
-                    var rightSpan = document.createElement('span');
-                    var leftSpan = document.createElement('span');
-                    txtSpan.innerText = translate.ADD + ' +';
+						// Create index button
+						var addBtn = document.createElement('a');
+						var txtSpan = document.createElement('span');
+						var rightSpan = document.createElement('span');
+						var leftSpan = document.createElement('span');
+						txtSpan.innerText = translate.ADD + ' +';
 
-                    addBtn.setAttribute('href', '#');
-                    addBtn.setAttribute('id', 'gd_index_rep_');
-                    addBtn.setAttribute('class', 'button gd_btn_index');
-                    addBtn.setAttribute('style', 'float: right;');
-                    txtSpan.setAttribute('id', 'gd_index_rep_txt');
-                    txtSpan.setAttribute('style', 'min-width: 50px; margin: 0 3px;');
-                    txtSpan.setAttribute('class', 'middle');
-                    rightSpan.setAttribute('class', 'right');
-                    leftSpan.setAttribute('class', 'left');
+						addBtn.setAttribute('href', '#');
+						addBtn.setAttribute('id', 'gd_index_rep_');
+						addBtn.setAttribute('class', 'button gd_btn_index');
+						addBtn.setAttribute('style', 'float: right;');
+						txtSpan.setAttribute('id', 'gd_index_rep_txt');
+						txtSpan.setAttribute('style', 'min-width: 50px; margin: 0 3px;');
+						txtSpan.setAttribute('class', 'middle');
+						rightSpan.setAttribute('class', 'right');
+						leftSpan.setAttribute('class', 'left');
 
-                    rightSpan.appendChild(txtSpan);
-                    leftSpan.appendChild(rightSpan);
-                    addBtn.appendChild(leftSpan);
+						rightSpan.appendChild(txtSpan);
+						leftSpan.appendChild(rightSpan);
+						addBtn.appendChild(leftSpan);
 
-					// Check if this report was already indexed
-                    var reportFound = false;
-                    for (var j = 0; j < globals.reportsFoundInbox.length; j++) {
-                        if (globals.reportsFoundInbox[j] === reportHash) {
-                            reportFound = true;
-                        }
-                    }
-                    if (reportFound) {
-                        addBtn.setAttribute('style', 'color: #36cd5b; float: right;');
-                        txtSpan.setAttribute('style', 'cursor: default;');
-                        txtSpan.innerText = translate.ADDED + ' ✓';
-                    } else {
-                        addBtn.addEventListener('click', function () {
-                            if ($('#gd_index_rep_txt').get(0)) {
-                                $('#gd_index_rep_txt').get(0).innerText = translate.SEND;
-                            }
-                            addToIndexFromInbox(reportHash, reportElement);
-                        }, false);
-                    }
+						// Check if this report was already indexed
+						var reportFound = false;
+						for (var j = 0; j < globals.reportsFoundInbox.length; j++) {
+							if (globals.reportsFoundInbox[j] === reportHash) {
+								reportFound = true;
+							}
+						}
+						if (reportFound) {
+							addBtn.setAttribute('style', 'color: #36cd5b; float: right;');
+							txtSpan.setAttribute('style', 'cursor: default;');
+							txtSpan.innerText = translate.ADDED + ' ✓';
+						} else {
+							addBtn.addEventListener('click', function () {
+								if ($('#gd_index_rep_txt').get(0)) {
+									$('#gd_index_rep_txt').get(0).innerText = translate.SEND;
+								}
+								addToIndexFromInbox(reportHash, reportElement);
+							}, false);
+						}
 
-					// Create share button
-                    var shareBtn = document.createElement('a');
-                    var shareInput = document.createElement('input');
-                    var rightShareSpan = document.createElement('span');
-                    var leftShareSpan = document.createElement('span');
-                    var txtShareSpan = document.createElement('span');
-                    shareInput.setAttribute('type', 'text');
-                    shareInput.setAttribute('id', 'gd_share_rep_inp');
-                    shareInput.setAttribute('style', 'float: right;');
-                    txtShareSpan.setAttribute('id', 'gd_share_rep_txt');
-                    txtShareSpan.setAttribute('class', 'middle');
-                    txtShareSpan.setAttribute('style', 'min-width: 50px; margin: 0 3px;');
-                    rightShareSpan.setAttribute('class', 'right');
-                    leftShareSpan.setAttribute('class', 'left');
-                    leftShareSpan.appendChild(rightShareSpan);
-                    rightShareSpan.appendChild(txtShareSpan);
-                    shareBtn.appendChild(leftShareSpan);
-                    shareBtn.setAttribute('href', '#');
-                    shareBtn.setAttribute('id', 'gd_share_rep_');
-                    shareBtn.setAttribute('class', 'button gd_btn_share');
-                    shareBtn.setAttribute('style', 'float: right;');
+						// Create share button
+						var shareBtn = document.createElement('a');
+						var shareInput = document.createElement('input');
+						var rightShareSpan = document.createElement('span');
+						var leftShareSpan = document.createElement('span');
+						var txtShareSpan = document.createElement('span');
+						shareInput.setAttribute('type', 'text');
+						shareInput.setAttribute('id', 'gd_share_rep_inp');
+						shareInput.setAttribute('style', 'float: right;');
+						txtShareSpan.setAttribute('id', 'gd_share_rep_txt');
+						txtShareSpan.setAttribute('class', 'middle');
+						txtShareSpan.setAttribute('style', 'min-width: 50px; margin: 0 3px;');
+						rightShareSpan.setAttribute('class', 'right');
+						leftShareSpan.setAttribute('class', 'left');
+						leftShareSpan.appendChild(rightShareSpan);
+						rightShareSpan.appendChild(txtShareSpan);
+						shareBtn.appendChild(leftShareSpan);
+						shareBtn.setAttribute('href', '#');
+						shareBtn.setAttribute('id', 'gd_share_rep_');
+						shareBtn.setAttribute('class', 'button gd_btn_share');
+						shareBtn.setAttribute('style', 'float: right;');
 
-                    txtShareSpan.innerText = translate.SHARE;
+						txtShareSpan.innerText = translate.SHARE;
 
-                    shareBtn.addEventListener('click', () => {
-                        if ($('#gd_share_rep_txt').get(0)) {
-                            var hashI = ('r' + reportHash).replace('-', 'm');
-                            var content = '<b>Share this report on Discord:</b><br><ul>' +
-                                '    <li>1. Install the GrepoData bot in your Discord server (<a href="https://grepodata.com/discord" target="_blank">link</a>).</li>' +
-                                '    <li>2. Insert the following code in your Discord server.<br/>The bot will then create the screenshot for you!' +
-                                '    </ul><br/><input type="text" class="gd-copy-input-' + reportHash + '" value="' + `!gd report ${hashI}` + '"> <a href="#" class="gd-copy-command-' + reportHash + '">Copy to clipboard</a><span class="gd-copy-done-' + reportHash + '" style="display: none; float: right;"> Copied!</span>' +
-                                '    <br /><br /><small>Thank you for using <a href="https://grepodata.com" target="_blank">GrepoData</a>!</small>';
+						shareBtn.addEventListener('click', () => {
+							if ($('#gd_share_rep_txt').get(0)) {
+								var hashI = ('r' + reportHash).replace('-', 'm');
+								var content = '<b>Share this report on Discord:</b><br><ul>' +
+									'    <li>1. Install the GrepoData bot in your Discord server (<a href="https://grepodata.com/discord" target="_blank">link</a>).</li>' +
+									'    <li>2. Insert the following code in your Discord server.<br/>The bot will then create the screenshot for you!' +
+									'    </ul><br/><input type="text" class="gd-copy-input-' + reportHash + '" value="' + `!gd report ${hashI}` + '"> <a href="#" class="gd-copy-command-' + reportHash + '">Copy to clipboard</a><span class="gd-copy-done-' + reportHash + '" style="display: none; float: right;"> Copied!</span>' +
+									'    <br /><br /><small>Thank you for using <a href="https://grepodata.com" target="_blank">GrepoData</a>!</small>';
 
-                            Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG).setContent(content)
-                            addToIndexFromInbox(reportHash, reportElement);
+								Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG).setContent(content)
+								addToIndexFromInbox(reportHash, reportElement);
 
-                            $(".gd-copy-command-" + reportHash).click(function () {
-                                $(".gd-copy-input-" + reportHash).select();
-                                document.execCommand('copy');
+								$(".gd-copy-command-" + reportHash).click(function () {
+									$(".gd-copy-input-" + reportHash).select();
+									document.execCommand('copy');
 
-                                $('.gd-copy-done-' + reportHash).get(0).style.display = 'block';
-                                setTimeout(function () {
-                                    if ($('.gd-copy-done-' + reportHash).get(0)) {
-                                        $('.gd-copy-done-' + reportHash).get(0).style.display = 'none';
-                                    }
-                                }, 3000);
-                            });
-                        }
-                    });
+									$('.gd-copy-done-' + reportHash).get(0).style.display = 'block';
+									setTimeout(function () {
+										if ($('.gd-copy-done-' + reportHash).get(0)) {
+											$('.gd-copy-done-' + reportHash).get(0).style.display = 'none';
+										}
+									}, 3000);
+								});
+							}
+						});
 
-					// Create custom footer
-                    var grepodataFooter = document.createElement('div');
-                    grepodataFooter.setAttribute('id', 'gd_inbox_footer');
-                    grepodataFooter.appendChild(addBtn);
-                    grepodataFooter.appendChild(shareBtn)
-                    footerElement.appendChild(grepodataFooter);
+						// Create custom footer
+						var grepodataFooter = document.createElement('div');
+						grepodataFooter.setAttribute('id', 'gd_inbox_footer');
+						grepodataFooter.appendChild(addBtn);
+						grepodataFooter.appendChild(shareBtn)
+						footerElement.appendChild(grepodataFooter);
 
-                    // Set footer button placement
-                    var folderElement = footerElement.querySelector('#select_folder_id');
-                    footerElement.style.backgroundSize = 'auto 100%';
-                    footerElement.style.padding = '6px 0';
-                    dateElement.style.marginTop = '-4px';
-                    dateElement.style.marginLeft = '3px';
-                    dateElement.style.position = 'absolute';
-                    dateElement.style.zIndex = '7';
-					dateElement.style.background = 'url(https://gpnl.innogamescdn.com/images/game/border/footer.png) repeat-x 0px -6px';
-                    if (folderElement !== null) {
-                        folderElement.style.position = 'absolute';
-                        folderElement.style.marginTop = '12px';
-                        folderElement.style.marginLeft = '3px';
-                        folderElement.style.zIndex = '6';
-                    }
+						// Set footer button placement
+						var folderElement = footerElement.querySelector('#select_folder_id');
+						footerElement.style.backgroundSize = 'auto 100%';
+						footerElement.style.padding = '6px 0';
+						dateElement.style.marginTop = '-4px';
+						dateElement.style.marginLeft = '3px';
+						dateElement.style.position = 'absolute';
+						dateElement.style.zIndex = '7';
+						dateElement.style.background = 'url(https://gpnl.innogamescdn.com/images/game/border/footer.png) repeat-x 0px -6px';
+						if (folderElement !== null) {
+							folderElement.style.position = 'absolute';
+							folderElement.style.marginTop = '12px';
+							folderElement.style.marginLeft = '3px';
+							folderElement.style.zIndex = '6';
+						}
 
-                    // Handle inbox keyboard shortcuts
-                    document.removeEventListener('keyup', inboxNavShortcut);
-                    document.addEventListener('keyup', inboxNavShortcut);
-                }
+						// Handle inbox keyboard shortcuts
+						document.removeEventListener('keyup', inboxNavShortcut);
+						document.addEventListener('keyup', inboxNavShortcut);
+					}
 
-            }
+				}
+
+			} catch (error) {
+                errorHandling(error, "parseInboxReport");
+			}
         }
 
         function inboxNavShortcut(e) {
-            var reportElement = document.getElementById("report_report");
-            if (gd_settings.keys_enabled === true && !['textarea', 'input'].includes(e.srcElement.tagName.toLowerCase()) && reportElement !== null) {
-                switch (e.key) {
-                    case gd_settings.key_inbox_prev:
-                        var prev = reportElement.getElementsByClassName('last_report game_arrow_left');
-                        if (prev.length === 1 && prev[0] != null) {
-                            prev[0].click();
-                        }
-                        break;
-                    case gd_settings.key_inbox_next:
-                        var next = reportElement.getElementsByClassName('next_report game_arrow_right');
-                        if (next.length === 1 && next[0] != null) {
-                            next[0].click();
-                        }
-                        break;
-                    default:
-                        break;
-                }
-            }
+			try {
+				var reportElement = document.getElementById("report_report");
+				if (gd_settings.keys_enabled === true && !['textarea', 'input'].includes(e.srcElement.tagName.toLowerCase()) && reportElement !== null) {
+					switch (e.key) {
+						case gd_settings.key_inbox_prev:
+							var prev = reportElement.getElementsByClassName('last_report game_arrow_left');
+							if (prev.length === 1 && prev[0] != null) {
+								prev[0].click();
+							}
+							break;
+						case gd_settings.key_inbox_next:
+							var next = reportElement.getElementsByClassName('next_report game_arrow_right');
+							if (next.length === 1 && next[0] != null) {
+								next[0].click();
+							}
+							break;
+						default:
+							break;
+					}
+				}
+			} catch (error) {
+                console.log(error);
+			}
         }
 
         function addForumReportById(reportId, reportHash) {
@@ -1018,174 +1081,179 @@
 
         // Forum reports
         function parseForumReport() {
-            var reportsInView = document.getElementsByClassName("bbcodes published_report");
+			try {
+				var reportsInView = document.getElementsByClassName("bbcodes published_report");
 
-            //process reports
-            if (reportsInView.length > 0) {
-                for (var i = 0; i < reportsInView.length; i++) {
-                    var reportElement = reportsInView[i];
-                    var reportId = reportElement.id;
+				//process reports
+				if (reportsInView.length > 0) {
+					for (var i = 0; i < reportsInView.length; i++) {
+						var reportElement = reportsInView[i];
+						var reportId = reportElement.id;
 
-                    if (!$('#gd_index_f_' + reportId).get(0)) {
+						if (!$('#gd_index_f_' + reportId).get(0)) {
 
-                        var bSpy = false;
-                        if (reportElement.getElementsByClassName("espionage_report").length > 0) {
-                            bSpy = true;
-                        } else if (reportElement.getElementsByClassName("report_units").length < 2
-                            || reportElement.getElementsByClassName("conquest").length > 0) {
-                            // ignore non intel reports
-                            continue;
-                        }
+							var bSpy = false;
+							if (reportElement.getElementsByClassName("espionage_report").length > 0) {
+								bSpy = true;
+							} else if (reportElement.getElementsByClassName("report_units").length < 2
+									   || reportElement.getElementsByClassName("conquest").length > 0) {
+								// ignore non intel reports
+								continue;
+							}
 
-                        var reportHash = null;
-                        try {
-                            // === Build report hash to create a unique identifier for this report that is consistent between sessions
-                            // Try to parse time string
-                            var header = reportElement.getElementsByClassName('published_report_header bold')[0];
-                            var dateText = header.getElementsByClassName('reports_date small')[0].innerText;
-                            try {
-                                var time = dateText.match(time_regex);
-                                if (time != null) {
-                                    dateText = time[0];
-                                }
-                            } catch (e) {
-                            }
+							var reportHash = null;
+							try {
+								// === Build report hash to create a unique identifier for this report that is consistent between sessions
+								// Try to parse time string
+								var header = reportElement.getElementsByClassName('published_report_header bold')[0];
+								var dateText = header.getElementsByClassName('reports_date small')[0].innerText;
+								try {
+									var time = dateText.match(time_regex);
+									if (time != null) {
+										dateText = time[0];
+									}
+								} catch (e) {
+								}
 
-                            // Try to parse town ids from report header
-                            var headerText = header.getElementsByClassName('bold')[0].innerText;
-                            try {
-                                var towns = header.getElementsByClassName('gp_town_link');
-                                if (towns.length === 2) {
-                                    var ids = [];
-                                    for (var m = 0; m < towns.length; m++) {
-                                        var href = towns[m].getAttribute("href");
-                                        var townJson = decodeHashToJson(href);
-                                        ids.push(townJson.id);
-                                    }
-                                    if (ids.length === 2) {
-                                        headerText = ids.join('');
-                                    }
-                                }
-                            } catch (e) {
-                            }
+								// Try to parse town ids from report header
+								var headerText = header.getElementsByClassName('bold')[0].innerText;
+								try {
+									var towns = header.getElementsByClassName('gp_town_link');
+									if (towns.length === 2) {
+										var ids = [];
+										for (var m = 0; m < towns.length; m++) {
+											var href = towns[m].getAttribute("href");
+											var townJson = decodeHashToJson(href);
+											ids.push(townJson.id);
+										}
+										if (ids.length === 2) {
+											headerText = ids.join('');
+										}
+									}
+								} catch (e) {
+								}
 
-                            // Try to parse units and buildings
-                            var reportUnits = reportElement.getElementsByClassName('unit_icon40x40');
-                            var reportBuildings = reportElement.getElementsByClassName('report_unit');
-                            var reportDetails = reportElement.getElementsByClassName('report_details');
-                            var reportContent = '';
-                            try {
-                                for (var u = 0; u < reportUnits.length; u++) {
-                                    reportContent += reportUnits[u].outerHTML;
-                                }
-                                for (var u = 0; u < reportBuildings.length; u++) {
-                                    reportContent += reportBuildings[u].outerHTML;
-                                }
-                                if (reportDetails.length === 1) {
-                                    reportContent += reportDetails[0].innerText;
-                                }
-                            } catch (e) {
-                            }
+								// Try to parse units and buildings
+								var reportUnits = reportElement.getElementsByClassName('unit_icon40x40');
+								var reportBuildings = reportElement.getElementsByClassName('report_unit');
+								var reportDetails = reportElement.getElementsByClassName('report_details');
+								var reportContent = '';
+								try {
+									for (var u = 0; u < reportUnits.length; u++) {
+										reportContent += reportUnits[u].outerHTML;
+									}
+									for (var u = 0; u < reportBuildings.length; u++) {
+										reportContent += reportBuildings[u].outerHTML;
+									}
+									if (reportDetails.length === 1) {
+										reportContent += reportDetails[0].innerText;
+									}
+								} catch (e) {
+								}
 
-                            // Combine intel and generate hash
-                            var reportText = dateText + headerText + reportContent;
-                            if (reportText !== null && reportText !== '') {
-                                reportHash = reportText.report_hash();
-                            }
+								// Combine intel and generate hash
+								var reportText = dateText + headerText + reportContent;
+								if (reportText !== null && reportText !== '') {
+									reportHash = reportText.report_hash();
+								}
 
-                        } catch (err) {
-                            reportHash = null;
-                        }
-                        console.log('Parsed forum report with hash: ' + reportHash);
+							} catch (err) {
+								reportHash = null;
+							}
+							console.log('Parsed forum report with hash: ' + reportHash);
 
-                        var exists = false;
-                        if (reportHash !== null && reportHash !== 0) {
-                            for (var j = 0; j < globals.reportsFoundForum.length; j++) {
-                                if (globals.reportsFoundForum[j] == reportHash) {
-                                    exists = true;
-                                }
-                            }
-                        }
+							var exists = false;
+							if (reportHash !== null && reportHash !== 0) {
+								for (var j = 0; j < globals.reportsFoundForum.length; j++) {
+									if (globals.reportsFoundForum[j] == reportHash) {
+										exists = true;
+									}
+								}
+							}
 
-                        var shareBtn = document.createElement('a');
-                        var shareInput = document.createElement('input');
-                        var rightShareSpan = document.createElement('span');
-                        var leftShareSpan = document.createElement('span');
-                        var txtShareSpan = document.createElement('span');
-                        shareInput.setAttribute('type', 'text');
-                        shareInput.setAttribute('id', 'gd_share_rep_inp');
-                        shareInput.setAttribute('style', 'float: right;');
-                        txtShareSpan.setAttribute('id', 'gd_share_rep_txt');
-                        txtShareSpan.setAttribute('class', 'middle');
-                        txtShareSpan.setAttribute('style', 'min-width: 50px;');
-                        rightShareSpan.setAttribute('class', 'right');
-                        leftShareSpan.setAttribute('class', 'left');
-                        leftShareSpan.appendChild(rightShareSpan);
-                        rightShareSpan.appendChild(txtShareSpan);
-                        shareBtn.appendChild(leftShareSpan);
-                        shareBtn.setAttribute('href', '#');
-                        shareBtn.setAttribute('id', 'gd_share_rep_');
-                        shareBtn.setAttribute('class', 'button gd_btn_share');
-                        shareBtn.setAttribute('style', 'float: right;');
+							var shareBtn = document.createElement('a');
+							var shareInput = document.createElement('input');
+							var rightShareSpan = document.createElement('span');
+							var leftShareSpan = document.createElement('span');
+							var txtShareSpan = document.createElement('span');
+							shareInput.setAttribute('type', 'text');
+							shareInput.setAttribute('id', 'gd_share_rep_inp');
+							shareInput.setAttribute('style', 'float: right;');
+							txtShareSpan.setAttribute('id', 'gd_share_rep_txt');
+							txtShareSpan.setAttribute('class', 'middle');
+							txtShareSpan.setAttribute('style', 'min-width: 50px;');
+							rightShareSpan.setAttribute('class', 'right');
+							leftShareSpan.setAttribute('class', 'left');
+							leftShareSpan.appendChild(rightShareSpan);
+							rightShareSpan.appendChild(txtShareSpan);
+							shareBtn.appendChild(leftShareSpan);
+							shareBtn.setAttribute('href', '#');
+							shareBtn.setAttribute('id', 'gd_share_rep_');
+							shareBtn.setAttribute('class', 'button gd_btn_share');
+							shareBtn.setAttribute('style', 'float: right;');
 
-                        txtShareSpan.innerText = translate.SHARE;
+							txtShareSpan.innerText = translate.SHARE;
 
 
-                        shareBtn.addEventListener('click', () => {
-                            if ($('#gd_share_rep_txt').get(0)) {
-                                var hashI = ('r' + reportHash).replace('-', 'm');
-                                var content = '<b>Share this report on Discord:</b><br><ul>' +
-                                    '    <li>1. Install the GrepoData bot in your Discord server (<a href="https://grepodata.com/discord" target="_blank">link</a>).</li>' +
-                                    '    <li>2. Insert the following code in your Discord server.<br/>The bot will then create the screenshot for you!' +
-                                    '    </ul><br/><input type="text" class="gd-copy-input-' + reportHash + '" value="' + `!gd report ${hashI}` + '"> <a href="#" class="gd-copy-command-' + reportHash + '">Copy to clipboard</a><span class="gd-copy-done-' + reportHash + '" style="display: none; float: right;"> Copied!</span>' +
-                                    '    <br /><br /><small>Thank you for using <a href="https://grepodata.com" target="_blank">GrepoData</a>!</small>';
+							shareBtn.addEventListener('click', () => {
+								if ($('#gd_share_rep_txt').get(0)) {
+									var hashI = ('r' + reportHash).replace('-', 'm');
+									var content = '<b>Share this report on Discord:</b><br><ul>' +
+										'    <li>1. Install the GrepoData bot in your Discord server (<a href="https://grepodata.com/discord" target="_blank">link</a>).</li>' +
+										'    <li>2. Insert the following code in your Discord server.<br/>The bot will then create the screenshot for you!' +
+										'    </ul><br/><input type="text" class="gd-copy-input-' + reportHash + '" value="' + `!gd report ${hashI}` + '"> <a href="#" class="gd-copy-command-' + reportHash + '">Copy to clipboard</a><span class="gd-copy-done-' + reportHash + '" style="display: none; float: right;"> Copied!</span>' +
+										'    <br /><br /><small>Thank you for using <a href="https://grepodata.com" target="_blank">GrepoData</a>!</small>';
 
-                                Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG).setContent(content);
-                                addForumReportById($('#gd_index_f_' + reportId).attr('report_id'), $('#gd_index_f_' + reportId).attr('report_hash'));
+									Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG).setContent(content);
+									addForumReportById($('#gd_index_f_' + reportId).attr('report_id'), $('#gd_index_f_' + reportId).attr('report_hash'));
 
-                                $(".gd-copy-command-" + reportHash).click(function () {
-                                    $(".gd-copy-input-" + reportHash).select();
-                                    document.execCommand('copy');
+									$(".gd-copy-command-" + reportHash).click(function () {
+										$(".gd-copy-input-" + reportHash).select();
+										document.execCommand('copy');
 
-                                    $('.gd-copy-done-' + reportHash).get(0).style.display = 'block';
-                                    setTimeout(function () {
-                                        if ($('.gd-copy-done-' + reportHash).get(0)) {
-                                            $('.gd-copy-done-' + reportHash).get(0).style.display = 'none';
-                                        }
-                                    }, 3000);
-                                });
-                            }
-                        })
+										$('.gd-copy-done-' + reportHash).get(0).style.display = 'block';
+										setTimeout(function () {
+											if ($('.gd-copy-done-' + reportHash).get(0)) {
+												$('.gd-copy-done-' + reportHash).get(0).style.display = 'none';
+											}
+										}, 3000);
+									});
+								}
+							})
 
-                        if (reportHash == null) {
-                            reportHash = '';
-                        }
-                        if (bSpy === true) {
-                            $(reportElement).append('<div class="gd_indexer_footer" style="background: #fff; height: 28px; margin-top: -28px;">\n' +
-                                '    <a href="#" id="gd_index_f_' + reportId + '" report_hash="' + reportHash + '" report_id="' + reportId + '" class="button rh' + reportHash + ' gd_btn_index" style="float: right;"><span class="left"><span class="right"><span id="gd_index_f_txt_' + reportId + '" class="middle" style="min-width: 50px;">' + translate.ADD + ' +</span></span></span></a>\n' +
-                                '    </div>');
-                            $(reportElement).find('.resources, .small').css("text-align", "left");
-                        } else {
-                            $(reportElement).append('<div class="gd_indexer_footer" style="background: url(https://gpnl.innogamescdn.com/images/game/border/odd.png); height: 28px; margin-top: -52px;">\n' +
-                                '    <a href="#" id="gd_index_f_' + reportId + '" report_hash="' + reportHash + '" report_id="' + reportId + '" class="button rh' + reportHash + ' gd_btn_index" style="float: right;"><span class="left"><span class="right"><span id="gd_index_f_txt_' + reportId + '" class="middle" style="min-width: 50px;">' + translate.ADD + ' +</span></span></span></a>\n' +
-                                '    </div>');
-                            $(reportElement).find('.button, .simulator, .all').parent().css("padding-top", "24px");
-                            $(reportElement).find('.button, .simulator, .all').siblings("span").css("margin-top", "-24px");
-                        }
+							if (reportHash == null) {
+								reportHash = '';
+							}
+							if (bSpy === true) {
+								$(reportElement).append('<div class="gd_indexer_footer" style="background: #fff; height: 28px; margin-top: -28px;">\n' +
+														'    <a href="#" id="gd_index_f_' + reportId + '" report_hash="' + reportHash + '" report_id="' + reportId + '" class="button rh' + reportHash + ' gd_btn_index" style="float: right;"><span class="left"><span class="right"><span id="gd_index_f_txt_' + reportId + '" class="middle" style="min-width: 50px;">' + translate.ADD + ' +</span></span></span></a>\n' +
+														'    </div>');
+								$(reportElement).find('.resources, .small').css("text-align", "left");
+							} else {
+								$(reportElement).append('<div class="gd_indexer_footer" style="background: url(https://gpnl.innogamescdn.com/images/game/border/odd.png); height: 28px; margin-top: -52px;">\n' +
+														'    <a href="#" id="gd_index_f_' + reportId + '" report_hash="' + reportHash + '" report_id="' + reportId + '" class="button rh' + reportHash + ' gd_btn_index" style="float: right;"><span class="left"><span class="right"><span id="gd_index_f_txt_' + reportId + '" class="middle" style="min-width: 50px;">' + translate.ADD + ' +</span></span></span></a>\n' +
+														'    </div>');
+								$(reportElement).find('.button, .simulator, .all').parent().css("padding-top", "24px");
+								$(reportElement).find('.button, .simulator, .all').siblings("span").css("margin-top", "-24px");
+							}
 
-                        $(reportElement).find('.gd_indexer_footer').append(shareBtn);
+							$(reportElement).find('.gd_indexer_footer').append(shareBtn);
 
-                        if (exists === true) {
-                            $('#gd_index_f_' + reportId).get(0).style.color = '#36cd5b';
-                            $('#gd_index_f_txt_' + reportId).get(0).innerText = translate.ADDED + ' ✓';
-                        } else {
-                            $('#gd_index_f_' + reportId).click(function () {
-                                addForumReportById($(this).attr('report_id'), $(this).attr('report_hash'));
-                            });
-                        }
-                    }
-                }
-            }
+							if (exists === true) {
+								$('#gd_index_f_' + reportId).get(0).style.color = '#36cd5b';
+								$('#gd_index_f_txt_' + reportId).get(0).innerText = translate.ADDED + ' ✓';
+							} else {
+								$('#gd_index_f_' + reportId).click(function () {
+									addForumReportById($(this).attr('report_id'), $(this).attr('report_hash'));
+								});
+							}
+						}
+					}
+				}
+
+			} catch (error) {
+                errorHandling(error, "parseForumReport");
+			}
         }
 
         function settings() {
@@ -1255,6 +1323,13 @@
                     '\t\t\t</table></div>\n' +
                     '\t\t\t<br/>';
 
+                // Other
+                settingsHtml += '\t\t\t<p style="margin-left: 10px; display: inline-flex; height: 14px;"><strong>'+translate.SETTINGS_OTHER+'</strong></p></br>\n' +
+                    '\t\t\t<div style="margin-left: 30px;" class="checkbox_new bug_reports_gd_enabled' + (gd_settings.bug_reports === true ? ' checked' : '') + '">\n' +
+                    '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.BUG_REPORTS + '</div>\n' +
+                    '\t\t\t</div>\n' +
+                    '\t\t\t<br><br><hr>\n';
+
                 // Footer
                 settingsHtml += '</div>' +
 					'<a href="https://grepodata.com/message" target="_blank">Contact</a>' +
@@ -1299,6 +1374,9 @@
                 $(".context_gd_enabled").click(function () {
                     settingsCbx('context', !gd_settings.context);
                 });
+                $(".bug_reports_gd_enabled").click(function () {
+                    settingsCbx('bug_reports', !gd_settings.bug_reports);
+                });
                 $(".keys_enabled_gd_enabled").click(function () {
                     settingsCbx('keys_enabled', !gd_settings.keys_enabled);
                 });
@@ -1337,33 +1415,43 @@
 
         // Save town intel to local storage
         function saveIntelHistory() {
-            var max_items_in_memory = 100;
+			try {
+				var max_items_in_memory = 100;
 
-            // Convert to list
-            var items = Object.keys(townIntelHistory).map(function(key) {
-                return [key, townIntelHistory[key]];
-            });
+				// Convert to list
+				var items = Object.keys(townIntelHistory).map(function(key) {
+					return [key, townIntelHistory[key]];
+				});
 
-            // Order by time added desc
-            items.sort(function(first, second) {
-                return second[1].t - first[1].t;
-            });
+				// Order by time added desc
+				items.sort(function(first, second) {
+					return second[1].t - first[1].t;
+				});
 
-            // Slice & save
-            items = items.slice(0, max_items_in_memory);
-            localStorage.setItem('gd_city_indexer_i', JSON.stringify(items));
+				// Slice & save
+				items = items.slice(0, max_items_in_memory);
+				localStorage.setItem('gd_city_indexer_i', JSON.stringify(items));
+
+			} catch (error) {
+                errorHandling(error, "saveIntelHistory");
+			}
         }
 
         // Load local town intel history
         function readIntelHistory() {
-            var intelJson = localStorage.getItem('gd_city_indexer_i');
-            if (intelJson != null) {
-                result = JSON.parse(intelJson);
-                var items = {}
-                result.forEach(function(e) {items[e[0]] = e[1]})
-                console.log("Loaded town intel from local storage: ", items);
-                townIntelHistory = items;
-            }
+			try {
+				var intelJson = localStorage.getItem('gd_city_indexer_i');
+				if (intelJson != null) {
+					result = JSON.parse(intelJson);
+					var items = {}
+					result.forEach(function(e) {items[e[0]] = e[1]})
+					console.log("Loaded town intel from local storage: ", items);
+					townIntelHistory = items;
+				}
+
+			} catch (error) {
+                errorHandling(error, "readIntelHistory");
+			}
         }
 
         function addToTownHistory(id, units) {
@@ -1379,7 +1467,7 @@
             try {
 				// Create a new dialog
                 var content_id = player_name + id;
-                content_id = content_id.split(' ').join('_');
+                content_id = content_id.replace(/[^a-zA-Z]+/g, '');
                 if (openIntelWindows[content_id]) {
                     try {
                         openIntelWindows[content_id].close();
@@ -1412,8 +1500,8 @@
                 }).done(function (response) {
 					renderTownIntelWindow(response, id, town_name, player_name, cmd_id, content_id);
                 });
-            } catch (err) {
-                console.error(err);
+			} catch (error) {
+                errorHandling(error, "loadTownIntel");
 				renderTownIntelError(content_id, intelUrl);
             }
         }
@@ -1427,7 +1515,9 @@
 		}
 
 		function renderTownIntelWindow(data, id, town_name, player_name, cmd_id, content_id) {
+			var intelUrl = 'https://grepodata.com/indexer/'+index_key;
 			try {
+				intelUrl = 'https://grepodata.com/indexer/town/'+index_key+'/'+world+'/'+id;
 				var unitHeight = 255;
 				var notesHeight = 170;
 
@@ -1444,7 +1534,7 @@
 				// Title
 				var townHash = getTownHash(parseInt(id), town_name, data.ix, data.iy);
 				var playerHash = getPlayerHash(data.player_id, data.player_name);
-				var title = '<div style="margin-bottom: 10px;">Town intelligence for: ' +
+				var title = '<div style="margin-bottom: 10px;">' +
 					'<a href="#'+townHash+'" class="gp_town_link"><img alt="" src="/images/game/icons/town.png" style="padding-right: 2px; vertical-align: top;">'+ data.name +'</a> ' +
 					'(<a href="#'+playerHash+'" class="gp_player_link"> <img alt="" src="/images/game/icons/player.png" style="padding-right: 2px; vertical-align: top;">'+ data.player_name +'</a>)' +
 					'<a href="https://grepodata.com/indexer/' + index_key + '" class="gd-ext-ref" target="_blank" style="float: right;">Index: ' + index_key + '</a></div>';
@@ -1493,7 +1583,7 @@
 					'   <div class="game_border_top"></div><div class="game_border_bottom"></div><div class="game_border_left"></div><div class="game_border_right"></div>\n' +
 					'   <div class="game_border_corner corner1"></div><div class="game_border_corner corner2"></div><div class="game_border_corner corner3"></div><div class="game_border_corner corner4"></div>\n' +
 					'   <div class="game_header bold">\n' +
-					'Unit intelligence\n' +
+					translate.INTEL_UNITS + '\n' +
 					'   </div>\n' +
 					'   <div style="height: '+unitHeight+'px;">' +
 					'     <ul class="game_list" style="display: block; width: 100%; height: '+unitHeight+'px; overflow-x: hidden; overflow-y: auto;">\n';
@@ -1656,7 +1746,7 @@
 					'   <div class="game_border_top"></div><div class="game_border_bottom"></div><div class="game_border_left"></div><div class="game_border_right"></div>\n' +
 					'   <div class="game_border_corner corner1"></div><div class="game_border_corner corner2"></div><div class="game_border_corner corner3"></div><div class="game_border_corner corner4"></div>\n' +
 					'   <div class="game_header bold">\n' +
-					'Notes\n' +
+					translate.INTEL_NOTE_TITLE + '\n' +
 					'   </div>\n' +
 					'   <div style="height: '+notesHeight+'px;">' +
 					'     <ul class="game_list" style="display: block; width: 100%; height: '+notesHeight+'px; overflow-x: hidden; overflow-y: auto;">\n';
@@ -1674,7 +1764,7 @@
 
 				if (bHasNotes == false) {
 					notesHtml = notesHtml + '<li class="odd" style="display: inherit; width: 100%;"><div style="text-align: center;">' +
-						'There are no notes for this town' +
+						translate.INTEL_NOTE_NONE +
 						'</div></li>\n';
 				}
 
@@ -1712,8 +1802,8 @@
 				var world = Game.world_id;
 				var exthtml =
 					'<div style="display: list-item" class="gd-ext-ref">' +
-					(data.player_id != null && data.player_id != 0 ? '   <a href="https://grepodata.com/indexer/player/' + index_key + '/' + world + '/' + data.player_id + '" target="_blank" style="float: left;"><img alt="" src="/images/game/icons/player.png" style="float: left; padding-right: 2px;">Show player intel (' + data.player_name + ')</a>' : '') +
-					(data.alliance_id != null && data.alliance_id != 0 ? '   <a href="https://grepodata.com/indexer/alliance/' + index_key + '/' + world + '/' + data.alliance_id + '" target="_blank" style="float: right;"><img alt="" src="/images/game/icons/ally.png" style="float: left; padding-right: 2px;">Show alliance intel</a>' : '') +
+					(data.player_id != null && data.player_id != 0 ? '   <a href="https://grepodata.com/indexer/player/' + index_key + '/' + world + '/' + data.player_id + '" target="_blank" style="float: left;"><img alt="" src="/images/game/icons/player.png" style="float: left; padding-right: 2px;">'+translate.INTEL_SHOW_PLAYER+' (' + data.player_name + ')</a>' : '') +
+					(data.alliance_id != null && data.alliance_id != 0 ? '   <a href="https://grepodata.com/indexer/alliance/' + index_key + '/' + world + '/' + data.alliance_id + '" target="_blank" style="float: right;"><img alt="" src="/images/game/icons/ally.png" style="float: left; padding-right: 2px;">'+translate.INTEL_SHOW_ALLIANCE+'</a>' : '') +
 					'</div>';
 				$('.gdintel_'+content_id).append(exthtml);
 				$('.gd-ext-ref').tooltip('Opens in new tab');
@@ -1721,12 +1811,9 @@
 				if (cmd_id != 0) {
 					setTimeout(function(){enhanceCommand(cmd_id, true)}, 10);
 				}
-			} catch (u) {
-				console.error("Error rendering town intel", u);
-				$('.gdintel_'+content_id).empty();
-				$('.gdintel_'+content_id).append('<div style="text-align: center"><br/><br/>' +
-												 'No intel available at the moment.<br/>Index some new reports about this town to collect intel.<br/><br/>' +
-												 '<a href="https://grepodata.com/indexer/' + index_key + '" target="_blank" style="">Index homepage: ' + index_key + '</a></div>');
+			} catch (error) {
+                errorHandling(error, "renderTownIntelWindow");
+				renderTownIntelError(content_id, intelUrl);
 			}
 		}
 
@@ -1778,8 +1865,8 @@
                     $('#gd_adding_note_'+content_id).hide();
                     $('#gd_note_input_'+content_id).prop('disabled',false);
                 });
-            } catch (e) {
-                console.error(e);
+			} catch (error) {
+                errorHandling(error, "saveNewNote");
             }
         }
 
@@ -1799,8 +1886,8 @@
                 }).done(function (b) {
                     console.log("Note deleted: ", b);
                 });
-            } catch (e) {
-                console.error(e);
+			} catch (error) {
+                errorHandling(error, "saveDeletedNote");
             }
         }
 
@@ -1822,13 +1909,13 @@
                         var statsBtn = '<a target="_blank" href="https://grepodata.com/alliance/' + gd_w.Game.world_id + '/' + alliance_id + '" class="write_message" style="background: ' + gd_icon + '; margin: 5px;"></a>';
                         $('#player_info > ul > li').filter(':first').append(statsBtn);
                     }
-                } catch (e) {
+                } catch (error) {
+					console.log(error);
                 }
             }
         }
 
         var count = 0;
-
         function gd_indicator() {
             count = count + 1;
             $('#gd_index_indicator').get(0).innerText = count;
@@ -1837,53 +1924,57 @@
         }
 
         function viewTownIntel(xhr) {
-            var town_id = xhr.responseText.match(/\[town\].*?(?=\[)/g)[0];
-            town_id = town_id.substring(6);
+			try {
+				var town_id = xhr.responseText.match(/\[town\].*?(?=\[)/g)[0];
+				town_id = town_id.substring(6);
 
-            // Add intel button and handle click event
-            var intelBtn = '<div id="gd_index_town_' + town_id + '" town_id="' + town_id + '" class="button_new gdtv' + town_id + '" style="float: right; bottom: 5px;">' +
-                '<div class="left"></div>' +
-                '<div class="right"></div>' +
-                '<div class="caption js-caption">' + translate.VIEW + '<div class="effect js-effect"></div></div></div>';
-            $('.info_tab_content_' + town_id + ' > .game_inner_box > .game_border > ul.game_list > li.odd').filter(':first').append(intelBtn);
+				// Add intel button and handle click event
+				var intelBtn = '<div id="gd_index_town_' + town_id + '" town_id="' + town_id + '" class="button_new gdtv' + town_id + '" style="float: right; bottom: 5px;">' +
+					'<div class="left"></div>' +
+					'<div class="right"></div>' +
+					'<div class="caption js-caption">' + translate.VIEW + '<div class="effect js-effect"></div></div></div>';
+				$('.info_tab_content_' + town_id + ' > .game_inner_box > .game_border > ul.game_list > li.odd').filter(':first').append(intelBtn);
 
-            if (gd_settings.stats === true) {
-                try {
-                    // Add stats button to player name
-                    var player_id = xhr.responseText.match(/player_id = [0-9]*,/g);
-                    if (player_id != null && player_id.length > 0) {
-                        player_id = player_id[0].substring(12, player_id[0].search(','));
-                        var statsBtn = '<a target="_blank" href="https://grepodata.com/player?world=' + gd_w.Game.world_id + '&id=' + player_id + '" class="write_message" style="background: ' + gd_icon + '"></a>';
-                        $('.info_tab_content_' + town_id + ' > .game_inner_box > .game_border > ul.game_list > li.even > div.list_item_right').eq(1).append(statsBtn);
-                        $('.info_tab_content_' + town_id + ' > .game_inner_box > .game_border > ul.game_list > li.even > div.list_item_right').css("min-width", "140px");
-                    }
-                    // Add stats button to ally name
-                    var ally_id = xhr.responseText.match(/alliance_id = parseInt\([0-9]*, 10\),/g);
-                    if (ally_id != null && ally_id.length > 0) {
-                        ally_id = ally_id[0].substring(23, ally_id[0].search(','));
-                        var statsBtn2 = '<a target="_blank" href="https://grepodata.com/alliance/' + gd_w.Game.world_id + '/' + ally_id + '" class="write_message" style="background: ' + gd_icon + '"></a>';
-                        $('.info_tab_content_' + town_id + ' > .game_inner_box > .game_border > ul.game_list > li.odd > div.list_item_right').filter(':first').append(statsBtn2);
-                        $('.info_tab_content_' + town_id + ' > .game_inner_box > .game_border > ul.game_list > li.odd > div.list_item_right').filter(':first').css("min-width", "140px");
-                    }
-                } catch (e) {
-                    console.log(e);
-                }
-            }
+				if (gd_settings.stats === true) {
+					try {
+						// Add stats button to player name
+						var player_id = xhr.responseText.match(/player_id = [0-9]*,/g);
+						if (player_id != null && player_id.length > 0) {
+							player_id = player_id[0].substring(12, player_id[0].search(','));
+							var statsBtn = '<a target="_blank" href="https://grepodata.com/player?world=' + gd_w.Game.world_id + '&id=' + player_id + '" class="write_message" style="background: ' + gd_icon + '"></a>';
+							$('.info_tab_content_' + town_id + ' > .game_inner_box > .game_border > ul.game_list > li.even > div.list_item_right').eq(1).append(statsBtn);
+							$('.info_tab_content_' + town_id + ' > .game_inner_box > .game_border > ul.game_list > li.even > div.list_item_right').css("min-width", "140px");
+						}
+						// Add stats button to ally name
+						var ally_id = xhr.responseText.match(/alliance_id = parseInt\([0-9]*, 10\),/g);
+						if (ally_id != null && ally_id.length > 0) {
+							ally_id = ally_id[0].substring(23, ally_id[0].search(','));
+							var statsBtn2 = '<a target="_blank" href="https://grepodata.com/alliance/' + gd_w.Game.world_id + '/' + ally_id + '" class="write_message" style="background: ' + gd_icon + '"></a>';
+							$('.info_tab_content_' + town_id + ' > .game_inner_box > .game_border > ul.game_list > li.odd > div.list_item_right').filter(':first').append(statsBtn2);
+							$('.info_tab_content_' + town_id + ' > .game_inner_box > .game_border > ul.game_list > li.odd > div.list_item_right').filter(':first').css("min-width", "140px");
+						}
+					} catch (e) {
+						console.log(e);
+					}
+				}
 
-            // Handle click:  view intel
-            $('#gd_index_town_' + town_id).click(function () {
-                var town_name = town_id;
-                var player_name = '';
-                try {
-                    panel_root = $('.info_tab_content_' + town_id).parent().parent().parent().get(0);
-                    town_name = panel_root.getElementsByClassName('ui-dialog-title')[0].innerText;
-                    player_name = panel_root.getElementsByClassName('gp_player_link')[0].innerText;
-                } catch (e) {
-                    console.log(e);
-                }
-                //panel_root.getElementsByClassName('active')[0].classList.remove('active');
-                loadTownIntel(town_id, town_name, player_name);
-            });
+				// Handle click:  view intel
+				$('#gd_index_town_' + town_id).click(function () {
+					var town_name = town_id;
+					var player_name = '';
+					try {
+						panel_root = $('.info_tab_content_' + town_id).parent().parent().parent().get(0);
+						town_name = panel_root.getElementsByClassName('ui-dialog-title')[0].innerText;
+						player_name = panel_root.getElementsByClassName('gp_player_link')[0].innerText;
+					} catch (e) {
+						console.log(e);
+					}
+					//panel_root.getElementsByClassName('active')[0].classList.remove('active');
+					loadTownIntel(town_id, town_name, player_name);
+				});
+			} catch (error) {
+                errorHandling(error, "enhanceTownInfoPanel");
+			}
         }
 
         // Loads a list of report ids that have already been added. This is used to avoid duplicates
@@ -1923,18 +2014,69 @@
                         }
                     } catch (u) {}
                 });
-            } catch (w) {
+			} catch (error) {
+                errorHandling(error, "loadIndexHashlist");
             }
         }
 
-		function getActiveIndexes() {
+		function getActiveIndexes(toString = true) {
 			indexes = [index_key];
 			if (globals.gdIndexScript.length > 1) {
 				indexes = globals.gdIndexScript;
 			}
-			indexes = JSON.stringify(indexes);
+			if (toString == true) {
+				indexes = JSON.stringify(indexes);
+			}
 			return indexes;
 		}
+
+		function getBrowser() {
+			var browser = 'unknown';
+			try {
+				var ua = navigator.userAgent,
+					tem,
+					M = ua.match(/(opera|maxthon|chrome|safari|firefox|msie|trident(?=\/))\/?\s*(\d+)/i) || [];
+				if (/trident/i.test(M[1])) {
+					tem = /\brv[ :]+(\d+)/g.exec(ua) || [];
+					M[1] = 'IE';
+					M[2] = tem[1] || '';
+				}
+				if (M[1] === 'Chrome') {
+					tem = ua.match(/\bOPR\/(\d+)/);
+					if (tem !== null) {
+						M[1] = 'Opera';
+						M[2] = tem[1];
+					}
+				}
+				M = M[2] ? [M[1], M[2]] : [navigator.appName, navigator.appVersion, '-?'];
+				if ((tem = ua.match(/version\/(\d+)/i)) !== null) M.splice(1, 1, tem[1]);
+
+				browser = M.join(' ');
+			} catch (u) {console.error("unable to identify browser", u);}
+			return browser;
+		}
+
+		// Error Handling / Remote diagnosis / Bug reports
+		var errorSubmissions = [];
+		function errorHandling(e, fn) {
+			console.log("GD-ERROR stack ", e.stack);
+			if (verbose) {
+				HumanMessage.error("GD-ERROR: " + e.message);
+			} else if (!(fn in errorSubmissions) && gd_settings.bug_reports) {
+				errorSubmissions[fn] = true;
+				try {
+					$.ajax({
+						type: "POST",
+						url: "https://api.grepodata.com/indexer/scripterror",
+						data: {error: e.stack.replace(/'/g, '"'), "function": fn, browser: getBrowser(), version: gd_version, world: world, index: index_key},
+						success: function (r) {}
+					});
+				} catch (error) {
+					console.log("Error handling bug report", error);
+				}
+			}
+		}
+
     }
 
     function enableCityIndex(key, globals) {

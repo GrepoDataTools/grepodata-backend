@@ -301,6 +301,12 @@ $oRouter->Add('indexunitinfo', new Route('/indexer/movementspeed', array(
   '_method'     => 'CalculateRuntime'
 )));
 
+// Reporting
+$oRouter->Add('indexerbugreport', new Route('/indexer/scripterror', array(
+  '_controller' => '\Grepodata\Application\API\Route\Indexer\Reporting',
+  '_method'     => 'BugReport'
+)));
+
 // old:
 $oRouter->Add('resetOwners', new Route('/indexer/resetowners', array(
   '_controller' => '\Grepodata\Application\API\Route\Indexer\Index',

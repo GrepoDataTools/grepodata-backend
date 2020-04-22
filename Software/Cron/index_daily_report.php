@@ -137,6 +137,19 @@ $oReport->title = "GrepoData warning rate";
 $oReport->data = json_encode($aStats);
 $oReport->save();
 
+// Worlds
+$aStats = DB::select( DB::raw("
+select substr(world,1,2) as country, count(*) as count
+from Index_info
+where created_at >= date_sub(curdate(), interval 3 month) 
+group by substr(world,1,2)
+order by count DESC"
+));
+$oReport = DailyReport::firstOrNew(array('type' => 'indexer_active_server_bins'));
+$oReport->title = "Active indexes by country";
+$oReport->data = json_encode($aStats);
+$oReport->save();
+
 // Script version
 $aStats = DB::select( DB::raw("
 SELECT script_version, count(*) as count, date(created_at) as date 
