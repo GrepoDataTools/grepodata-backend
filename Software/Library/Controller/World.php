@@ -85,22 +85,28 @@ class World
 
   /**
    * Returns the minutes untill the next expected scoreboard update
+   * This includes a round up to the nearest $UpdateIntervalMinutes
    * @param \Grepodata\Library\Model\World $oWorld
    * @return string
    */
-  public static function getNextUpdateDiff(\Grepodata\Library\Model\World $oWorld)
+  public static function getNextUpdateDiff(\Grepodata\Library\Model\World $oWorld, $UpdateIntervalMinutes = 10)
   {
     // Find next update in server time
     $ScoreboardLastUpdate = Carbon::createFromFormat('Y-m-d H:i:s', date('Y-m-d H:i:s', strtotime($oWorld->grep_server_time)), 'UTC');
     $ScoreboardLastUpdate->setTimezone($oWorld->php_timezone);
     $ScoreboardLastUpdate->addHour();
-//    error_log($ScoreboardLastUpdate->format('Y-m-d H:i:s'));
+
+    // wait for import to execute: 10 minute ceil
+    $SecondsUntillNextImport = $UpdateIntervalMinutes * 60;
+    $UpdateTimestamp = ($SecondsUntillNextImport * ceil($ScoreboardLastUpdate->getTimestamp() / $SecondsUntillNextImport));
+    $ScoreboardLastUpdate->setTimestamp($UpdateTimestamp);
+
+    // Add 2 minute update margin
+    $ScoreboardLastUpdate->addMinutes(2);
 
     // Find diff with current server time
     $ServerTime = $oWorld->getServerTime();
-//    error_log($ServerTime->format('Y-m-d H:i:s'));
     return $ServerTime->diffForHumans($ScoreboardLastUpdate);
-
   }
 
   /**

@@ -1052,7 +1052,7 @@
             var reportElement = document.getElementById(reportId);
 
 			if (!reportElement) return
-			if (!reportHash || reportHash !== '') {
+			if (!reportHash || reportHash == '') {
 				throw new Error("Unable to find forum report hash.");
 				return;
 			}
