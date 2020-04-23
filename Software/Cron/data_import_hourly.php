@@ -38,6 +38,7 @@ foreach ($aWorlds as $oWorld) {
   try {
     //$WorldDayStart = $oWorld->getLastUtcResetTime();
     Logger::debugInfo("Processing world " . $oWorld->grep_id . ". Server time: ".$oWorld->getServerTime()->format('Y-m-d H:i:s'));
+    //Logger::debugInfo("Hourly import memory usage: used=" . round(memory_get_usage(false)/1048576,2) . "MB, real=" . round(memory_get_usage(true)/1048576,2) . "MB");
 
     $bUpdated = Hourly::DataImportHourly($oWorld);
     if ($bUpdated == true) {

@@ -443,8 +443,9 @@
 					$('#gd_cmd_filter').click(function() {
 						bParsingEnabledTemp = !bParsingEnabledTemp;
 						if (!bParsingEnabledTemp) {
-							$('.gd_cmd_units').remove();
-							$(this).css({ opacity: 0.3 });
+ 							$('.gd_cmd_units').remove();
+ 							$('.gd_cmd_runtime').remove();
+ 							$(this).css({ opacity: 0.3 });
 						} else {
 							$(this).css({ opacity: 1 });
 							enhanceCommandOverview();
@@ -453,7 +454,7 @@
 				}
 
 				// Parse overview
-				if (bParsingEnabledTemp) {
+				if (bParsingEnabledTemp && MM.getModels().MovementsUnits) {
 					var commandList = $('#command_overview');
 					var commands = $(commandList).find('li');
 					var parseLimit = 100; // Limit number of parsed commands
@@ -463,7 +464,7 @@
 						try {
 							var command_id = this.id;
 							if (!command_id) {return}
-							command_id = command_id.replace(/[^\d]+/g, '')
+							command_id = command_id.replace(/[^\d]+/g, '');
 							if (!(command_id in parsedCommands)) {
 								var cmd_units = $(this).find('.command_overview_units');
 								if (cmd_units.length != 0) {
@@ -521,7 +522,7 @@
 				var departureElem = document.getElementById('gd-runtime-'+id);
 				if (!departureElem && gd_settings.departure_time === true && cmd.movement_id > 0) {
 					var movement = MM.getModels().MovementsUnits[cmd.movement_id];
-					var runtimeHtml = '<span id="gd-runtime-'+id+'" class="troops_arrive_at gd-runtime-'+id+'">(';
+					var runtimeHtml = '<span id="gd-runtime-'+id+'" class="troops_arrive_at gd_cmd_runtime gd-runtime-'+id+'">(';
 					var bHasRuntime = false
 					if (movement.attributes.hasOwnProperty('cap_of_invisibility_effective_until')) {
 						bHasRuntime = true;
@@ -695,8 +696,7 @@
 
             var data = {
                 'key': globals.gdIndexScript,
-                'type': 'default',
-                'report_hash': reportHash || '',
+                'report_hash': reportHash,
                 'report_text': reportText,
                 'report_json': reportJson,
                 'script_version': gd_version,
@@ -733,7 +733,6 @@
 
             var data = {
                 'key': globals.gdIndexScript,
-                'type': 'inbox',
                 'report_hash': reportHash,
                 'report_text': reportText,
                 'report_json': reportJson,
@@ -1052,6 +1051,12 @@
         function addForumReportById(reportId, reportHash) {
             var reportElement = document.getElementById(reportId);
 
+			if (!reportElement) return
+			if (!reportHash || reportHash !== '') {
+				throw new Error("Unable to find forum report hash.");
+				return;
+			}
+
             // Find report poster
             var inspectedElement = reportElement.parentElement;
             var search_limit = 20;
@@ -1104,20 +1109,22 @@
 							var reportHash = null;
 							try {
 								// === Build report hash to create a unique identifier for this report that is consistent between sessions
-								// Try to parse time string
 								var header = reportElement.getElementsByClassName('published_report_header bold')[0];
-								var dateText = header.getElementsByClassName('reports_date small')[0].innerText;
+
+								// Try to parse time string
 								try {
+									var dateText = header.getElementsByClassName('reports_date small')[0].innerText;
 									var time = dateText.match(time_regex);
 									if (time != null) {
 										dateText = time[0];
 									}
-								} catch (e) {
+								} catch (error) {
+									errorHandling(error, "parseForumReportNoTimeFound");
 								}
 
 								// Try to parse town ids from report header
-								var headerText = header.getElementsByClassName('bold')[0].innerText;
 								try {
+									var headerText = header.getElementsByClassName('bold')[0].innerText;
 									var towns = header.getElementsByClassName('gp_town_link');
 									if (towns.length === 2) {
 										var ids = [];
@@ -1130,15 +1137,16 @@
 											headerText = ids.join('');
 										}
 									}
-								} catch (e) {
+								} catch (error) {
+									errorHandling(error, "parseForumReportReportTownIds");
 								}
 
 								// Try to parse units and buildings
-								var reportUnits = reportElement.getElementsByClassName('unit_icon40x40');
-								var reportBuildings = reportElement.getElementsByClassName('report_unit');
-								var reportDetails = reportElement.getElementsByClassName('report_details');
-								var reportContent = '';
 								try {
+									var reportUnits = reportElement.getElementsByClassName('unit_icon40x40');
+									var reportBuildings = reportElement.getElementsByClassName('report_unit');
+									var reportDetails = reportElement.getElementsByClassName('report_details');
+									var reportContent = '';
 									for (var u = 0; u < reportUnits.length; u++) {
 										reportContent += reportUnits[u].outerHTML;
 									}
@@ -1148,7 +1156,8 @@
 									if (reportDetails.length === 1) {
 										reportContent += reportDetails[0].innerText;
 									}
-								} catch (e) {
+								} catch (error) {
+									errorHandling(error, "parseForumReportReportUnits");
 								}
 
 								// Combine intel and generate hash
@@ -1157,7 +1166,8 @@
 									reportHash = reportText.report_hash();
 								}
 
-							} catch (err) {
+							} catch (error) {
+								errorHandling(error, "parseForumReportCreateHashError");
 								reportHash = null;
 							}
 							console.log('Parsed forum report with hash: ' + reportHash);

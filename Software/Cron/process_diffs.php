@@ -37,6 +37,7 @@ foreach ($worlds as $oWorld) {
 
   try {
     Logger::debugInfo("Processing diffs for world ".$oWorld->grep_id.".");
+    Logger::debugInfo("Diff script memory usage: used=" . round(memory_get_usage(false)/1048576,2) . "MB, real=" . round(memory_get_usage(true)/1048576,2) . "MB");
 
     // Loop players for this world
     $aPlayers = Player::allByWorldAndUpdate($oWorld->grep_id, $QueryDateLimit);

@@ -9,17 +9,18 @@ class Client
   protected static $hosts;
 
   /**
+   * @param int $NumRetries
+   * @param bool $bForceNew
    * @return \Elasticsearch\Client
    */
-  public static function GetInstance($NumRetries=5)
+  public static function GetInstance($NumRetries = 5, $bForceNew = false)
   {
     static $inst = null;
-    if ($inst === null) {
+    if ($inst === null || $bForceNew) {
       $inst = ClientBuilder::create()
         ->setRetries($NumRetries)
         ->setHosts(self::$hosts)
         ->build();
-      $t=2;
     }
     return $inst;
   }

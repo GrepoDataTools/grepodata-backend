@@ -32,6 +32,8 @@ foreach ($aWorlds as $oWorld) {
 
   try {
     Logger::debugInfo("Processing world " . $oWorld->grep_id);
+    Logger::debugInfo("Rank import memory usage: used=" . round(memory_get_usage(false)/1048576,2) . "MB, real=" . round(memory_get_usage(true)/1048576,2) . "MB");
+
     Hourly::DataImportRanks($oWorld);
   } catch (\Exception $e) {
     Logger::error("Error processing rank import for world " . $oWorld . " (".$e->getMessage().")");

@@ -137,12 +137,12 @@ class Common
       }
 
       if ($Report->type === 'default') {
-        $aParsed = ForumParser::ParseReport($Report->index_code, $aReportData, '', '', substr($Info->world, 0, 2));
+        $aParsed = ForumParser::ParseReport($Report->index_code, $aReportData, '', 'LOCAL_DEBUG', substr($Info->world, 0, 2));
         if (is_array($aParsed) && isset($aParsed['id']) && isset($aParsed['debug'])) {
           $aParsed = $aParsed['id'];
         }
       } else {
-        $aParsed = InboxParser::ParseReport($Report->index_code, $aReportData, $Report->report_poster, '','',$Report->fingerprint, substr($Info->world, 0, 2));
+        $aParsed = InboxParser::ParseReport($Report->index_code, $aReportData, $Report->report_poster, '','', 'LOCAL_DEBUG', substr($Info->world, 0, 2));
       }
 
       if (is_numeric($aParsed) && $aParsed > 0 && $Report->city_id <= 0) {

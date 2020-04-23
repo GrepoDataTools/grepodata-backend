@@ -13,7 +13,6 @@ use Grepodata\Library\Indexer\ForumParser;
 use Grepodata\Library\Indexer\InboxParser;
 use Grepodata\Library\Indexer\Validator;
 use Grepodata\Library\Logger\Logger;
-use Illuminate\Support\Facades\Log;
 
 class Report extends \Grepodata\Library\Router\BaseRoute
 {
@@ -71,21 +70,16 @@ class Report extends \Grepodata\Library\Router\BaseRoute
     $aParams = array();
     try {
       // Validate params
-      $aParams = self::validateParams(array('key', 'report_hash', 'report_text', 'report_json', 'type', 'report_poster', 'report_poster_id', 'report_poster_ally_id', 'script_version'));
+      $aParams = self::validateParams(array('key', 'report_hash', 'report_text', 'report_json', 'report_poster', 'report_poster_id', 'report_poster_ally_id', 'script_version'));
 
       if (!is_array($aParams['key'])) {
         $aParams['key'] = array($aParams['key']);
       }
 
-//      if (sizeof($aParams['key'])>1) {
-//        Logger::debugInfo("multi key request: " . json_encode($aParams['key']));
-//      }
-
       foreach ($aParams['key'] as $Key) {
         // Get data
         $ReportInfo = preg_replace('/\s+/', ' ', $aParams['report_text']);
         $ReportInfo = substr($ReportInfo, 0, 500);
-        $Fingerprint = md5($ReportInfo);
         $ReportPoster = $aParams['report_poster'];
         $ReportPosterAllyId = $aParams['report_poster_ally_id'];
         $ScriptVersion = $aParams['script_version'];
@@ -101,19 +95,23 @@ class Report extends \Grepodata\Library\Router\BaseRoute
           // Update HTML for existing report
           try {
             $Report = \Grepodata\Library\Controller\Indexer\Report::firstById($ReportId->index_report_id);
+            $bSave = false;
             if ($Report->report_json == '' || $Report->report_json == null) {
               $Report->report_json = $ReportJson;
+              $bSave = true;
             }
             if ($Report->report_info == '' || $Report->report_info == null) {
-              $Report->report_info = $ReportInfo;
+              $Report->report_info = json_encode(substr($ReportInfo, 0, 100));
+              $bSave = true;
             }
-            $Report->save();
+            if ($bSave == true) {
+              $Report->save();
+            }
           } catch (\Exception $e) {
             Logger::warning("Error updating html for report hash: $ReportHash and key: $Key");
           }
           continue;
         }
-        $ReportId = $ReportHash;
 
         // Validate index
         $bValidIndex = false;
@@ -134,39 +132,36 @@ class Report extends \Grepodata\Library\Router\BaseRoute
 
         // Add report
         $City_id = 0;
-        $LogPrefix = 'Unable to parse inbox report with id ' . $ReportHash . ' [index '.$oIndex->key_code.' - poster '.$ReportPosterId.' - v'.$ScriptVersion.']';
-        $Debug = false;
+        $LogPrefix = 'Unable to parse inbox report with id ' . $ReportHash . ' [index '.$oIndex->key_code.' - v'.$ScriptVersion.' - world '.$oIndex->world.']';
         $Explain = null;
         try {
-          $City_id = InboxParser::ParseReport($Key, $ReportRaw, $ReportPoster, $ReportPosterId, $ReportPosterAllyId, $Fingerprint, substr($oIndex->world, 0, 2));
+          $City_id = InboxParser::ParseReport($Key, $ReportRaw, $ReportPoster, $ReportPosterId, $ReportPosterAllyId, $ReportHash, substr($oIndex->world, 0, 2));
         } catch (InboxParserExceptionDebug $e) {
           Logger::debugInfo($LogPrefix . ' ('.$e->getMessage().')');
           $City_id = -1;
           $Explain = $e->getMessage();
-          $Debug = true;
         } catch (InboxParserExceptionWarning $e) {
-          Logger::warning($LogPrefix . ' ('.$e->getMessage().') {'. substr($ReportInfo, 0, 100).'}');
+          Logger::warning($LogPrefix . ' ('.$e->getMessage().')');
           $Explain = $e->getMessage();
         } catch (InboxParserExceptionError $e) {
-          Logger::error($LogPrefix . ' ('.$e->getMessage().') {'. substr($ReportInfo, 0, 250).'}');
+          Logger::error($LogPrefix . ' ('.$e->getMessage().')');
           $Explain = $e->getMessage();
         } catch (\Exception $e) {
-          Logger::error('UNEXPECTED: ' . $LogPrefix . ' ('.$e->getMessage().') {'. substr($ReportInfo, 0, 250).'}');
+          Logger::error('UNEXPECTED: ' . $LogPrefix . ' ('.$e->getMessage().')');
           $Explain = $e->getMessage();
         }
 
         if ($City_id === null || $City_id === false) {
           $City_id = 0;
-          $Debug = true;
         }
 
         $oReport = new \Grepodata\Library\Model\Indexer\Report();
         $oReport->index_code      = $Key;
-        $oReport->type            = $aParams['type'];
+        $oReport->type            = 'inbox';
         $oReport->report_poster   = $ReportPoster;
-        $oReport->fingerprint     = $Fingerprint;
+        $oReport->fingerprint     = $ReportHash;
         $oReport->report_json     = $ReportJson;
-        $oReport->report_info     = substr($ReportInfo, 0, 100);
+        $oReport->report_info     = json_encode(substr($ReportInfo, 0, 100));
         $oReport->script_version  = $ScriptVersion;
         if (isset($City_id)) {
           $oReport->city_id = $City_id;
@@ -203,7 +198,7 @@ class Report extends \Grepodata\Library\Router\BaseRoute
     $aParams = array();
     try {
       // Validate params
-      $aParams = self::validateParams(array('key', 'report_text', 'report_json', 'type', 'report_poster', 'script_version'));
+      $aParams = self::validateParams(array('report_hash', 'key', 'report_text', 'report_json', 'report_poster', 'script_version'));
 
       if (!is_array($aParams['key'])) {
         $aParams['key'] = array($aParams['key']);
@@ -235,153 +230,80 @@ class Report extends \Grepodata\Library\Router\BaseRoute
         $ReportInfo = preg_replace('/\s+/', ' ', $aParams['report_text']);
         $ReportInfo = substr($ReportInfo, 0, 500);
 
-        // check duplicates
-        $bCheckFingerprint = false;
-        if (isset($_POST['report_hash'])) {
-          $Hash = $_POST['report_hash'];
-          $ReportId = ReportId::getByHashIndex($Hash, $Key);
-          if ($ReportId !== null) {
-            // Update HTML for existing report
-            try {
-              $Report = \Grepodata\Library\Controller\Indexer\Report::firstById($ReportId->index_report_id);
-              if ($Report->report_json==''||$Report->report_json==null) {
-                $Report->report_json = $ReportJson;
-              }
-              if ($Report->report_info==''||$Report->report_info==null) {
-                $Report->report_info = $ReportInfo;
-              }
+        // Check if hash exists
+        $Hash = $aParams['report_hash'];
+        $ReportId = ReportId::getByHashIndex($Hash, $Key);
+        if ($ReportId !== null) {
+          // Update HTML for existing report
+          try {
+            $Report = \Grepodata\Library\Controller\Indexer\Report::firstById($ReportId->index_report_id);
+            $bSave = false;
+            if ($Report->report_json==''||$Report->report_json==null) {
+              $Report->report_json = $ReportJson;
+              $bSave = true;
+            }
+            if ($Report->report_info==''||$Report->report_info==null) {
+              $Report->report_info = json_encode(substr($ReportInfo, 0, 100));
+              $bSave = true;
+            }
+            if ($bSave == true) {
               $Report->save();
-            } catch (\Exception $e) {
-              Logger::warning("Error updating html for report hash: $Hash and key: $Key");
             }
-            continue;
-          } else {
-            $oReportId = new \Grepodata\Library\Model\Indexer\ReportId();
-            $oReportId->report_id = $Hash;
-            if (isset($_POST['report_poster_id']) && is_numeric($_POST['report_poster_id'])) {
-              $oReportId->player_id = (int) $_POST['report_poster_id'];
-            } else {
-              $oReportId->player_id = 0;
-            }
-            $oReportId->index_key = $Key;
-            $oReportId->index_report_id = 0;
-            $oReportId->index_type = 'forum';
-          }
-        } else {
-          $bCheckFingerprint = true;
-        }
-
-        $Debug = false;
-        $Explain = null;
-
-        // Check for incompatible reports
-        $aExclusionStrings = array();
-        $lang = 'nl';
-        if (strpos($oIndex->world, 'nl') !== false) {
-          $lang = 'nl';
-          $aExclusionStrings = array(
-            'valt je ondersteunende troepen in',
-            'verovert',
-            'wijsheid',
-            'Wijsheid'
-          );
-        } else if (strpos($oIndex->world, 'en') !== false) {
-          $lang = 'en';
-          $aExclusionStrings = array(
-            'is attacking your support in',
-            'is conquering',
-            'wisdom',
-            'Wisdom',
-          );
-        } else if (strpos($oIndex->world, 'fr') !== false) {
-          $lang = 'fr';
-          $aExclusionStrings = array(
-            'attaque ton soutien en',
-            'attrape ton soutien',
-            'ton soutien',
-            'conquête',
-            'conquiert',
-            'conquis',
-          );
-        } else if (strpos($oIndex->world, 'de') !== false) {
-          $lang = 'de';
-          $aExclusionStrings = array(
-            'greift deine Unterstützung in',
-            'erobert',
-            'weisheit',
-            'Weisheit'
-          );
-        } else {
-          $lang = substr($oIndex->world, 0, 2);
-          $aExclusionStrings = array();
-          //$Debug = true;
-          //$Explain = "CHECK NEW SERVER SETTINGS: " . $lang;
-        }
-
-        $bExclude = false;
-        foreach ($aExclusionStrings as $Exclusion) {
-          if (strpos($aParams['report_text'], $Exclusion) !== false) {
-            $bExclude = true;
-          }
-        }
-
-        if ($bExclude===true) {
-          if (isset($oReportId)) {
-            $oReportId->save();
-            Logger::debugInfo("[index ".$Key."] Skipping report [report id ".$oReportId->id."] with exclusion match: " . $aParams['report_text']);
-          } else {
-            Logger::debugInfo("[index ".$Key."] Skipping report with exclusion match: " . $aParams['report_text']);
+          } catch (\Exception $e) {
+            Logger::warning("Error updating html for existing report hash: $Hash and key: $Key");
           }
           continue;
         }
 
-        // Check if report already exists
-        $Fingerprint = md5($ReportInfo);
-        if (\Grepodata\Library\Controller\Indexer\Report::exists($Fingerprint, $Key)) {
-          if (isset($oReportId)) {
-            $oReportId->save();
-          }
-          continue;
+        // Save hash to db
+        $oReportId = new \Grepodata\Library\Model\Indexer\ReportId();
+        $oReportId->report_id = $Hash;
+        if (isset($_POST['report_poster_id']) && is_numeric($_POST['report_poster_id'])) {
+          $oReportId->player_id = (int) $_POST['report_poster_id'];
+        } else {
+          $oReportId->player_id = 0;
         }
+        $oReportId->index_key = $Key;
+        $oReportId->index_report_id = 0;
+        $oReportId->index_type = 'forum';
 
         // Add report
+        $Explain = null;
+        $lang = substr($oIndex->world, 0, 2);
         $City_id = 0;
-        $LogPrefix = 'Unable to parse forum report with fingerprint ' . $Fingerprint . ' [index '.$oIndex->key_code.' - v'.$ScriptVersion.' - '.$lang.']';
+        $LogPrefix = 'Unable to parse forum report with hash ' . $Hash . ' [index '.$oIndex->key_code.' - v'.$ScriptVersion.' - '.$lang.']';
         try {
-          $aParseOutput = ForumParser::ParseReport($Key, $ReportRaw, $ReportPoster, $Fingerprint, $lang);
+          $aParseOutput = ForumParser::ParseReport($Key, $ReportRaw, $ReportPoster, $Hash, $lang);
         } catch (ForumParserExceptionDebug $e) {
           $City_id = -1;
-          $Debug = true;
           $Explain = $e->getMessage();
           Logger::debugInfo($LogPrefix . ' ('.$e->getMessage().')');
         } catch (ForumParserExceptionWarning $e) {
           $Explain = $e->getMessage();
-          Logger::warning($LogPrefix . ' ('.$e->getMessage().') {'. substr($ReportInfo, 0, 100).'}');
+          Logger::warning($LogPrefix . ' ('.$e->getMessage().')');
         } catch (ForumParserExceptionError $e) {
           $Explain = $e->getMessage();
-          Logger::error($LogPrefix . ' ('.$e->getMessage().') {'. substr($ReportInfo, 0, 250).'}');
+          Logger::error($LogPrefix . ' ('.$e->getMessage().')');
         } catch (\Exception $e) {
           $Explain = $e->getMessage();
-          Logger::error('UNEXPECTED: ' . $LogPrefix . ' ('.$e->getMessage().') {'. substr($ReportInfo, 0, 250).'}');
+          Logger::error('UNEXPECTED: ' . $LogPrefix . ' ('.$e->getMessage().')');
         }
 
         if ($City_id !== -1) {
           if (!isset($aParseOutput) || $aParseOutput === null || $aParseOutput === false || !is_array($aParseOutput)) {
             $City_id = 0;
-            $Debug = true;
           } else if (isset($aParseOutput['id'])) {
             $City_id = $aParseOutput['id'];
-            $Debug = $aParseOutput['debug'];
           }
         }
         
         $oReport = new \Grepodata\Library\Model\Indexer\Report();
         $oReport->index_code      = $Key;
-        $oReport->type            = $aParams['type'];
+        $oReport->type            = 'forum';
         $oReport->report_poster   = $ReportPoster;
-        $oReport->fingerprint     = $Fingerprint;
+        $oReport->fingerprint     = $Hash;
         $oReport->report_json     = $ReportJson;
-        $oReport->report_info     = $ReportInfo;
+        $oReport->report_info     = json_encode(substr($ReportInfo, 0, 100));
         $oReport->script_version  = $ScriptVersion;
         if (isset($City_id)) {
           $oReport->city_id = $City_id;
@@ -407,9 +329,6 @@ class Report extends \Grepodata\Library\Router\BaseRoute
 
     } catch (\Exception $e) {
       Logger::warning('Error processing indexer add report: ' . $e->getMessage());
-//      die(self::OutputJson(array(
-//        'message'     => 'Something went wrong while indexing your report. please contact us if this error persists.'
-//      ), 500));
       die(self::OutputJson(array(), 200));
     }
   }

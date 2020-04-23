@@ -169,9 +169,9 @@ class Import
     );
   }
 
-  public static function EnsureIndex(&$IndexName = '')
+  public static function EnsureIndex(&$IndexName = '', $bForceNewConnection = false)
   {
-    $ElasticsearchClient = \Grepodata\Library\Elasticsearch\Client::GetInstance(5);
+    $ElasticsearchClient = \Grepodata\Library\Elasticsearch\Client::GetInstance(5, $bForceNewConnection);
 
     $IndexName = self::IndexIdentifier;
 

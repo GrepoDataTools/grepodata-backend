@@ -5,6 +5,7 @@ namespace Grepodata\Library\Model\Indexer;
 use \Illuminate\Database\Eloquent\Model;
 
 /**
+ * @property mixed id
  * @property mixed town_id
  * @property mixed index_key
  * @property mixed town_name

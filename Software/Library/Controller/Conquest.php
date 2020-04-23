@@ -3,6 +3,7 @@
 namespace Grepodata\Library\Controller;
 
 use Exception;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -48,13 +49,17 @@ class Conquest
    */
   public static function getPlayerConquests($Id, $World)
   {
-    return \Grepodata\Library\Model\Conquest::where(function ($query) use ($Id) {
-        $query->where('n_p_id', '=', $Id)
-          ->orWhere('o_p_id', '=', $Id);
-      })
-      ->where('world', '=', $World)
-      ->orderBy('id', 'desc')
+    $New = \Grepodata\Library\Model\Conquest::where('world', '=', $World)
+      ->where('n_p_id', '=', $Id)
       ->get();
+    $Old = \Grepodata\Library\Model\Conquest::where('world', '=', $World)
+      ->where('o_p_id', '=', $Id)
+      ->get();
+
+    /** @var Collection $Combined */
+    $Combined = $New->merge($Old);
+    $Combined = $Combined->SortByDesc('id');
+    return $Combined;
   }
 
   /**
@@ -64,13 +69,17 @@ class Conquest
    */
   public static function getAllianceConquests($Id, $World)
   {
-    return \Grepodata\Library\Model\Conquest::where(function ($query) use ($Id) {
-        $query->where('n_a_id', '=', $Id)
-          ->orWhere('o_a_id', '=', $Id);
-      })
-      ->where('world', '=', $World)
-      ->orderBy('id', 'desc')
+    $New = \Grepodata\Library\Model\Conquest::where('world', '=', $World)
+      ->where('n_a_id', '=', $Id)
       ->get();
+    $Old = \Grepodata\Library\Model\Conquest::where('world', '=', $World)
+      ->where('o_a_id', '=', $Id)
+      ->get();
+
+    /** @var Collection $Combined */
+    $Combined = $New->merge($Old);
+    $Combined = $Combined->SortByDesc('id');
+    return $Combined;
   }
 
   /**

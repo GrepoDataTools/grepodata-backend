@@ -50,7 +50,7 @@ class Daily
     Logger::silly("Loaded " . $DatabasePlayers . " active players from database.");
 
     if ($TotalPlayers < (.90 * $DatabasePlayers)) {
-      Logger::warning("Remote data size too small! aborting player import. Database count: " . $DatabasePlayers . ", remote count: " . $TotalPlayers);
+      Logger::warning("Remote data size too small! Database count: " . $DatabasePlayers . ", remote count: " . $TotalPlayers);
     }
 
     // handle player data

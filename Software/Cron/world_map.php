@@ -47,9 +47,10 @@ foreach ($worlds as $oWorld) {
   // Check commands 'php SCRIPTNAME[=0] WORLD[=1]'
   if (isset($argv[1]) && $argv[1]!=null && $argv[1]!='' && $argv[1]!=$oWorld->grep_id) continue;
 
-  Logger::debugInfo("Processing map for world $oWorld->grep_id");
-
   try {
+    Logger::debugInfo("Processing map for world $oWorld->grep_id");
+    Logger::debugInfo("World map memory usage: used=" . round(memory_get_usage(false)/1048576,2) . "MB, real=" . round(memory_get_usage(true)/1048576,2) . "MB");
+
     // Get colormap
     $ColorMap = $oWorld->colormap;
     //$MapSettings = $oWorld->mapsettings;

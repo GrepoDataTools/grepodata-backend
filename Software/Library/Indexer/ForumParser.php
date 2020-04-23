@@ -176,18 +176,18 @@ class ForumParser
    * @param $IndexKey
    * @param $aReportData
    * @param $ReportPoster
-   * @param $Fingerprint
+   * @param $ReportHash
    * @param string $Locale
    * @return Mixed
    * @throws ForumParserExceptionDebug
    * @throws ForumParserExceptionError
    * @throws ForumParserExceptionWarning
    */
-  public static function ParseReport($IndexKey, $aReportData, $ReportPoster, $Fingerprint, $Locale='nl')
+  public static function ParseReport($IndexKey, $aReportData, $ReportPoster, $ReportHash, $Locale)
   {
     try {
       $oIndexInfo = \Grepodata\Library\Controller\Indexer\IndexInfo::firstOrFail($IndexKey);
-      $aCityInfo = self::ExtractCityInfo($aReportData, $Fingerprint, $oIndexInfo, $Locale);
+      $aCityInfo = self::ExtractCityInfo($aReportData, $ReportHash, $Locale);
 
       $AllianceId = 0;
       if ($aCityInfo['player_name'] !== 'Ghost' && $aCityInfo['player_id'] !== 0) {
@@ -300,16 +300,15 @@ class ForumParser
 
   /**
    * @param $aReportData
-   * @param $Fingerprint
+   * @param $ReportHash
    * @param string $Locale
-   * @param IndexInfo $oIndex
    * @return array
    * @throws ForumParserExceptionWarning
    * @throws ForumParserExceptionError
    * @throws ForumParserExceptionDebug
    * @throws \Grepodata\Library\Exception\ParserDefaultWarning
    */
-  private static function ExtractCityInfo($aReportData, $Fingerprint, IndexInfo $oIndex, $Locale='nl')
+  private static function ExtractCityInfo($aReportData, $ReportHash, $Locale)
   {
     $cityInfo = array();
 
@@ -347,9 +346,9 @@ class ForumParser
       $numberCount = preg_match_all( "/[0-9]/", $ReportDate);
       if ($numberCount > 6) {
         // Should contain date
-        Logger::error("ForumParser " . $Fingerprint . ": TODO add date format for locale " . $Locale . ". date example: " . $ReportDate);
+        Logger::error("ForumParser " . $ReportHash . ": TODO add date format for locale " . $Locale . ". date example: " . $ReportDate);
       } else {
-        Logger::warning("ForumParser " . $Fingerprint . ": TODO add date format for locale " . $Locale . ". date example: " . $ReportDate);
+        Logger::warning("ForumParser " . $ReportHash . ": TODO add date format for locale " . $Locale . ". date example: " . $ReportDate);
       }
       $Locale = 'nl';
       $bLocalFallback = true;
@@ -357,7 +356,7 @@ class ForumParser
 
     if ($ReportDate == null) {
       // Fallback to today
-      Logger::warning("ForumParser " . $Fingerprint . ": unable to locate report date");
+      Logger::warning("ForumParser " . $ReportHash . ": unable to locate report date");
       $cityInfo['mutation_date'] = date(self::format[$Locale]['day'].' '.self::format[$Locale]['time']);
       $cityInfo['parsed_date'] = new Carbon();
       $cityInfo['print_debug'] = true;
@@ -366,10 +365,10 @@ class ForumParser
         try {
           $ReportDate = Helper::getTextContent($ReportDate);
         } catch (Exception $e) {
-          Logger::warning("ForumParser " . $Fingerprint . ": Unable to parse report time; " . $e->getMessage());
+          Logger::warning("ForumParser " . $ReportHash . ": Unable to parse report time; " . $e->getMessage());
         }
       } else if (!is_string($ReportDate)) {
-        Logger::warning("ForumParser " . $Fingerprint . ": Unable to parse report time");
+        Logger::warning("ForumParser " . $ReportHash . ": Unable to parse report time");
       }
 
       if ($bLocalFallback===false) {
@@ -401,7 +400,7 @@ class ForumParser
             $oDateMin = new Carbon();
             $oDateMin->subDays(150);
             if ($ParsedDate < $oDateMin) {
-              Logger::warning("InboxParser ". $Fingerprint . ": Parsed date is too far in the past");
+              Logger::warning("InboxParser ". $ReportHash . ": Parsed date is too far in the past");
               $cityInfo['print_debug'] = true;
             } else {
               $cityInfo['parsed_date'] = $ParsedDate;
@@ -544,7 +543,7 @@ class ForumParser
             $cityInfo['silver_in_cave'] = $mainSilver . $bonusSilver;
           }
         } else {
-          Logger::warning("can not find silver in Forum parser: " . $Fingerprint);
+          Logger::warning("can not find silver in Forum parser: " . $ReportHash);
           $cityInfo['silver_in_cave'] = null;
         }
 
@@ -563,7 +562,7 @@ class ForumParser
             foreach (self::aUnitNames as $Key => $aUnit) {
               if (strpos($Class, $Key)) {
                 if ($Value===null) {
-                  Logger::warning("Forum parser $Fingerprint: Invalid Value for unit child: " . json_encode($unitsChild));
+                  Logger::warning("Forum parser $ReportHash: Invalid Value for unit child: " . json_encode($unitsChild));
                 }
 
                 if ($aUnit['value'] === null) {
@@ -586,7 +585,7 @@ class ForumParser
 
         //loop buildings
         if (strpos($aReportData["content"][5]["content"][3]["attributes"]["class"], "spy_buildings") === false) {
-          Logger::warning("Forum parser " . $Fingerprint . ": Spy report: unable to find spy buildings");
+          Logger::warning("Forum parser " . $ReportHash . ": Spy report: unable to find spy buildings");
         }
         $buildsRootArr = $aReportData['content'][5]['content'][3]['content'];
         $bHasWall = false;
@@ -698,12 +697,12 @@ class ForumParser
             if (strpos($cityInfo['wall'], ')') !== false) {
               $cityInfo['wall'] = substr($cityInfo['wall'], 0, strpos($cityInfo['wall'], ')') + 1);
             } else {
-              Logger::warning("ForumParser " . $Fingerprint . ": Unable to find closing brace for wall with value '" . $cityInfo['wall'] . "'");
+              Logger::warning("ForumParser " . $ReportHash . ": Unable to find closing brace for wall with value '" . $cityInfo['wall'] . "'");
               $cityInfo['print_debug'] = true;
             }
           } else {
             // no wall level found
-            Logger::warning("ForumParser " . $Fingerprint . ": Unable to parse wall with value '" . $cityInfo['wall'] . "'");
+            Logger::warning("ForumParser " . $ReportHash . ": Unable to parse wall with value '" . $cityInfo['wall'] . "'");
             $cityInfo['print_debug'] = true;
           }
         }
@@ -795,15 +794,15 @@ class ForumParser
                   $Class = $unitsChild['content'][1]['attributes']['class'];
                   if (!is_string($Value) && is_array($Value)) {
                     $Value = Helper::getTextContent($Value);
-                    Logger::warning("ForumParser " . $Fingerprint . ": unit child value is not string. extracted text: " . $Value);
+                    Logger::warning("ForumParser " . $ReportHash . ": unit child value is not string. extracted text: " . $Value);
                   }
                   if (!is_string($Died) && is_array($Died)) {
                     $Died = Helper::getTextContent($Died);
-                    Logger::warning("ForumParser " . $Fingerprint . ": unit child died is not string. extracted text: " . $Died);
+                    Logger::warning("ForumParser " . $ReportHash . ": unit child died is not string. extracted text: " . $Died);
                   }
                   if (!is_string($Class) && is_array($Class)) {
                     $Class = Helper::getTextContent($Class);
-                    Logger::warning("ForumParser " . $Fingerprint . ": unit child class is not string. extracted text: " . $Class);
+                    Logger::warning("ForumParser " . $ReportHash . ": unit child class is not string. extracted text: " . $Class);
                   }
 
                   // Parse unit names

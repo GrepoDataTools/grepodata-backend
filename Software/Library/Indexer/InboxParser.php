@@ -52,12 +52,17 @@ class InboxParser
   /**
    * @param $IndexKey
    * @param $aReportData
+   * @param $ReportPoster
+   * @param $PosterId
+   * @param $PosterAllyId
+   * @param $ReportHash
+   * @param string $Locale
    * @return int Inserted city id
-   * @throws InboxParserExceptionWarning
    * @throws InboxParserExceptionDebug
    * @throws InboxParserExceptionError
+   * @throws InboxParserExceptionWarning
    */
-  public static function ParseReport($IndexKey, $aReportData, $ReportPoster, $PosterId, $PosterAllyId, $Fingerprint, $Locale='nl')
+  public static function ParseReport($IndexKey, $aReportData, $ReportPoster, $PosterId, $PosterAllyId, $ReportHash, $Locale='nl')
   {
     try {
       $oIndexInfo = \Grepodata\Library\Controller\Indexer\IndexInfo::firstOrFail($IndexKey);
@@ -78,7 +83,7 @@ class InboxParser
 
       $ReportImage = $ReportAction["content"][1]["content"][1]['content'][0]["attributes"]["src"];
       if ($ReportImage === null) {
-        throw new InboxParserExceptionWarning("InboxParser ". $Fingerprint . ": Unable to locate ReportImage");
+        throw new InboxParserExceptionWarning("InboxParser ". $ReportHash . ": Unable to locate ReportImage");
       }
 
       $bSpy = false;
@@ -163,7 +168,7 @@ class InboxParser
       $oDateMin = new Carbon();
       $oDateMin->subDays(150);
       if ($oDate < $oDateMin) {
-        Logger::warning("InboxParser ". $Fingerprint . ": Parsed date is too far in the past");
+        Logger::warning("InboxParser ". $ReportHash . ": Parsed date is too far in the past");
       }
       $ReportDate = $oDate->format("d-m-y H:i:s");
       $ParsedDate = $oDate;
@@ -698,12 +703,11 @@ class InboxParser
         }
       }
 
-      if ($bSaved) {
-        return $oCity->id;
-      } else {
+      if ($bSaved == false || $oCity->id < 0) {
         throw new InboxParserExceptionWarning("Unable to save City record: " . $oCity->toJson());
       }
 
+      return $oCity->id;
     }
     catch(InboxParserExceptionDebug $e) {throw $e;}
     catch(InboxParserExceptionWarning $e) {throw $e;}
