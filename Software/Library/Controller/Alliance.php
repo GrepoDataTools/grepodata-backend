@@ -60,7 +60,7 @@ class Alliance
   /**
    * @param $World
    * @param $UpdateLimit
-   * @return Collection
+   * @return Collection|\Grepodata\Library\Model\Alliance[]
    */
   public static function allByWorldAndUpdate($World, $UpdateLimit)
   {

@@ -86,7 +86,7 @@ class Town
   /**
    * @param $World
    * @param $Id
-   * @return Collection
+   * @return bool|Collection|\Grepodata\Library\Model\Town[]
    */
   public static function allByPlayer($Id, $World)
   {
@@ -99,7 +99,7 @@ class Town
   /**
    * @param $World
    * @param $Id
-   * @return array
+   * @return bool|Collection|\Grepodata\Library\Model\Town[]
    */
   public static function allByAlliance($Id, $World)
   {
@@ -127,7 +127,7 @@ class Town
    * @param $World
    * @param $Query string search query
    * @param int $Limit
-   * @return \Illuminate\Database\Eloquent\Collection
+   * @return bool|Collection|\Grepodata\Library\Model\Town[]
    */
   public static function search($World, $Query, $Limit = 30)
   {

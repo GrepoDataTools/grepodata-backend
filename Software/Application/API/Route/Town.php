@@ -20,7 +20,6 @@ class Town extends \Grepodata\Library\Router\BaseRoute
       foreach ($aTowns as $oTown) {
         $aResponse[] = $oTown->getMinimalFields();
       }
-//      die(json_encode($aResponse));
       return self::OutputJson($aResponse);
     } catch (ModelNotFoundException $e) {
       die(self::OutputJson(array(

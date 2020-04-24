@@ -108,7 +108,7 @@ class Report extends \Grepodata\Library\Router\BaseRoute
               $Report->save();
             }
           } catch (\Exception $e) {
-            Logger::warning("Error updating html for report hash: $ReportHash and key: $Key");
+            Logger::warning("Error updating html for report hash: $ReportHash and key: $Key;" . $e->getMessage());
           }
           continue;
         }
@@ -250,7 +250,7 @@ class Report extends \Grepodata\Library\Router\BaseRoute
               $Report->save();
             }
           } catch (\Exception $e) {
-            Logger::warning("Error updating html for existing report hash: $Hash and key: $Key");
+            Logger::warning("Error updating html for existing report hash: $Hash and key: $Key;" . $e->getMessage());
           }
           continue;
         }
@@ -299,7 +299,7 @@ class Report extends \Grepodata\Library\Router\BaseRoute
         
         $oReport = new \Grepodata\Library\Model\Indexer\Report();
         $oReport->index_code      = $Key;
-        $oReport->type            = 'forum';
+        $oReport->type            = 'default';
         $oReport->report_poster   = $ReportPoster;
         $oReport->fingerprint     = $Hash;
         $oReport->report_json     = $ReportJson;

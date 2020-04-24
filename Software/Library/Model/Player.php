@@ -2,6 +2,7 @@
 
 namespace Grepodata\Library\Model;
 
+use Carbon\Carbon;
 use \Illuminate\Database\Eloquent\Model;
 
 /**
@@ -40,6 +41,7 @@ class Player extends Model
 
   public function getPublicFields()
   {
+    $Now = Carbon::now()->format('Y-m-d H:i:s');
     return array(
       'grep_id'     => $this->grep_id,
       'world'       => $this->world,
@@ -55,12 +57,16 @@ class Player extends Model
       'att_rank'    => $this->att_rank,
       'def_rank'    => $this->def_rank,
       'fight_rank'  => $this->fight_rank,
-      'att_rank_max'  => $this->att_rank_max,
-      'def_rank_max'  => $this->def_rank_max,
-      'fight_rank_max'  => $this->fight_rank_max,
-      'att_rank_date'   => $this->att_rank_date,
-      'def_rank_date'   => $this->def_rank_date,
-      'fight_rank_date' => $this->fight_rank_date,
+      'rank_max'    => min($this->rank_max, $this->rank),
+      'towns_max'   => max($this->towns_max, $this->towns),
+      'att_rank_max'  => min($this->att_rank_max, $this->att_rank),
+      'def_rank_max'  => min($this->def_rank_max, $this->def_rank),
+      'fight_rank_max'  => min($this->fight_rank_max, $this->fight_rank),
+      'rank_date'       => $this->rank_max < $this->rank ? $this->rank_date : $Now,
+      'towns_date'      => $this->towns_max > $this->towns ? $this->towns_date : $Now,
+      'att_rank_date'   => $this->att_rank_max < $this->att_rank ? $this->att_rank_date : $Now,
+      'def_rank_date'   => $this->def_rank_max < $this->def_rank ? $this->def_rank_date : $Now,
+      'fight_rank_date' => $this->fight_rank_max < $this->fight_rank ? $this->fight_rank_date : $Now,
       'heatmap' => (is_null($this->heatmap)? array() : json_decode($this->heatmap, true)),
     );
   }

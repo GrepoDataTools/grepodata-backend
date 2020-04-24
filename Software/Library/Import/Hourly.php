@@ -49,9 +49,10 @@ class Hourly
       // ATT
       if ($aData = $aAttData[$oPlayer->grep_id] ?? null) {
         if ($oPlayer->att_rank_max == null || $oPlayer->att_rank == null || $aData['rank'] != $oPlayer->att_rank) {
-          if ($oPlayer->att_rank_max == null || $oPlayer->att_rank < $aData['rank']) {
+          if ($oPlayer->att_rank_max == null || $oPlayer->att_rank == null
+            || ($oPlayer->att_rank < $aData['rank'] && $oPlayer->att_rank <= $oPlayer->att_rank_max)) {
             $oPlayer->att_rank_max = $oPlayer->att_rank != null ? $oPlayer->att_rank : $aData['rank'];
-            $oPlayer->att_rank_date = Carbon::now();
+            $oPlayer->att_rank_date = Carbon::now()->subDay();
           }
           $oPlayer->att_rank = $aData['rank'];
           $bUpdated = true;
@@ -61,9 +62,10 @@ class Hourly
       // DEF
       if ($aData = $aDefData[$oPlayer->grep_id] ?? null) {
         if ($oPlayer->def_rank_max == null || $oPlayer->def_rank == null || $aData['rank'] != $oPlayer->def_rank) {
-          if ($oPlayer->def_rank_max == null || $oPlayer->def_rank < $aData['rank']) {
+          if ($oPlayer->def_rank_max == null || $oPlayer->def_rank == null
+            || ($oPlayer->def_rank < $aData['rank'] && $oPlayer->def_rank <= $oPlayer->def_rank_max)) {
             $oPlayer->def_rank_max = $oPlayer->def_rank != null ? $oPlayer->def_rank : $aData['rank'];
-            $oPlayer->def_rank_date = Carbon::now();
+            $oPlayer->def_rank_date = Carbon::now()->subDay();
           }
           $oPlayer->def_rank = $aData['rank'];
           $bUpdated = true;
@@ -73,9 +75,10 @@ class Hourly
       // KILLS
       if ($aData = $aAllData[$oPlayer->grep_id] ?? null) {
         if ($oPlayer->fight_rank_max == null || $oPlayer->fight_rank == null || $aData['rank'] != $oPlayer->fight_rank) {
-          if ($oPlayer->fight_rank_max == null || $oPlayer->fight_rank < $aData['rank']) {
+          if ($oPlayer->fight_rank_max == null || $oPlayer->fight_rank == null
+            || ($oPlayer->fight_rank < $aData['rank'] && $oPlayer->fight_rank <= $oPlayer->fight_rank_max)) {
             $oPlayer->fight_rank_max = $oPlayer->fight_rank != null ? $oPlayer->fight_rank : $aData['rank'];
-            $oPlayer->fight_rank_date = Carbon::now();
+            $oPlayer->fight_rank_date = Carbon::now()->subDay();
           }
           $oPlayer->fight_rank = $aData['rank'];
           $bUpdated = true;
@@ -85,18 +88,20 @@ class Hourly
       // TOWNS + RANK
       if ($aData = $aPlayerData[$oPlayer->grep_id] ?? null) {
         if ($oPlayer->rank_max == null || $oPlayer->rank != $aData['rank']) {
-          if ($oPlayer->rank_max == null || $oPlayer->rank < $aData['rank']) {
+          if ($oPlayer->rank_max == null
+            || ($oPlayer->rank < $aData['rank'] && $oPlayer->rank <= $oPlayer->rank_max)) {
             $oPlayer->rank_max = $oPlayer->rank != null ? $oPlayer->rank : $aData['rank'];
-            $oPlayer->rank_date = Carbon::now();
+            $oPlayer->rank_date = Carbon::now()->subDay();
           }
           $oPlayer->rank = $aData['rank'];
           $bUpdated = true;
         }
 
         if ($oPlayer->towns_max == null || $oPlayer->towns != $aData['towns']) {
-          if ($oPlayer->towns_max == null || $oPlayer->towns > $aData['towns']) {
+          if ($oPlayer->towns_max == null
+            || ($oPlayer->towns > $aData['towns'] && $oPlayer->towns >= $oPlayer->towns_max)) {
             $oPlayer->towns_max = $oPlayer->towns != null ? $oPlayer->towns : $aData['towns'];
-            $oPlayer->towns_date = Carbon::now();
+            $oPlayer->towns_date = Carbon::now()->subDay();
           }
           $oPlayer->towns = $aData['towns'];
           $bUpdated = true;
@@ -159,6 +164,13 @@ class Hourly
       Logger::debugInfo("New data detected. [Local: ".$oWorld->etag." ".date("Y-m-d H:i:s", strtotime($oWorld->grep_server_time))."] [Remote: ".$GrepEtag." ".date("Y-m-d H:i:s", strtotime($GrepServerTime))."]");
     }
 
+    // Load player data
+    $aPlayerAttData = InnoData::loadPlayerAttData($oWorld->grep_id);
+    if ($aPlayerAttData === false) {
+      Logger::warning("Error getting player attack data.");
+      return false;
+    }
+
     // Save world status as updated
     $oWorld->grep_server_time = date('Y-m-d H:i:s', strtotime($GrepServerTime));
     $oWorld->etag = $GrepEtag;
@@ -170,8 +182,6 @@ class Hourly
     $DiffHourOfDay = $DiffDate->hour; // 0 trough 23
 
     // ==== 1. ATTACK
-    // Load player data
-    $aPlayerAttData = InnoData::loadPlayerAttData($oWorld->grep_id);
     $TotalAtt = sizeof($aPlayerAttData);
     Logger::silly("Updating player kills att: ".$TotalAtt.".");
 
@@ -270,6 +280,10 @@ class Hourly
     // ==== 2. DEFENCE
     // Load player data
     $aPlayerDefData = InnoData::loadPlayerDefData($oWorld->grep_id);
+    if ($aPlayerDefData === false) {
+      Logger::warning("Error getting player defence data.");
+      return false;
+    }
     $TotalDef = sizeof($aPlayerDefData);
     Logger::silly("Updating player kills def: ".$TotalDef.".");
 

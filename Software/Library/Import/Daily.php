@@ -63,7 +63,7 @@ class Daily
         if ($aData = $aPlayerData[$oPlayer->grep_id] ?? null) {
           $aPlayerData[$oPlayer->grep_id]['checked'] = true;
 
-          if (($oPlayer->rank < 300 && $oPlayer->rank != $aData['rank'])
+          if (($oPlayer->rank < 500 && $oPlayer->rank != $aData['rank'])
             || $oPlayer->alliance_id != $aData['alliance_id']
             || $oPlayer->points != $aData['points']
             || $oPlayer->towns != $aData['towns']

@@ -21,7 +21,7 @@ define('INNO_DATA_ALLIANCE_DEF',  'alliance_kills_def.txt.gz');
 define('INNO_DATA_CONQUERS',      'conquers.txt.gz');
 
 define('USERSCRIPT_VERSION',      '4.0.1');
-define('USERSCRIPT_UPDATE_INFO',  'Added departure time to incoming attacks. You can now index wisdom reports. Added intel shortcut to context menu.');
+define('USERSCRIPT_UPDATE_INFO',  'You can now index wisdom reports. Added intel shortcut to context menu.');
 
 define('DEFAULT_SERVER',  'nl');
 define('DEFAULT_WORLD',   'nl79');

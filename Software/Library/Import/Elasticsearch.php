@@ -20,6 +20,7 @@ class Elasticsearch
 
     $IndexErrors = 0;
     $IndexedDocuments = 0;
+    $aAllianceNames = array();
 
     // Import alliances for this world
     $DateLimit = Carbon::now()->subDays(16); // If updated within last 16 days
@@ -28,6 +29,8 @@ class Elasticsearch
       try {
         Import::SaveAlliance($oAlliance);
         $IndexedDocuments++;
+
+        $aAllianceNames[$oAlliance->grep_id] = $oAlliance->name;
       } catch (\Exception $e) {$IndexErrors++;}
     }
 
@@ -35,7 +38,6 @@ class Elasticsearch
 
     // Import players for this world
     $aPlayers = Player::allActiveByWorld($oWorld->grep_id);
-    $aAllianceNames = array();
     $aBatch = array();
     $BatchSize = 50;
     foreach ($aPlayers as $oPlayer) {

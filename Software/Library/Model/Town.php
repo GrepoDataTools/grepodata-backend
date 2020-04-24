@@ -22,24 +22,26 @@ class Town extends Model
   public function getPublicFields()
   {
     return array(
-      'world'       => $this->world,
-      'grep_id'     => $this->grep_id,
-      'name'        => $this->name,
-      'points'      => $this->points,
-      'player_id'   => $this->player_id,
-      'ix'          => $this->island_x,
-      'iy'          => $this->island_y,
+      'world'     => $this->world,
+      'grep_id'   => $this->grep_id,
+      'name'      => $this->name,
+      'points'    => $this->points,
+      'player_id' => $this->player_id,
+      'ix'        => $this->island_x,
+      'iy'        => $this->island_y,
+      'ocean'     => (int) (floor($this->island_x/100) . floor($this->island_y/100)),
     );
   }
 
   public function getMinimalFields()
   {
     return array(
-      'grep_id'     => $this->grep_id,
-      'name'        => $this->name,
-      'points'      => $this->points,
-      'ix'          => $this->island_x,
-      'iy'          => $this->island_y,
+      'grep_id' => $this->grep_id,
+      'name'    => $this->name,
+      'points'  => $this->points,
+      'ix'      => $this->island_x,
+      'iy'      => $this->island_y,
+      'ocean'   => (int) (floor($this->island_x/100) . floor($this->island_y/100)),
     );
   }
 }

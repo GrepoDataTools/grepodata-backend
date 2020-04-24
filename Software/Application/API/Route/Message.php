@@ -26,7 +26,7 @@ class Message extends \Grepodata\Library\Router\BaseRoute
 
     try {
       // Notify
-      Pushbullet::SendPushMessage('New gd message: ' . $aParams['message']);
+      Logger::error('New gd message: ' . $aParams['message']);
 
       // Mail job
       if (isset($aParams['mail']) && $aParams['mail']!='' && $aParams['mail']!='_') {

@@ -57,7 +57,6 @@ class Logger
       'level'   => self::level_error,
       'pid'     => self::getPid()
     ));
-    if (!bDevelopmentMode) Pushbullet::SendPushMessage($Message, 'GD error');
   }
 
   private static function writeLogMessage($aParams)

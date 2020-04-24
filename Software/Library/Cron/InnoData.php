@@ -290,7 +290,8 @@ class InnoData
 
     if (sizeof($aData) <= 0) {
       Logger::error("Found 0 valid data rows while loading inno data for endpoint " . $Endpoint);
-      die();
+      return false;
+      //      die();
     }
 
     if ($InvalidRows > 0) {
@@ -378,7 +379,8 @@ class InnoData
 
     if (sizeof($aData) <= 0) {
       Logger::error("Found 0 valid data rows while loading inno data for endpoint " . $Endpoint);
-      die();
+      return false;
+//      die();
     }
 
     if ($InvalidRows > 0) {

@@ -9,6 +9,11 @@ require(__DIR__ . '/../config.php');
 use Carbon\Carbon;
 use Grepodata\Library\Controller\Indexer\CityInfo;
 use Grepodata\Library\Controller\World;
+use Grepodata\Library\Model\Operation_log;
+
+$t = Carbon::now()->subDay();
+$t2 = Carbon::now();
+
 
 $aCities = CityInfo::allByTownIdByKeys(array('5be6zv1s'), 10043);
 
