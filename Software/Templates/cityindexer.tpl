@@ -95,15 +95,15 @@
             SAVED: 'Settings saved',
             SHARE: 'Share',
             CMD_OVERVIEW_TITLE: 'Enhanced command overview',
-			CMD_DEPARTURE_INFO: 'Add the departure and travel time to incoming enemy attacks/support',
+			CMD_DEPARTURE_INFO: 'Add the return and cancel time to your own movements',
             CMD_OVERVIEW_INFO: 'Enhance your command overview with unit intelligence from your enemy city index. Note: this is a new feature, currently still in development. Please contact us if you have feedback.',
             CONTEXT_TITLE: 'Expand context menu',
             CONTEXT_INFO: 'Add an intel shortcut to the town context menu. The shortcut opens the intel for this town.',
 			BUG_REPORTS: 'Upload anonymous bug reports to help improve our script.',
 			SETTINGS_OTHER: 'Miscellaneous settings',
-			RUNTIME: 'Travel time',
-			RUNTIME_DEPARTED: 'Departed at',
+			DEPARTED_FROM: 'Departed from',
 			RUNTIME_CANCELABLE: 'Cancelable until',
+			RUNTIME_RETURNS: 'Returns at',
 			INTEL_NOTE_TITLE: 'Notes',
 			INTEL_NOTE_NONE: 'There are no notes for this town',
 			INTEL_UNITS: 'Units',
@@ -137,15 +137,15 @@
                         SAVED: 'Instellingen opgeslagen',
                         SHARE: 'Delen',
                         CMD_OVERVIEW_TITLE: 'Uitgebreid beveloverzicht',
-						CMD_DEPARTURE_INFO: 'Voeg de vertrek en looptijd toe aan inkomende aanvallen/ondersteuning.',
+						CMD_DEPARTURE_INFO: 'Voeg de annuleer en terugkeer tijd toe aan eigen bevelen.',
                         CMD_OVERVIEW_INFO: 'Voeg troepen intel uit je city index toe aan het beveloverzicht. Let op: dit is een nieuwe feature, momenteel nog in ontwikkeling. Contacteer ons als je feedback hebt.',
 						CONTEXT_TITLE: 'Context menu uitbreiden',
 						CONTEXT_INFO: 'Voeg een intel snelkoppeling toe aan het context menu als je op een stad klikt. De snelkoppeling verwijst naar de verzamelde intel van de stad.',
 						BUG_REPORTS: 'Anonieme bug reports uploaden om het script te verbeteren.',
 						SETTINGS_OTHER: 'Overige instellingen',
-						RUNTIME: 'Looptijd',
-						RUNTIME_DEPARTED: 'Verzonden om',
+						DEPARTED_FROM: 'Verzonden vanuit',
 						RUNTIME_CANCELABLE: 'Annuleerbaar tot',
+						RUNTIME_RETURNS: 'Terug om',
 						INTEL_NOTE_TITLE: 'Notities',
 						INTEL_NOTE_NONE: 'Er zijn nog geen notities voor deze stad',
 						INTEL_UNITS: 'Eenheden',
@@ -301,22 +301,14 @@
 				var data = JSON.parse(xhr.responseText);
 				if (!data.json.command_id) return;
 				var command_id = data.json.command_id;
-				//console.log("Enhancing command info panel: ", command_id);
 
 				var movement = false;
-				//if (command_id in parsedCommands) {
-				//	var command = parsedCommands[command_id];
-				//	movement = MM.getModels().MovementsUnits[command.movement_id];
-				//}
-				//if (!movement) {
-				// try to find in movements
 				let movements = Object.values(MM.getModels().MovementsUnits);
 				movements.map(m => {
 					if (m.attributes.command_id == command_id) {
 						movement = m;
 					}
 				});
-				//}
 				if (!movement) return;
 
 				if (verbose) console.log(movement);
@@ -324,20 +316,11 @@
 				var renderIntel = movement.isIncommingMovement();
 				var town_id = movement.attributes.home_town_id;
 
-				// parse actual departure time
-				var departure = false;
-				if (movement.attributes.hasOwnProperty('cap_of_invisibility_effective_until')) {
-					departure = getDepartureTimeFromMovement(movement);
-				}
+				// parse source town
 				var departureElem = document.getElementById('gd_departure_'+command_id+'_wnd_'+window_id);
 				if (!departureElem && gd_settings.departure_time === true) {
-					var departureHtml = '<fieldset class="command_info_time">'+
-						'<legend>'+translate.RUNTIME_DEPARTED+'</legend>';
-
-					if (departure != false) {
-						departureHtml = departureHtml + '<div class="arrival_time">'+departure.departure_readable+'</div>'+
-							'<div class="way_duration"><span id="gd_departure_'+command_id+'_wnd_'+window_id+'" class="arrival_at_countdown eta">'+translate.RUNTIME+' '+departure.runtime_readable+'</span></div>';
-					}
+					var departureHtml = '<fieldset class="command_info_units">'+
+						'<legend>'+translate.DEPARTED_FROM+'</legend>';
 
 					departureHtml = departureHtml + '<div style="display: inline-block; padding: 0 14px;">'+
 						(movement.attributes.link_origin ? '<div style="display: inline-block; margin-top: 12px;"><img alt="" src="/images/game/icons/town.png" style="padding-right: 2px; vertical-align: top;"> ' + movement.attributes.link_origin + '</div>' : '');
@@ -359,30 +342,24 @@
 					}
 				}
 
-				// TODO: list possible units in attack, taking into account the travel time and collected intel
-				//if (gd_settings.cmdoverview === true && renderIntel) {}
-
 			} catch (error) {
                 errorHandling(error, "enhanceCommandInfoPanel");
 			}
 		}
 
-		function getDepartureTimeFromMovement(movement) {
+		function getReturnTimeFromMovement(movement) {
 			var arrival_time = movement.attributes.arrival_at;
-			var visible_since = movement.attributes.cap_of_invisibility_effective_until;
-			var visible_runtime = arrival_time - visible_since;
-			var runtime_actual = Math.floor((visible_runtime / 0.9) * 1);
-			var departed_at = arrival_time - runtime_actual;
+			var departure_time = movement.attributes.started_at;
+			var returns_at = arrival_time + (arrival_time - departure_time);
 			return {
 				arrival_time: arrival_time,
-				departure_time: departed_at,
-				departure_readable: getHumanReadableDateTime(departed_at),
-				runtime_readable: getHumanReadableRuntime(arrival_time, departed_at),
+				returns_at: returns_at,
+				return_readable: getHumanReadableDateTime(returns_at, false),
 			};
 		}
 
-		function getHumanReadableRuntime(arrival, departure) {
-			var diff = arrival - departure;
+		function getHumanReadableTimestampDiff(end, start) {
+			var diff = start - end;
 			var hours = Math.floor(diff / 3600);
 			var residual = diff % 3600;
 			var minutes = Math.floor(residual / 60);
@@ -518,27 +495,33 @@
 				var cmd = parsedCommands[id];
 				var cmdInfoBox = $('#command_'+id).find('.cmd_info_box');
 
-				// Insert travel time
-				var departureElem = document.getElementById('gd-runtime-'+id);
-				if (!departureElem && gd_settings.departure_time === true && cmd.movement_id > 0) {
+				var returnsElem = document.getElementById('gd-runtime-'+id);
+				if (!returnsElem && gd_settings.departure_time === true && cmd.movement_id > 0) {
 					var movement = MM.getModels().MovementsUnits[cmd.movement_id];
-					var runtimeHtml = '<span id="gd-runtime-'+id+'" class="troops_arrive_at gd_cmd_runtime gd-runtime-'+id+'">(';
-					var bHasRuntime = false
-					if (movement.attributes.hasOwnProperty('cap_of_invisibility_effective_until')) {
-						bHasRuntime = true;
-						var departure = getDepartureTimeFromMovement(movement);
-						runtimeHtml = runtimeHtml + translate.RUNTIME + ' '+departure.runtime_readable;
-					}
-					if (movement.attributes.hasOwnProperty('cancelable_until') && movement.attributes.cancelable_until != null) {
-						var diff = movement.attributes.cancelable_until - Date.now() / 1000;
-						if (diff>0) {
-							var cancelable_until = getHumanReadableDateTime(movement.attributes.cancelable_until, false);
-							runtimeHtml = runtimeHtml + (bHasRuntime==true?', '+translate.RUNTIME_CANCELABLE.toLowerCase():translate.RUNTIME_CANCELABLE) + ' ' + cancelable_until;
+
+					if (!movement.isIncommingMovement()) {
+						var runtimeHtml = '<span id="gd-runtime-'+id+'" class="troops_arrive_at gd_cmd_runtime gd-runtime-'+id+'">(';
+						var bHasReturnTime = false;
+						var bHasCancelTime = false;
+						if (movement.attributes.hasOwnProperty('started_at')) {
+							bHasReturnTime = true;
+							var returns = getReturnTimeFromMovement(movement);
+							runtimeHtml = runtimeHtml + translate.RUNTIME_RETURNS + ' '+returns.return_readable;
+						}
+						if (movement.attributes.hasOwnProperty('cancelable_until') && movement.attributes.cancelable_until != null) {
+							var diff = movement.attributes.cancelable_until - Date.now() / 1000;
+							if (diff>0) {
+								bHasCancelTime = true;
+								var cancelable_until = getHumanReadableDateTime(movement.attributes.cancelable_until, false);
+								runtimeHtml = runtimeHtml + (bHasReturnTime==true?', '+translate.RUNTIME_CANCELABLE.toLowerCase():translate.RUNTIME_CANCELABLE) + ' ' + cancelable_until;
+							}
+						}
+						runtimeHtml = runtimeHtml + ')</span>';
+						if (bHasReturnTime || bHasCancelTime) {
+							cmdInfoBox.append(runtimeHtml);
 						}
 					}
-					runtimeHtml = runtimeHtml + ')</span>';
-					cmdInfoBox.append(runtimeHtml);
-					//$('#gd-runtime-'+id).tooltip('Departed at ' + departure.departure_readable);
+
 				}
 
 				// Insert intel
@@ -1739,7 +1722,7 @@
 
 				if (bHasIntel == false) {
 					table = table + '<li class="even" style="display: inherit; width: 100%;"><div style="text-align: center;">' +
-						'<strong>No unit intellgence available</strong><br/>' +
+						'<strong>No unit intelligence available</strong><br/>' +
 						'You have not yet indexed any reports about this town.<br/><br/>' +
 						'<span style="font-style: italic;">note: intel about your allies (index contributors) is hidden by default</span></div></li>\n';
 				}
