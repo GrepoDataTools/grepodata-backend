@@ -138,7 +138,7 @@ class Common
 
       if ($Report->type === 'default') {
         $aParsed = ForumParser::ParseReport($Report->index_code, $aReportData, '', 'LOCAL_DEBUG', substr($Info->world, 0, 2));
-        if (is_array($aParsed) && isset($aParsed['id']) && isset($aParsed['debug'])) {
+        if (is_array($aParsed) && isset($aParsed['id'])) {
           $aParsed = $aParsed['id'];
         }
       } else {

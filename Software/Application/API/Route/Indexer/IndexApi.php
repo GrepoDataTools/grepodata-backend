@@ -388,6 +388,7 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
         'player_id' => $oTown->player_id,
         'alliance_id' => 0,
         'player_name' => '',
+        'has_stonehail' => false,
         'notes' => array(),
         'buildings' => array(),
         'intel' => array(),
@@ -419,6 +420,9 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
           $aDuplicateCheck[] = $cityhash;
 
           $aRecord = CityInfo::formatAsTownIntel($oCity, $oWorld, $aResponse['buildings']);
+          if (!empty($aRecord['stonehail'])) {
+            $aResponse['has_stonehail'] = true;
+          }
 
           $aResponse['intel'][] = $aRecord;
         }

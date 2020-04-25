@@ -4,21 +4,12 @@ namespace Grepodata\Library\Indexer;
 
 use Carbon\Carbon;
 use Exception;
-use Grepodata\Library\Controller\Alliance;
-use Grepodata\Library\Controller\Indexer\Conquest;
 use Grepodata\Library\Controller\Player;
-use Grepodata\Library\Controller\Town;
-use Grepodata\Library\Controller\World;
 use Grepodata\Library\Exception\ForumParserExceptionDebug;
 use Grepodata\Library\Exception\ForumParserExceptionError;
 use Grepodata\Library\Exception\ForumParserExceptionWarning;
-use Grepodata\Library\Exception\InboxParserExceptionDebug;
-use Grepodata\Library\Exception\InboxParserExceptionError;
 use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\Indexer\City;
-use Grepodata\Library\Model\Indexer\IndexInfo;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\Log;
 
 class ForumParser
 {
@@ -211,6 +202,9 @@ class ForumParser
       foreach ($aBuildingIds as $Building) {
         if (isset($aCityInfo[$Building])) $aBuildings[$Building] = $aCityInfo[$Building];
       }
+      if (!empty($aCityInfo['parsed_buildings'])) {
+        $aBuildings = array_merge($aBuildings, $aCityInfo['parsed_buildings']);
+      }
       $aLandUnits = array();
       foreach ($aLandUnitIds as $LandUnit) {
         if (isset($aCityInfo[$LandUnit])) $aLandUnits[$LandUnit] = $aCityInfo[$LandUnit];
@@ -278,8 +272,7 @@ class ForumParser
 
       if ($bSaved) {
         return array(
-          'id' => $oCity->id,
-          'debug' => (isset($aCityInfo['print_debug']) && $aCityInfo['print_debug'] === true ? true : false)
+          'id' => $oCity->id
         );
       } else {
         throw new ForumParserExceptionWarning("Unable to save City record: " . $oCity->toJson());
@@ -359,7 +352,6 @@ class ForumParser
       Logger::warning("ForumParser " . $ReportHash . ": unable to locate report date");
       $cityInfo['mutation_date'] = date(self::format[$Locale]['day'].' '.self::format[$Locale]['time']);
       $cityInfo['parsed_date'] = new Carbon();
-      $cityInfo['print_debug'] = true;
     } else {
       if (!is_string($ReportDate) && is_array($ReportDate)) {
         try {
@@ -384,7 +376,6 @@ class ForumParser
         $Time = $TimeMatches[0];
       } else {
         $Time = date(self::format[$Locale]['time']); // Current time
-        $cityInfo['print_debug'] = true;
       }
       $cityInfo['mutation_date'] = "$Day $Time";
       try {
@@ -401,7 +392,6 @@ class ForumParser
             $oDateMin->subDays(150);
             if ($ParsedDate < $oDateMin) {
               Logger::warning("InboxParser ". $ReportHash . ": Parsed date is too far in the past");
-              $cityInfo['print_debug'] = true;
             } else {
               $cityInfo['parsed_date'] = $ParsedDate;
             }
@@ -684,31 +674,73 @@ class ForumParser
           $cityInfo['player_id'] = 0;
         }
 
-        //wall
-        $aReportStats = $aReportData['content'][5]['content'][1]['content'][3]['content'][1]['content'][1]['content'][2]['content'][1]['content'][1]['content'][1];
-        if (!is_null($aReportStats) && count($aReportStats['content']) == 2) {
-          $cityInfo['wall'] = 0;
-        } else {
-          $cityInfo['wall'] = $aReportStats['content'][2]['content'][1]['content'][2];
-          if (is_string($cityInfo['wall']) && strpos($cityInfo['wall'], ": +100%")) {
-            $cityInfo['wall'] = 0;
-          } else if (is_string($cityInfo['wall']) && preg_match('/[0-9]/', $cityInfo['wall'], $matches, PREG_OFFSET_CAPTURE)) {
-            $cityInfo['wall'] = substr($cityInfo['wall'], $matches[0][1]);
-            if (strpos($cityInfo['wall'], ')') !== false) {
-              $cityInfo['wall'] = substr($cityInfo['wall'], 0, strpos($cityInfo['wall'], ')') + 1);
-            } else {
-              Logger::warning("ForumParser " . $ReportHash . ": Unable to find closing brace for wall with value '" . $cityInfo['wall'] . "'");
-              $cityInfo['print_debug'] = true;
+        // Parse buildings (stonehail + wall)
+        // TODO: get translations from client: Object.values(GameData.buildings).map(function(e) {tmp[e.controller] = e.name});
+        $aBuildingNames = null;
+        if ($Locale == 'nl') {
+          $aBuildingNames = array(
+            'academy' => 'Academie',
+            'barracks' => 'Kazerne',
+            'docks' => 'Haven',
+            'farm' => 'Boerderij',
+            'hide' => 'Grot',
+            'ironer' => 'Zilvermijn',
+            'library' => 'Bibliotheek',
+            'lighthouse' => 'Vuurtoren',
+            'lumber' => 'Houthakkerskamp',
+            'main' => 'Senaat',
+            'market' => 'Marktplaats',
+            'oracle' => 'Orakel',
+            'place' => 'Agora',
+            'statue' => 'Godenbeeld',
+            'stoner' => 'Steengroeve',
+            'storage' => 'Pakhuis',
+            'temple' => 'Tempel',
+            'theater' => 'Theater',
+            'thermal' => 'Badhuis',
+            'tower' => 'Toren',
+            'trade_office' => 'Handelskantoor',
+            'wall' => 'Stadsmuur',
+          );
+        }
+
+        $aReportStats = $aReportData['content'][5]['content'][1]['content'][3]['content'][1]['content'][1]['content'][2]['content'][1]['content'][1]['content'][1]['content'] ?? null;
+        if (empty($aReportStats)) {
+          throw new ForumParserExceptionWarning("Unable to find forum report stats");
+        }
+        $cityInfo['wall'] = 0;
+        $cityInfo['parsed_buildings'] = array();
+        try {
+          foreach ($aReportStats as $aStats) {
+            $Class = $aStats["content"][1]["content"][1]["attributes"]["class"] ?? null;
+            if (empty($Class)) continue;
+
+            $Value = $aStats["content"][1]["content"][2] ?? null;
+            if (empty($Value) || !is_string($Value)) continue;
+
+            preg_match('/[0-9]{1,2} \(-[0-9]{1,2}\)/', $Value, $aMatches);
+            if (empty($aMatches)) continue;
+
+            if (strpos($Class, 'catapult') !== false) {
+              $cityInfo['wall'] = $aMatches[0];
+            } else if (strpos($Class, 'stone_hail') !== false && !empty($aBuildingNames)) {
+              foreach ($aBuildingNames as $Key => $Name) {
+                if (strpos($Value, $Name) !== false) {
+                  $cityInfo['parsed_buildings'][$Key] = $aMatches[0];
+                }
+              }
             }
-          } else {
-            // no wall level found
-            Logger::warning("ForumParser " . $ReportHash . ": Unable to parse wall with value '" . $cityInfo['wall'] . "'");
-            $cityInfo['print_debug'] = true;
           }
+
+        } catch (Exception $e) {
+          Logger::warning("ForumParser " . $ReportHash . ": error parsing buildings; " . $e->getMessage());
         }
 
         //loop units
-        $unitsRootArr = $aReportData['content'][5]['content'][1]['content'][5]['content'];
+        $unitsRootArr = $aReportData['content'][5]['content'][1]['content'][5]['content'] ?? null;
+        if (empty($unitsRootArr)) {
+          throw new ForumParserExceptionWarning("Unable to find forum report units array");
+        }
 
         foreach ($unitsRootArr as $unitsChildren) {
 

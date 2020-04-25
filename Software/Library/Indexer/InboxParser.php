@@ -471,27 +471,93 @@ class InboxParser
           }
         }
 
-        // Build
-        $ReportWall = $aReportData["content"][1]["content"][19]["content"][5]["content"][1]["content"][5]["content"][3]["content"][1] ?? null;
-        if (is_string($ReportWall) && strpos($ReportWall, ": +100%")) {
-          $ReportWall = 0;
-        } else if (is_array($ReportWall)) {
-          $ReportWall = 0;
-        } else if (is_string($ReportWall)) {
-          $ReportWall = substr($ReportWall, strpos($ReportWall, ": ")+2);
-          $ReportWall = substr($ReportWall, 0, strpos($ReportWall, ")")+1);
-          if ($ReportWall == "") {
-            $ReportWall = 0;
-          }
-        } else {
-          $ReportWall = 0;
+        // Parse buildings (stonehail + wall)
+        // TODO: get translations from client: Object.values(GameData.buildings).map(function(e) {tmp[e.controller] = e.name});
+        $aBuildingNames = null;
+        if ($Locale == 'nl') {
+          $aBuildingNames = array(
+            'academy' => 'Academie',
+            'barracks' => 'Kazerne',
+            'docks' => 'Haven',
+            'farm' => 'Boerderij',
+            'hide' => 'Grot',
+            'ironer' => 'Zilvermijn',
+            'library' => 'Bibliotheek',
+            'lighthouse' => 'Vuurtoren',
+            'lumber' => 'Houthakkerskamp',
+            'main' => 'Senaat',
+            'market' => 'Marktplaats',
+            'oracle' => 'Orakel',
+            'place' => 'Agora',
+            'statue' => 'Godenbeeld',
+            'stoner' => 'Steengroeve',
+            'storage' => 'Pakhuis',
+            'temple' => 'Tempel',
+            'theater' => 'Theater',
+            'thermal' => 'Badhuis',
+            'tower' => 'Toren',
+            'trade_office' => 'Handelskantoor',
+            'wall' => 'Stadsmuur',
+          );
         }
-//        if (isset($aShowDefenderUnits) && isset($aShowDefenderUnits['ground']) && $aShowDefenderUnits['ground']===false) {
-//          $ReportWall = '?';
-//        }
-        if (!$bPlayerIsReceiver) {
+
+        // Buildings
+        $aBuildings = array('wall' => 0);
+
+        try {
+          $aReportDetails = $aReportData["content"][1]["content"][19]["content"][5]["content"][1]["content"][5]['content'];
+          foreach ($aReportDetails as $aDetails) {
+            $Class = $aDetails['attributes']['class'] ?? null;
+            if ($Class == null || !is_string($Class)) continue;
+
+            if (strpos($Class, 'oldwall') !== false) {
+              $DetailClass = $aDetails['content'][0]['attributes']['class'] ?? null;
+              if ($DetailClass == null || !is_string($DetailClass)) continue;
+
+              $ValueString = $aDetails["content"][1] ?? null;
+              if ($ValueString == null || !is_string($ValueString)) {
+                Logger::warning("InboxParser $ReportHash: unable to find value for report building");
+                continue;
+              }
+
+              if (strpos($ValueString, '+100%') !== false) {
+                // ignore night bonus
+                continue;
+              }
+
+              $Value = substr($ValueString, strpos($ValueString, ": ") + 2);
+              $Value = substr($Value, 0, strpos($Value, ")") + 1);
+              if (strpos($Value, '+') !== false
+                || strpos($Value, '%') !== false
+                || strlen($Value) <= 0
+                || (strlen($Value) > 2 && strpos($Value, '(') === false)
+              ) {
+                Logger::warning("InboxParser $ReportHash: invalid value for report building");
+                continue;
+              }
+
+              if ($aBuildingNames != null) {
+                foreach ($aBuildingNames as $Key => $Name) {
+                  if (strpos($ValueString, $Name) !== false) {
+                    $aBuildings[$Key] = $Value;
+                    continue 2;
+                  }
+                }
+              } else {
+                // First instance must be wall, break loop
+                $aBuildings['wall'] = $Value;
+                break;
+              }
+
+            }
+          }
+        } catch (\Exception $e) {
+          throw new InboxParserExceptionWarning("Error parsing attack buildings: " . $e->getMessage());
+        }
+
+        if ($bPlayerIsReceiver) {
           // Wall is only known if enemy is defender
-          $aBuildings = array("wall"=>$ReportWall);
+          $aBuildings = array();
         }
 
       } else if ($bSupport === true) {

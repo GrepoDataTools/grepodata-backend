@@ -198,14 +198,22 @@ class CityInfo
     } catch (Exception $e) {}
 
     $Wall = '';
+    $aStonehail = null;
     if ($oCity->report_type !== "attack_on_conquest") {
       $Build = $oCity->buildings;
       if ($Build != null && $Build != "" && $Build != "[]") {
         $aBuild = json_decode($Build, true);
-        if (is_array($aBuild) && sizeof($aBuild) > 0) {
+        $NumBuildings = sizeof($aBuild);
+        if (is_array($aBuild) && $NumBuildings > 0) {
           foreach ($aBuild as $Name => $Value) {
             if ($Name === 'wall' && $Value !== '?') {
               $Wall = str_replace(' (-0)','',$Value);
+            } elseif ($NumBuildings <= 2) {
+              // stonehail
+              $aStonehail = array(
+                'building' => $Name,
+                'value' => $Value
+              );
             }
             if ($Name === 'special_1' || $Name === 'special_2') {
               $Name = $Value;
@@ -293,6 +301,16 @@ class CityInfo
       $IntelCost *= 100; // We care a lot more about this information
     }
 
+    // Silver
+    $Silver = $aCityFields['silver'];
+    preg_match_all('/[0-9]{3,}/', $Silver, $aSilverMatches);
+    if (!empty($aSilverMatches) && isset($aSilverMatches[0][0])) {
+      $Silver = (int) $aSilverMatches[0][0];
+      if (isset($aSilverMatches[0][1])) {
+        $Silver += (int) $aSilverMatches[0][1];
+      }
+    }
+
     // Format response
     $aFormatted = array(
       'id'        => $oCity->id,
@@ -301,10 +319,11 @@ class CityInfo
       'date'    => $aCityFields['date'],
       'units'   => $aUnits,
       'type'    => $aCityFields['type'],
-      'silver'  => $aCityFields['silver'],
+      'silver'  => (string) $Silver,
       'wall'    => $Wall,
+      'stonehail' => $aStonehail,
       'hero'    => strtolower($aCityFields['hero']),
-      'god'     => $aCityFields['god'],
+      'god'     => strtolower($aCityFields['god']),
       'cost'    => (int) $IntelCost
     );
     return $aFormatted;
