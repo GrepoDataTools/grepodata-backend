@@ -224,6 +224,13 @@ class CityInfo
                 $Name = $new;
               }
             }
+            preg_match_all('/[0-9]{1,}/', $Value, $aBuildingMatches);
+            if (!empty($aBuildingMatches) && isset($aBuildingMatches[0][0])) {
+              $Value = (int) $aBuildingMatches[0][0];
+              if (isset($aBuildingMatches[0][1])) {
+                $Value -= (int) $aBuildingMatches[0][1];
+              }
+            }
             $aBuildings[$Name] = array(
               "level" => $Value,
               "date" => $aCityFields['date']

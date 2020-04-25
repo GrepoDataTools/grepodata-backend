@@ -1650,7 +1650,7 @@
 							'<div style="display: table-cell; width: 50px;">' +
 							typeHtml +
 							'</div>';
-						tooltips.push(tooltip);
+						tooltips.push({id: 'intel-type-' + id + '-' + j, text: tooltip});
 					} else {
 						row = row + '<div style="display: table-cell;"></div>';
 					}
@@ -1685,25 +1685,28 @@
 							killed = true;
 						}
 						unitHtml = unitHtml +
-							'<div class="unit_icon25x25 ' + unit.name + '" style="overflow: unset; font-size: ' + size + 'px; text-shadow: 1px 1px 3px #000; color: #fff; font-weight: 700; border: 1px solid #626262; padding: 10px 0 0 0; line-height: 13px; height: 15px; text-align: right; margin-right: 2px;">' +
+							'<div class="unit_icon25x25 ' + unit.name + ' intel-unit-' + unit.name + '-' + id + '-' + j + '" style="overflow: unset; font-size: ' + size + 'px; text-shadow: 1px 1px 3px #000; color: #fff; font-weight: 700; border: 1px solid #626262; padding: 10px 0 0 0; line-height: 13px; height: 15px; text-align: right; margin-right: 2px;">' +
 							unit.count +
 							(unit.killed > 0 ? '   <div class="report_losts" style="position: absolute; margin: 4px 0 0 0; font-size: ' + (size - 1) + 'px; text-shadow: none;">-' + unit.killed + '</div>\n' : '') +
 							'</div>';
+
+						tooltips.push({id: 'intel-unit-' + unit.name + '-' + id + '-' + j, text: unit.count + ' ' + (unit.name=='unknown'?'unknown land units':unit.name.replace('_',' '))});
 					}
 					if (intel.hero != null) {
 						unitHtml = unitHtml +
-							'<div class="hero_icon_border golden_border" style="display: inline-block;">\n' +
+							'<div class="hero_icon_border golden_border intel-hero-' + id + '-' + j + '" style="display: inline-block;">\n' +
 							'    <div class="hero_icon_background">\n' +
 							'        <div class="hero_icon hero25x25 ' + intel.hero.toLowerCase() + '"></div>\n' +
 							'    </div>\n' +
 							'</div>';
+						tooltips.push({id: 'intel-hero-' + id + '-' + j, text: intel.hero.toLowerCase()});
 					}
 					row = row + '<div style="display: table-cell;"><div><div class="origin_town_units" style="padding-left: 30px; margin: 5px 0 5px 0; ' + (killed ? 'height: 37px;' : '') + '">' + unitHtml + '</div></div></div>';
 
 					// Wall
 					if (intel.wall !== null && intel.wall !== '' && (!isNaN(0) || intel.wall.indexOf('%') < 0)) {
 						row = row +
-							'<div style="display: table-cell; width: 50px; float: right;">' +
+							'<div style="display: table-cell; width: 50px; float: right;" class="intel-wall-' + id + '-' + j + '">' +
 							'<div class="sprite-image" style="display: block; font-weight: 600; ' + (killed ? '' : 'padding-top: 10px;') + '">' +
 							'<div style="position: absolute; top: 19px; margin-left: 8px; z-index: 10; color: #fff; font-size: 10px; text-shadow: 1px 1px 3px #000;">' + intel.wall + '</div>' +
 							'<img src="https://gpnl.innogamescdn.com/images/game/main/buildings_sprite_40x40.png" alt="icon" ' +
@@ -1711,7 +1714,20 @@
 							'transform: scale(0.68, 0.68);-ms-transform: scale(0.68, 0.68);-webkit-transform: scale(0.68, 0.68);' +
 							'padding-left: -7px; margin: -48px 0 0 0px; position:absolute;">' +
 							'</div></div>';
+						tooltips.push({id: 'intel-wall-' + id + '-' + j, text: 'wall: ' + intel.wall});
 					} else {
+						row = row + '<div style="display: table-cell;"></div>';
+					}
+
+					// Stonehail
+					if (data.has_stonehail === true && intel.stonehail && intel.stonehail.building && intel.stonehail.value) {
+						row = row +
+							'<div style="display: table-cell; width: 50px; float: right;" class="intel-stonehail-' + id + '-' + j + '">' +
+							'<div class="building_header building_icon40x40 ' + intel.stonehail.building + ' regular" style="margin-top: -54px; transform: scale(0.68, 0.68); -ms-transform: scale(0.68, 0.68); -webkit-transform: scale(0.68, 0.68);">' +
+							'<div style="position: absolute; top: 0; margin-left: 4px; z-index: 10; color: #fff; font-size: 16px; font-weight: 700; text-shadow: 1px 1px 3px #000;">' + intel.stonehail.value + '</div></div>' +
+							'</div>';
+						tooltips.push({id: 'intel-stonehail-' + id + '-' + j, text: 'stonehail: ' + intel.stonehail.building + ' ' + intel.stonehail.value});
+					} else if (data.has_stonehail === true) {
 						row = row + '<div style="display: table-cell;"></div>';
 					}
 
@@ -1730,7 +1746,7 @@
 				table = table + '</ul></div></div>';
 				$('.gdintel_'+content_id).append(table);
 				for (var j = 0; j < tooltips.length; j++) {
-					$('.intel-type-' + id + '-' + j).tooltip(tooltips[j]);
+					$('.' + tooltips[j].id).tooltip(tooltips[j].text);
 				}
 
 				// notes

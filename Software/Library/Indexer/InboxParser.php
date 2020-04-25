@@ -476,28 +476,19 @@ class InboxParser
         $aBuildingNames = null;
         if ($Locale == 'nl') {
           $aBuildingNames = array(
-            'academy' => 'Academie',
-            'barracks' => 'Kazerne',
-            'docks' => 'Haven',
-            'farm' => 'Boerderij',
-            'hide' => 'Grot',
-            'ironer' => 'Zilvermijn',
-            'library' => 'Bibliotheek',
-            'lighthouse' => 'Vuurtoren',
-            'lumber' => 'Houthakkerskamp',
-            'main' => 'Senaat',
-            'market' => 'Marktplaats',
-            'oracle' => 'Orakel',
-            'place' => 'Agora',
-            'statue' => 'Godenbeeld',
-            'stoner' => 'Steengroeve',
-            'storage' => 'Pakhuis',
-            'temple' => 'Tempel',
-            'theater' => 'Theater',
-            'thermal' => 'Badhuis',
-            'tower' => 'Toren',
-            'trade_office' => 'Handelskantoor',
-            'wall' => 'Stadsmuur',
+            'academy' => 'Academie', 'barracks' => 'Kazerne', 'docks' => 'Haven', 'farm' => 'Boerderij', 'hide' => 'Grot', 'ironer' => 'Zilvermijn', 'library' => 'Bibliotheek', 'lighthouse' => 'Vuurtoren', 'lumber' => 'Houthakkerskamp', 'main' => 'Senaat', 'market' => 'Marktplaats', 'oracle' => 'Orakel', 'place' => 'Agora', 'statue' => 'Godenbeeld', 'stoner' => 'Steengroeve', 'storage' => 'Pakhuis', 'temple' => 'Tempel', 'theater' => 'Theater', 'thermal' => 'Badhuis', 'tower' => 'Toren', 'trade_office' => 'Handelskantoor', 'wall' => 'Stadsmuur',
+          );
+        } else if ($Locale == 'fr') {
+          $aBuildingNames = array(
+            'main' => 'Sénat', 'hide' => 'Grotte', 'place' => 'Agora', 'lumber' => 'Scierie', 'stoner' => 'Carrière', 'ironer' => "Mine d'argent", 'market' => 'Marché', 'docks' => 'Port', 'barracks' => 'Caserne', 'wall' => 'Remparts', 'storage' => 'Entrepôt ', 'farm' => 'Ferme', 'academy' => 'Académie', 'temple' => 'Temple', 'theater' => 'Théâtre', 'thermal' => 'Thermes', 'library' => 'Bibliothèque', 'lighthouse' => 'Phare', 'tower' => 'Tour', 'statue' => 'Statue divine', 'oracle' => 'Oracle', 'trade_office' => 'Comptoir commercial', 
+          );
+        } else if ($Locale == 'en') {
+          $aBuildingNames = array(
+            "main" => "Senate", "hide" => "Cave", "place" => "Agora", "lumber" => "Timber camp", "stoner" => "Quarry", "ironer" => "Silver mine", "market" => "Marketplace", "docks" => "Harbor", "barracks" => "Barracks", "wall" => "City wall", "storage" => "Warehouse", "farm" => "Farm", "academy" => "Academy", "temple" => "Temple", "theater" => "Theater", "thermal" => "Thermal baths", "library" => "Library", "lighthouse" => "Lighthouse", "tower" => "Tower", "statue" => "Divine statue", "oracle" => "Oracle", "trade_office" => "Merchant's shop",
+          );
+        } else if ($Locale == 'de') {
+          $aBuildingNames = array(
+            "building_main" => "Senat", "building_hide" => "Höhle", "building_place" => "Agora", "building_lumber" => "Holzfäller", "building_stoner" => "Steinbruch", "building_ironer" => "Silbermine", "building_market" => "Marktplatz", "building_docks" => "Hafen", "building_barracks" => "Kaserne", "building_wall" => "Stadtmauer", "building_storage" => "Lager", "building_farm" => "Bauernhof", "building_academy" => "Akademie", "building_temple" => "Tempel", "building_theater" => "Theater", "building_thermal" => "Therme", "building_library" => "Bibliothek", "building_lighthouse" => "Leuchtturm", "building_tower" => "Turm", "building_statue" => "Götterstatue", "building_oracle" => "Orakel", "building_trade_office" => "Handelskontor", 
           );
         }
 
