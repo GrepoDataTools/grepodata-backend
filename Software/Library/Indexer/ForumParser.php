@@ -238,12 +238,6 @@ class ForumParser
         $oCity->poster_player_id = $oPosterPlayer->grep_id;
         $oCity->poster_alliance_id = $oPosterPlayer->alliance_id;
       }
-      if (isset($aCityInfo['conquest_id'])) {
-        $oCity->conquest_id = $aCityInfo['conquest_id'];
-      }
-      if (isset($aCityInfo['conquest_details']) && !empty($aCityInfo['conquest_details'])) {
-        $oCity->conquest_details = json_encode($aCityInfo['conquest_details']->jsonSerialize());
-      }
       $oCity->report_date = $aCityInfo['mutation_date'];
       if (isset($aCityInfo['parsed_date'])) {
         $oCity->parsed_date = $aCityInfo['parsed_date'];
@@ -258,6 +252,18 @@ class ForumParser
       $oCity->sea_units   = json_encode($aSeaUnits);
       $oCity->fireships   = $Fireships;
       $oCity->type        = 'forum';
+
+      // check conquest
+      if (isset($aCityInfo['conquest_details']) && !empty($aCityInfo['conquest_details'])) {
+        $oCity->conquest_details = json_encode($aCityInfo['conquest_details']->jsonSerialize());
+        $SiegeId = SiegeParser::saveSiegeAttack($aCityInfo['conquest_details'], $oCity, $oIndexInfo, $ReportHash
+//          ,array('player_id' => $ReceiverPlayerId, 'player_name' => $ReceiverPlayerName,
+//            'alliance_id' => $ReceiverAllianceId, 'alliance_name' => $ReceiverAllianceName));
+        );
+        if (!empty($SiegeId) && !is_nan($SiegeId) && $SiegeId > 0) {
+          $oCity->conquest_id = $SiegeId;
+        }
+      }
 
       $bSaved = false;
       try {
@@ -878,19 +884,7 @@ class ForumParser
           $oConquestDetails->siegeTownName = $BesiegedTown['name'];
           $oConquestDetails->siegePlayerId = $SiegeLeadBy['id'];
           $oConquestDetails->siegePlayerName = $SiegeLeadBy['name'];
-          $oConquestDetails->siegeAllianceId = 0;
-          $oConquestDetails->siegeAllianceName = '';
           $oConquestDetails->wall = 0;
-
-          try {
-            // find alliance id
-            $oPlayer = Player::firstOrFail($oConquestDetails->siegePlayerId, $oIndex->world);
-            $oConquestDetails->siegeAllianceId = $oPlayer->alliance_id;
-            $oAlliance = Alliance::firstOrFail($oPlayer->alliance_id, $oIndex->world);
-            $oConquestDetails->siegeAllianceName = $oAlliance->name;
-          } catch (Exception $e) {
-            Logger::warning("ForumParser $ReportHash: error parsing ongoing conquest alliance; " . $e->getMessage());
-          }
 
           try {
             // find wall level
@@ -940,6 +934,12 @@ class ForumParser
           $cityInfo['conquest_details'] = $oConquestDetails;
         } catch (Exception $e) {
           Logger::warning("ForumParser $ReportHash: error parsing ongoing conquest units; " . $e->getMessage());
+        }
+
+        if (isset($aSiegeUnits) && !empty($aSiegeUnits) && key_exists('unknown_naval', $aSiegeUnits) && key_exists('unknown', $aSiegeUnits)) {
+          // Friendly attack on conquest is ignored
+          // TODO: consider it as a friendly attack on an enemy town and save wall level for besieged town
+          throw new ForumParserExceptionDebug("Ignoring friendly attack on a conquest");
         }
         break;
       default:

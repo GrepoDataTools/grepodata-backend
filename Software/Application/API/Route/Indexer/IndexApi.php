@@ -458,10 +458,8 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
         $aOwners = IndexOverview::getOwnerAllianceIds($oPrimaryIndex->key_code);
         if (isset($aResponse['alliance_id']) && $aResponse['alliance_id']!==null) {
           if (in_array($aResponse['alliance_id'], $aOwners)) {
-            die(self::OutputJson(array(
-              'message'     => 'No intel found on this town in this index.',
-              'parameters'  => $aParams
-            ), 404));
+            $aResponse['intel'] = array();
+            $aResponse['hidden_owner_intel'] = true;
           }
         }
       } catch (Exception $e) {}

@@ -255,12 +255,15 @@ class InboxParser
 
       // Alliance
       $ReceiverAllianceId = 0;
+      $ReceiverAllianceName = '';
       $ReceiverAlliance = $ReportReceiver["content"][5]["content"][1] ?? null;
       if ($ReceiverAlliance !== null && isset($ReceiverAlliance['attributes']['onclick'])) {
         $Onclick = $ReceiverAlliance['attributes']['onclick'];
         if (strpos($Onclick, 'allianceProfile') !== false) {
           $OnclickSub = substr($Onclick, strrpos($Onclick, "',") + 2);
           $ReceiverAllianceId = substr($OnclickSub, 0, strlen($OnclickSub) - 1);
+          $OnclickSubName = substr($Onclick, strrpos($Onclick, "('") + 2);
+          $ReceiverAllianceName = substr($OnclickSubName, 0, strrpos($OnclickSubName, "',"));
         }
       }
       if (($ReceiverAllianceId === 0 || !is_numeric($ReceiverAllianceId)) && !is_null($ReceiverPlayerId) && is_numeric($ReceiverPlayerId)) {
@@ -395,16 +398,6 @@ class InboxParser
               $oConquestDetails->siegeTownName = $ReceiverTownName;
               $oConquestDetails->siegePlayerId = $PosterId;
               $oConquestDetails->siegePlayerName = $ReportPoster;
-              $oConquestDetails->siegeAllianceId = $PosterAllyId;
-
-              if (!empty($PosterAllyId)) {
-                try {
-                  $oAlliance = Alliance::firstOrFail($PosterAllyId, $oIndexInfo->world);
-                  $oConquestDetails->siegeAllianceName = $oAlliance->name;
-                } catch (\Exception $e) {
-                  Logger::warning("InboxParser $ReportHash: unable to find alliance for conquest details; " . $e->getMessage());
-                }
-              }
             } catch (\Exception $e) {
               Logger::warning("InboxParser $ReportHash: error parsing ongoing conquest details; " . $e->getMessage());
             }
@@ -766,9 +759,6 @@ class InboxParser
       $oCity->player_id   = $PlayerId;
       $oCity->player_name = $PlayerName;
       $oCity->alliance_id = $AllianceId;
-      if ($bIsOngoingConquest == true && !is_null($oConquestDetails)) {
-        $oCity->conquest_details = json_encode($oConquestDetails->jsonSerialize());
-      }
       $oCity->poster_player_id    = ($PosterId!=0?(int) $PosterId:null);
       $oCity->poster_alliance_id  = ($PosterAllyId!=0?(int) $PosterAllyId:null);
       $oCity->report_date = $ReportDate;
@@ -783,6 +773,17 @@ class InboxParser
       $oCity->sea_units   = json_encode($aSeaUnits);
       if (isset($Fireships)) {$oCity->fireships = $Fireships;}
       $oCity->type        = 'inbox';
+
+      // check conquest
+      if ($bIsOngoingConquest == true && !is_null($oConquestDetails)) {
+        $oCity->conquest_details = json_encode($oConquestDetails->jsonSerialize());
+        $SiegeId = SiegeParser::saveSiegeAttack($oConquestDetails, $oCity, $oIndexInfo, $ReportHash,
+          array('player_id' => $ReceiverPlayerId, 'player_name' => $ReceiverPlayerName,
+            'alliance_id' => $ReceiverAllianceId, 'alliance_name' => $ReceiverAllianceName));
+        if (!empty($SiegeId) && !is_nan($SiegeId) && $SiegeId > 0) {
+          $oCity->conquest_id = $SiegeId;
+        }
+      }
 
       $bSaved = false;
       try {

@@ -2,6 +2,7 @@
 
 namespace Grepodata\Library\Model\Indexer;
 
+use Grepodata\Library\Controller\Indexer\CityInfo;
 use \Illuminate\Database\Eloquent\Model;
 
 /**

@@ -6,6 +6,7 @@ use DOMDocument;
 use DOMXPath;
 use Grepodata\Library\Exception\ParserDefaultWarning;
 use Grepodata\Library\Logger\Logger;
+use Grepodata\Library\Model\Indexer\City;
 use Grepodata\Library\Model\Indexer\Report;
 
 class Helper

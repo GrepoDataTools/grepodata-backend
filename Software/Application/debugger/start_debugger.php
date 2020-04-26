@@ -53,6 +53,10 @@ try {
       }
       $Table .= '</tr></table>';
       $aParsed = $Table;
+
+      if (!is_null($oCity->conquest_details)) {
+        $aParsed .= "<p>".str_replace(',', ', ', $oCity->conquest_details)."</p>";
+      }
     } catch (\Exception $e) {
       $aParsed .= ' - Unable to load city: ' . $e->getMessage();
     }

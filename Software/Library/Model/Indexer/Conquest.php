@@ -13,10 +13,17 @@ use \Illuminate\Database\Eloquent\Model;
  * @property mixed player_name
  * @property mixed alliance_id
  * @property mixed alliance_name
- * @property mixed date
- * @property mixed victory
- * @property mixed fireships_total
- * @property mixed myths_total
+ * @property mixed belligerent_player_id
+ * @property mixed belligerent_player_name
+ * @property mixed belligerent_alliance_id
+ * @property mixed belligerent_alliance_name
+ * @property mixed first_attack_date
+ * @property mixed cs_killed
+ * @property mixed new_owner_player_id
+ * @property mixed belligerent_all
+ * @property mixed total_losses_att
+ * @property mixed total_losses_def
+ * @property mixed num_attacks_counted
  */
 class Conquest extends Model
 {

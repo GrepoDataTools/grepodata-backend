@@ -391,4 +391,44 @@ class CityInfo
     $OutputFormat = 'd-m-y H:i:s';
     return $Date->format($OutputFormat);
   }
+
+  /**
+   * Returns a merged array of all the units in the City record
+   * @param $oCity
+   * @return array
+   */
+  public static function getMergedUnits(City $oCity)
+  {
+    $aUnits = array();
+    if (!empty($oCity->mythical_units) && $oCity->mythical_units != "[]") {
+      self::parseUnitField($aUnits, $oCity->mythical_units);
+    }
+    if (!empty($oCity->land_units) && $oCity->land_units != "[]") {
+      self::parseUnitField($aUnits, $oCity->land_units);
+    }
+    if (!empty($oCity->sea_units) && $oCity->sea_units != "[]") {
+      self::parseUnitField($aUnits, $oCity->sea_units);
+    }
+    if (!empty($oCity->fireships) && is_string($oCity->fireships) && strlen($oCity->fireships) > 0) {
+      $aUnits[self::fireship] = $oCity->fireships;
+    }
+    return $aUnits;
+  }
+
+  /**
+   * Adds the units from the $InputField to the $aUnits array
+   * Invalid forum unit keys are translated to their real unit names
+   * @param $aUnits
+   * @param $InputField
+   */
+  public static function parseUnitField(&$aUnits, $InputField)
+  {
+    $aInputUnits = json_decode($InputField, true);
+    foreach ($aInputUnits as $Key => $Value) {
+      $Key = self::land_units[$Key] ?? $Key;
+      $Key = self::sea_units[$Key] ?? $Key;
+      $Key = self::myth_units[$Key] ?? $Key;
+      $aUnits[$Key] = $Value;
+    }
+  }
 }

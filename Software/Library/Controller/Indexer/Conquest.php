@@ -18,16 +18,18 @@ class Conquest
   }
 
   /**
+   * @param $TownId
    * @param $Index
-   * @param $TownName
-   * @return
+   * @param int $Limit
+   * @return \Grepodata\Library\Model\Indexer\Conquest[]
    */
-  public static function latestByTownName($Index, $TownName)
+  public static function allByTownId($TownId, $Index, $Limit=50)
   {
-    return $oConquest = \Grepodata\Library\Model\Indexer\Conquest::where('town_name', '=', $TownName, 'and')
+    return $oConquest = \Grepodata\Library\Model\Indexer\Conquest::where('town_id', '=', $TownId, 'and')
       ->where('index_key', '=', $Index)
-      ->orderBy('date', 'desc')
-      ->first();
+      ->orderBy('first_attack_date', 'desc')
+      ->limit($Limit)
+      ->get();
   }
 
   /**
