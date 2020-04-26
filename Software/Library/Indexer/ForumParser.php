@@ -4,12 +4,14 @@ namespace Grepodata\Library\Indexer;
 
 use Carbon\Carbon;
 use Exception;
+use Grepodata\Library\Controller\Alliance;
 use Grepodata\Library\Controller\Player;
 use Grepodata\Library\Exception\ForumParserExceptionDebug;
 use Grepodata\Library\Exception\ForumParserExceptionError;
 use Grepodata\Library\Exception\ForumParserExceptionWarning;
 use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\Indexer\City;
+use Grepodata\Library\Model\Indexer\IndexInfo;
 
 class ForumParser
 {
@@ -178,7 +180,7 @@ class ForumParser
   {
     try {
       $oIndexInfo = \Grepodata\Library\Controller\Indexer\IndexInfo::firstOrFail($IndexKey);
-      $aCityInfo = self::ExtractCityInfo($aReportData, $ReportHash, $Locale);
+      $aCityInfo = self::ExtractCityInfo($aReportData, $ReportHash, $Locale, $oIndexInfo);
 
       $AllianceId = 0;
       if ($aCityInfo['player_name'] !== 'Ghost' && $aCityInfo['player_id'] !== 0) {
@@ -239,6 +241,9 @@ class ForumParser
       if (isset($aCityInfo['conquest_id'])) {
         $oCity->conquest_id = $aCityInfo['conquest_id'];
       }
+      if (isset($aCityInfo['conquest_details']) && !empty($aCityInfo['conquest_details'])) {
+        $oCity->conquest_details = json_encode($aCityInfo['conquest_details']->jsonSerialize());
+      }
       $oCity->report_date = $aCityInfo['mutation_date'];
       if (isset($aCityInfo['parsed_date'])) {
         $oCity->parsed_date = $aCityInfo['parsed_date'];
@@ -295,13 +300,14 @@ class ForumParser
    * @param $aReportData
    * @param $ReportHash
    * @param string $Locale
+   * @param IndexInfo $oIndex
    * @return array
    * @throws ForumParserExceptionWarning
    * @throws ForumParserExceptionError
    * @throws ForumParserExceptionDebug
    * @throws \Grepodata\Library\Exception\ParserDefaultWarning
    */
-  private static function ExtractCityInfo($aReportData, $ReportHash, $Locale)
+  private static function ExtractCityInfo($aReportData, $ReportHash, $Locale, $oIndex)
   {
     $cityInfo = array();
 
@@ -699,33 +705,7 @@ class ForumParser
         if (empty($aReportStats)) {
           throw new ForumParserExceptionWarning("Unable to find forum report stats");
         }
-        $cityInfo['wall'] = 0;
-        $cityInfo['parsed_buildings'] = array();
-        try {
-          foreach ($aReportStats as $aStats) {
-            $Class = $aStats["content"][1]["content"][1]["attributes"]["class"] ?? null;
-            if (empty($Class)) continue;
-
-            $Value = $aStats["content"][1]["content"][2] ?? null;
-            if (empty($Value) || !is_string($Value)) continue;
-
-            preg_match('/[0-9]{1,2} \(-[0-9]{1,2}\)/', $Value, $aMatches);
-            if (empty($aMatches)) continue;
-
-            if (strpos($Class, 'catapult') !== false) {
-              $cityInfo['wall'] = $aMatches[0];
-            } else if (strpos($Class, 'stone_hail') !== false && !empty($aBuildingNames)) {
-              foreach ($aBuildingNames as $Key => $Name) {
-                if (strpos($Value, $Name) !== false) {
-                  $cityInfo['parsed_buildings'][$Key] = $aMatches[0];
-                }
-              }
-            }
-          }
-
-        } catch (Exception $e) {
-          Logger::warning("ForumParser " . $ReportHash . ": error parsing buildings; " . $e->getMessage());
-        }
+        self::ParseForumReportStats($cityInfo, $aReportStats, $ReportHash, $aBuildingNames);
 
         //loop units
         $unitsRootArr = $aReportData['content'][5]['content'][1]['content'][5]['content'] ?? null;
@@ -881,57 +861,178 @@ class ForumParser
         $cityInfo['player_name'] = $AttackingPlayer['name'];
         $cityInfo['player_id'] = $AttackingPlayer['id'];
 
-        //loop units
-        $unitsRootArr = $aReportData['content'][5]['content'][1]['content'][1]['content'];
-        foreach ($unitsRootArr as $unitsChildren) {
-
-          if (is_array($unitsChildren)
-            && key_exists('attributes', $unitsChildren)
-            && key_exists('class', $unitsChildren['attributes'])
-            && strpos($unitsChildren['attributes']['class'], "report_units_type") !== FALSE) {
-            $subArr = $unitsChildren['content'];
-
-            foreach ($subArr as $unitsChild) {
-
-              if (is_array($unitsChild)
-                && count($unitsChild) > 1
-                && isset($unitsChild['content'][1]['attributes']['class'])) {
-                $Value = $unitsChild['content'][1]['content'][1]['content'][0];
-                $Died = $unitsChild['content'][3]['content'][0];
-                $Class = $unitsChild['content'][1]['attributes']['class'];
-
-                // Parse unit names
-                foreach (self::aUnitNames as $Key => $aUnit) {
-                  if (strpos($Class, $Key)) {
-                    if ($aUnit['value'] === null) {
-                      // Regular unit (-killed)
-                      $cityInfo[$aUnit['type']] = $Value;
-                      if (strpos($Died, '-') !== FALSE) {
-                        $cityInfo[$aUnit['type']] .= "(" . $Died . ")";
-                      }
-                    } else {
-                      // Hero
-                      $cityInfo[$aUnit['type']] = $aUnit['value'];
-                    }
-                    if ($aUnit['god'] !== null) {
-                      // Set god for mythical unit
-                      $cityInfo['god'] = $aUnit['god'];
-                    }
-                    break;
-                  }
-                }
-
-              }
-            }
+        // Conquest details
+        $oConquestDetails = new ConquestDetails();
+        try {
+          if ($ReportChainString = 'town-player-town-player') {
+            $BesiegedTown = $aHeaderChainData[2];
+            $SiegeLeadBy = $aHeaderChainData[3];
+          } else if ($ReportChainString = 'town-player-player-town') {
+            $BesiegedTown = $aHeaderChainData[3];
+            $SiegeLeadBy = $aHeaderChainData[2];
+          } else {
+            throw new Exception("Unhandled conquest chain: " . $ReportChainString);
           }
+
+          $oConquestDetails->siegeTownId = $BesiegedTown['id'];
+          $oConquestDetails->siegeTownName = $BesiegedTown['name'];
+          $oConquestDetails->siegePlayerId = $SiegeLeadBy['id'];
+          $oConquestDetails->siegePlayerName = $SiegeLeadBy['name'];
+          $oConquestDetails->siegeAllianceId = 0;
+          $oConquestDetails->siegeAllianceName = '';
+          $oConquestDetails->wall = 0;
+
+          try {
+            // find alliance id
+            $oPlayer = Player::firstOrFail($oConquestDetails->siegePlayerId, $oIndex->world);
+            $oConquestDetails->siegeAllianceId = $oPlayer->alliance_id;
+            $oAlliance = Alliance::firstOrFail($oPlayer->alliance_id, $oIndex->world);
+            $oConquestDetails->siegeAllianceName = $oAlliance->name;
+          } catch (Exception $e) {
+            Logger::warning("ForumParser $ReportHash: error parsing ongoing conquest alliance; " . $e->getMessage());
+          }
+
+          try {
+            // find wall level
+            $aReportStats = $aReportData['content'][5]['content'][1]['content'][3]['content'][1]['content'][1]['content'][2]['content'][1]['content'][1]['content'][1]['content'] ?? null;
+            if (empty($aReportStats)) {
+              throw new Exception("Unable to find forum report stats");
+            }
+            self::ParseForumReportStats($aParsedStats, $aReportStats, $ReportHash);
+            if (isset($aParsedStats['wall'])) {
+              $oConquestDetails->wall = $aParsedStats['wall'];
+            }
+          } catch (Exception $e) {
+            Logger::warning("ForumParser $ReportHash: error parsing ongoing conquest wall; " . $e->getMessage());
+          }
+
+        } catch (Exception $e) {
+          Logger::warning("ForumParser $ReportHash: error parsing ongoing conquest details; " . $e->getMessage());
         }
 
+        //loop units
+        $aReportContents = $aReportData['content'][5]['content'][1]['content'] ?? null;
+        if (empty($aReportContents)) throw new ForumParserExceptionWarning("Unable to locate report contents");
+
+        $aAttUnits = null;
+        $aDefUnits = null;
+        foreach ($aReportContents as $aContent) {
+          $Class = $aContent['attributes']['class'] ?? null;
+          if (empty($Class) || !isset($aContent['content']) || sizeof($aContent['content']) <= 0) continue;
+
+          if (strpos($Class, 'report_side_attacker') !== false) {
+            $aAttUnits = $aContent['content'];
+          } else if (strpos($Class, 'report_side_defender') !== false) {
+            $aDefUnits = $aContent['content'];
+          }
+        }
+        if (empty($aAttUnits) || empty($aDefUnits)) throw new ForumParserExceptionWarning("Unable to locate att and def units in report");
+
+        // parse incoming
+        self::parseSingleSideConquestUnits($cityInfo, $aAttUnits);
+
+        // parse siege units
+        try {
+          self::parseSingleSideConquestUnits($aSiegeUnits, $aDefUnits, true);
+          if (empty($aSiegeUnits)) throw new ForumParserExceptionWarning("Unable to parse siege units");
+          $oConquestDetails->siegeUnits = $aSiegeUnits;
+
+          $cityInfo['conquest_details'] = $oConquestDetails;
+        } catch (Exception $e) {
+          Logger::warning("ForumParser $ReportHash: error parsing ongoing conquest units; " . $e->getMessage());
+        }
         break;
       default:
         throw new ForumParserExceptionWarning("Report type not handled: " . $ReportType);
     }
 
     return $cityInfo;
+  }
+
+  private static function ParseForumReportStats(&$cityInfo, $aReportStats, $ReportHash, $aBuildingNames = array())
+  {
+    $cityInfo['wall'] = 0;
+    $cityInfo['parsed_buildings'] = array();
+    try {
+      foreach ($aReportStats as $aStats) {
+        $Class = $aStats["content"][1]["content"][1]["attributes"]["class"] ?? null;
+        if (empty($Class)) continue;
+
+        $Value = $aStats["content"][1]["content"][2] ?? null;
+        if (empty($Value) || !is_string($Value)) continue;
+
+        preg_match('/[0-9]{1,2} \(-[0-9]{1,2}\)/', $Value, $aMatches);
+        if (empty($aMatches)) continue;
+
+        if (strpos($Class, 'catapult') !== false) {
+          $cityInfo['wall'] = $aMatches[0];
+        } else if (strpos($Class, 'stone_hail') !== false && !empty($aBuildingNames)) {
+          foreach ($aBuildingNames as $Key => $Name) {
+            if (strpos($Value, $Name) !== false) {
+              $cityInfo['parsed_buildings'][$Key] = $aMatches[0];
+            }
+          }
+        }
+      }
+
+    } catch (Exception $e) {
+      Logger::warning("ForumParser " . $ReportHash . ": error parsing report stats; " . $e->getMessage());
+    }
+  }
+
+  private static function parseSingleSideConquestUnits(&$cityInfo, $unitsRootArr, $bUseRealName = false) {
+    foreach ($unitsRootArr as $unitsChildren) {
+
+      if (is_array($unitsChildren)
+        && key_exists('attributes', $unitsChildren)
+        && key_exists('class', $unitsChildren['attributes'])
+        && strpos($unitsChildren['attributes']['class'], "report_units_type") !== FALSE) {
+        $subArr = $unitsChildren['content'];
+
+        foreach ($subArr as $unitsChild) {
+
+          if (is_array($unitsChild)
+            && count($unitsChild) > 1
+            && isset($unitsChild['content'][1]['attributes']['class'])) {
+            $Value = $unitsChild['content'][1]['content'][1]['content'][0];
+            $Died = $unitsChild['content'][3]['content'][0];
+            $Class = $unitsChild['content'][1]['attributes']['class'];
+
+            // Parse unit names
+            foreach (self::aUnitNames as $Key => $aUnit) {
+              if ($bUseRealName == false && strpos($Class, $Key) !== false) {
+                if ($aUnit['value'] === null) {
+                  // Regular unit (-killed)
+                  $cityInfo[$aUnit['type']] = $Value;
+                  if (strpos($Died, '-') !== FALSE) {
+                    $cityInfo[$aUnit['type']] .= "(" . $Died . ")";
+                  }
+                } else {
+                  // Hero
+                  $cityInfo[$aUnit['type']] = $aUnit['value'];
+                }
+                if ($aUnit['god'] !== null) {
+                  // Set god for mythical unit
+                  $cityInfo['god'] = $aUnit['god'];
+                }
+                break;
+              } elseif ($bUseRealName == true) {
+                // dont translate unit name!
+                $rawUnitName = str_replace('unit_','',$Key);
+                if (strpos($Class, $Key) !== false) {
+                  $cityInfo[$rawUnitName] = $Value;
+                  if (strpos($Died, '-') !== FALSE) {
+                    $cityInfo[$rawUnitName] .= "(" . $Died . ")";
+                  }
+                }
+              }
+            }
+
+          }
+        }
+
+      }
+    }
   }
 
 }

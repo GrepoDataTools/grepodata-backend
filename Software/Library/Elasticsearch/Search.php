@@ -242,25 +242,37 @@ class Search
           )
         )
       );
+
       // Boost exact match
+      $boost = 10000;
+      if (isset($aOptions['sql']) && $aOptions['sql']==true) {
+        // Discord search has sql=true and requires a higher exact match boost
+        $boost = 100000;
+      }
       $aSearchParams['query']['function_score']['query']['bool']['should'][] = array(
         'match' => array(
           'Name' => array(
             'query' => $aOptions['query'],
-            'boost' => 10000.0,
+            'boost' => $boost,
           )
         )
       );
+
       // Optional boost by preferred server
       if (isset($aOptions['preferred_server'])
         && $aOptions['preferred_server'] != ''
         && is_string($aOptions['preferred_server'])
         && strlen($aOptions['preferred_server']) == 2) {
+        $boost = (strlen($aOptions['query']) > 4 ? 300.0 : 400.0);
+        if (isset($aOptions['sql']) && $aOptions['sql']==true) {
+          // Discord search has sql=true and requires a higher preferred server boost
+          $boost = 5000;
+        }
         $aSearchParams['query']['function_score']['query']['bool']['should'][] = array(
           'match' => array(
             'Server' => array(
               'query' => $aOptions['preferred_server'],
-              'boost' => (strlen($aOptions['query']) > 4 ? 300.0 : 400.0),
+              'boost' => $boost,
             )
           )
         );

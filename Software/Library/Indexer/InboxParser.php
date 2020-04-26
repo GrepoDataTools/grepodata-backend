@@ -4,6 +4,7 @@ namespace Grepodata\Library\Indexer;
 
 
 use Carbon\Carbon;
+use Grepodata\Library\Controller\Alliance;
 use Grepodata\Library\Controller\Player;
 use Grepodata\Library\Controller\Town;
 use Grepodata\Library\Exception\InboxParserExceptionDebug;
@@ -282,6 +283,8 @@ class InboxParser
       $aLandUnits = array();
       $aSeaUnits = array();
       $aMythUnits = array();
+      $bIsOngoingConquest = false;
+      $oConquestDetails = null;
 
       if ($bWisdom == true) {
         $ReportType = "wisdom";
@@ -380,16 +383,31 @@ class InboxParser
 //        }
 
         if ((!$bPlayerIsSender && !$bPlayerIsReceiver) || ($bPlayerIsReceiver && $bPlayerIsSender)) {
-          // check if this is an ongoing conquest..
-//          if (strpos(json_encode($aCityUnitsAtt),self::kolo) !== false) {
-////            Logger::warning("kolo found in att");
-//            $ReportType = "attack_on_conquest";
-//            $bPlayerIsReceiver = true;
-//          }
           if (strpos(json_encode($aCityUnitsDef),self::kolo) !== false) {
-//            Logger::warning("kolo found in def");
             $ReportType = "attack_on_conquest";
             $bPlayerIsReceiver = true;
+            $bIsOngoingConquest = true;
+
+            $oConquestDetails = new ConquestDetails();
+            try {
+              // try to parse conquest details
+              $oConquestDetails->siegeTownId = $ReceiverTownId;
+              $oConquestDetails->siegeTownName = $ReceiverTownName;
+              $oConquestDetails->siegePlayerId = $PosterId;
+              $oConquestDetails->siegePlayerName = $ReportPoster;
+              $oConquestDetails->siegeAllianceId = $PosterAllyId;
+
+              if (!empty($PosterAllyId)) {
+                try {
+                  $oAlliance = Alliance::firstOrFail($PosterAllyId, $oIndexInfo->world);
+                  $oConquestDetails->siegeAllianceName = $oAlliance->name;
+                } catch (\Exception $e) {
+                  Logger::warning("InboxParser $ReportHash: unable to find alliance for conquest details; " . $e->getMessage());
+                }
+              }
+            } catch (\Exception $e) {
+              Logger::warning("InboxParser $ReportHash: error parsing ongoing conquest details; " . $e->getMessage());
+            }
           } else {
             // unable to identify owner!
             throw new InboxParserExceptionWarning("inbox report owner not found");
@@ -423,35 +441,40 @@ class InboxParser
         if (sizeof($aCityUnits) <= 0 && ($bGroundVisible || $bSeaVisible)) {
           throw new InboxParserExceptionWarning("unable to find report units");
         }
-        $aCityUnitsFinal = array(
-          'had' => array(),
-          'lost' => array()
-        );
-        foreach ($aCityUnits as $aUnitInfo) {
-          foreach (['had','lost'] as $Moment) {
-            if (key_exists($Moment, $aUnitInfo) && sizeof($aUnitInfo[$Moment]) > 0) {
-              foreach ($aUnitInfo[$Moment] as $Unit => $Value) {
-                if (!key_exists($Unit, $aCityUnitsFinal[$Moment])) {
-                  $aCityUnitsFinal[$Moment][$Unit] = $Value;
+        function parseSingleSideUnits($aCityUnits) {
+          $aCityUnitsFinal = array(
+            'had' => array(),
+            'lost' => array()
+          );
+          foreach ($aCityUnits as $aUnitInfo) {
+            foreach (['had','lost'] as $Moment) {
+              if (key_exists($Moment, $aUnitInfo) && sizeof($aUnitInfo[$Moment]) > 0) {
+                foreach ($aUnitInfo[$Moment] as $Unit => $Value) {
+                  if (!key_exists($Unit, $aCityUnitsFinal[$Moment])) {
+                    $aCityUnitsFinal[$Moment][$Unit] = $Value;
+                  }
                 }
               }
             }
           }
-        }
-        $aCityUnits = $aCityUnitsFinal;
+          $aCityUnits = $aCityUnitsFinal;
 
-        $aUnitsClean = array();
-        foreach ($aCityUnits['had'] as $Unit => $Value) {
-          $aUnitsClean[$Unit] = $Value;
-        }
-        foreach ($aCityUnits['lost'] as $Unit => $Value) {
-          if (isset($aUnitsClean[$Unit])) {
-            $aUnitsClean[$Unit] = $aUnitsClean[$Unit] . '(-'.$Value.')';
-          } else {
-            $aUnitsClean[$Unit] = $Value . '(-'.$Value.')';
+          $aUnitsClean = array();
+          foreach ($aCityUnits['had'] as $Unit => $Value) {
+            $aUnitsClean[$Unit] = $Value;
           }
+          foreach ($aCityUnits['lost'] as $Unit => $Value) {
+            if (isset($aUnitsClean[$Unit])) {
+              $aUnitsClean[$Unit] = $aUnitsClean[$Unit] . '(-'.$Value.')';
+            } else {
+              $aUnitsClean[$Unit] = $Value . '(-'.$Value.')';
+            }
+          }
+          return $aUnitsClean;
         }
 
+        // Normal att OR defender side
+        $aUnitsClean = parseSingleSideUnits($aCityUnits);
         foreach ($aUnitsClean as $Unit => $Value) {
           if ($Unit == self::fireships) {
             $Fireships = $Value;
@@ -469,6 +492,12 @@ class InboxParser
               }
             }
           }
+        }
+
+        // Parse conquest side
+        if ($bIsOngoingConquest == true && !is_null($oConquestDetails)) {
+          $aUnitsClean = parseSingleSideUnits($aCityUnitsDef);
+          $oConquestDetails->siegeUnits = $aUnitsClean;
         }
 
         // Parse buildings (stonehail + wall)
@@ -527,9 +556,12 @@ class InboxParser
                 continue;
               }
 
-              if ($aBuildingNames != null) {
+              if (strpos($DetailClass, 'catapult') !== false) {
+                // wall
+                $aBuildings['wall'] = $Value;
+              } else if (strpos($DetailClass, 'stone_hail') !== false && $aBuildingNames != null) {
                 foreach ($aBuildingNames as $Key => $Name) {
-                  if (strpos($ValueString, $Name) !== false) {
+                  if (strpos(strtolower($ValueString), strtolower($Name)) !== false) {
                     $aBuildings[$Key] = $Value;
                     continue 2;
                   }
@@ -544,6 +576,10 @@ class InboxParser
           }
         } catch (\Exception $e) {
           throw new InboxParserExceptionWarning("Error parsing attack buildings: " . $e->getMessage());
+        }
+
+        if ($bIsOngoingConquest && !is_null($oConquestDetails)) {
+          $oConquestDetails->wall = $aBuildings['wall'] ?? 0;
         }
 
         if ($bPlayerIsReceiver) {
@@ -730,6 +766,9 @@ class InboxParser
       $oCity->player_id   = $PlayerId;
       $oCity->player_name = $PlayerName;
       $oCity->alliance_id = $AllianceId;
+      if ($bIsOngoingConquest == true && !is_null($oConquestDetails)) {
+        $oCity->conquest_details = json_encode($oConquestDetails->jsonSerialize());
+      }
       $oCity->poster_player_id    = ($PosterId!=0?(int) $PosterId:null);
       $oCity->poster_alliance_id  = ($PosterAllyId!=0?(int) $PosterAllyId:null);
       $oCity->report_date = $ReportDate;

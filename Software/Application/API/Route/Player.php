@@ -200,7 +200,7 @@ class Player extends \Grepodata\Library\Router\BaseRoute
       try {
         $aElasticsearchResults = Search::FindPlayers($aParams, $bBuildForm);
       } catch (Exception $e) {
-        $msg = "ES Player search failed with message: " . $e->getMessage() . ". params: " . json_encode($aParams);
+        $msg = "ES Player search failed with message: " . $e->getMessage() . ". params: " . urlencode(json_encode($aParams['query']));
         error_log($msg);
         Logger::warning($msg);
       }

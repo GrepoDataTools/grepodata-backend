@@ -3,8 +3,11 @@
 namespace Grepodata\Library\Cron;
 
 use Carbon\Carbon;
+use Grepodata\Library\Controller\Alliance;
 use Grepodata\Library\Controller\CronStatus;
 use Grepodata\Library\Controller\Indexer\IndexOverview;
+use Grepodata\Library\Controller\Indexer\ReportId;
+use Grepodata\Library\Controller\Player;
 use Grepodata\Library\Indexer\ForumParser;
 use Grepodata\Library\Indexer\InboxParser;
 use Grepodata\Library\Logger\Logger;
@@ -136,13 +139,30 @@ class Common
         $Report->save();
       }
 
+      $ReportHash = 'LOCAL_DEBUG';
+      $ReportPosterId = '';
+      $ReportPosterName = $Report->report_poster;
+      $ReportAllianceId = '';
+      try {
+        $oReportHash = ReportId::firstByIndexByHash($Info->key_code, $Report->fingerprint);
+        $ReportHash = $oReportHash->report_id;
+      } catch (\Exception $e) {}
+
       if ($Report->type === 'default') {
-        $aParsed = ForumParser::ParseReport($Report->index_code, $aReportData, '', 'LOCAL_DEBUG', substr($Info->world, 0, 2));
+        $aParsed = ForumParser::ParseReport($Report->index_code, $aReportData, $ReportPosterName, $ReportHash, substr($Info->world, 0, 2));
         if (is_array($aParsed) && isset($aParsed['id'])) {
           $aParsed = $aParsed['id'];
         }
       } else {
-        $aParsed = InboxParser::ParseReport($Report->index_code, $aReportData, $Report->report_poster, '','', 'LOCAL_DEBUG', substr($Info->world, 0, 2));
+        if (isset($oReportHash)) {
+          $ReportPosterId = $oReportHash->player_id;
+          try {
+            $oPlayer = Player::firstOrFail($ReportPosterId, $Info->world);
+            $oAlliance = Alliance::firstOrFail($oPlayer->alliance_id, $Info->world);
+            $ReportAllianceId = $oAlliance->grep_id;
+          } catch (\Exception $e) {}
+        }
+        $aParsed = InboxParser::ParseReport($Report->index_code, $aReportData, $ReportPosterName, $ReportPosterId, $ReportAllianceId, $ReportHash, substr($Info->world, 0, 2));
       }
 
       if (is_numeric($aParsed) && $aParsed > 0 && $Report->city_id <= 0) {
