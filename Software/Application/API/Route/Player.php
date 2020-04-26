@@ -220,7 +220,9 @@ class Player extends \Grepodata\Library\Router\BaseRoute
                 $aResponse['results'][$i][$Field] = $Value;
                 //}
               }
-              if (isset($aParams['query']) && $oPlayer->name === $aParams['query']) {
+              if ($aBestMatch == null
+                && isset($aParams['query'])
+                && strtolower($oPlayer->name) === strtolower($aParams['query'])) {
                 $aBestMatch = $aResponse['results'][$i];
                 $BestIndex = $i;
               }

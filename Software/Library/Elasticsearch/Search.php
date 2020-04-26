@@ -264,10 +264,10 @@ class Search
         && is_string($aOptions['preferred_server'])
         && strlen($aOptions['preferred_server']) == 2) {
         $boost = (strlen($aOptions['query']) > 4 ? 300.0 : 400.0);
-        if (isset($aOptions['sql']) && $aOptions['sql']==true) {
-          // Discord search has sql=true and requires a higher preferred server boost
-          $boost = 5000;
-        }
+//        if (isset($aOptions['sql']) && $aOptions['sql']==true) {
+//          // Discord search has sql=true and requires a higher preferred server boost
+//          $boost = 100000;
+//        }
         $aSearchParams['query']['function_score']['query']['bool']['should'][] = array(
           'match' => array(
             'Server' => array(
@@ -292,8 +292,14 @@ class Search
       }
     } else {
       // Higher player points = increased sort order
-      $aSearchParams['query']['function_score']['script_score']['script']['inline'] =
-        "_score + (doc['Points'].value / 10000)";
+      if (isset($aOptions['sql']) && $aOptions['sql']==true) {
+        // Discord search has sql=true, give points a bit more kick
+        $aSearchParams['query']['function_score']['script_score']['script']['inline'] =
+          "_score + (doc['Points'].value)";
+      } else {
+        $aSearchParams['query']['function_score']['script_score']['script']['inline'] =
+          "_score + (doc['Points'].value / 10000)";
+      }
     }
 
     // Search by id
