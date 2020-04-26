@@ -27,6 +27,11 @@ class SiegeParser
   public static function saveSiegeAttack(ConquestDetails $oConquestDetails, City $oCity, IndexInfo $oIndex, $ReportHash, $aReceiverDetails = array())
   {
     try {
+      // Ignore non-intel
+      if (key_exists('unknown_naval', $oConquestDetails->siegeUnits) && key_exists('unknown', $oConquestDetails->siegeUnits)) {
+        return null;
+      }
+
       // ignore older reports
       $ReportDate = $oCity->parsed_date;
       if (Carbon::now()->diffInDays($ReportDate) > 14) {

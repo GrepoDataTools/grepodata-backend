@@ -163,6 +163,7 @@ class ForumParser
     "unit_urephon"            => array('type' => 'hero',  'value' => 'Urephon',       'god' => null),
     "unit_zuretha"            => array('type' => 'hero',  'value' => 'Zuretha',       'god' => null),
     "unit_themistokles"       => array('type' => 'hero',  'value' => 'Themistokles',  'god' => null),
+    "unit_pariphaistes"       => array('type' => 'hero',  'value' => 'Pariphaistes',  'god' => null),
   );
 
   /**
@@ -253,18 +254,6 @@ class ForumParser
       $oCity->fireships   = $Fireships;
       $oCity->type        = 'forum';
 
-      // check conquest
-      if (isset($aCityInfo['conquest_details']) && !empty($aCityInfo['conquest_details'])) {
-        $oCity->conquest_details = json_encode($aCityInfo['conquest_details']->jsonSerialize());
-        $SiegeId = SiegeParser::saveSiegeAttack($aCityInfo['conquest_details'], $oCity, $oIndexInfo, $ReportHash
-//          ,array('player_id' => $ReceiverPlayerId, 'player_name' => $ReceiverPlayerName,
-//            'alliance_id' => $ReceiverAllianceId, 'alliance_name' => $ReceiverAllianceName));
-        );
-        if (!empty($SiegeId) && !is_nan($SiegeId) && $SiegeId > 0) {
-          $oCity->conquest_id = $SiegeId;
-        }
-      }
-
       $bSaved = false;
       try {
         $bSaved = $oCity->save();
@@ -282,6 +271,20 @@ class ForumParser
       }
 
       if ($bSaved) {
+        // check conquest
+        try {
+          if (isset($aCityInfo['conquest_details']) && !empty($aCityInfo['conquest_details'])) {
+            $oCity->conquest_details = json_encode($aCityInfo['conquest_details']->jsonSerialize());
+            $SiegeId = SiegeParser::saveSiegeAttack($aCityInfo['conquest_details'], $oCity, $oIndexInfo, $ReportHash);
+            if (!empty($SiegeId) && !is_nan($SiegeId) && $SiegeId > 0) {
+              $oCity->conquest_id = $SiegeId;
+              $oCity->save();
+            }
+          }
+        } catch (Exception $e) {
+          Logger::warning("ForumParser $ReportHash: unable to update conquest details after creating city object");
+        }
+
         return array(
           'id' => $oCity->id
         );
@@ -870,10 +873,10 @@ class ForumParser
         // Conquest details
         $oConquestDetails = new ConquestDetails();
         try {
-          if ($ReportChainString = 'town-player-town-player') {
+          if ($ReportChainString == 'town-player-town-player') {
             $BesiegedTown = $aHeaderChainData[2];
             $SiegeLeadBy = $aHeaderChainData[3];
-          } else if ($ReportChainString = 'town-player-player-town') {
+          } else if ($ReportChainString == 'town-player-player-town') {
             $BesiegedTown = $aHeaderChainData[3];
             $SiegeLeadBy = $aHeaderChainData[2];
           } else {
@@ -936,7 +939,7 @@ class ForumParser
           Logger::warning("ForumParser $ReportHash: error parsing ongoing conquest units; " . $e->getMessage());
         }
 
-        if (isset($aSiegeUnits) && !empty($aSiegeUnits) && key_exists('unknown_naval', $aSiegeUnits) && key_exists('unknown', $aSiegeUnits)) {
+        if (isset($aSiegeUnits) && !empty($aSiegeUnits) && (key_exists('unknown_naval', $aSiegeUnits) || key_exists('unknown', $aSiegeUnits))) {
           // Friendly attack on conquest is ignored
           // TODO: consider it as a friendly attack on an enemy town and save wall level for besieged town
           throw new ForumParserExceptionDebug("Ignoring friendly attack on a conquest");

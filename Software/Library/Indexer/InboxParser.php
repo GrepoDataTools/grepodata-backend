@@ -4,6 +4,7 @@ namespace Grepodata\Library\Indexer;
 
 
 use Carbon\Carbon;
+use Exception;
 use Grepodata\Library\Controller\Alliance;
 use Grepodata\Library\Controller\Player;
 use Grepodata\Library\Controller\Town;
@@ -774,17 +775,6 @@ class InboxParser
       if (isset($Fireships)) {$oCity->fireships = $Fireships;}
       $oCity->type        = 'inbox';
 
-      // check conquest
-      if ($bIsOngoingConquest == true && !is_null($oConquestDetails)) {
-        $oCity->conquest_details = json_encode($oConquestDetails->jsonSerialize());
-        $SiegeId = SiegeParser::saveSiegeAttack($oConquestDetails, $oCity, $oIndexInfo, $ReportHash,
-          array('player_id' => $ReceiverPlayerId, 'player_name' => $ReceiverPlayerName,
-            'alliance_id' => $ReceiverAllianceId, 'alliance_name' => $ReceiverAllianceName));
-        if (!empty($SiegeId) && !is_nan($SiegeId) && $SiegeId > 0) {
-          $oCity->conquest_id = $SiegeId;
-        }
-      }
-
       $bSaved = false;
       try {
         $bSaved = $oCity->save();
@@ -802,6 +792,22 @@ class InboxParser
 
       if ($bSaved == false || $oCity->id < 0) {
         throw new InboxParserExceptionWarning("Unable to save City record: " . $oCity->toJson());
+      }
+
+      // check conquest
+      try {
+        if ($bIsOngoingConquest == true && !is_null($oConquestDetails)) {
+          $oCity->conquest_details = json_encode($oConquestDetails->jsonSerialize());
+          $SiegeId = SiegeParser::saveSiegeAttack($oConquestDetails, $oCity, $oIndexInfo, $ReportHash,
+            array('player_id' => $ReceiverPlayerId, 'player_name' => $ReceiverPlayerName,
+              'alliance_id' => $ReceiverAllianceId, 'alliance_name' => $ReceiverAllianceName));
+          if (!empty($SiegeId) && !is_nan($SiegeId) && $SiegeId > 0) {
+            $oCity->conquest_id = $SiegeId;
+            $oCity->save();
+          }
+        }
+      } catch (Exception $e) {
+        Logger::warning("InboxParser $ReportHash: unable to update conquest details after creating city object");
       }
 
       return $oCity->id;
