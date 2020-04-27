@@ -12,6 +12,7 @@ use Grepodata\Library\Cron\Common;
 use Grepodata\Library\Cron\InnoData;
 use Grepodata\Library\Logger\Logger;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Log;
 
 class Conquest
 {
@@ -37,12 +38,20 @@ class Conquest
     $aConquestData = InnoData::loadConquersData($oWorld->grep_id);
     Logger::silly("Updating conquests: (".sizeof($aConquestData).").");
 
+    $NumNew = 0;
     $aPlayerCitiesGained    = array();
     $aPlayerCitiesLost      = array();
     $aAllianceCitiesGained  = array();
     $aAllianceCitiesLost    = array();
     if ($aConquestData == false) {
       $aConquestData = array();
+    }
+
+    $aUnresolvedSieges = array();
+    try {
+      $aUnresolvedSieges = \Grepodata\Library\Controller\Indexer\Conquest::allByWorldUnresolved($oWorld, 1000);
+    } catch (\Exception $e) {
+      Logger::warning("ConquestImport: error loading recent unresolved sieges: " . $e->getMessage());
     }
 
     // Find conquest day limits for today
@@ -54,6 +63,7 @@ class Conquest
 
     foreach ($aConquestData as $aData) {
       try {
+        // Conquest[time] is a UNIX timestamp
         $ConquestTime = strtotime($aData['time']);
 
         // Limit history (script runs every hour so we can ignore older records as they have already been processed by now)
@@ -67,22 +77,62 @@ class Conquest
             (isset($aAllianceCitiesLost[$aData['o_a_id']])    ? $aAllianceCitiesLost[$aData['o_a_id']]['cities'] += 1   : $aAllianceCitiesLost[$aData['o_a_id']]['cities'] = 1 );
           }
 
+          // Save conquest to database
           $oConquest = new \Grepodata\Library\Model\Conquest();
           $oConquest->world = $oWorld->grep_id;
           foreach ($aData as $Key => $Value) {
             $oConquest->$Key = $Value;
           }
-          $oConquest->save();
+          try {
+            $oConquest->save();
+            $NumNew++;
+          } catch (\Exception $e) {
+            // Exception likely caused by duplicate entries
+            if (strpos($e, "Duplicate entry") === false) {
+              throw new \Exception("Error saving new conquest entry: " . $e->getMessage());
+            }
+          }
+
+          // Check if we can resolve an ongoing siege with this conquest
+          try {
+            $LocalConquestTime = Carbon::parse($aData['time']);
+            $LocalConquestTime->setTimezone($oWorld->php_timezone);
+            foreach ($aUnresolvedSieges as $oOngoingConquest) {
+              if ($oConquest->town_id != $oOngoingConquest->town_id) {
+                continue;
+              }
+
+              $LastAttack = Carbon::parse($oOngoingConquest->first_attack_date, $oWorld->php_timezone);
+              if ($LastAttack == null) {
+                continue;
+              }
+
+              $DiffToSiege = $LastAttack->diffInMinutes($LocalConquestTime, false);
+              if ($DiffToSiege > 0 && $DiffToSiege < 20*60) {
+                // Conquest is within 20 hours AFTER the last registered attack on the siege
+                // assume that the siege was successful and the town now has a new owner
+                Logger::silly("Resolved ongoing conquest via ConquestImport; town has a new owner. conquest_id: " . $oOngoingConquest->id);
+                $oOngoingConquest->new_owner_player_id = $oConquest->n_p_id;
+                $oOngoingConquest->save();
+                break;
+              } else if ($DiffToSiege < 0 && $DiffToSiege > 12*60) {
+                Logger::warning("ConquestImport: odd looking siege time diff. should investigate conquest_id " . $oOngoingConquest->id);
+              }
+            }
+
+          } catch (\Exception $e) {
+            Logger::warning("ConquestImport: Error parsing ongoing sieges: " . $e->getMessage());
+          }
         }
       } catch (\Exception $e) {
         if (strpos($e, "Duplicate entry") === false) {
           Logger::warning("Conquest import exception for conquest entry: " . $e->getMessage());
         }
-        // Exception likely caused by duplicate entries caused by daylight savings time transitions. ignore for now
       }
     }
     unset($aConquestData);
-    Logger::silly("Finished updating conquests. Starting scoreboard update.");
+    unset($aUnresolvedSieges);
+    Logger::silly("Finished updating conquests (found $NumNew records). Starting scoreboard update.");
 
     // ==== SCOREBOARDS
 

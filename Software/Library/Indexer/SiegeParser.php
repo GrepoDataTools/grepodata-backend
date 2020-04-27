@@ -11,6 +11,7 @@ use Grepodata\Library\Controller\Town;
 use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\Indexer\City;
 use Grepodata\Library\Model\Indexer\IndexInfo;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class SiegeParser
 {
@@ -111,6 +112,8 @@ class SiegeParser
           $oConquest->belligerent_alliance_id = $oPlayer->alliance_id;
           $oAlliance = Alliance::firstOrFail($oPlayer->alliance_id, $oIndex->world);
           $oConquest->belligerent_alliance_name = $oAlliance->name;
+        } catch (ModelNotFoundException $e) {
+          Logger::debugInfo("SiegeParser $ReportHash: player or alliance model of belligerent not found; " . $e->getMessage());
         } catch (Exception $e) {
           Logger::warning("SiegeParser $ReportHash: error parsing alliance for new siege; " . $e->getMessage());
         }

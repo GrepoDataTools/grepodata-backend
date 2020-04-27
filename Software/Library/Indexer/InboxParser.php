@@ -545,7 +545,7 @@ class InboxParser
                 continue;
               }
 
-              if (strpos($ValueString, '+100%') !== false) {
+              if (strpos($ValueString, '+100') !== false) {
                 // ignore night bonus
                 continue;
               }

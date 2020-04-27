@@ -432,6 +432,8 @@ if ($aJobs !== false) {
 $Logs = Operation_log::orderBy('created_at', 'desc')->orderBy('microtime', 'desc');
 if (isset($_GET['level']) && $_GET['level'] != '' && $_GET['level'] != 0) {
   $Logs->where('level', $_GET['level']);
+} else {
+  $Logs->where('level', '!=', 10);
 }
 if (isset($_GET['pid']) && $_GET['pid'] != '') {
   $Logs->where('pid', $_GET['pid']);

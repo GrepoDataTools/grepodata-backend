@@ -939,6 +939,7 @@ class ForumParser
 
           $cityInfo['conquest_details'] = $oConquestDetails;
         } catch (Exception $e) {
+          // $aDefUnits[3]["attributes"]["class"] = "small"  => def units are not made visible
           Logger::warning("ForumParser $ReportHash: error parsing ongoing conquest units; " . $e->getMessage());
         }
 
