@@ -85,7 +85,7 @@ class Conquest
   /**
    * @param $Id
    * @param $World
-   * @return \Illuminate\Database\Eloquent\Collection Town conquest records
+   * @return \Grepodata\Library\Model\Conquest[]
    */
   public static function getTownConquests($Id, $World)
   {

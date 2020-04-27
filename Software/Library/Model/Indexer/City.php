@@ -44,6 +44,7 @@ class City extends Model
       'player_id'   => $this->player_id,
       'player_name' => $this->player_name,
       'alliance_id' => $this->alliance_id,
+      'conquest_id' => $this->conquest_id,
       'date'        => $this->report_date,
       'parsed_date' => $this->parsed_date,
       'type'        => $this->report_type,

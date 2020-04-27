@@ -2,12 +2,15 @@
 
 namespace Grepodata\Application\API\Route\Indexer;
 
+use Carbon\Carbon;
 use Exception;
 use Grepodata\Library\Controller\Indexer\CityInfo;
 use Grepodata\Library\Controller\Indexer\Conquest;
 use Grepodata\Library\Controller\Indexer\IndexInfo;
 use Grepodata\Library\Controller\Indexer\IndexOverview;
 use Grepodata\Library\Controller\Indexer\IndexOwners;
+use Grepodata\Library\Controller\Indexer\Notes;
+use Grepodata\Library\Controller\World;
 use Grepodata\Library\Indexer\IndexBuilder;
 use Grepodata\Library\Indexer\Validator;
 use Grepodata\Library\Logger\Logger;
@@ -477,7 +480,7 @@ admin@grepodata.com',
 
           // Update conquest records
           try {
-            $aConquests = Conquest::allByIndex($oIndex);
+            $aConquests = Conquest::allByIndex($oIndex, 5000);
             /** @var \Grepodata\Library\Model\Indexer\Conquest $oConquest */
             foreach ($aConquests as $oConquest) {
               $oConquest->index_key = $oNewIndex->key_code;
@@ -485,6 +488,17 @@ admin@grepodata.com',
             }
           } catch (Exception $e) {
             Logger::error("Unable to move all conquests for new index " . $oNewIndex->key_code . ". " . $e->getMessage());
+          }
+
+          // Update notes
+          try {
+            $aNotes = Notes::allByIndex($oIndex);
+            foreach ($aNotes as $oNote) {
+              $oNote->index_key = $oNewIndex->key_code;
+              $oNote->save();
+            }
+          } catch (Exception $e) {
+            Logger::error("Unable to move all notes for new index " . $oNewIndex->key_code . ". " . $e->getMessage());
           }
 
           // Update owners record
@@ -698,10 +712,20 @@ admin@grepodata.com',
 
       $aRecentConquests = array();
       try {
+        $oWorld = World::getWorldById($oIndex->world);
         $aConquests = Conquest::allByIndex($oIndex, 5);
+        $Now = $oWorld->getServerTime();
         foreach ($aConquests as $oConquest) {
           if ($oConquest->num_attacks_counted>2) {
-            $aRecentConquests[] = $oConquest->getPublicFields();
+            $aConquestData = $oConquest->getPublicFields();
+            $aConquestData['hide_details'] = false;
+            if ($oConquest->new_owner_player_id == null
+              && $oConquest->cs_killed == false
+              && $Now->diffInHours(Carbon::parse($oConquest->first_attack_date)) < 3) {
+              // add a 3 hour delay before friendly intel is visible in the detailed report
+              $aConquestData['hide_details'] = true;
+            }
+            $aRecentConquests[] = $aConquestData;
           }
         }
       } catch (Exception $e) {

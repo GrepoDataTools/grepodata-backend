@@ -8,6 +8,17 @@ class Notes
 {
 
   /**
+   * @param \Grepodata\Library\Model\Indexer\IndexInfo $oIndex
+   * @return Collection|\Grepodata\Library\Model\Indexer\Notes[]
+   */
+  public static function allByIndex(\Grepodata\Library\Model\Indexer\IndexInfo $oIndex)
+  {
+    return \Grepodata\Library\Model\Indexer\Notes::whereIn('index_key', $oIndex->key_code, 'and')
+      ->orderBy('id', 'desc')
+      ->get();
+  }
+
+  /**
    * @param $Keys array list of Index identifiers
    * @param $Id int Town identifier
    * @return Collection|\Grepodata\Library\Model\Indexer\Notes[]

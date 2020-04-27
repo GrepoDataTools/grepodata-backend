@@ -55,7 +55,7 @@ class Report extends \Grepodata\Library\Router\BaseRoute
       }
       if (isset($aParams['filter'])) {
         // TODO: parse filter
-        Logger::debugInfo("filter => key: ".$aParams['key'].", id: ".$aParams['player_id'].", value: ".$aParams['filter']);
+        Logger::indexDebug("filter => key: ".$aParams['key'].", id: ".$aParams['player_id'].", value: ".$aParams['filter']);
       }
 
       die(self::OutputJson($aResponse, 200));
