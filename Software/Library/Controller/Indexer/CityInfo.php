@@ -51,7 +51,8 @@ class CityInfo
     'orakel' => 'oracle',
     'handelskantoor' => 'trade_office',
   );
-  const fireship   = 'attack_ship';
+  const fireship = 'attack_ship';
+  const sea_monster = 'sea_monster';
 
   /**
    * @param $Key string Index identifier
@@ -131,6 +132,19 @@ class CityInfo
       ->where('alliance_id', '=', $Id)
       ->orderBy('town_name', 'asc')
       ->orderBy('id', 'desc')
+      ->get();
+  }
+
+  /**
+   * @param $Key string Index identifier
+   * @param $Id int Conquest identifier
+   * @return City[]
+   */
+  public static function allByConquestId($Key, $Id)
+  {
+    return \Grepodata\Library\Model\Indexer\City::where('index_key', '=', $Key, 'and')
+      ->where('conquest_id', '=', $Id)
+      ->orderBy('parsed_date', 'desc')
       ->get();
   }
 
@@ -394,7 +408,7 @@ class CityInfo
 
   /**
    * Returns a merged array of all the units in the City record
-   * @param $oCity
+   * @param City $oCity
    * @return array
    */
   public static function getMergedUnits(City $oCity)
@@ -413,6 +427,27 @@ class CityInfo
       $aUnits[self::fireship] = $oCity->fireships;
     }
     return $aUnits;
+  }
+
+  /**
+   * Split land and sea units
+   * @param $aUnits
+   * @return array
+   */
+  public static function splitLandSeaUnits($aUnits)
+  {
+    $aSplitUnits = array(
+      'sea' => array(),
+      'land' => array(),
+    );
+    foreach ($aUnits as $Unit => $Value) {
+      if ($Unit == self::fireship || $Unit == self::sea_monster || in_array($Unit, array_values(self::sea_units))) {
+        $aSplitUnits['sea'][$Unit] = $Value;
+      } else {
+        $aSplitUnits['land'][$Unit] = $Value;
+      }
+    }
+    return $aSplitUnits;
   }
 
   /**

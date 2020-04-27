@@ -257,20 +257,31 @@ class InboxParser
       // Alliance
       $ReceiverAllianceId = 0;
       $ReceiverAllianceName = '';
-      $ReceiverAlliance = $ReportReceiver["content"][5]["content"][1] ?? null;
-      if ($ReceiverAlliance !== null && isset($ReceiverAlliance['attributes']['onclick'])) {
-        $Onclick = $ReceiverAlliance['attributes']['onclick'];
-        if (strpos($Onclick, 'allianceProfile') !== false) {
-          $OnclickSub = substr($Onclick, strrpos($Onclick, "',") + 2);
-          $ReceiverAllianceId = substr($OnclickSub, 0, strlen($OnclickSub) - 1);
-          $OnclickSubName = substr($Onclick, strrpos($Onclick, "('") + 2);
-          $ReceiverAllianceName = substr($OnclickSubName, 0, strrpos($OnclickSubName, "',"));
+      $ReceiverAlliance = $ReportReceiver["content"][5]["content"] ?? null;
+      if ($ReceiverAlliance !== null && is_array($ReceiverAlliance)) {
+        foreach ($ReceiverAlliance as $aContent) {
+          if (isset($aContent['attributes']['onclick']) && strpos($aContent['attributes']['onclick'], 'allianceProfile') !== false) {
+            $Onclick = $aContent['attributes']['onclick'];
+            if (strpos($Onclick, 'allianceProfile') !== false) {
+              $OnclickSub = substr($Onclick, strrpos($Onclick, "',") + 2);
+              $ReceiverAllianceId = substr($OnclickSub, 0, strlen($OnclickSub) - 1);
+              if (isset($aContent['content'][0]) && is_string($aContent['content'][0])) {
+                $ReceiverAllianceName = $aContent['content'][0];
+              }
+            }
+          }
         }
       }
       if (($ReceiverAllianceId === 0 || !is_numeric($ReceiverAllianceId)) && !is_null($ReceiverPlayerId) && is_numeric($ReceiverPlayerId)) {
         $oPlayer = Player::firstById($oIndexInfo->world, $ReceiverPlayerId);
         if ($oPlayer !== null) {
           $ReceiverAllianceId = $oPlayer->alliance_id;
+          if ($oPlayer->alliance_id > 0) {
+            $oAlliance = Alliance::first($oPlayer->alliance_id, $oIndexInfo->world);
+            if (!empty($oAlliance)) {
+              $ReceiverAllianceName = $oAlliance->name;
+            }
+          }
         } else {
           $ReceiverAllianceId = 0;
         }

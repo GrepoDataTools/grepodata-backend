@@ -46,21 +46,26 @@ class SiegeParser
         // check if the current record fits into any of the existing conquests
         $ReportDate = $oCity->parsed_date;
         foreach ($aConquests as $ExistingConquest) {
-          if ($ExistingConquest->cs_killed == true) {
+          $ConquestDate = Carbon::parse($ExistingConquest->first_attack_date);
+          if ($ReportDate == null) continue;
+
+          if ($ReportDate > $ConquestDate && $ExistingConquest->cs_killed == true) {
+            // This new report came after the cs was already down, must be a new conquest
             continue;
           }
 
-          $ConquestDate = Carbon::parse($ExistingConquest->first_attack_date);
-          if ($ReportDate == null) continue;
           $HourDiff = $ReportDate->diffInHours($ConquestDate);
-          if ($HourDiff > 24) {
+          if ($HourDiff > 20) {
+            // no overlap, must be new conquest
             continue;
           }
 
           $oConquest = $ExistingConquest;
-          if ($ReportDate < $oConquest->first_attack_date) {
+          if ($ReportDate > $ConquestDate) {
+            // first_attack_date = latest parsed date in this conquest
             $oConquest->first_attack_date = $ReportDate;
           }
+          break;
         }
       }
 
@@ -173,7 +178,7 @@ class SiegeParser
         } catch (Exception $e) {}
       }
 
-      $bDoSave = true;
+      $bDoSave = false;
       if (!bDevelopmentMode || $bDoSave) {
         $oConquest->save();
       }

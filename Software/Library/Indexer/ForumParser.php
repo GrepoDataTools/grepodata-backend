@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Exception;
 use Grepodata\Library\Controller\Alliance;
 use Grepodata\Library\Controller\Player;
+use Grepodata\Library\Controller\World;
 use Grepodata\Library\Exception\ForumParserExceptionDebug;
 use Grepodata\Library\Exception\ForumParserExceptionError;
 use Grepodata\Library\Exception\ForumParserExceptionWarning;
@@ -384,7 +385,9 @@ class ForumParser
       if ($bLocalFallback===false && isset($DayMatches[0])) {
         $Day = $DayMatches[0];
       } else {
-        $Day = date(self::format[$Locale]['day']); // Current day
+        // Get current day in locale timezone
+        $oWorld = World::getWorldById($oIndex->world);
+        $Day = $oWorld->getServerTime()->format(self::format[$Locale]['day']);
       }
       preg_match(self::format[$Locale]['time_regex'], $ReportDate, $TimeMatches);
       if (isset($TimeMatches[0])) {

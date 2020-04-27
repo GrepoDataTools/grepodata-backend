@@ -680,9 +680,6 @@ admin@grepodata.com',
       $aParams = self::validateParams(array('key'));
 
       // Validate index key
-      if ($aParams['key'] == "Jaegqam2") {
-        $aParams['key'] = "jaegqam2";
-      }
       $oIndex = Validator::IsValidIndex($aParams['key']);
       if ($oIndex === null || $oIndex === false) {
         die(self::OutputJson(array(
@@ -699,6 +696,18 @@ admin@grepodata.com',
       $oIndexOverview = IndexOverview::firstOrFail($aParams['key']);
       if ($oIndexOverview == null) throw new ModelNotFoundException();
 
+      $aRecentConquests = array();
+      try {
+        $aConquests = Conquest::allByIndex($oIndex, 5);
+        foreach ($aConquests as $oConquest) {
+          if ($oConquest->num_attacks_counted>2) {
+            $aRecentConquests[] = $oConquest->getPublicFields();
+          }
+        }
+      } catch (Exception $e) {
+        Logger::warning("Error loading recent conquests: " . $e->getMessage());
+      }
+
       $aResponse = array(
         'world'             => $oIndexOverview['world'],
         'total_reports'     => $oIndexOverview['total_reports'],
@@ -707,6 +716,7 @@ admin@grepodata.com',
         'friendly_attacks'  => $oIndexOverview['friendly_attacks'],
         'latest_report'     => $oIndexOverview['latest_report'],
         'max_version'       => $oIndexOverview['max_version'],
+        'recent_conquests'  => $aRecentConquests,
         'latest_version'    => USERSCRIPT_VERSION,
         'update_message'    => USERSCRIPT_UPDATE_INFO,
         'owners'            => json_decode(urldecode($oIndexOverview['owners'])),

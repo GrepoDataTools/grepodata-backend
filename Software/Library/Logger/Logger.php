@@ -12,6 +12,7 @@ class Logger
   const level_warning = 2;
   const level_debug   = 3;
   const level_silly   = 4;
+  const level_index   = 10;
 
   /**
    * Enable local output (for testing purposes)
@@ -45,6 +46,15 @@ class Logger
     self::writeLogMessage(array(
       'message' => $Message,
       'level'   => self::level_warning,
+      'pid'     => self::getPid()
+    ));
+  }
+
+  public static function indexDebug($Message)
+  {
+    self::writeLogMessage(array(
+      'message' => $Message,
+      'level'   => self::level_index,
       'pid'     => self::getPid()
     ));
   }

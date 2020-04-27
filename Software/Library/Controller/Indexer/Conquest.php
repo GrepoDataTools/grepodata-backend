@@ -33,12 +33,15 @@ class Conquest
   }
 
   /**
-   * @return Collection
+   * @param \Grepodata\Library\Model\Indexer\IndexInfo $oIndex
+   * @param int $Limit
+   * @return \Grepodata\Library\Model\Indexer\Conquest[]
    */
-  public static function allByIndex(\Grepodata\Library\Model\Indexer\IndexInfo $oIndex)
+  public static function allByIndex(\Grepodata\Library\Model\Indexer\IndexInfo $oIndex, $Limit = 100)
   {
     return \Grepodata\Library\Model\Indexer\Conquest::where('index_key', '=', $oIndex->key_code, 'and')
-      ->orderBy('date', 'desc')
+      ->orderBy('first_attack_date', 'desc')
+      ->limit($Limit)
       ->get();
   }
 

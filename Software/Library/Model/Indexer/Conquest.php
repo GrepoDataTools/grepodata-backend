@@ -28,4 +28,29 @@ use \Illuminate\Database\Eloquent\Model;
 class Conquest extends Model
 {
   protected $table = 'Index_conquest';
+
+  public function getPublicFields()
+  {
+    $aBelligerentsAll = json_decode($this->belligerent_all, true);
+    return array(
+      'conquest_id'   => $this->id,
+      'town_id'       => $this->town_id,
+      'town_name'     => $this->town_name,
+      'player_id'     => $this->player_id,
+      'player_name'   => $this->player_name,
+      'alliance_id'   => $this->alliance_id,
+      'alliance_name' => $this->alliance_name,
+      'last_attack_date' => $this->first_attack_date,
+      'num_attacks_counted' => $this->num_attacks_counted,
+      'total_losses_att' => json_decode($this->total_losses_att, true),
+      'total_losses_def' => json_decode($this->total_losses_def, true),
+      'belligerent_all'  => is_array($aBelligerentsAll) ? array_values($aBelligerentsAll) : array(),
+      'belligerent_player_id'     => $this->belligerent_player_id,
+      'belligerent_player_name'   => $this->belligerent_player_name,
+      'belligerent_alliance_id'   => $this->belligerent_alliance_id,
+      'belligerent_alliance_name' => $this->belligerent_alliance_name,
+      'new_owner_player_id' => $this->new_owner_player_id,
+      'cs_killed' => $this->cs_killed,
+    );
+  }
 }

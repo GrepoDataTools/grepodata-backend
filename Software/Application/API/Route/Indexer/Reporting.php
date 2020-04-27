@@ -12,7 +12,7 @@ class Reporting extends \Grepodata\Library\Router\BaseRoute
       $aParams = self::validateParams(array('error', 'function', 'browser', 'version', 'world', 'index'));
 
       // Save bug report as logmessage
-      Logger::warning("INDEXER_BUG_REPORT => " . json_encode($aParams));
+      Logger::indexDebug(json_encode($aParams));
 
       die(self::OutputJson(array('success' => true), 200));
     } catch (\Exception $e) {

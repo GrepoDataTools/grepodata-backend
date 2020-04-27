@@ -300,6 +300,14 @@ $oRouter->Add('indexunitinfo', new Route('/indexer/movementspeed', array(
   '_controller' => '\Grepodata\Application\API\Route\Indexer\IndexApi',
   '_method'     => 'CalculateRuntime'
 )));
+$oRouter->Add('conquestreports', new Route('/indexer/conquest', array(
+  '_controller' => '\Grepodata\Application\API\Route\Indexer\IndexApi',
+  '_method'     => 'GetConquestReports'
+)));
+$oRouter->Add('conquestsiegelist', new Route('/indexer/siegelist', array(
+  '_controller' => '\Grepodata\Application\API\Route\Indexer\IndexApi',
+  '_method'     => 'GetSiegelist'
+)));
 
 // Reporting
 $oRouter->Add('indexerbugreport', new Route('/indexer/scripterror', array(

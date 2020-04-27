@@ -5,6 +5,7 @@ namespace Grepodata\Application\API\Route\Indexer;
 use Carbon\Carbon;
 use Exception;
 use Grepodata\Library\Controller\Indexer\CityInfo;
+use Grepodata\Library\Controller\Indexer\Conquest;
 use Grepodata\Library\Controller\Indexer\IndexOverview;
 use Grepodata\Library\Controller\Indexer\Notes;
 use Grepodata\Library\Controller\Player;
@@ -288,6 +289,118 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
     } catch (Exception $e) {
       die(self::OutputJson(array(
         'message'     => 'Unable to delete note.',
+        'parameters'  => $aParams
+      ), 404));
+    }
+  }
+
+  public static function GetConquestReportsGET()
+  {
+    $aParams = array();
+    try {
+      // Validate params
+      $aParams = self::validateParams(array('conquest_id', 'key'));
+
+      // Validate key
+      $SearchKey = $aParams['key'];
+      $bValidIndex = false;
+      $oIndex = null;
+      $Attempts = 0;
+      while (!$bValidIndex && $Attempts <= 30) {
+        $Attempts += 1;
+        $oIndex = Validator::IsValidIndex($SearchKey);
+        if ($oIndex === null || $oIndex === false) {
+          die(self::OutputJson(array(
+            'message'     => 'Unauthorized index key. Please enter the correct index key. You will be banned after 10 incorrect attempts.',
+          ), 401));
+        }
+        if (isset($oIndex->moved_to_index) && $oIndex->moved_to_index !== null && $oIndex->moved_to_index != '') {
+          $SearchKey = $oIndex->moved_to_index; // redirect to new index
+        } else {
+          $bValidIndex = true;
+        }
+      }
+
+      // Find reports
+      $aReports = CityInfo::allByConquestId($aParams['key'], $aParams['conquest_id']);
+      if (empty($aReports) || count($aReports) <= 0) {
+        throw new Exception("No reports found for this conquest");
+      }
+
+      // format response
+      $aResponse = array('intel' => array());
+      foreach ($aReports as $oCity) {
+        $aConqDetails = json_decode($oCity->conquest_details, true);
+        $aAttOnConq = array(
+          'date' => $oCity->parsed_date,
+          'attacker' => array(
+            'town_id' => $oCity->town_id,
+            'town_name' => $oCity->town_name,
+            'player_id' => $oCity->player_id,
+            'player_name' => $oCity->player_name,
+            'alliance_id' => $oCity->alliance_id,
+            'units' => CityInfo::getMergedUnits($oCity),
+          ),
+          'defender' => array(
+            'units' => CityInfo::splitLandSeaUnits($aConqDetails['siege_units']) ?? array(),
+          )
+        );
+
+        $aResponse['intel'][] = $aAttOnConq;
+      }
+
+      return self::OutputJson($aResponse);
+    } catch (Exception $e) {
+      die(self::OutputJson(array(
+        'message'     => 'No conquests found with this id in this index.',
+        'parameters'  => $aParams
+      ), 404));
+    }
+  }
+
+  public static function GetSiegelistGET()
+  {
+    $aParams = array();
+    try {
+      // Validate params
+      $aParams = self::validateParams(array('key'));
+
+      // Validate key
+      $SearchKey = $aParams['key'];
+      $bValidIndex = false;
+      $oIndex = null;
+      $Attempts = 0;
+      while (!$bValidIndex && $Attempts <= 30) {
+        $Attempts += 1;
+        $oIndex = Validator::IsValidIndex($SearchKey);
+        if ($oIndex === null || $oIndex === false) {
+          die(self::OutputJson(array(
+            'message'     => 'Unauthorized index key. Please enter the correct index key. You will be banned after 10 incorrect attempts.',
+          ), 401));
+        }
+        if (isset($oIndex->moved_to_index) && $oIndex->moved_to_index !== null && $oIndex->moved_to_index != '') {
+          $SearchKey = $oIndex->moved_to_index; // redirect to new index
+        } else {
+          $bValidIndex = true;
+        }
+      }
+
+      // Find sieges
+      $aSieges = Conquest::allByIndex($oIndex, 300);
+      if (empty($aSieges) || count($aSieges) <= 0) {
+        throw new Exception("No reports found for this conquest");
+      }
+
+      // format response
+      $aResponse = array('sieges' => array());
+      foreach ($aSieges as $oConquest) {
+        $aResponse['sieges'][] = $oConquest->getPublicFields();
+      }
+
+      return self::OutputJson($aResponse);
+    } catch (Exception $e) {
+      die(self::OutputJson(array(
+        'message'     => 'No sieges found in this index.',
         'parameters'  => $aParams
       ), 404));
     }
