@@ -2,6 +2,8 @@
 
 namespace Grepodata\Library\Model\Indexer;
 
+use Carbon\Carbon;
+use Grepodata\Library\Model\World;
 use \Illuminate\Database\Eloquent\Model;
 
 /**
@@ -29,10 +31,10 @@ class Conquest extends Model
 {
   protected $table = 'Index_conquest';
 
-  public function getPublicFields()
+  public function getPublicFields(World $oWorld = null)
   {
     $aBelligerentsAll = json_decode($this->belligerent_all, true);
-    return array(
+    $aResponse = array(
       'conquest_id'   => $this->id,
       'town_id'       => $this->town_id,
       'town_name'     => $this->town_name,
@@ -52,5 +54,18 @@ class Conquest extends Model
       'new_owner_player_id' => $this->new_owner_player_id,
       'cs_killed' => $this->cs_killed,
     );
+
+    $aResponse['hide_details'] = false;
+    if ($oWorld != null) {
+      $Now = $oWorld->getServerTime();
+      if ($this->new_owner_player_id == null
+        && $this->cs_killed == false
+        && $Now->diffInHours(Carbon::parse($this->first_attack_date, $oWorld->php_timezone)) < 3) {
+        // add a 3 hour delay before friendly intel is visible in the detailed report
+        $aResponse['hide_details'] = true;
+      }
+    }
+
+    return $aResponse;
   }
 }

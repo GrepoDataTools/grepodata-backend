@@ -713,19 +713,14 @@ admin@grepodata.com',
       $aRecentConquests = array();
       try {
         $oWorld = World::getWorldById($oIndex->world);
-        $aConquests = Conquest::allByIndex($oIndex, 5);
-        $Now = $oWorld->getServerTime();
+        $aConquests = Conquest::allByIndex($oIndex, 10);
+        $SearchLimit = 1;
+        if (count($aConquests) > 3) $SearchLimit = 2;
+        if (count($aConquests) > 6) $SearchLimit = 3;
+        if (count($aConquests) >= 10) $SearchLimit = 4;
         foreach ($aConquests as $oConquest) {
-          if ($oConquest->num_attacks_counted>2) {
-            $aConquestData = $oConquest->getPublicFields();
-            $aConquestData['hide_details'] = false;
-            if ($oConquest->new_owner_player_id == null
-              && $oConquest->cs_killed == false
-              && $Now->diffInHours(Carbon::parse($oConquest->first_attack_date, $oWorld->php_timezone)) < 3) {
-              // add a 3 hour delay before friendly intel is visible in the detailed report
-              $aConquestData['hide_details'] = true;
-            }
-            $aRecentConquests[] = $aConquestData;
+          if ($oConquest->num_attacks_counted>=$SearchLimit) {
+            $aRecentConquests[] = $oConquest->getPublicFields($oWorld);;
           }
         }
       } catch (Exception $e) {

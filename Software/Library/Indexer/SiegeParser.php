@@ -8,6 +8,7 @@ use Grepodata\Library\Controller\Alliance;
 use Grepodata\Library\Controller\Indexer\CityInfo;
 use Grepodata\Library\Controller\Player;
 use Grepodata\Library\Controller\Town;
+use Grepodata\Library\Controller\World;
 use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\Indexer\City;
 use Grepodata\Library\Model\Indexer\IndexInfo;
@@ -81,19 +82,57 @@ class SiegeParser
         // Besieged town info
         $oConquest->town_id = $oConquestDetails->siegeTownId;
         $oConquest->town_name = $oConquestDetails->siegeTownName;
+
+        // Check conquest history for besieged town
+        $oMatchingTownConquest = null;
+        try {
+          $oWorld = World::getWorldById($oIndex->world);
+          $LastAttack = Carbon::parse($oCity->parsed_date, $oWorld->php_timezone);
+          $aTownConquests = \Grepodata\Library\Controller\Conquest::getTownConquests($oConquest->town_id, $oIndex->world);
+          if (!empty($aTownConquests)) {
+            foreach ($aTownConquests as $oTownConquest) {
+              $oConquestTime = Carbon::parse($oTownConquest->time)->setTimezone($oWorld->php_timezone);
+
+              $DiffToSiege = $LastAttack->diffInMinutes($oConquestTime, false);
+              if ($DiffToSiege > 0 && $DiffToSiege < 24 * 60) {
+                // TODO use world speed to shorten this search interval = more accurate
+                // Conquest is within 20 hours AFTER the attack on the siege
+                // assume that the siege was successful and the town now has a new owner
+                $oConquest->new_owner_player_id = $oTownConquest->n_p_id;
+                $oMatchingTownConquest = $oTownConquest;
+                break;
+              }
+
+            }
+          }
+        } catch (Exception $e) {
+          Logger::warning("SiegeParser $ReportHash: error parsing town conquests for new siege; " . $e->getMessage());
+        }
+
+        // Besieged town owner info
         if (key_exists('player_id', $aReceiverDetails)) {
+          // get town ownership from inbox data
           $oConquest->player_id = $aReceiverDetails['player_id'];
           $oConquest->player_name = $aReceiverDetails['player_name'];
           $oConquest->alliance_id = $aReceiverDetails['alliance_id'];
           $oConquest->alliance_name = $aReceiverDetails['alliance_name'];
         } else {
-          // TODO: get town from conquests (get all by town id, filter to report->parsed_date)
-          $oTown = Town::firstById($oIndex->world, $oConquestDetails->siegeTownId);
-          $oConquest->player_id = $oTown->player_id;
-          $oPlayer = Player::firstById($oIndex->world, $oTown->player_id);
-          $oConquest->player_name = $oPlayer->name;
-          $oConquest->alliance_id = $oPlayer->alliance_id;
-          $oAlliance = Alliance::first($oPlayer->alliance_id, $oIndex->world);
+          if ($oMatchingTownConquest != null) {
+            // Get town ownership from matching conquest record
+            $oConquest->player_id = $oMatchingTownConquest->o_p_id ?? 0;
+            $oPlayer = $oConquest->player_id > 0 ? Player::firstById($oIndex->world, $oConquest->player_id) : null;
+            $oConquest->player_name = !empty($oPlayer) ? $oPlayer->name : '';
+            $oConquest->alliance_id = $oMatchingTownConquest->o_a_id ?? 0;
+            $oAlliance = $oConquest->alliance_id > 0 ? Alliance::first($oConquest->alliance_id, $oIndex->world) : null;
+          } else {
+            // get town ownership from current database state
+            $oTown = Town::firstById($oIndex->world, $oConquest->town_id);
+            $oConquest->player_id = $oTown->player_id;
+            $oPlayer = $oTown->player_id > 0 ? Player::firstById($oIndex->world, $oTown->player_id) : null;
+            $oConquest->player_name = !empty($oPlayer) ? $oPlayer->name : '';
+            $oConquest->alliance_id = !empty($oPlayer) ? $oPlayer->alliance_id : 0;
+            $oAlliance = !empty($oPlayer) && $oPlayer->alliance_id > 0 ? Alliance::first($oPlayer->alliance_id, $oIndex->world) : null;
+          }
           if (!empty($oAlliance)) {
             $oConquest->alliance_name = $oAlliance->name;
           } else {
@@ -107,11 +146,21 @@ class SiegeParser
         $oConquest->belligerent_alliance_id = 0;
         $oConquest->belligerent_alliance_name = '';
         try {
-          // find alliance id
-          $oPlayer = Player::firstOrFail($oConquestDetails->siegePlayerId, $oIndex->world);
-          $oConquest->belligerent_alliance_id = $oPlayer->alliance_id;
-          $oAlliance = Alliance::firstOrFail($oPlayer->alliance_id, $oIndex->world);
-          $oConquest->belligerent_alliance_name = $oAlliance->name;
+          if ($oMatchingTownConquest != null) {
+            // Get new owner from conquest info
+            $oConquest->belligerent_player_id = $oMatchingTownConquest->n_p_id;
+            $oPlayer = Player::firstOrFail($oConquest->belligerent_player_id, $oIndex->world);
+            $oConquest->belligerent_player_name = $oPlayer->name;
+            $oConquest->belligerent_alliance_id = $oMatchingTownConquest->n_a_id;
+            $oAlliance = Alliance::firstOrFail($oConquest->belligerent_alliance_id, $oIndex->world);
+            $oConquest->belligerent_alliance_name = $oAlliance->name;
+          } else {
+            // find alliance id in database
+            $oPlayer = Player::firstOrFail($oConquestDetails->siegePlayerId, $oIndex->world);
+            $oConquest->belligerent_alliance_id = $oPlayer->alliance_id;
+            $oAlliance = Alliance::firstOrFail($oPlayer->alliance_id, $oIndex->world);
+            $oConquest->belligerent_alliance_name = $oAlliance->name;
+          }
         } catch (ModelNotFoundException $e) {
           Logger::debugInfo("SiegeParser $ReportHash: player or alliance model of belligerent not found; " . $e->getMessage());
         } catch (Exception $e) {
@@ -189,6 +238,7 @@ class SiegeParser
     } catch (\Exception $e) {
       Logger::warning("SiegeParser $ReportHash: error parsing conquest details for siege; " . $e->getMessage());
     }
+    return null;
   }
 
 }

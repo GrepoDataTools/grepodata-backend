@@ -709,7 +709,7 @@ class ForumParser
           );
         } else if ($Locale == 'de') {
           $aBuildingNames = array(
-            "building_main" => "Senat", "building_hide" => "Höhle", "building_place" => "Agora", "building_lumber" => "Holzfäller", "building_stoner" => "Steinbruch", "building_ironer" => "Silbermine", "building_market" => "Marktplatz", "building_docks" => "Hafen", "building_barracks" => "Kaserne", "building_wall" => "Stadtmauer", "building_storage" => "Lager", "building_farm" => "Bauernhof", "building_academy" => "Akademie", "building_temple" => "Tempel", "building_theater" => "Theater", "building_thermal" => "Therme", "building_library" => "Bibliothek", "building_lighthouse" => "Leuchtturm", "building_tower" => "Turm", "building_statue" => "Götterstatue", "building_oracle" => "Orakel", "building_trade_office" => "Handelskontor",
+            "main" => "Senat", "hide" => "Höhle", "place" => "Agora", "lumber" => "Holzfäller", "stoner" => "Steinbruch", "ironer" => "Silbermine", "market" => "Marktplatz", "docks" => "Hafen", "barracks" => "Kaserne", "wall" => "Stadtmauer", "storage" => "Lager", "farm" => "Bauernhof", "academy" => "Akademie", "temple" => "Tempel", "theater" => "Theater", "thermal" => "Therme", "library" => "Bibliothek", "lighthouse" => "Leuchtturm", "tower" => "Turm", "statue" => "Götterstatue", "oracle" => "Orakel", "trade_office" => "Handelskontor",
           );
         }
 

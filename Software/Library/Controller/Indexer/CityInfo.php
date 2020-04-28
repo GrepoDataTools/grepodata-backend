@@ -343,6 +343,7 @@ class CityInfo
       'silver'  => (string) $Silver,
       'wall'    => $Wall,
       'stonehail' => $aStonehail,
+      'conquest_id' => $oCity->conquest_id > 0 ? $oCity->conquest_id : 0,
       'hero'    => strtolower($aCityFields['hero']),
       'god'     => strtolower($aCityFields['god']),
       'cost'    => (int) $IntelCost
@@ -430,7 +431,7 @@ class CityInfo
   }
 
   /**
-   * Split land and sea units
+   * Split land and sea units and parse their values
    * @param $aUnits
    * @return array
    */
@@ -447,12 +448,14 @@ class CityInfo
         $aSplitUnits['land'][$Unit] = $Value;
       }
     }
+    $aSplitUnits['sea'] = self::parseUnitLossCount($aSplitUnits['sea']);
+    $aSplitUnits['land'] = self::parseUnitLossCount($aSplitUnits['land']);
     return $aSplitUnits;
   }
 
   /**
    * Adds the units from the $InputField to the $aUnits array
-   * Invalid forum unit keys are translated to their real unit names
+   * translates unit names to proper keys
    * @param $aUnits
    * @param $InputField
    */
@@ -465,5 +468,33 @@ class CityInfo
       $Key = self::myth_units[$Key] ?? $Key;
       $aUnits[$Key] = $Value;
     }
+  }
+
+  /**
+   * Parses unit losses. e.g. slinger:400(-200) to [count: 400, loss: 200, name: slinger, raw: 400(-200)]
+   * @param $aInputUnits
+   * @return array
+   */
+  public static function parseUnitLossCount($aInputUnits)
+  {
+    $aParsed = array();
+    foreach ($aInputUnits as $Key => $Value) {
+      $Count = 0;
+      $Killed = 0;
+      preg_match_all('/[0-9]{1,}/', $Value, $aValueMatches);
+      if (!empty($aValueMatches) && isset($aValueMatches[0][0])) {
+        $Count = (int) $aValueMatches[0][0];
+        if (isset($aValueMatches[0][1])) {
+          $Killed = (int) $aValueMatches[0][1];
+        }
+      }
+      $aParsed[] = array(
+        'count' => $Count,
+        'killed' => $Killed,
+        'name' => $Key,
+        'raw' => $Value,
+      );
+    }
+    return $aParsed;
   }
 }

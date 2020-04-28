@@ -131,6 +131,31 @@ class Conquest
       }
     }
     unset($aConquestData);
+
+    // Check siege timeouts
+    $ServerTime = $oWorld->getServerTime();
+    foreach ($aUnresolvedSieges as $oOngoingConquest) {
+      try {
+        if ($oOngoingConquest->new_owner_player_id != null) {
+          // already resolved by above loop
+          continue;
+        }
+
+        $LastAttack = Carbon::parse($oOngoingConquest->first_attack_date, $oWorld->php_timezone);
+        $DiffToNow = $ServerTime->diffInHours($LastAttack);
+        if ($DiffToNow > 24) {
+          // Found no overlapping conquest and siege must be over by now
+          // Siege likely failed so new owner = old owner
+          // CS was likely killed but that report was not indexed
+          Logger::silly("Resolved ongoing conquest via ConquestImport; town conquest timed out after 24hrs. conquest_id: " . $oOngoingConquest->id);
+          $oOngoingConquest->new_owner_player_id = $oOngoingConquest->player_id;
+          $oOngoingConquest->save();
+        }
+      } catch (\Exception $e) {
+        Logger::warning("ConquestImport: Error checking ongoing siege timeouts. conquest_id: ".$oOngoingConquest->id.", msg: " . $e->getMessage());
+      }
+    }
+
     unset($aUnresolvedSieges);
     Logger::silly("Finished updating conquests (found $NumNew records). Starting scoreboard update.");
 

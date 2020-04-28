@@ -10,7 +10,7 @@ class Conquest
 
   /**
    * @param $Id
-   * @return
+   * @return \Grepodata\Library\Model\Indexer\Conquest
    */
   public static function first($Id)
   {

@@ -321,14 +321,36 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
         }
       }
 
+      // format response
+      $aResponse = array(
+        'conquest' => array(),
+        'intel' => array()
+      );
+
+      // Find conquest object if requested
+      $bHideRemainingDefences = false;
+      if (isset($aParams['include_conquest']) && $aParams['include_conquest'] == true) {
+        $oConquest = Conquest::first($aParams['conquest_id']);
+        $oWorld = World::getWorldById($oIndex->world);
+        if (!empty($oConquest) && !empty($oWorld)) {
+          $aResponse['conquest'] = $oConquest->getPublicFields($oWorld);
+          if (isset($aResponse['conquest']['hide_details']) && $aResponse['conquest']['hide_details'] == true) {
+            $bHideRemainingDefences = true;
+          }
+        }
+      }
+
+//      if ($bHideRemainingDefences) {
+//        // Report contents are hidden by Conquest (too recent)
+//        return self::OutputJson($aResponse);
+//      }
+
       // Find reports
       $aReports = CityInfo::allByConquestId($aParams['key'], $aParams['conquest_id']);
       if (empty($aReports) || count($aReports) <= 0) {
         throw new Exception("No reports found for this conquest");
       }
 
-      // format response
-      $aResponse = array('intel' => array());
       foreach ($aReports as $oCity) {
         $aConqDetails = json_decode($oCity->conquest_details, true);
         $aAttOnConq = array(
@@ -339,12 +361,18 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
             'player_id' => $oCity->player_id,
             'player_name' => $oCity->player_name,
             'alliance_id' => $oCity->alliance_id,
-            'units' => CityInfo::getMergedUnits($oCity),
+            'units' => CityInfo::parseUnitLossCount(CityInfo::getMergedUnits($oCity)),
           ),
           'defender' => array(
-            'units' => CityInfo::splitLandSeaUnits($aConqDetails['siege_units']) ?? array(),
+            'units' => array(),
+            'wall' => $aConqDetails['wall'] ?? 0,
+            'hidden' => $bHideRemainingDefences
           )
         );
+
+        if ($bHideRemainingDefences == false) {
+          $aAttOnConq['defender']['units'] = CityInfo::splitLandSeaUnits($aConqDetails['siege_units']) ?? array();
+        }
 
         $aResponse['intel'][] = $aAttOnConq;
       }
@@ -386,6 +414,7 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
       }
 
       // Find sieges
+      $oWorld = World::getWorldById($oIndex->world);
       $aSieges = Conquest::allByIndex($oIndex, 300);
       if (empty($aSieges) || count($aSieges) <= 0) {
         throw new Exception("No reports found for this conquest");
@@ -394,7 +423,7 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
       // format response
       $aResponse = array('sieges' => array());
       foreach ($aSieges as $oConquest) {
-        $aResponse['sieges'][] = $oConquest->getPublicFields();
+        $aResponse['sieges'][] = $oConquest->getPublicFields($oWorld);
       }
 
       return self::OutputJson($aResponse);
