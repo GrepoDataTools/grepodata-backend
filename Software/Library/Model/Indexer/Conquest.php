@@ -8,6 +8,7 @@ use \Illuminate\Database\Eloquent\Model;
 
 /**
  * @property mixed id
+ * @property mixed uid
  * @property mixed index_key
  * @property mixed town_id
  * @property mixed town_name
@@ -35,7 +36,7 @@ class Conquest extends Model
   {
     $aBelligerentsAll = json_decode($this->belligerent_all, true);
     $aResponse = array(
-      'conquest_id'   => $this->id,
+      'conquest_id'   => $this->uid,
       'town_id'       => $this->town_id,
       'town_name'     => $this->town_name,
       'player_id'     => $this->player_id,
@@ -60,7 +61,7 @@ class Conquest extends Model
       $Now = $oWorld->getServerTime();
       if ($this->new_owner_player_id == null
         && $this->cs_killed == false
-        && $Now->diffInHours(Carbon::parse($this->first_attack_date, $oWorld->php_timezone)) < 3) {
+        && $Now->diffInHours(Carbon::parse($this->first_attack_date, $oWorld->php_timezone)) < 4) {
         // add a 3 hour delay before friendly intel is visible in the detailed report
         $aResponse['hide_details'] = true;
       }

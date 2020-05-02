@@ -19,6 +19,26 @@ class Conquest
   }
 
   /**
+   * @param $Id
+   * @return \Grepodata\Library\Model\Indexer\Conquest
+   */
+  public static function firstOrFail($Id)
+  {
+    return \Grepodata\Library\Model\Indexer\Conquest::where('id', '=', $Id)
+      ->firstOrFail();
+  }
+
+  /**
+   * @param $Uid
+   * @return \Grepodata\Library\Model\Indexer\Conquest
+   */
+  public static function firstByUid($Uid)
+  {
+    return \Grepodata\Library\Model\Indexer\Conquest::where('uid', '=', $Uid)
+      ->firstOrFail();
+  }
+
+  /**
    * @param $TownId
    * @param $Index
    * @param int $Limit

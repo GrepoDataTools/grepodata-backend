@@ -243,6 +243,18 @@ class Scoreboard extends \Grepodata\Library\Router\BaseRoute
       // Validate params
       $aParams = self::validateParams(array());
 
+      // Check discord args
+      $bMinimal = false;
+      if (isset($aParams['minimal']) && $aParams['minimal'] === 'true') {
+        $bMinimal = true;
+      }
+      if (isset($aParams['guild']) && $aParams['guild'] !== '') {
+        $oDiscord = \Grepodata\Library\Controller\Discord::firstOrNew($aParams['guild']);
+        if ($oDiscord->server !== null) {
+          $aParams['world'] = $oDiscord->server;
+        }
+      }
+
       // Optional world
       if (!isset($aParams['world']) || $aParams['world'] == '') {
         $aParams['world'] = DEFAULT_WORLD;
@@ -274,8 +286,10 @@ class Scoreboard extends \Grepodata\Library\Router\BaseRoute
 
       // Find min date
       $MinDate = '';
-      $aMinDate = AllianceScoreboard::getMinDate($aParams['world']);
-      if (isset($aMinDate['date'])) $MinDate = $aMinDate['date'];
+      if ($bMinimal === false) {
+        $aMinDate = AllianceScoreboard::getMinDate($aParams['world']);
+        if (isset($aMinDate['date'])) $MinDate = $aMinDate['date'];
+      }
 
       // Check allow cache
       $AllowCache = false;
@@ -298,8 +312,8 @@ class Scoreboard extends \Grepodata\Library\Router\BaseRoute
         'nextUpdate'  => $Diff,
         'att'         => json_decode(urldecode($aScoreboard['att'])),
         'def'         => json_decode(urldecode($aScoreboard['def'])),
-        'con'         => json_decode(urldecode($aScoreboard['con'])),
-        'los'         => json_decode(urldecode($aScoreboard['los'])),
+        'con'         => $bMinimal?[]:json_decode(urldecode($aScoreboard['con'])),
+        'los'         => $bMinimal?[]:json_decode(urldecode($aScoreboard['los'])),
       );
       return self::OutputJson($aResponse);
     } catch (ModelNotFoundException $e) {

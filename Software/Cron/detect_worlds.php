@@ -30,7 +30,7 @@ $aServers = World::getServers();
 foreach ($aServers as $Server) {
 
   // Check new world
-  $oWorld = World::getLatestByServer($Server);
+  $oWorld = World::getPreviousWorld($Server);
 
   if ($oWorld == null || $oWorld == false) {
     Logger::error("Server detector was unable to get latest world for server " . $Server);
@@ -39,10 +39,21 @@ foreach ($aServers as $Server) {
 
   // Increment world id
   $PreviousWorldNum = substr($oWorld->grep_id, 2);
-  for ($i = 1; $i < 4; $i++) {
+
+  for ($i = 1; $i < 5; $i++) {
     $WorldNum = $PreviousWorldNum + $i;
     $WorldNum = $Server . $WorldNum;
-    Logger::debugInfo("Checking new world with id: " . $WorldNum);
+    try {
+      $oExistingWorld = World::getWorldById($WorldNum);
+      // world exists, skip to next world
+      if (!empty($oExistingWorld) || $oExistingWorld->grep_id == null) {
+        Logger::debugInfo("World already exists: " . $WorldNum);
+        continue;
+      }
+    } catch (\Exception $e) {
+      // world does not exist, we can continue checking
+      Logger::debugInfo("Checking new world with id: " . $WorldNum);
+    }
 
     // Test endpoint
     if (InnoData::testEndpoint($WorldNum)) {

@@ -74,6 +74,7 @@ class SiegeParser
       // Create a new conquest
       if ($oConquest == null) {
         $oConquest = new \Grepodata\Library\Model\Indexer\Conquest();
+        $oConquest->uid = md5(IndexBuilder::generateIndexKey(32) . time());
         $oConquest->index_key = $oCity->index_key;
         $oConquest->num_attacks_counted = 0;
         $oConquest->cs_killed = false;

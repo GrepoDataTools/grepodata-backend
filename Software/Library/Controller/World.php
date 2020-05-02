@@ -45,6 +45,19 @@ class World
   }
 
   /**
+   * Returns the previous most recent server for the given region
+   * @param $Server string Server identifier
+   * @return \Grepodata\Library\Model\World World
+   */
+  public static function getPreviousWorld($Server)
+  {
+    return \Grepodata\Library\Model\World::where('grep_id', 'LIKE', '%'.$Server.'%')
+      ->orderBy('created_at', 'desc')
+      ->offset(1)
+      ->first();
+  }
+
+  /**
    * Returns the current scoreboard date (current server date +2 hours delay)
    * @param \Grepodata\Library\Model\World $oWorld
    * @return string

@@ -299,56 +299,48 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
     $aParams = array();
     try {
       // Validate params
-      $aParams = self::validateParams(array('conquest_id', 'key'));
+      $aParams = self::validateParams(array());
 
-      // Validate key
-      $SearchKey = $aParams['key'];
-      $bValidIndex = false;
-      $oIndex = null;
-      $Attempts = 0;
-      while (!$bValidIndex && $Attempts <= 30) {
-        $Attempts += 1;
-        $oIndex = Validator::IsValidIndex($SearchKey);
+      // Find main objects using uid
+      if (isset($aParams['uid'])) {
+        $oConquest = Conquest::firstByUid($aParams['uid']);
+        $oIndex = \Grepodata\Library\Controller\Indexer\IndexInfo::firstOrFail($oConquest->index_key);
+        $oWorld = World::getWorldById($oIndex->world);
+      } else if (isset($aParams['conquest_id']) && isset($aParams['key'])) {
+        // find objects using real id + key, iff key is valid
+
+        // Validate key
+        $oIndex = Validator::IsValidIndex($aParams['key']);
         if ($oIndex === null || $oIndex === false) {
           die(self::OutputJson(array(
-            'message'     => 'Unauthorized index key. Please enter the correct index key. You will be banned after 10 incorrect attempts.',
+            'message'     => 'Unauthorized index key.',
           ), 401));
         }
-        if (isset($oIndex->moved_to_index) && $oIndex->moved_to_index !== null && $oIndex->moved_to_index != '') {
-          $SearchKey = $oIndex->moved_to_index; // redirect to new index
-        } else {
-          $bValidIndex = true;
-        }
+        $oConquest = Conquest::firstOrFail($aParams['conquest_id']);
+        $oWorld = World::getWorldById($oIndex->world);
+      } else {
+        die(self::OutputJson(array(
+          'message' => 'Bad request! Invalid or missing fields.',
+          'fields'  => 'Missing: uid OR (conquest_id AND key)'
+        ), 400));
       }
 
       // format response
       $aResponse = array(
-        'conquest' => array(),
+        'world' => $oWorld->grep_id,
+        'conquest' => $oConquest->getPublicFields($oWorld),
         'intel' => array()
       );
 
-      // Find conquest object if requested
       $bHideRemainingDefences = false;
-      if (isset($aParams['include_conquest']) && $aParams['include_conquest'] == true) {
-        $oConquest = Conquest::first($aParams['conquest_id']);
-        $oWorld = World::getWorldById($oIndex->world);
-        if (!empty($oConquest) && !empty($oWorld)) {
-          $aResponse['conquest'] = $oConquest->getPublicFields($oWorld);
-          if (isset($aResponse['conquest']['hide_details']) && $aResponse['conquest']['hide_details'] == true) {
-            $bHideRemainingDefences = true;
-          }
-        }
+      if (isset($aResponse['conquest']['hide_details']) && $aResponse['conquest']['hide_details'] == true) {
+        $bHideRemainingDefences = true;
       }
 
-//      if ($bHideRemainingDefences) {
-//        // Report contents are hidden by Conquest (too recent)
-//        return self::OutputJson($aResponse);
-//      }
-
       // Find reports
-      $aReports = CityInfo::allByConquestId($aParams['key'], $aParams['conquest_id']);
+      $aReports = CityInfo::allByConquestId($oIndex->key_code, $oConquest->id);
       if (empty($aReports) || count($aReports) <= 0) {
-        throw new Exception("No reports found for this conquest");
+        return self::OutputJson($aResponse);
       }
 
       foreach ($aReports as $oCity) {
@@ -361,6 +353,8 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
             'player_id' => $oCity->player_id,
             'player_name' => $oCity->player_name,
             'alliance_id' => $oCity->alliance_id,
+            'attack_type' => 'attack',
+            'friendly' => false,
             'units' => CityInfo::parseUnitLossCount(CityInfo::getMergedUnits($oCity)),
           ),
           'defender' => array(
@@ -370,6 +364,17 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
           )
         );
 
+        if (!empty($aAttOnConq['attacker']['units'])) {
+          foreach ($aAttOnConq['attacker']['units'] as $aUnit) {
+            if (isset($aUnit['name']) && (
+                in_array($aUnit['name'], CityInfo::sea_units) ||
+                $aUnit['name'] == CityInfo::sea_monster)) {
+              $aAttOnConq['attacker']['attack_type'] = 'sea_attack';
+              break;
+            }
+          }
+        }
+
         if ($bHideRemainingDefences == false) {
           $aAttOnConq['defender']['units'] = CityInfo::splitLandSeaUnits($aConqDetails['siege_units']) ?? array();
         }
@@ -377,10 +382,27 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
         $aResponse['intel'][] = $aAttOnConq;
       }
 
+      try {
+        // Hide owner intel
+        $aOwners = IndexOverview::getOwnerAllianceIds($oIndex->key_code);
+        if (!empty($aResponse['intel'])) {
+          foreach ($aResponse['intel'] as $Id => $aAttOnConq) {
+            if (isset($aAttOnConq['attacker']['alliance_id']) && $aAttOnConq['attacker']['alliance_id'] > 0) {
+              if (in_array($aAttOnConq['attacker']['alliance_id'], $aOwners)) {
+                // Friendly intel is hidden
+                $aResponse['intel'][$Id]['attacker']['town_id'] = 0;
+                $aResponse['intel'][$Id]['attacker']['town_name'] = '';
+                $aResponse['intel'][$Id]['attacker']['friendly'] = true;
+              }
+            }
+          }
+        }
+      } catch (Exception $e) {}
+
       return self::OutputJson($aResponse);
     } catch (Exception $e) {
       die(self::OutputJson(array(
-        'message'     => 'No conquests found with this id in this index.',
+        'message'     => 'No conquests found with this uid.',
         'parameters'  => $aParams
       ), 404));
     }

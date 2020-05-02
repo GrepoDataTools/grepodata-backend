@@ -9,11 +9,17 @@ require(__DIR__ . '/../config.php');
 use Carbon\Carbon;
 use Grepodata\Library\Controller\Indexer\CityInfo;
 use Grepodata\Library\Controller\World;
+use Grepodata\Library\Indexer\IndexBuilder;
 use Grepodata\Library\Model\Operation_log;
 
 $t = Carbon::now()->subDay();
 $t2 = Carbon::now();
 
+//$aConquests = \Grepodata\Library\Model\Indexer\Conquest::whereNull('uid')->get();
+//foreach ($aConquests as $oConquest) {
+//  $oConquest->uid = md5(IndexBuilder::generateIndexKey(32) . time());
+//  $oConquest->save();
+//}
 
 $aCities = CityInfo::allByTownIdByKeys(array('5be6zv1s'), 10043);
 
