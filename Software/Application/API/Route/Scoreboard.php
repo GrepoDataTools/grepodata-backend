@@ -273,7 +273,12 @@ class Scoreboard extends \Grepodata\Library\Router\BaseRoute
       }
 
       // Optional using date
-      if (isset($aParams['date']) && $aParams['date'] != '') {
+      if (isset($aParams['yesterday']) && $aParams['yesterday'] === 'true') {
+        $aScoreboard = AllianceScoreboard::yesterdayByWorld($aParams['world']);
+        if ($aScoreboard===null) {
+          throw new ModelNotFoundException();
+        }
+      } elseif (isset($aParams['date']) && $aParams['date'] != '') {
         $aScoreboard = AllianceScoreboard::first($aParams['date'], $aParams['world']);
       }
 

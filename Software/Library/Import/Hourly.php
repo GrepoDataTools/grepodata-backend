@@ -181,6 +181,14 @@ class Hourly
     $DiffDayOfWeek = $DiffDate->dayOfWeek; // 0 for sunday, trough 6 for saturday
     $DiffHourOfDay = $DiffDate->hour; // 0 trough 23
 
+    // Check scoreboard date; if there is a daily reset due to happen, use new diff instead of old_att/old_def
+    $LastProcessedReset = $oWorld->last_reset_time;
+    $bAwaitingDailyReset = False;
+    if (strtotime("-26 hour") > strtotime($LastProcessedReset)) {
+      Logger::silly("Awaiting daily reset, using diff values for update; server last reset time: " . $LastProcessedReset);
+      $bAwaitingDailyReset = True;
+    }
+
     // ==== 1. ATTACK
     $TotalAtt = sizeof($aPlayerAttData);
     Logger::silly("Updating player kills att: ".$TotalAtt.".");
@@ -246,7 +254,7 @@ class Hourly
 
           $aPlayerAttDiffs[$aData['player_id']] = array(
             'i' => $aData['player_id'],
-            's' => ($oPlayer->att - $oPlayer->att_old),
+            's' => $bAwaitingDailyReset == true ? $Diff : ($oPlayer->att - $oPlayer->att_old),
             'n' => $oPlayer->name,
             'a_id' => $oPlayer->alliance_id,
             'r' => (int) $aData['rank']
@@ -347,7 +355,7 @@ class Hourly
 
           $aPlayerDefDiffs[$aData['player_id']] = array(
             'i' => $aData['player_id'],
-            's' => ($oPlayer->def - $oPlayer->def_old),
+            's' => $bAwaitingDailyReset == true ? $Diff : ($oPlayer->def - $oPlayer->def_old),
             'n' => $oPlayer->name,
             'a_id' => $oPlayer->alliance_id,
             'r' => (int) $aData['rank']

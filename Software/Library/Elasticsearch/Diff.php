@@ -447,7 +447,7 @@ class Diff
         'Date'=>'asc',
       ),
       'from' => 0,
-      'size' => 100,
+      'size' => 3000,
       'query' => array(
         'bool' => array(
           'must' => array(

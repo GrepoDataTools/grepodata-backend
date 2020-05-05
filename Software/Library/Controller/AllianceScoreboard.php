@@ -44,6 +44,17 @@ class AllianceScoreboard
 
   /**
    * @param $World string World identifier
+   * @return \Grepodata\Library\Model\PlayerScoreboard
+   */
+  public static function yesterdayByWorld($World)
+  {
+    return \Grepodata\Library\Model\AllianceScoreboard::where('world', '=', $World)
+      ->orderBy('updated_at', 'desc')
+      ->skip(1)->take(1)->get()[0];
+  }
+
+  /**
+   * @param $World string World identifier
    * @return \Grepodata\Library\Model\AllianceScoreboard
    */
   public static function getMinDate($World)
