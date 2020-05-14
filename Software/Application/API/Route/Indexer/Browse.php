@@ -164,6 +164,8 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
       if ($aCities === null || sizeof($aCities) <= 0) throw new ModelNotFoundException();
 
       $aResponse = self::FormatBrowseOutput($aCities, $oWorld);
+      $aResponse['script_version'] = $oIndex->script_version;
+      $aResponse['update_message'] = USERSCRIPT_UPDATE_INFO;
       return self::OutputJson($aResponse);
 
     } catch (ModelNotFoundException $e) {
@@ -222,6 +224,8 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
       }
 
       $aResponse = self::FormatBrowseOutput($aCities, $oWorld);
+      $aResponse['script_version'] = $oIndex->script_version;
+      $aResponse['update_message'] = USERSCRIPT_UPDATE_INFO;
       return self::OutputJson($aResponse);
 
     } catch (ModelNotFoundException $e) {
@@ -318,7 +322,7 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
       }
 
       $aResponse['all'] = array_reverse($aResponse['all']);
-      $aResponse['latest_version'] = USERSCRIPT_VERSION;
+      $aResponse['latest_version'] = $oIndex->script_version;
       $aResponse['update_message'] = USERSCRIPT_UPDATE_INFO;
       return self::OutputJson($aResponse);
 
@@ -382,8 +386,6 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
       'off'=>array(),
       'bir'=>array(),
       'def'=>array(),
-      'latest_version' => USERSCRIPT_VERSION,
-      'update_message' => USERSCRIPT_UPDATE_INFO,
     );
     $aFireshipCities = array();
     $aMythCities = array();

@@ -25,6 +25,7 @@ class IndexBuilder
       $oIndex->world = $World;
       $oIndex->mail = $Mail;
       $oIndex->status = 'active';
+      $oIndex->script_version = USERSCRIPT_VERSION;
       $Result = $oIndex->save();
 
       if ($Result) {

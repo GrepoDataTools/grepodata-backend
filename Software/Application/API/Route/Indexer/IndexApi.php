@@ -562,7 +562,7 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
         'notes' => array(),
         'buildings' => array(),
         'intel' => array(),
-        'latest_version' => USERSCRIPT_VERSION,
+        'latest_version' => $oPrimaryIndex->script_version,
         'update_message' => USERSCRIPT_UPDATE_INFO,
       );
       $bHasIntel = false;

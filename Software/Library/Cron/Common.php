@@ -304,8 +304,9 @@ class Common
       ->get();
 
     if (!isset($aIndex) || $aIndex == null || $aIndex == '' || sizeof($aIndex) <= 0) {
-      Logger::warning("Found 0 active indices in database.");
-      return false;
+      return array();
+//      Logger::warning("Found 0 active indices in database.");
+//      return false;
     }
 
     return $aIndex;

@@ -7,6 +7,7 @@ use Grepodata\Library\Controller\World;
 use Grepodata\Library\Cron\Common;
 use Grepodata\Library\Indexer\IndexBuilder;
 use Grepodata\Library\Logger\Logger;
+use Grepodata\Library\Model\Indexer\IndexInfo;
 
 if (PHP_SAPI !== 'cli') {
   die('not allowed');
@@ -34,11 +35,16 @@ foreach ($aWorlds as $oWorld) {
     Common::endExecution(__FILE__);
   }
 
+  Logger::silly("Reloading userscripts for world " . $oWorld->grep_id . ". Num indexes: " . count($aIndex));
+
+  /** @var IndexInfo $oIndex */
   foreach ($aIndex as $oIndex) {
     // Check commands 'php SCRIPTNAME[=0] INDEXCODE[=1]'
     if (isset($argv[1]) && $argv[1]!=null && $argv[1]!='' && $argv[1]!=$oIndex->key_code) continue;
 
     IndexBuilder::createUserscript($oIndex->key_code, $oWorld);
+    $oIndex->script_version = USERSCRIPT_VERSION; // update active version
+    $oIndex->save();
   }
 }
 
