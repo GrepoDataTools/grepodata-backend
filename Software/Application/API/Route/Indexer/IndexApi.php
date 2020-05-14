@@ -494,6 +494,12 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
             ), 401));
           }
           if (isset($oIndex->moved_to_index) && $oIndex->moved_to_index !== null && $oIndex->moved_to_index != '') {
+            if ($oIndex->moved_to_index == 'deleted1') {
+              die(self::OutputJson(array(
+                'moved'       => true,
+                'message'     => 'Index was deleted'
+              ), 200));
+            }
             $SearchKey = $oIndex->moved_to_index; // redirect to new index
           } else {
             $bValidIndex = true;

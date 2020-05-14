@@ -4,6 +4,7 @@ namespace Grepodata\Library\Indexer;
 
 use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\Indexer\IndexInfo;
+use Grepodata\Library\Model\World;
 
 class IndexBuilder
 {
@@ -28,7 +29,8 @@ class IndexBuilder
 
       if ($Result) {
         try {
-          self::createUserscript($oIndex->key_code, $oIndex->world);
+          $oWorld = \Grepodata\Library\Controller\World::getWorldById($oIndex->world);
+          self::createUserscript($oIndex->key_code, $oWorld);
         } catch (\Exception $e) {
           Logger::error("Critical error while creating new userscript for index " . $NewIndexKey);
         }
@@ -53,19 +55,54 @@ class IndexBuilder
       return true;
     }
 
-    public static function createUserscript($key, $world, $version = USERSCRIPT_VERSION) {
+    public static function createUserscript($key, World $oWorld, $version = USERSCRIPT_VERSION) {
       try {
         $Encrypted = md5($key);
+        if (empty($oWorld->uid)) {
+          $oWorld->uid = str_shuffle("abcdefkabltnghijklmnopqrstuvwxyz");
+          $oWorld->save();
+        }
 
-        // Script indexer
+        // Source
+        $oSource = new \Grepodata\Library\Helper\Smarty();
+        $oSource->assign('world', $oWorld->grep_id);
+        $oSource->assign('globals', $oWorld->uid);
+        $oSource->assign('key', $key);
+        $oSource->assign('encrypted', $Encrypted);
+        $oSource->assign('version', $version);
+        $Source = $oSource->fetch('source.tpl');
+        $Source = str_replace('gd_', substr(str_shuffle("abcdefghijklmnopqrstuvwxyz"), 0, rand(1,10)).md5(IndexBuilder::generateIndexKey(32).time()), $Source);
+        $SourceFilename = USERSCRIPT_TEMP . '/source_'.$Encrypted.'.js';
+        $SourceFile = file_put_contents($SourceFilename, $Source);
+        if (!$SourceFile || !file_exists($SourceFilename)) throw new \Exception("Unable to save source to disk");
+
+        // Obfs
+        $ObfuscatorExec = OBFUSCATOR_EXEC;
+        $ObsFilename = USERSCRIPT_TEMP . '/obs_'.$Encrypted.'.js';
+        $Options = '';
+        if (!bDevelopmentMode) shell_exec(". /home/vps/.nvm/nvm.sh");
+        $result = shell_exec("$ObfuscatorExec $SourceFilename --output $ObsFilename $Options 2>&1");
+        echo $result;
+        if (!file_exists($ObsFilename)) {
+          throw new \Exception("Unable to obfuscate source [".$SourceFilename."]. result: " . json_encode($result));
+        }
+        unlink($SourceFilename);
+        $SourceObs = file_get_contents($ObsFilename);
+        unlink($ObsFilename);
+        if ($SourceObs == false) {
+          throw new \Exception("Unable to read obs file");
+        }
+
+        // Script
         $oSmarty = new \Grepodata\Library\Helper\Smarty();
-        $oSmarty->assign('world', $world);
+        $oSmarty->assign('world', $oWorld->grep_id);
         $oSmarty->assign('key', $key);
         $oSmarty->assign('encrypted', $Encrypted);
+        $oSmarty->assign('source', $SourceObs);
         $oSmarty->assign('version', $version);
         $Script = $oSmarty->fetch('cityindexer.tpl');
         $Result = file_put_contents(USERSCRIPT_INDEXER . '/cityindexer_'.$Encrypted.'.user.js', $Script);
-        if (!$Result) throw new \Exception();
+        if (!$Result) throw new \Exception("Unable to save cityindexer to disk");
 
         return true;
       } catch (\Exception $e) {

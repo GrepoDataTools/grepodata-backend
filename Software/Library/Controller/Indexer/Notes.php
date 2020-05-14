@@ -13,7 +13,7 @@ class Notes
    */
   public static function allByIndex(\Grepodata\Library\Model\Indexer\IndexInfo $oIndex)
   {
-    return \Grepodata\Library\Model\Indexer\Notes::whereIn('index_key', $oIndex->key_code, 'and')
+    return \Grepodata\Library\Model\Indexer\Notes::where('index_key', '=', $oIndex->key_code)
       ->orderBy('id', 'desc')
       ->get();
   }

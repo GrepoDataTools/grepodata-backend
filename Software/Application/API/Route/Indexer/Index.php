@@ -533,7 +533,7 @@ New index key: '.$oNewIndex->key_code.',<br/>
 New index page: <a href="https://grepodata.com/indexer/'.$oNewIndex->key_code.'">grepodata.com/indexer/'.$oNewIndex->key_code.'</a><br/>
 <br/>
 Your previously collected intel will be available under the new index key.<br/>
-All new reports will be redirected to the new index; you do not need to update the userscript.<br/>
+All new reports will be redirected to the new index; But it is advised that you remove the old userscript and install the userscript for this new index.<br/>
 <br/>
 If you encounter any problems or have a question, please feel free to reply to this email.<br/>
 <br/>
@@ -721,7 +721,7 @@ admin@grepodata.com',
         if (count($aConquests) >= 20) $SearchLimit = 5;
         foreach ($aConquests as $oConquest) {
           if ($oConquest->num_attacks_counted>=$SearchLimit) {
-            $aRecentConquests[] = $oConquest->getPublicFields($oWorld);;
+            $aRecentConquests[] = $oConquest->getPublicFields($oWorld);
           }
           if (count($aRecentConquests) > 10) {
             // only return top 10

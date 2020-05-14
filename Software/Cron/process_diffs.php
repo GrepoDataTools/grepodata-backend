@@ -28,6 +28,9 @@ if ($worlds === false) {
   Common::endExecution(__FILE__);
 }
 
+$WorldCount = count($worlds);
+Logger::warning("Diff worlds: retrieved $WorldCount active worlds from database.");
+
 $QueryDateLimit = Carbon::now()->subDays(14); // If updated within last 14 days
 
 /** @var $oWorld World */

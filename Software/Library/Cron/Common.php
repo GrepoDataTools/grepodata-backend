@@ -262,8 +262,8 @@ class Common
       return $worlds;
     }
 
-    // Prioritise Dutch worlds, then English worlds
-    $aPriorityOrder = array('nl' => array(), 'en' => array(), 'de' => array(), 'other' => array()); // Other servers maintain original order
+    // Prioritise Dutch worlds, then French worlds
+    $aPriorityOrder = array('nl' => array(), 'fr' => array(), 'de' => array(), 'en' => array(), 'other' => array()); // Other servers maintain original order
     /** @var World $oWorld */
     foreach ($worlds as $oWorld) {
       $Server = substr($oWorld->grep_id, 0, 2);
@@ -276,8 +276,10 @@ class Common
 
     // Join servers
     $aJoined = array();
-    foreach ($aPriorityOrder as $Servers) {
-      $aJoined = array_merge($aJoined, $Servers);
+    foreach ($aPriorityOrder as $aServer) {
+      foreach ($aServer as $oWorld) {
+        $aJoined[] = $oWorld;
+      }
     }
 
     return $aJoined;
@@ -286,6 +288,20 @@ class Common
   public static function getAllActiveIndexes()
   {
     $aIndex = IndexInfo::where('status', '=', 'active')->get();
+
+    if (!isset($aIndex) || $aIndex == null || $aIndex == '' || sizeof($aIndex) <= 0) {
+      Logger::warning("Found 0 active indices in database.");
+      return false;
+    }
+
+    return $aIndex;
+  }
+
+  public static function getAllIndexesByWorld(World $oWorld)
+  {
+    $aIndex = IndexInfo::where('world', '=', $oWorld->grep_id)
+      ->orderBy('id', 'desc')
+      ->get();
 
     if (!isset($aIndex) || $aIndex == null || $aIndex == '' || sizeof($aIndex) <= 0) {
       Logger::warning("Found 0 active indices in database.");

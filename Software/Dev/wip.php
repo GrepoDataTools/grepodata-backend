@@ -15,6 +15,9 @@ use Grepodata\Library\Model\Operation_log;
 $t = Carbon::now()->subDay();
 $t2 = Carbon::now();
 
+//$aWorlds2 = World::getAllActiveWorlds();
+$aWorlds = \Grepodata\Library\Cron\Common::getAllActiveWorlds();
+
 //$aConquests = \Grepodata\Library\Model\Indexer\Conquest::whereNull('uid')->get();
 //foreach ($aConquests as $oConquest) {
 //  $oConquest->uid = md5(IndexBuilder::generateIndexKey(32) . time());

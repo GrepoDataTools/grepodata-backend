@@ -1,4 +1,5 @@
 <?php
 require(__DIR__ . '/../config.php');
 
-\Grepodata\Library\Indexer\IndexBuilder::createUserscript('', 'nl66');
+$oWorld = \Grepodata\Library\Controller\World::getWorldById('nl78');
+\Grepodata\Library\Indexer\IndexBuilder::createUserscript('', $oWorld);

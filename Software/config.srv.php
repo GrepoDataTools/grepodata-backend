@@ -40,11 +40,12 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
 
   // Smarty dirs
   $SourceDir = 'X:/dev/grepodata/grepodata-backend/';
-  define('SMARTY_TEMPLATE_DIR', "$SourceDir/Software/Templates");
+  define('SMARTY_TEMPLATE_DIR', "$SourceDir/Software/Templates/templates");
   define('SMARTY_COMPILE_DIR', "$SourceDir/Software/Templates/compiled");
   define('SMARTY_CACHE_DIR', "$SourceDir/Software/Templates/cache");
 
   define('USERSCRIPT_INDEXER', $SourceDir."Software/Templates/compiled");
+  define('USERSCRIPT_TEMP', $SourceDir."Software/Templates/compiled");
   define('HASH2IMG_DIRECTORY', $SourceDir."Software/Application/debugger/temp");
 
   define('FRONTEND_URL', 'http://localhost:4200');
@@ -83,11 +84,12 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
   $HomeDir = '/home/vps/grepodata/acceptance/grepodata-backend';
   $SourceDir = $HomeDir . '/active/';
   $UserscriptDir = $HomeDir . '/Userscript';
-  define('SMARTY_TEMPLATE_DIR', "$SourceDir/Software/Templates");
+  define('SMARTY_TEMPLATE_DIR', "$UserscriptDir/smarty/templates");
   define('SMARTY_COMPILE_DIR', "$UserscriptDir/smarty/compiled");
   define('SMARTY_CACHE_DIR', "$UserscriptDir/smarty/cache");
 
   define('USERSCRIPT_INDEXER', $UserscriptDir . '/v1');
+  define('USERSCRIPT_TEMP', $UserscriptDir . '/v2');
   define('HASH2IMG_DIRECTORY', $HomeDir."/Temp/report2img/temp");
 
   define('FRONTEND_URL', 'https://test.grepodata.com');
@@ -126,11 +128,12 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
   $HomeDir = '/home/vps/grepodata/production/grepodata-backend';
   $SourceDir = $HomeDir . '/active/';
   $UserscriptDir = $HomeDir . '/Userscript';
-  define('SMARTY_TEMPLATE_DIR', "$SourceDir/Software/Templates");
+  define('SMARTY_TEMPLATE_DIR', "$UserscriptDir/smarty/templates");
   define('SMARTY_COMPILE_DIR', "$UserscriptDir/smarty/compiled");
   define('SMARTY_CACHE_DIR', "$UserscriptDir/smarty/cache");
 
   define('USERSCRIPT_INDEXER', $UserscriptDir . '/v1');
+  define('USERSCRIPT_TEMP', $UserscriptDir . '/v2');
   define('HASH2IMG_DIRECTORY', $HomeDir."/Temp/report2img/temp");
 
   define('FRONTEND_URL', 'https://grepodata.com');

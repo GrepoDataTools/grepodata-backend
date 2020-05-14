@@ -23,3 +23,5 @@ define('PRIVATE_MAIL_TRANSPORT_KEY',  '');
 
 define('PRIVATE_LOG_AUTH', '');
 define('PRIVATE_DEBUG_AUTH', '');
+
+define('OBFUSCATOR_EXEC', 'node javascript-obfuscator');

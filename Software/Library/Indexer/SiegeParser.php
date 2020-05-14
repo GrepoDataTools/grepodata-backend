@@ -190,6 +190,7 @@ class SiegeParser
         if (!empty($aMatch)) {
           $LostUnits = abs((int) filter_var($aMatch[0], FILTER_SANITIZE_NUMBER_INT));
           if (!is_nan($LostUnits)) {
+            if (!isset($aTotalLossesAtt[$Key])) $aTotalLossesAtt[$Key] = 0;
             $aTotalLossesAtt[$Key] += $LostUnits;
           }
         }
@@ -200,6 +201,7 @@ class SiegeParser
         if (!empty($aMatch)) {
           $LostUnits = abs((int) filter_var($aMatch[0], FILTER_SANITIZE_NUMBER_INT));
           if (!is_nan($LostUnits) && $LostUnits > 0) {
+            if (!isset($aTotalLossesDef[$Key])) $aTotalLossesDef[$Key] = 0;
             $aTotalLossesDef[$Key] += $LostUnits;
             if ($Key === 'colonize_ship') {
               $oConquest->cs_killed = true;

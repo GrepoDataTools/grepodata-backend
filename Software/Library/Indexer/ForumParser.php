@@ -21,6 +21,10 @@ class ForumParser
       'day' => 'd-m-y', 'day_regex' => '/[0-9]{2}[-]{1}[0-9]{2}[-]{1}[0-9]{2}/',
       'time' => 'H:i:s', 'time_regex' => '/[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2}(?!.*[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2})/',
     ),
+    'se' => array(
+      'day' => 'y-m-d', 'day_regex' => '/[0-9]{2}[-]{1}[0-9]{2}[-]{1}[0-9]{2}/',
+      'time' => 'H:i:s', 'time_regex' => '/[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2}(?!.*[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2})/',
+    ),
     'de' => array(
       'day' => 'd.m.y', 'day_regex' => '/[0-9]{2}[.]{1}[0-9]{2}[.]{1}[0-9]{2}/',
       'time' => 'H:i:s', 'time_regex' => '/[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2}(?!.*[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2})/',
@@ -325,6 +329,11 @@ class ForumParser
     $ReportClass = $aReportData['attributes']['class'];
     if (strpos($ReportClass, "published_report") === false) {
       throw new ForumParserExceptionError("Invalid report class. report data does not contain published_report");
+    }
+
+    // Reformat molehole changes
+    if (isset($aReportData['content'][0]['type']) && $aReportData['content'][0]['type'] === 'I') {
+      $aReportData = $aReportData['content'][0];
     }
 
     // Navigate to report child (If report is contained within a bold, underline or italic BBcode element, then each of these will add a layer of abstraction)

@@ -11,6 +11,7 @@ use Grepodata\Library\Import\Daily;
 use Grepodata\Library\Import\Elasticsearch;
 use Grepodata\Library\Import\Hourly;
 use Grepodata\Library\Import\Towns;
+use Grepodata\Library\Indexer\IndexBuilder;
 use Grepodata\Library\Logger\Logger;
 
 if (PHP_SAPI !== 'cli') {
@@ -68,6 +69,7 @@ foreach ($aServers as $Server) {
       Logger::warning("New world detected: " . $WorldNum);
       $oNewWorld = new \Grepodata\Library\Model\World();
       $oNewWorld->grep_id = $WorldNum;
+      $oNewWorld->uid = null;
       $oNewWorld->php_timezone = $oWorld->php_timezone;
       $oNewWorld->name = $WorldNum;
       $oNewWorld->stopped = 1;

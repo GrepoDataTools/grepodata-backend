@@ -161,7 +161,7 @@ class Scoreboard extends \Grepodata\Library\Router\BaseRoute
       $oWorld = \Grepodata\Library\Controller\World::getWorldById($aParams['world']);
       $oDate = Carbon::createFromFormat("Y-m-d H:i", $aParams['date'] . " 00:00");
 
-      $aResponse = Diff::GetDiffsByHour($oWorld, $oDate, $aParams['hour'], 50, 20);
+      $aResponse = Diff::GetDiffsByHour($oWorld, $oDate, $aParams['hour'], 500, 20);
 
       return self::OutputJson($aResponse);
     } catch (ModelNotFoundException $e) {

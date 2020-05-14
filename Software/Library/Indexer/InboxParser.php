@@ -20,6 +20,7 @@ class InboxParser
     'nl' => array('date_format' => 'd-m-Y H:i:s'),
     'en' => array('date_format' => 'Y-m-d H:i:s'),
     'us' => array('date_format' => 'Y-m-d H:i:s'),
+    'se' => array('date_format' => 'Y-m-d H:i:s'), // 2020-05-09 23:54:53
     'de' => array('date_format' => 'd.m.Y H:i:s'),
     'ro' => array('date_format' => 'd.m.Y H:i:s'),
     'ru' => array('date_format' => 'd.m.Y H:i:s'),
@@ -448,40 +449,9 @@ class InboxParser
         if (sizeof($aCityUnits) <= 0 && ($bGroundVisible || $bSeaVisible)) {
           throw new InboxParserExceptionWarning("unable to find report units");
         }
-        function parseSingleSideUnits($aCityUnits) {
-          $aCityUnitsFinal = array(
-            'had' => array(),
-            'lost' => array()
-          );
-          foreach ($aCityUnits as $aUnitInfo) {
-            foreach (['had','lost'] as $Moment) {
-              if (key_exists($Moment, $aUnitInfo) && sizeof($aUnitInfo[$Moment]) > 0) {
-                foreach ($aUnitInfo[$Moment] as $Unit => $Value) {
-                  if (!key_exists($Unit, $aCityUnitsFinal[$Moment])) {
-                    $aCityUnitsFinal[$Moment][$Unit] = $Value;
-                  }
-                }
-              }
-            }
-          }
-          $aCityUnits = $aCityUnitsFinal;
-
-          $aUnitsClean = array();
-          foreach ($aCityUnits['had'] as $Unit => $Value) {
-            $aUnitsClean[$Unit] = $Value;
-          }
-          foreach ($aCityUnits['lost'] as $Unit => $Value) {
-            if (isset($aUnitsClean[$Unit])) {
-              $aUnitsClean[$Unit] = $aUnitsClean[$Unit] . '(-'.$Value.')';
-            } else {
-              $aUnitsClean[$Unit] = $Value . '(-'.$Value.')';
-            }
-          }
-          return $aUnitsClean;
-        }
 
         // Normal att OR defender side
-        $aUnitsClean = parseSingleSideUnits($aCityUnits);
+        $aUnitsClean = self::parseSingleSideUnits($aCityUnits);
         foreach ($aUnitsClean as $Unit => $Value) {
           if ($Unit == self::fireships) {
             $Fireships = $Value;
@@ -503,7 +473,7 @@ class InboxParser
 
         // Parse conquest side
         if ($bIsOngoingConquest == true && !is_null($oConquestDetails)) {
-          $aUnitsClean = parseSingleSideUnits($aCityUnitsDef);
+          $aUnitsClean = self::parseSingleSideUnits($aCityUnitsDef);
           $oConquestDetails->siegeUnits = $aUnitsClean;
         }
 
@@ -836,6 +806,39 @@ class InboxParser
       }
     }
 
+  }
+
+  private static function parseSingleSideUnits($aCityUnits)
+  {
+    $aCityUnitsFinal = array(
+      'had' => array(),
+      'lost' => array()
+    );
+    foreach ($aCityUnits as $aUnitInfo) {
+      foreach (['had','lost'] as $Moment) {
+        if (key_exists($Moment, $aUnitInfo) && sizeof($aUnitInfo[$Moment]) > 0) {
+          foreach ($aUnitInfo[$Moment] as $Unit => $Value) {
+            if (!key_exists($Unit, $aCityUnitsFinal[$Moment])) {
+              $aCityUnitsFinal[$Moment][$Unit] = $Value;
+            }
+          }
+        }
+      }
+    }
+    $aCityUnits = $aCityUnitsFinal;
+
+    $aUnitsClean = array();
+    foreach ($aCityUnits['had'] as $Unit => $Value) {
+      $aUnitsClean[$Unit] = $Value;
+    }
+    foreach ($aCityUnits['lost'] as $Unit => $Value) {
+      if (isset($aUnitsClean[$Unit])) {
+        $aUnitsClean[$Unit] = $aUnitsClean[$Unit] . '(-'.$Value.')';
+      } else {
+        $aUnitsClean[$Unit] = $Value . '(-'.$Value.')';
+      }
+    }
+    return $aUnitsClean;
   }
 
 }

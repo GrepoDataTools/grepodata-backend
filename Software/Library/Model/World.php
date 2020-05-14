@@ -8,6 +8,7 @@ use \Illuminate\Database\Eloquent\Model;
 
 /**
  * @property mixed grep_id
+ * @property mixed uid
  * @property mixed php_timezone
  * @property mixed name
  * @property mixed stopped
@@ -21,7 +22,7 @@ use \Illuminate\Database\Eloquent\Model;
 class World extends Model
 {
   protected $table = 'World';
-  protected $fillable = array('grep_id', 'php_timezone', 'name', 'stopped', 'last_reset_time', 'grep_server_time', 'etag');
+  protected $fillable = array('grep_id', 'uid', 'php_timezone', 'name', 'stopped', 'last_reset_time', 'grep_server_time', 'etag');
 
   /**
    * Returns the current server time

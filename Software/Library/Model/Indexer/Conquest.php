@@ -3,6 +3,7 @@
 namespace Grepodata\Library\Model\Indexer;
 
 use Carbon\Carbon;
+use Grepodata\Library\Indexer\UnitStats;
 use Grepodata\Library\Model\World;
 use \Illuminate\Database\Eloquent\Model;
 
@@ -32,6 +33,8 @@ class Conquest extends Model
 {
   protected $table = 'Index_conquest';
 
+
+
   public function getPublicFields(World $oWorld = null)
   {
     $aBelligerentsAll = json_decode($this->belligerent_all, true);
@@ -55,6 +58,19 @@ class Conquest extends Model
       'new_owner_player_id' => $this->new_owner_player_id,
       'cs_killed' => $this->cs_killed,
     );
+
+    try {
+      $BPAtt = 0;
+      foreach ($aResponse['total_losses_att'] as $Unit => $value) {
+        $BPAtt += UnitStats::units[$Unit]['population'] * $value;
+      }
+      $BPDef = 0;
+      foreach ($aResponse['total_losses_def'] as $Unit => $value) {
+        $BPDef += UnitStats::units[$Unit]['population'] * $value;
+      }
+      $aResponse['total_bp_att'] = $BPAtt;
+      $aResponse['total_bp_def'] = $BPDef;
+    } catch (\Exception $e) {}
 
     $aResponse['hide_details'] = false;
     if ($oWorld != null) {
