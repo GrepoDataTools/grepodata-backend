@@ -56,11 +56,12 @@ class IndexBuilder
       return true;
     }
 
-    public static function createUserscript($key, World $oWorld, $version = USERSCRIPT_VERSION) {
+    public static function createUserscript($key, World $oWorld, $bObfuscate = true, $bMask = true, $version = USERSCRIPT_VERSION) {
       try {
         $Encrypted = md5($key);
+        $Mask = substr(str_shuffle("abcdefghijklmnopqrstuvwxyz"), 0, rand(1,4)).substr(md5(IndexBuilder::generateIndexKey(32).time()), 0, rand(4,12));
         if (empty($oWorld->uid)) {
-          $oWorld->uid = str_shuffle("abcdefkabltnghijklmnopqrstuvwxyz");
+          $oWorld->uid = $Mask;
           $oWorld->save();
         }
 
@@ -72,26 +73,34 @@ class IndexBuilder
         $oSource->assign('encrypted', $Encrypted);
         $oSource->assign('version', $version);
         $Source = $oSource->fetch('source.tpl');
-        $Source = str_replace('gd_', substr(str_shuffle("abcdefghijklmnopqrstuvwxyz"), 0, rand(1,10)).md5(IndexBuilder::generateIndexKey(32).time()), $Source);
-        $SourceFilename = USERSCRIPT_TEMP . '/source_'.$Encrypted.'.js';
-        $SourceFile = file_put_contents($SourceFilename, $Source);
-        if (!$SourceFile || !file_exists($SourceFilename)) throw new \Exception("Unable to save source to disk");
 
-        // Obfs
-        $ObfuscatorExec = OBFUSCATOR_EXEC;
-        $ObsFilename = USERSCRIPT_TEMP . '/obs_'.$Encrypted.'.js';
-        $Options = '';
-        if (!bDevelopmentMode) shell_exec(". /home/vps/.nvm/nvm.sh");
-        $result = shell_exec("$ObfuscatorExec $SourceFilename --output $ObsFilename $Options 2>&1");
-        echo $result;
-        if (!file_exists($ObsFilename)) {
-          throw new \Exception("Unable to obfuscate source [".$SourceFilename."]. result: " . json_encode($result));
+        if ($bMask) {
+          $Source = str_replace('globals_', $oWorld->uid, $Source);
+          $Source = str_replace('gd_', $Mask, $Source);
+          $Source = str_replace($Mask . 'city_indexer_', 'gd_city_indexer_', $Source);
         }
-        unlink($SourceFilename);
-        $SourceObs = file_get_contents($ObsFilename);
-        unlink($ObsFilename);
-        if ($SourceObs == false) {
-          throw new \Exception("Unable to read obs file");
+
+        if ($bObfuscate == true) {
+          $SourceFilename = USERSCRIPT_TEMP . '/source_'.$Encrypted.'.js';
+          $SourceFile = file_put_contents($SourceFilename, $Source);
+          if (!$SourceFile || !file_exists($SourceFilename)) throw new \Exception("Unable to save source to disk");
+
+          $ObfuscatorExec = OBFUSCATOR_EXEC;
+          $ObsFilename = USERSCRIPT_TEMP . '/obs_'.$Encrypted.'.js';
+          $Options = '';
+          if (!bDevelopmentMode) shell_exec(". /home/vps/.nvm/nvm.sh");
+          $result = shell_exec("$ObfuscatorExec $SourceFilename --output $ObsFilename $Options 2>&1");
+          if (!file_exists($ObsFilename)) {
+            throw new \Exception("Unable to obfuscate source [".$SourceFilename."]. result: " . json_encode($result));
+          }
+          unlink($SourceFilename);
+          $SourceObs = file_get_contents($ObsFilename);
+          unlink($ObsFilename);
+          if ($SourceObs == false) {
+            throw new \Exception("Unable to read obs file");
+          }
+        } else {
+          $SourceObs = $Source;
         }
 
         // Script

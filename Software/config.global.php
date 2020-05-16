@@ -20,7 +20,7 @@ define('INNO_DATA_ALLIANCE_ATT',  'alliance_kills_att.txt.gz');
 define('INNO_DATA_ALLIANCE_DEF',  'alliance_kills_def.txt.gz');
 define('INNO_DATA_CONQUERS',      'conquers.txt.gz');
 
-define('USERSCRIPT_VERSION',      '4.0.2');
+define('USERSCRIPT_VERSION',      '4.0.3');
 define('USERSCRIPT_UPDATE_INFO',  'Bugfixes and index security improvements.');
 
 define('DEFAULT_SERVER',  'nl');
