@@ -56,30 +56,36 @@ foreach ($aServers as $Server) {
       Logger::debugInfo("Checking new world with id: " . $WorldNum);
     }
 
-    // Test endpoint
-    if (InnoData::testEndpoint($WorldNum)) {
-      $aPlayerData = InnoData::loadPlayerData($WorldNum);
-      if (count($aPlayerData) <= 5) {
-        Logger::warning("New world has less then 5 players. skipping new world.");
-        continue;
-      }
-      unset($aPlayerData);
+    try {
+      // Test endpoint
+      if (InnoData::testEndpoint($WorldNum)) {
+        $aPlayerData = InnoData::loadPlayerData($WorldNum);
+        if (count($aPlayerData) <= 5) {
+          Logger::warning("New world has less then 5 players. skipping new world.");
+          continue;
+        }
+        unset($aPlayerData);
+        $aAllianceData = InnoData::loadAllianceData($WorldNum);
+        if (count($aAllianceData) <= 2) {
+          Logger::warning("New world has less then 2 alliances. skipping new world.");
+          continue;
+        }
+        unset($aAllianceData);
 
-      // new world!
-      Logger::warning("New world detected: " . $WorldNum);
-      $oNewWorld = new \Grepodata\Library\Model\World();
-      $oNewWorld->grep_id = $WorldNum;
-      $oNewWorld->uid = null;
-      $oNewWorld->php_timezone = $oWorld->php_timezone;
-      $oNewWorld->name = $WorldNum;
-      $oNewWorld->stopped = 1;
-      $oNewWorld->last_reset_time = $oWorld->last_reset_time;
-      $oNewWorld->grep_server_time = $oWorld->grep_server_time;
-      $oNewWorld->etag = $oWorld->etag;
-      $oNewWorld->save();
+        // new world!
+        Logger::warning("New world detected: " . $WorldNum);
+        $oNewWorld = new \Grepodata\Library\Model\World();
+        $oNewWorld->grep_id = $WorldNum;
+        $oNewWorld->uid = null;
+        $oNewWorld->php_timezone = $oWorld->php_timezone;
+        $oNewWorld->name = $WorldNum;
+        $oNewWorld->stopped = 1;
+        $oNewWorld->last_reset_time = $oWorld->last_reset_time;
+        $oNewWorld->grep_server_time = $oWorld->grep_server_time;
+        $oNewWorld->etag = $oWorld->etag;
+        $oNewWorld->save();
 
-      // Handle imports for new world
-      try {
+        // Handle imports for new world
         Logger::debugInfo('Starting daily import for new world.');
         if (Daily::DataImportDaily($oNewWorld) !== true) {
           throw new \Exception("Daily import failed for new world.");
@@ -105,9 +111,9 @@ foreach ($aServers as $Server) {
         Logger::error('Successful import of new world. Opening world status.');
         $oNewWorld->stopped = 0;
         $oNewWorld->save();
-      } catch (\Exception $e) {
-        Logger::error('New world import failed with status: '. $e->getMessage());
       }
+    } catch (\Exception $e) {
+      Logger::error('New world import failed with status: '. $e->getMessage());
     }
   }
 

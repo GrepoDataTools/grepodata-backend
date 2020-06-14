@@ -51,7 +51,7 @@ class Town extends \Grepodata\Library\Router\BaseRoute
             $aResponse['alliance_id'] = $oPlayer->alliance_id;
             $aResponse['player_data'] = $oPlayer->getPublicFields();
             if ($oPlayer->alliance_id > 0) {
-              $oAlliance = \Grepodata\Library\Controller\Alliance::first($aParams['id'], $aParams['world']);
+              $oAlliance = \Grepodata\Library\Controller\Alliance::first($oPlayer->alliance_id, $aParams['world']);
               if ($oAlliance != false && isset($oAlliance->name)) {
                 $aResponse['alliance_name'] = $oAlliance->name;
                 $aResponse['alliance_data'] = $oAlliance->getPublicFields();

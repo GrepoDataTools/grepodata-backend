@@ -164,7 +164,7 @@ class InboxParser
       }
 
       $oDateMax = new Carbon();
-      $oDateMax->addHours(24);
+      $oDateMax->addHours(26);
       if ($oDate > $oDateMax) {
         throw new InboxParserExceptionError("Parsed date is in the future");
       }

@@ -411,7 +411,7 @@ class ForumParser
           throw new Exception("Parsed date is null");
         } else {
           $oDateMax = new Carbon();
-          $oDateMax->addHours(24);
+          $oDateMax->addHours(26);
           if ($ParsedDate > $oDateMax) {
             throw new Exception("Parsed date is in the future");
           } else {
