@@ -22,6 +22,7 @@ class InboxParser
     'us' => array('date_format' => 'Y-m-d H:i:s'),
     'se' => array('date_format' => 'Y-m-d H:i:s'), // 2020-05-09 23:54:53
     'de' => array('date_format' => 'd.m.Y H:i:s'),
+    'fi' => array('date_format' => 'd.m.Y H:i:s'),
     'ro' => array('date_format' => 'd.m.Y H:i:s'),
     'ru' => array('date_format' => 'd.m.Y H:i:s'),
     'sk' => array('date_format' => 'd.m.Y H:i:s'),
