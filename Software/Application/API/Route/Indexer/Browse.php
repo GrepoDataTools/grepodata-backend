@@ -386,10 +386,12 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
       'off'=>array(),
       'bir'=>array(),
       'def'=>array(),
+      'trir'=>array(),
     );
     $aFireshipCities = array();
     $aMythCities = array();
     $aBirCities = array();
+    $aTrirCities = array();
     $aOffCities = array();
     $aDefCities = array();
     $aAllCities = array();
@@ -636,7 +638,40 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
             $aBirCities[$oCity->player_id]['towns'][] = $aBirCity;
             $bPrimaryIntel = false;
           }
+        }
 
+        // Trir
+        $TrirKey = '';
+        if (isset($aSeaUnits['trir']) && $aSeaUnits['trir'] !== null && $aSeaUnits['trir'] !== '') {
+          $TrirKey = 'trir';
+        } elseif (isset($aSeaUnits['trireme']) && $aSeaUnits['trireme'] !== null && $aSeaUnits['trireme'] !== '') {
+          $TrirKey = 'trireme';
+        }
+        if ($TrirKey !== '') {
+          $num = self::parseDeathUnits($aSeaUnits[$TrirKey]);
+          if (self::isValidNum($num, 10, 600)) {
+            $aTrirCity = array(
+              'id'        => $oCity->id,
+              'deleted'   => $aCity['deleted']||false,
+              'csa_prio'  => $bPrimaryIntel,
+              'cost'      => $num - $DaysAgo*4, // 300-30daysago(=300-90=210), 200-0daysago(=200)
+              'town_id'   => $aCity['town_id'],
+              'town_name' => $aCity['town_name'],
+              'date'      => $aCity['date'],
+              'units'     => $aSeaUnits[$TrirKey],
+              'count'     => (strpos($aSeaUnits[$TrirKey],'(')!==false?substr($aSeaUnits[$TrirKey], 0, strpos($aSeaUnits[$TrirKey],'(')):$aSeaUnits[$TrirKey])
+
+            );
+            if (!isset($aTrirCities[$oCity->player_id])) {
+              $aTrirCities[$oCity->player_id] = array(
+                'id'    => $oCity->player_id,
+                'name'  => $oCity->player_name,
+                'towns' => array(),
+              );
+            }
+            $aTrirCities[$oCity->player_id]['towns'][] = $aTrirCity;
+            $bPrimaryIntel = false;
+          }
         }
       }
 
@@ -662,7 +697,7 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
     $aResponse['cities']['players'] = $aAllCities;
 
     $aCollection = array(
-      'fire' => $aFireshipCities, 'myth' => $aMythCities, 'bir' => $aBirCities,
+      'fire' => $aFireshipCities, 'myth' => $aMythCities, 'bir' => $aBirCities, 'trir' => $aTrirCities,
       'off' => $aOffCities, 'def' => $aDefCities
     );
     foreach ($aCollection as $Type => $aCities) {
