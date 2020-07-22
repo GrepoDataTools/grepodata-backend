@@ -8,7 +8,7 @@ use Grepodata\Library\Controller\Indexer\Report;
 use Grepodata\Library\Indexer\Helper;
 use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\Indexer\ReportId;
-use Grepodata\Library\Router\ErrorCode;
+use Grepodata\Library\Router\ResponseCode;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class Discord extends \Grepodata\Library\Router\BaseRoute
@@ -166,13 +166,13 @@ class Discord extends \Grepodata\Library\Router\BaseRoute
         } else {
           // Old hash version: get required settings
           if ($oDiscord->index_key === null) {
-            ErrorCode::code(5001); // index key required
+            ResponseCode::errorCode(5001); // index key required
           }
           $oReportHash = \Grepodata\Library\Controller\Indexer\ReportId::firstByIndexByHash($oDiscord->index_key, $aParams['hash']);
         }
       } catch (ModelNotFoundException $e) {
         // If this step fails, report has not been indexed yet
-        ErrorCode::code(5000);
+        ResponseCode::errorCode(5000);
       }
       $oIndex = IndexInfo::firstOrFail($oReportHash->index_key);
 
@@ -180,19 +180,19 @@ class Discord extends \Grepodata\Library\Router\BaseRoute
         $oReport = Report::firstById($oReportHash->index_report_id);
       } catch (ModelNotFoundException $e) {
         // If this step fails, report has been indexed but we do not have the information about the report
-        ErrorCode::custom("Report has been indexed but we are unable to rebuild report for this hash (report info not found)", 5000);
+        ResponseCode::custom("Report has been indexed but we are unable to rebuild report for this hash (report info not found)", 5000);
       }
 
       if ($oReport->report_json == null || $oReport->report_json == '') {
         // if $oReport->report_json is empty, report html is not available and probably never will be
-        ErrorCode::custom("Report has been indexed but we are unable to rebuild report for this hash (lost html)", 5000);
+        ResponseCode::custom("Report has been indexed but we are unable to rebuild report for this hash (lost html)", 5000);
       }
 
       try {
         $html = \Grepodata\Library\Indexer\Helper::JsonToHtml($oReport, true);
         $Url = Helper::reportToImage($html, $oReport, $aParams['hash']);
       } catch (\Exception $e) {
-        ErrorCode::code(5004);
+        ResponseCode::errorCode(5004);
       }
 
       $aResponse = array(

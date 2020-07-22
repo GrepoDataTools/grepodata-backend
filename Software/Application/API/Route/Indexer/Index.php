@@ -733,6 +733,7 @@ admin@grepodata.com',
       }
 
       $aResponse = array(
+        'is_admin'          => false,
         'world'             => $oIndexOverview['world'],
         'total_reports'     => $oIndexOverview['total_reports'],
         'spy_reports'       => $oIndexOverview['spy_reports'],
@@ -750,6 +751,13 @@ admin@grepodata.com',
         'latest_intel'      => json_decode(urldecode($oIndexOverview['latest_intel'])),
       );
 
+      if (isset($aParams['access_token'])) {
+        $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token'], false);
+        if ($oUser!=false && $oUser->is_confirmed==true && $oIndex->created_by_user == $oUser->id) {
+          $aResponse['is_admin'] = true;
+        }
+      }
+
       return self::OutputJson($aResponse);
 
     } catch (ModelNotFoundException $e) {
@@ -765,17 +773,23 @@ admin@grepodata.com',
     $aParams = array();
     try {
       // Validate params
-      $aParams = self::validateParams(array('world', 'mail', 'captcha'));
+      $aParams = self::validateParams(array('world', 'access_token', 'captcha'));
 
       // Validate captcha
       if (!bDevelopmentMode) {
         BaseRoute::verifyCaptcha($aParams['captcha']);
       }
 
+      // Verify token
+      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+
       // New index
-      $oIndex = IndexBuilder::buildNewIndex($aParams['world'], $aParams['mail']);
+      $oIndex = IndexBuilder::buildNewIndex($aParams['world'], $oUser->id);
       if ($oIndex !== false && $oIndex !== null) {
         //Logger::error('https://grepodata.com/indexer/' . $oIndex->key_code);
+
+        $oIndex->created_by_user = $oUser->id;
+
         try {
           IndexOverview::buildIndexOverview($oIndex);
         } catch (\Exception $e) {

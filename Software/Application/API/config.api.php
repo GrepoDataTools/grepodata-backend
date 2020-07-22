@@ -10,6 +10,14 @@ $oRouter->Add('register', new Route('/auth/register', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
   '_method'     => 'Register'
 )));
+$oRouter->Add('confirmMail', new Route('/auth/confirm', array(
+  '_controller' => '\Grepodata\Application\API\Route\Authentication',
+  '_method'     => 'ConfirmMail'
+)));
+$oRouter->Add('newConfirmMail', new Route('/auth/newconfirm', array(
+  '_controller' => '\Grepodata\Application\API\Route\Authentication',
+  '_method'     => 'RequestNewConfirmMail'
+)));
 //Verify
 $oRouter->Add('verifytoken', new Route('/auth/token', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
@@ -24,6 +32,11 @@ $oRouter->Add('login', new Route('/auth/login', array(
 $oRouter->Add('forgot', new Route('/auth/reset', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
   '_method'     => 'Forgot'
+)));
+//Reset password
+$oRouter->Add('changepassword', new Route('/auth/changepassword', array(
+  '_controller' => '\Grepodata\Application\API\Route\Authentication',
+  '_method'     => 'ChangePassword'
 )));
 
 

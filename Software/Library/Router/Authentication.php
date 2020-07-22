@@ -36,29 +36,51 @@ class Authentication
 
   /**
    * @param $JWT
-   * @return User
+   * @param bool $bDieIfInvalid
+   * @return bool|User
    */
-  public static function verifyJWT($JWT)
+  public static function verifyJWT($JWT, $bDieIfInvalid = true)
   {
     $bValid = Token::validate($JWT, JWT_SECRET);
     if ($bValid === false) {
-      self::invalidJWT();
+      if ($bDieIfInvalid) {
+        self::invalidJWT();
+      } else {
+        return false;
+      }
     }
 
     $aPayload = Token::getPayload($JWT, JWT_SECRET);
 
     try {
       $oUser = \Grepodata\Library\Controller\User::GetUserById($aPayload['uid']);
+      return $oUser;
     } catch (ModelNotFoundException $e) {
-      self::invalidJWT();
+      if ($bDieIfInvalid) {
+        self::invalidJWT();
+      } else {
+        return false;
+      }
+    }
+  }
+
+  /**
+   * Return the user for this token if it exists
+   * @param $Token
+   * @return User
+   */
+  public static function verifyAccountToken($Token)
+  {
+    try {
+      $oUser = \Grepodata\Library\Controller\User::GetUserByToken($Token);
+    } catch (ModelNotFoundException $e) {
+      ResponseCode::errorCode(3006, array(), 401);
     }
     return $oUser;
   }
 
   private static function invalidJWT()
   {
-    die(BaseRoute::OutputJson(array(
-      'message'     => 'Invalid JWT.'
-    ), 401));
+    ResponseCode::errorCode(3003, array(), 401);
   }
 }

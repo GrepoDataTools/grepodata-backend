@@ -24,7 +24,7 @@ class BaseRoute
     // Get params
     $aParams = array();
     if (self::$oRequestContext->getMethod() == 'GET') $aParams = self::getGetVars();
-    else if (self::$oRequestContext->getMethod() == 'POST') $aParams = self::getPostVars($aParamNames);
+    else if (self::$oRequestContext->getMethod() == 'POST') $aParams = self::getPostVars();
 
     // Validate
     $aInvalidParams = array();
@@ -33,11 +33,7 @@ class BaseRoute
     }
 
     if (!empty($aInvalidParams)) {
-      //error_log(json_encode($aInvalidParams));
-      die(self::OutputJson(array(
-        'message' => 'Bad request! Invalid or missing fields.',
-        'fields'  => $aInvalidParams
-      ), 400));
+      ResponseCode::errorCode(1010, array('fields'  => $aInvalidParams), 400);
     }
     return $aParams;
   }
@@ -46,9 +42,7 @@ class BaseRoute
   {
     $bValidCaptcha = Captcha::verifyResponse($CaptchaResponse);
     if (!$bValidCaptcha) {
-      die(self::OutputJson(array(
-        'message'     => 'Invalid captcha key.'
-      ), 401));
+      ResponseCode::errorCode(3002, array(), 401);
     }
     return $bValidCaptcha;
   }
@@ -60,20 +54,9 @@ class BaseRoute
     return $aVars;
   }
 
-  private static function getPostVars($aParamNames)
+  private static function getPostVars()
   {
-    $aVars = array();
-    foreach ($aParamNames as $ParamName) {
-      if (isset($_POST[$ParamName])) $aVars[$ParamName] = $_POST[$ParamName];
-    }
-
-    // Check textual post params not contained in $_POST
-//    if (sizeof($aVars) == 0) {
-//      $RequestData = self::$oRequest->getContent();
-//      parse_str($RequestData, $aVars);
-//    }
-
-    return $aVars;
+    return $_POST;
 
   }
 }
