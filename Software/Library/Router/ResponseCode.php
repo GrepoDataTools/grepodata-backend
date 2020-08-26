@@ -15,10 +15,12 @@ define('GD_ERROR_3003', 'Invalid access token');
 define('GD_ERROR_3004', 'Unknown email address');
 define('GD_ERROR_3005', 'Invalid password');
 define('GD_ERROR_3006', 'Invalid account token');
+define('GD_ERROR_3007', 'Unknown username address');
 define('GD_ERROR_3010', 'Email address is still unconfirmed. Confirm your email address to continue');
 define('GD_ERROR_3011', 'Invalid email confirmation token.');
 define('GD_ERROR_3030', 'This email address is already in use');
 define('GD_ERROR_3031', 'Password is not strong enough. Your password should be at least 8 characters');
+define('GD_ERROR_3032', 'This username is already in use');
 
 // Discord
 define('GD_ERROR_5000', 'Unable to handle discord request');

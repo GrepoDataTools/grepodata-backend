@@ -16,6 +16,16 @@ class User
   }
 
   /**
+   * @param $Username
+   * @return \Grepodata\Library\Model\User
+   */
+  public static function GetUserByUsername($Username)
+  {
+    return \Grepodata\Library\Model\User::where('username', '=', $Username)
+      ->firstOrFail();
+  }
+
+  /**
    * @param $Token
    * @return \Grepodata\Library\Model\User
    */
@@ -36,14 +46,16 @@ class User
   }
 
   /**
+   * @param $Username
    * @param $Mail
    * @param $Passphrase
    * @param string $Role
    * @return \Grepodata\Library\Model\User
    */
-  public static function AddUser($Mail, $Passphrase, $Role='USER')
+  public static function AddUser($Username, $Mail, $Passphrase, $Role='USER')
   {
     $oUser = new \Grepodata\Library\Model\User();
+    $oUser->username   = $Username;
     $oUser->email      = $Mail;
     $oUser->passphrase = $Passphrase;
     $oUser->role       = $Role;

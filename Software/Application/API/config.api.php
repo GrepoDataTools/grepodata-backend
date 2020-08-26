@@ -185,7 +185,7 @@ $oRouter->Add('allianceRanking', new Route('/ranking/alliance', array(
 
 // Towns
 $oRouter->Add('playerTowns', new Route('/town/player', array(
-  '_controller' => '\Grepodata\Application\API\Route\Town',
+  '_controllenour' => '\Grepodata\Application\API\Route\Town',
   '_method'     => 'PlayerTowns'
 )));
 //$oRouter->Add('allianceTowns', new Route('/town/alliance', array(
@@ -201,8 +201,25 @@ $oRouter->Add('playerTowns', new Route('/town/player', array(
 //  '_method'     => 'Search'
 //)));
 
+// Indexer v2
+$oRouter->Add('addReportForumV2', new Route('/indexer/v2/addreport', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Report',
+  '_method'     => 'AddReportFromForum'
+)));
+$oRouter->Add('addReportInboxV2', new Route('/indexer/v2/inboxreport', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Report',
+  '_method'     => 'AddReportFromInbox'
+)));
+$oRouter->Add('newIndexV2', new Route('/indexer/v2/newindex', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Index',
+  '_method'     => 'NewIndex'
+)));
+$oRouter->Add('getIndexV2', new Route('/indexer/v2/getindex', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Index',
+  '_method'     => 'GetIndex'
+)));
 
-// Indexer
+// Indexer V1
 $oRouter->Add('stats', new Route('/indexer/stats', array(
   '_controller' => '\Grepodata\Application\API\Route\Indexer\Index',
   '_method'     => 'Stats'

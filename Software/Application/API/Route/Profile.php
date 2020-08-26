@@ -3,6 +3,7 @@
 namespace Grepodata\Application\API\Route;
 
 use Grepodata\Library\Controller\Indexer\IndexOverview;
+use Grepodata\Library\Controller\IndexV2\Roles;
 use Grepodata\Library\Model\Indexer\IndexInfo;
 use Grepodata\Library\Router\BaseRoute;
 use Grepodata\Library\Router\ResponseCode;
@@ -20,21 +21,26 @@ class Profile extends BaseRoute
     }
 
     $aResponse = array();
-    $aIndexesRaw = \Grepodata\Library\Controller\Indexer\IndexInfo::allByMail($oUser->email);
-    foreach ($aIndexesRaw as $oIndex) {
-      if ($oIndex->moved_to_index !== null) {
-        continue;
+    $aIndexes = \Grepodata\Library\Controller\Indexer\IndexInfo::allByUser($oUser);
+    foreach ($aIndexes as $oIndex) {
+      $aOverview = [];
+      if (isset($aParams['expand_overview'])) {
+        try {
+          $oOverview = IndexOverview::firstOrFail($oIndex->key_code);
+          $aOverview = $oOverview->getPublicFields();
+        } catch (\Exception $e) {
+          continue;
+        }
       }
-      $oOverview = [];
-      try {
-        $oOverview = IndexOverview::firstOrFail($oIndex->key_code);
-      } catch (\Exception $e) {}
       $aResponse[] = array(
         'key' => $oIndex->key_code,
+        'name' => $oIndex->index_name,
+        'role' => $oIndex->role,
+        'contribute' => $oIndex->contribute,
         'world' => $oIndex->world,
         'created_at' => $oIndex->created_at,
         'updated_at' => $oIndex->updated_at,
-        'overview' => $oOverview->getPublicFields()
+        'overview' => $aOverview
       );
     }
 

@@ -108,6 +108,12 @@ class Helper
           .game_border {margin: 2px !important;}
           #report_game_body {width: 796px !important;}
           #report_date {margin: 0 !important;}
+          .spy_success_left_align {
+              text-align: left;
+              margin-left: 10px;
+              display: inline-block;
+              padding-bottom: 10px;
+          }
         </style>
       </head>
       <body>
@@ -175,10 +181,12 @@ class Helper
   /**
    * Returns the text content of the input node
    * @param $Element array Input node from forum or inbox parsers
+   * @param int $Depth
+   * @param bool $bOnlyParseContent
    * @return string text content
    * @throws ParserDefaultWarning
    */
-  public static function getTextContent($Element, $Depth=0)
+  public static function getTextContent($Element, $Depth=0, $bOnlyParseContent = False)
   {
     if (!is_array($Element)) {
       throw new ParserDefaultWarning("Element must be array");
@@ -191,18 +199,50 @@ class Helper
     $iterator = $Element;
     if (key_exists('content', $Element)) {
       $iterator = $Element['content'];
+    } elseif ($bOnlyParseContent === true) {
+      return '';
     }
 
     $textContent = array();
     foreach ($iterator as $Child) {
       if (is_array($Child)) {
-        $textContent[] = self::getTextContent($Child, $Depth+1);
+        $textContent[] = self::getTextContent($Child, $Depth+1, $bOnlyParseContent);
       } else if (is_string($Child)) {
         $textContent[] = $Child;
       }
     }
 
     return join(" ", $textContent);
+  }
+
+  /**
+   * Returns all elements with the given class
+   * @param $aParentElement
+   * @param $ClassName
+   * @return array
+   * @throws ParserDefaultWarning
+   */
+  public static function allByClass($aParentElement, $ClassName)
+  {
+    $aElements = array();
+    if (!is_array($aParentElement)) {
+      return $aElements;
+    }
+
+    if (isset($aParentElement['attributes']['class']) && strpos($aParentElement['attributes']['class'], $ClassName) !== false) {
+      $aElements[] = $aParentElement;
+    }
+
+    if (key_exists('content', $aParentElement)) {
+      foreach ($aParentElement['content'] as $Child) {
+        if (is_array($Child)) {
+          $aChildElementsMatched = self::allByClass($Child, $ClassName);
+          $aElements = array_merge($aElements, $aChildElementsMatched);
+        }
+      }
+    }
+
+    return $aElements;
   }
 
 }

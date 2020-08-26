@@ -23,12 +23,21 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
       BaseRoute::verifyCaptcha($aParams['captcha']);
     }
 
+    // Validate email
     try {
       if (User::GetUserByMail($aParams['mail'])) {
         ResponseCode::errorCode(3030, array(), 409);
       }
     } catch (ModelNotFoundException $e) {}
 
+    // Validate username
+    try {
+      if (User::GetUserByUsername($aParams['username'])) {
+        ResponseCode::errorCode(3032, array(), 409);
+      }
+    } catch (ModelNotFoundException $e) {}
+
+    // Validate password
     if (strlen($aParams['password']) < 8) {
       ResponseCode::errorCode(3031, array(), 422);
     }
@@ -37,7 +46,7 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
     $hash = password_hash($aParams['password'], PASSWORD_BCRYPT);
 
     // Save to db
-    $oUser = \Grepodata\Library\Controller\User::AddUser($aParams['mail'], $hash);
+    $oUser = \Grepodata\Library\Controller\User::AddUser($aParams['username'], $aParams['mail'], $hash);
 
     // Login token
     $jwt = \Grepodata\Library\Router\Authentication::generateJWT($oUser);
@@ -56,7 +65,7 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
           'Grepodata account confirmation',
           'Hi,<br/>
 <br/>
-You are receiving this message because an account was created for your email address on grepodata.com.<br/>
+You are receiving this message because an account was created on grepodata.com using this email address.<br/>
 <br/>
 Please click on the following link to confirm your account:<br/>
 <br/>
@@ -157,20 +166,20 @@ admin@grepodata.com',
       $oUser->token = null;
       $oUser->save();
 
-      // transfer old indexes
-      try {
-        $oIndexes = IndexInfo::allByMail($oUser->email);
-        foreach ($oIndexes as $oIndex) {
-          try {
-            $oIndex->created_by_user = $oUser->id;
-            $oIndex->save();
-          } catch (\Exception $e) {
-            Logger::error("Error transfering old index (".$oIndex->key_code.") ownership to new user: ". $e->getMessage());
-          }
-        }
-      } catch (\Exception $e) {
-        Logger::error("Error transfering old indexes to new user (uid ".$oUser->id."): ". $e->getMessage());
-      }
+//      // transfer old indexes
+//      try {
+//        $oIndexes = IndexInfo::allByMail($oUser->email);
+//        foreach ($oIndexes as $oIndex) {
+//          try {
+//            $oIndex->created_by_user = $oUser->id;
+//            $oIndex->save();
+//          } catch (\Exception $e) {
+//            Logger::error("Error transfering old index (".$oIndex->key_code.") ownership to new user: ". $e->getMessage());
+//          }
+//        }
+//      } catch (\Exception $e) {
+//        Logger::error("Error transfering old indexes to new user (uid ".$oUser->id."): ". $e->getMessage());
+//      }
 
       // Redirect to profile
       header("Location: ".FRONTEND_URL."/auth/profile");
@@ -195,7 +204,12 @@ admin@grepodata.com',
     try {
       $oUser = User::GetUserByMail($aParams['mail']);
     } catch (ModelNotFoundException $e) {
-      ResponseCode::errorCode(3004, array(), 401);
+      try {
+        // try as username
+        $oUser = User::GetUserByUsername($aParams['mail']);
+      } catch (ModelNotFoundException $e) {
+        ResponseCode::errorCode(3004, array(), 401);
+      }
     }
 
     // verify password

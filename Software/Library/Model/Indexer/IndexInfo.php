@@ -6,6 +6,7 @@ use \Illuminate\Database\Eloquent\Model;
 
 /**
  * @property mixed key_code
+ * @property mixed index_name
  * @property mixed world
  * @property mixed script_version
  * @property mixed mail

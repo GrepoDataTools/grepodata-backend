@@ -3,6 +3,7 @@
 namespace Grepodata\Library\Indexer;
 
 use Carbon\Carbon;
+use Elasticsearch\Endpoints\Cat\Help;
 use Exception;
 use Grepodata\Library\Controller\Alliance;
 use Grepodata\Library\Controller\Player;
@@ -73,6 +74,10 @@ class ForumParser
       'day' => 'd/m/y', 'day_regex' => '/[0-9]{2}[\/]{1}[0-9]{2}[\/]{1}[0-9]{2}/',
       'time' => 'H:i:s', 'time_regex' => '/[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2}(?!.*[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2})/',
     ),
+    'fi' => array(
+      'day' => 'd.m.y', 'day_regex' => '/[0-9]{2}[\/]{1}[0-9]{2}[\/]{1}[0-9]{2}/',
+      'time' => 'H:i:s', 'time_regex' => '/[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2}(?!.*[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2})/',
+    ),
     'ro' => array(
       'day' => 'd.m.y', 'day_regex' => '/[0-9]{2}[.]{1}[0-9]{2}[.]{1}[0-9]{2}/',
       'time' => 'H:i:s', 'time_regex' => '/[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2}(?!.*[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2})/',
@@ -108,6 +113,7 @@ class ForumParser
     'enemy'    => 'enemy_attack',
     'conquest' => 'attack_on_conquest'
   );
+  const gods = array('zeus', 'poseidon', 'hera', 'athene', 'hades', 'artemis');
   const aUnitNames = array(
     // Misc
     "unknown_naval" => array('type' => 'unknown_naval', 'value' => null, 'god' => null),
@@ -192,7 +198,8 @@ class ForumParser
       if ($aCityInfo['player_name'] !== 'Ghost' && $aCityInfo['player_id'] !== 0) {
         $oPlayer = Player::firstById($oIndexInfo->world, $aCityInfo['player_id']);
         if ($oPlayer === null) {
-          throw new ForumParserExceptionWarning("Unable to find player with name ".$aCityInfo['player_name']." and id ".$aCityInfo['player_id']);
+//          throw new ForumParserExceptionWarning("Unable to find player with name ".$aCityInfo['player_name']." and id ".$aCityInfo['player_id']);
+          Logger::warning("ForumParser reporthash $ReportHash: Unable to find player with name ".$aCityInfo['player_name']." and id ".$aCityInfo['player_id']);
         }
         $AllianceId = $oPlayer->alliance_id;
       }
@@ -448,17 +455,35 @@ class ForumParser
       if (is_array($aHeaderItem) && key_exists('attributes', $aHeaderItem)) {
         $aAttributes = $aHeaderItem['attributes'];
         if (key_exists('href', $aAttributes) && key_exists('class', $aAttributes)) {
+//          if (key_exists('onclick', $aAttributes) && strpos($aAttributes['onclick'], 'allianceProfile') !== false) {
+//            $aLinkData = array(
+//              'type' => 'alliance',
+//              'name' => Helper::getTextContent($aHeaderItem),
+//              'id' => 0
+//            );
+//            $OnClick = $aAttributes['onclick'];
+//            $AllianceId = substr($OnClick, strrpos($OnClick, ',')+1);
+//            $AllianceId = substr($AllianceId, 0, strpos($AllianceId, ')'));
+//            $aLinkData['id'] = $AllianceId;
+//            $aHeaderChainData[] = $aLinkData;
+//            $aHeaderChainType[] = 'alliance';
+//          } elseif (key_exists('class', $aAttributes)) {
           $LinkDataEncoded = $aAttributes['href'];
           $aLinkData = json_decode(base64_decode($LinkDataEncoded), true);
           $Class = $aAttributes['class'];
           if (str_contains($Class, 'gp_town_link')) {
             $aHeaderChainData[] = $aLinkData;
             $aHeaderChainType[] = 'town';
+
+            if (isset($aLinkData['tp']) && $aLinkData['tp'] == 'temple') {
+              throw new ForumParserExceptionDebug("Unable to parse attack on temple. Skipping report.");
+            }
           }
           elseif (str_contains($Class, 'gp_player_link')) {
             $aHeaderChainData[] = $aLinkData;
             $aHeaderChainType[] = 'player';
           }
+//          }
           else {
             Logger::warning("Unhandled attribute class in forum report header: " . $Class);
           }
@@ -540,28 +565,45 @@ class ForumParser
         // Player
         if ($bReceiverIsGhost === false) {
           $AttackedPlayer = $aHeaderChainData[2];
-          $cityInfo['player_name'] = $AttackedPlayer['name'];
-          $cityInfo['player_id'] = $AttackedPlayer['id'];
+          if ($AttackedPlayer['type'] == 'alliance') {
+            $cityInfo['player_name'] = '';
+            $cityInfo['player_id'] = 0;
+          } else {
+            $cityInfo['player_name'] = $AttackedPlayer['name'];
+            $cityInfo['player_id'] = $AttackedPlayer['id'];
+          }
         } else {
           $cityInfo['player_name'] = 'Ghost';
           $cityInfo['player_id'] = 0;
         }
 
         // Check silver
-        if (isset($aReportData['content'][5]['content'][5]['content'][4]['content'][0])) {
-          $Silver = $aReportData['content'][5]['content'][5]['content'][4]['content'][0];
+        $aSilverItems = Helper::allByClass($aReportData, 'spy_payed');
+        if (count($aSilverItems) > 0) {
+          $aTextItems = Helper::allByClass($aSilverItems[0], 'small bold');
+          if (count($aTextItems) >= 2) {
+            $Silver = Helper::getTextContent($aTextItems[1], 0, true);
+            $Silver = preg_replace('/\s+/', '', $Silver);
+          }
 
           $cityInfo['silver_in_cave'] = $Silver;
-          $cityInfo['silver_in_cave'] = substr($cityInfo['silver_in_cave'], 5, strlen($cityInfo['silver_in_cave']) - 12);
-          if (strpos($cityInfo['silver_in_cave'], '(+') !== FALSE) {
-            $bonusPos = strpos($cityInfo['silver_in_cave'], '(+');
-            $bonusSilver = substr($cityInfo['silver_in_cave'], $bonusPos);
-            $mainSilver = substr($cityInfo['silver_in_cave'], 0, $bonusPos - 9);
-            $cityInfo['silver_in_cave'] = $mainSilver . $bonusSilver;
+          preg_match_all('/[0-9]{1,}/', $Silver, $numbers);
+          if (is_array($numbers[0]) && count($numbers[0]) == 2) {
+            $cityInfo['silver_in_cave'] = $numbers[0][0] + $numbers[0][1];
           }
         } else {
           Logger::warning("can not find silver in Forum parser: " . $ReportHash);
           $cityInfo['silver_in_cave'] = null;
+        }
+
+        // Check god
+        $aGodItems = Helper::allByClass($aReportData, 'god_display');
+        if (count($aGodItems) >= 1) {
+          $God = strtolower(Helper::getTextContent($aGodItems[0], 0, true));
+          $God = preg_replace('/\s+/', '', $God);
+          if (in_array($God, self::gods)) {
+            $cityInfo['god'] = $God;
+          }
         }
 
         //loop units
@@ -694,8 +736,13 @@ class ForumParser
         // Player
         if ($bReceiverIsGhost === false) {
           $AttackedPlayer = $aHeaderChainData[2];
-          $cityInfo['player_name'] = $AttackedPlayer['name'];
-          $cityInfo['player_id'] = $AttackedPlayer['id'];
+          if ($AttackedPlayer['type'] == 'alliance') {
+            $cityInfo['player_name'] = '';
+            $cityInfo['player_id'] = 0;
+          } else {
+            $cityInfo['player_name'] = $AttackedPlayer['name'];
+            $cityInfo['player_id'] = $AttackedPlayer['id'];
+          }
         } else {
           $cityInfo['player_name'] = 'Ghost';
           $cityInfo['player_id'] = 0;

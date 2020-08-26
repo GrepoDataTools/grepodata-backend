@@ -234,7 +234,7 @@ class Search
       $aSearchParams['query']['function_score']['query']['bool']['must'] = array(
         'fuzzy' => array(
           'Name' => array(
-            'value' => $aOptions['query'],
+            'value' => substr($aOptions['query'], 0, 20),
             'boost' => 1.0,
             'fuzziness' => 2,
             'prefix_length' => 4,

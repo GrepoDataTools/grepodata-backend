@@ -6,6 +6,7 @@ use \Illuminate\Database\Eloquent\Model;
 
 /**
  * @property mixed id
+ * @property mixed username
  * @property mixed email
  * @property mixed is_confirmed
  * @property mixed passphrase
@@ -15,5 +16,5 @@ use \Illuminate\Database\Eloquent\Model;
 class User extends Model
 {
   protected $table = 'User';
-  protected $fillable = array('email', 'is_confirmed', 'passphrase', 'role');
+  protected $fillable = array('username', 'email', 'is_confirmed', 'passphrase', 'role');
 }

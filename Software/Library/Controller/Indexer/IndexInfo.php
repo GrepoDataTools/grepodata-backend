@@ -2,6 +2,8 @@
 
 namespace Grepodata\Library\Controller\Indexer;
 
+use Grepodata\Library\Model\User;
+
 class IndexInfo
 {
 
@@ -33,6 +35,23 @@ class IndexInfo
   {
     return \Grepodata\Library\Model\Indexer\IndexInfo::where('mail', '=', $Mail)
       ->orderBy('created_at', 'desc')
+      ->get();
+  }
+
+  /**
+   * Return all indexes that the user has rights on
+   * @param User $oUser
+   * @return \Grepodata\Library\Model\Indexer\IndexInfo[]
+   */
+  public static function allByUser(User $oUser)
+  {
+//    return \Grepodata\Library\Model\IndexV2\Roles::where('user_id', '=', $oUser->id)
+//      ->orderBy('created_at', 'desc')
+//      ->get();
+    return \Grepodata\Library\Model\Indexer\IndexInfo::select(['Index_info.*', 'Indexer_roles.role', 'Indexer_roles.contribute'])
+      ->join('Indexer_roles', 'Indexer_roles.index_key', '=', 'Index_info.key_code')
+      ->where('Indexer_roles.user_id', '=', $oUser->id)
+      ->orderBy('Index_info.created_at', 'desc')
       ->get();
   }
 

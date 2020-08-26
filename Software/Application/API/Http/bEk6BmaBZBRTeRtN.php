@@ -257,7 +257,7 @@ if (!isset($_SESSION['sql_html'])) {
   echo $_SESSION['sql_html'];
 }
 if (!isset($_SESSION['inno_html'])) {
-  if (InnoData::testEndpoint('nl73')) {
+  if (InnoData::testEndpoint('nl16')) {
     $inno_html = '<span class="server-health green">INNO API: OK</span>';
     $_SESSION['inno_html'] = $inno_html;
     echo $inno_html;

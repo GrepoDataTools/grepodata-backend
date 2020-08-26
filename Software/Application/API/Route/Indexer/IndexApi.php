@@ -435,9 +435,18 @@ class IndexApi extends \Grepodata\Library\Router\BaseRoute
         }
       }
 
+      $From = 0;
+      $Limit = 300;
+      if (isset($aParams['from']) && is_numeric($aParams['from'])) {
+        $From = $aParams['from'];
+      }
+      if (isset($aParams['limit']) && is_numeric($aParams['limit'])) {
+        $Limit = $aParams['limit'];
+      }
+
       // Find sieges
       $oWorld = World::getWorldById($oIndex->world);
-      $aSieges = Conquest::allByIndex($oIndex, 300);
+      $aSieges = Conquest::allByIndex($oIndex, $From, $Limit);
       if (empty($aSieges) || count($aSieges) <= 0) {
         throw new Exception("No reports found for this conquest");
       }
