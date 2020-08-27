@@ -88,6 +88,7 @@ admin@grepodata.com',
     $aResponseData = array(
       'access_token'  => $jwt,
       'refresh_token' => $refresh_token,
+      'expires_in'    => \Grepodata\Library\Router\Authentication::expiresIn($jwt),
       'email_sent'    => (isset($Result)&&$Result>=1 ? true : false)
     );
     ResponseCode::success($aResponseData, 1120);
@@ -224,7 +225,8 @@ admin@grepodata.com',
     // Response
     $aResponse = array(
       'access_token'  => $jwt,
-      'refresh_token' => $refresh_token
+      'refresh_token' => $refresh_token,
+      'expires_in'    => \Grepodata\Library\Router\Authentication::expiresIn($jwt)
     );
     ResponseCode::success($aResponse, 1110);
   }
@@ -290,7 +292,7 @@ admin@grepodata.com',
   }
 
   /**
-   * Verify the access_token and renew if valid
+   * Verify the access_token
    * Returns 401 status code if token is invalid
    */
   public static function VerifyPOST()
@@ -301,12 +303,10 @@ admin@grepodata.com',
     // Verify token
     $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
 
-    // Renew login token
-    $jwt = \Grepodata\Library\Router\Authentication::generateJWT($oUser);
-
     // Response
     $aResponseData = array(
-      'access_token'  => $jwt,
+      'access_token'  => $aParams['access_token'],
+      'expires_in'    => \Grepodata\Library\Router\Authentication::expiresIn($aParams['access_token']),
       'is_confirmed'  => ($oUser->is_confirmed==true?true:false)
     );
     ResponseCode::success($aResponseData, 1100);
@@ -331,7 +331,8 @@ admin@grepodata.com',
     // Response
     $aResponseData = array(
       'access_token'  => $jwt,
-      'refresh_token' => $refresh_token
+      'refresh_token' => $refresh_token,
+      'expires_in'    => \Grepodata\Library\Router\Authentication::expiresIn($jwt)
     );
     ResponseCode::success($aResponseData, 1101);
   }

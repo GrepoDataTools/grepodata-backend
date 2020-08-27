@@ -12,7 +12,7 @@ class Authentication
 
   /**
    * @param User $oUser
-   * @return bool|string
+   * @return string
    */
   public static function generateJWT(User $oUser, $bIsRefreshToken = false)
   {
@@ -41,6 +41,16 @@ class Authentication
     }
 
     return $jwt;
+  }
+
+  /**
+   * @param $JWT
+   * @return bool|User
+   */
+  public static function expiresIn($JWT)
+  {
+    $aPayload = Token::getPayload($JWT, JWT_SECRET);
+    return $aPayload['exp'] - time();
   }
 
   /**
