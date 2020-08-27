@@ -50,6 +50,7 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
 
     // Login token
     $jwt = \Grepodata\Library\Router\Authentication::generateJWT($oUser);
+    $refresh_token = \Grepodata\Library\Router\Authentication::generateJWT($oUser, true);
 
     // Create confirmation link
     $Token = bin2hex(random_bytes(16));
@@ -87,6 +88,7 @@ admin@grepodata.com',
     $aResponseData = array(
       'status'        => 'User created',
       'access_token'  => $jwt,
+      'refresh_token' => $refresh_token,
       'email_sent'    => (isset($Result)&&$Result>=1 ? true : false)
     );
     ResponseCode::success($aResponseData);
@@ -137,7 +139,6 @@ admin@grepodata.com',
     // Response
     $aResponseData = array(
       'status'        => 'Confirmation requested',
-      'access_token'  => $aParams['access_token'],
       'email_sent'    => (isset($Result)&&$Result>=1 ? true : false)
     );
     ResponseCode::success($aResponseData);
@@ -224,7 +225,8 @@ admin@grepodata.com',
     // Response
     $aResponse = array(
       'status'        => 'User login',
-      'access_token'  => $jwt
+      'access_token'  => $jwt,
+      'refresh_token' => $jwt
     );
     ResponseCode::success($aResponse);
   }
@@ -306,11 +308,37 @@ admin@grepodata.com',
 
     // Response
     $aResponseData = array(
-      'status'        => 'Renew token',
+      'status'        => 'Renewed access token',
       'access_token'  => $jwt,
       'is_confirmed'  => ($oUser->is_confirmed==true?true:false)
     );
-    ResponseCode::success($aResponseData);
+    ResponseCode::success($aResponseData, 200, 1100);
+  }
+
+  /**
+   * Get a new access_token using a refresh_token
+   * Returns 401 status code if token is invalid
+   */
+  public static function RefreshPOST()
+  {
+    // Validate params
+    $aParams = self::validateParams(array('refresh_token'));
+
+    // Verify token
+    $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['refresh_token']);
+
+    // Renew login token
+    $jwt = \Grepodata\Library\Router\Authentication::generateJWT($oUser);
+    $refresh_token = \Grepodata\Library\Router\Authentication::generateJWT($oUser, true);
+
+    // Response
+    $aResponseData = array(
+      'status'        => 'Valid refresh token',
+      'access_token'  => $jwt,
+      'refresh_token' => $refresh_token,
+      'is_confirmed'  => ($oUser->is_confirmed==true?true:false)
+    );
+    ResponseCode::success($aResponseData, 200, 1101);
   }
 
   /**

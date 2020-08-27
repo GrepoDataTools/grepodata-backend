@@ -29,6 +29,15 @@ define('GD_ERROR_5002', 'This guild has not set a default server required for th
 define('GD_ERROR_5003', 'Report not found for these parameters');
 define('GD_ERROR_5004', 'Server was not able to build this image (internal error)');
 
+
+// === Success codes
+define('GD_SUCCESS_1000', 'Request processed successfully');
+define('GD_SUCCESS_1100', 'Renewed existing access token');
+define('GD_SUCCESS_1101', 'Renewed access token for valid refresh token');
+define('GD_SUCCESS_1110', 'Login successful');
+define('GD_SUCCESS_1120', 'Registration complete');
+
+
 class ResponseCode
 {
   /**
@@ -36,10 +45,16 @@ class ResponseCode
    * @param array $aExtraResponseData
    * @param int $HttpCode
    */
-  public static function success($aExtraResponseData = array(), $HttpCode = 200)
+  public static function success($aExtraResponseData = array(), $HttpCode = 200, $SuccessCode = 1000)
   {
+    $Message = constant('GD_SUCCESS_'.$SuccessCode);
+    if (is_null($Message)) {
+      $Message = GD_SUCCESS_1000;
+    }
     $aResponseData = array(
       'success' => true,
+      'success_code' => $SuccessCode,
+      'message' => $Message
     );
     if (is_array($aExtraResponseData) && sizeof($aExtraResponseData)) {
       $aResponseData = array_merge($aResponseData, $aExtraResponseData);

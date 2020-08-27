@@ -27,6 +27,11 @@ $oRouter->Add('verifytoken', new Route('/auth/token', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
   '_method'     => 'Verify'
 )));
+//Refresh token
+$oRouter->Add('verifytoken', new Route('/auth/refresh', array(
+  '_controller' => '\Grepodata\Application\API\Route\Authentication',
+  '_method'     => 'Refresh'
+)));
 //Login
 $oRouter->Add('login', new Route('/auth/login', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',

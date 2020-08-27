@@ -14,14 +14,23 @@ class Authentication
    * @param User $oUser
    * @return bool|string
    */
-  public static function generateJWT(User $oUser)
+  public static function generateJWT(User $oUser, $bIsRefreshToken = false)
   {
+    // access_token has en expiration of 24 hours
+    $expirationWindow = (24 * 60 * 60);
+
+    if ($bIsRefreshToken) {
+      // refresh_token has an expiration of 90 days
+      $expirationWindow = (90 * 24 * 60 * 60);
+    }
+
     // Payload
     $aPayload = array(
       'iss' => 'https://grepodata.com',
       'uid' => $oUser->id,
+      'ref' => $bIsRefreshToken,
       'iat' => time(),
-      'exp' => time() + (24 * 60 * 60),
+      'exp' => time() + $expirationWindow,
     );
 
     // Encode
