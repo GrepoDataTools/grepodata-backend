@@ -16,7 +16,7 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
   public static function RegisterPOST()
   {
     // Validate params
-    $aParams = self::validateParams(array('mail', 'password'));
+    $aParams = self::validateParams(array('mail', 'password', 'username'));
 
     // Validate captcha
     if (!bDevelopmentMode && isset($aParams['captcha'])) {
