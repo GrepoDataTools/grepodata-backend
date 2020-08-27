@@ -28,9 +28,11 @@ class Authentication
     $aPayload = array(
       'iss' => 'https://grepodata.com',
       'uid' => $oUser->id,
+      'mail' => $oUser->email,
+      'username' => $oUser->username,
       'ref' => $bIsRefreshToken,
       'iat' => time(),
-      'exp' => time() + $expirationWindow,
+      'exp' => time() + $expirationWindow
     );
 
     // Encode
