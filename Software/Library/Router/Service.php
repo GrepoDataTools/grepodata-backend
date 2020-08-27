@@ -56,26 +56,30 @@ class Service
       if (isset($aMatchedParameters['_controller']) && isset($aMatchedParameters['_method']) && class_exists($aMatchedParameters['_controller'])) {
         $oController = new $aMatchedParameters['_controller']($oContext, $oRequest);
         $MethodName = $aMatchedParameters['_method'].$oContext->getMethod();
-        if (isset($aMatchedParameters['_ratelimit']) && is_array($aMatchedParameters['_ratelimit'])) {
-          $Limit = $aMatchedParameters['_ratelimit']['limit'];
-          $Window = 60;
-          if (isset($aMatchedParameters['_ratelimit']['window'])) {
-            $Window = $aMatchedParameters['_ratelimit']['window'];
+
+        // Check rate limits (default limit applies if route does not specify)
+        if (!bDevelopmentMode) {
+          $RateLimit = 200;
+          $RateWindow = 60;
+          if (isset($aMatchedParameters['_ratelimit']) && is_array($aMatchedParameters['_ratelimit'])) {
+            $RateLimit = $aMatchedParameters['_ratelimit']['limit'];
+            if (isset($aMatchedParameters['_ratelimit']['window'])) {
+              $RateWindow = $aMatchedParameters['_ratelimit']['window'];
+            }
           }
-          // TODO: switch to Redis backend before going live
-          // https://redis.io/
+
           $ResourceId = json_encode($aMatchedParameters);
-          $RateLimiter = \RateLimit\RateLimiterFactory::createInMemoryRateLimiter($Limit, $Window);
-//          $RateLimiter = \RateLimit\RateLimiterFactory::createRedisBackedRateLimiter([
-//            'host' => REDIS_HOST,
-//            'port' => REDIS_PORT,
-//          ], $Limit, $Window);
+          $RateLimiter = \RateLimit\RateLimiterFactory::createRedisBackedRateLimiter([
+            'host' => REDIS_HOST,
+            'port' => REDIS_PORT,
+          ], $RateLimit, $RateWindow);
           try {
             $RateLimiter->hit($ResourceId);
           } catch (RateLimitExceededException $e) {
             die(BaseRoute::OutputJson(array('message' => 'Too many requests. You have exceeded the rate limit for this specific resource. Please try again in a minute.'), 429));
           }
         }
+
         if ($oContext->getMethod() == 'OPTIONS') {
           header('Access-Control-Allow-Origin: *');
           header('Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept');

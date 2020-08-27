@@ -4,52 +4,65 @@ use Symfony\Component\Routing\Route;
 
 $oRouter = \Grepodata\Library\Router\Service::GetInstance();
 
+$limit1PerMin = array(
+  'limit' => 1,
+  'window' => 60
+);
+$limit10PerMin = array(
+  'limit' => 10,
+  'window' => 60
+);
+$limit100PerMin = array(
+  'limit' => 100,
+  'window' => 60
+);
+
 // AUTH
 //Register
 $oRouter->Add('register', new Route('/auth/register', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
   '_method'     => 'Register',
-  '_ratelimit'  => array(
-    'limit' => 10,
-    'window' => 60
-  )
+  '_ratelimit'  => $limit10PerMin
 )));
 $oRouter->Add('confirmMail', new Route('/auth/confirm', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
-  '_method'     => 'ConfirmMail'
+  '_method'     => 'ConfirmMail',
+  '_ratelimit'  => $limit10PerMin
 )));
 $oRouter->Add('newConfirmMail', new Route('/auth/newconfirm', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
-  '_method'     => 'RequestNewConfirmMail'
+  '_method'     => 'RequestNewConfirmMail',
+  '_ratelimit'  => $limit1PerMin
 )));
 //Verify
 $oRouter->Add('verifytoken', new Route('/auth/token', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
-  '_method'     => 'Verify'
+  '_method'     => 'Verify',
+  '_ratelimit'  => $limit100PerMin
 )));
 //Refresh token
 $oRouter->Add('refreshtoken', new Route('/auth/refresh', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
-  '_method'     => 'Refresh'
+  '_method'     => 'Refresh',
+  '_ratelimit'  => $limit100PerMin
 )));
 //Login
 $oRouter->Add('login', new Route('/auth/login', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
   '_method'     => 'Login',
-  '_ratelimit'  => array(
-    'limit' => 10,
-    'window' => 60
-  )
+  '_ratelimit'  => $limit10PerMin
 )));
 //Forgot
 $oRouter->Add('forgot', new Route('/auth/reset', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
-  '_method'     => 'Forgot'
+  '_method'     => 'Forgot',
+  '_ratelimit'  => $limit1PerMin
 )));
 //Reset password
 $oRouter->Add('changepassword', new Route('/auth/changepassword', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
-  '_method'     => 'ChangePassword'
+  '_method'     => 'ChangePassword',
+  '_ratelimit'  => $limit1PerMin
 )));
 
 
