@@ -16,10 +16,10 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
   public static function RegisterPOST()
   {
     // Validate params
-    $aParams = self::validateParams(array('mail', 'password', 'captcha'));
+    $aParams = self::validateParams(array('mail', 'password'));
 
     // Validate captcha
-    if (!bDevelopmentMode) {
+    if (!bDevelopmentMode && isset($aParams['captcha'])) {
       BaseRoute::verifyCaptcha($aParams['captcha']);
     }
 
@@ -192,10 +192,10 @@ admin@grepodata.com',
   public static function LoginPOST()
   {
     // Validate params
-    $aParams = self::validateParams(array('mail', 'password', 'captcha'));
+    $aParams = self::validateParams(array('mail', 'password'));
 
     // Validate captcha
-    if (!bDevelopmentMode) {
+    if (!bDevelopmentMode && isset($aParams['captcha'])) {
       BaseRoute::verifyCaptcha($aParams['captcha']);
     }
 
@@ -342,10 +342,10 @@ admin@grepodata.com',
   public static function ForgotPOST()
   {
     // Validate params
-    $aParams = self::validateParams(array('mail', 'captcha'));
+    $aParams = self::validateParams(array('mail'));
 
     // Validate captcha
-    if (!bDevelopmentMode) {
+    if (!bDevelopmentMode && isset($aParams['captcha'])) {
       BaseRoute::verifyCaptcha($aParams['captcha']);
     }
 
@@ -397,10 +397,10 @@ admin@grepodata.com',
   public static function ChangePasswordPOST()
   {
     // Validate params
-    $aParams = self::validateParams(array('captcha'));
+    $aParams = self::validateParams();
 
     // Validate captcha
-    if (!bDevelopmentMode) {
+    if (!bDevelopmentMode && isset($aParams['captcha'])) {
       BaseRoute::verifyCaptcha($aParams['captcha']);
     }
 
