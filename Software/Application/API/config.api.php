@@ -185,7 +185,7 @@ $oRouter->Add('allianceRanking', new Route('/ranking/alliance', array(
 
 // Towns
 $oRouter->Add('playerTowns', new Route('/town/player', array(
-  '_controllenour' => '\Grepodata\Application\API\Route\Town',
+  '_controller' => '\Grepodata\Application\API\Route\Town',
   '_method'     => 'PlayerTowns'
 )));
 //$oRouter->Add('allianceTowns', new Route('/town/alliance', array(
