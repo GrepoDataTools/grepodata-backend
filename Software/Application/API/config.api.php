@@ -8,7 +8,11 @@ $oRouter = \Grepodata\Library\Router\Service::GetInstance();
 //Register
 $oRouter->Add('register', new Route('/auth/register', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
-  '_method'     => 'Register'
+  '_method'     => 'Register',
+  '_ratelimit'  => array(
+    'limit' => 10,
+    'window' => 60
+  )
 )));
 $oRouter->Add('confirmMail', new Route('/auth/confirm', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
@@ -26,7 +30,11 @@ $oRouter->Add('verifytoken', new Route('/auth/token', array(
 //Login
 $oRouter->Add('login', new Route('/auth/login', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
-  '_method'     => 'Login'
+  '_method'     => 'Login',
+  '_ratelimit'  => array(
+    'limit' => 10,
+    'window' => 60
+  )
 )));
 //Forgot
 $oRouter->Add('forgot', new Route('/auth/reset', array(
