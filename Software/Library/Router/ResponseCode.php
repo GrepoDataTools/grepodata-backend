@@ -34,8 +34,10 @@ define('GD_ERROR_5004', 'Server was not able to build this image (internal error
 define('GD_SUCCESS_1000', 'Request processed successfully');
 define('GD_SUCCESS_1100', 'Renewed existing access token');
 define('GD_SUCCESS_1101', 'Renewed access token for valid refresh token');
-define('GD_SUCCESS_1110', 'Login successful');
-define('GD_SUCCESS_1120', 'Registration complete');
+define('GD_SUCCESS_1110', 'User login successful');
+define('GD_SUCCESS_1120', 'Registration complete, user created');
+define('GD_SUCCESS_1130', 'Password changed');
+define('GD_SUCCESS_1140', 'Account confirmation requested');
 
 
 class ResponseCode
@@ -45,7 +47,7 @@ class ResponseCode
    * @param array $aExtraResponseData
    * @param int $HttpCode
    */
-  public static function success($aExtraResponseData = array(), $HttpCode = 200, $SuccessCode = 1000)
+  public static function success($aExtraResponseData = array(), $SuccessCode = 1000, $HttpCode = 200)
   {
     $Message = constant('GD_SUCCESS_'.$SuccessCode);
     if (is_null($Message)) {

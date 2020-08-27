@@ -86,12 +86,11 @@ admin@grepodata.com',
 
     // Response
     $aResponseData = array(
-      'status'        => 'User created',
       'access_token'  => $jwt,
       'refresh_token' => $refresh_token,
       'email_sent'    => (isset($Result)&&$Result>=1 ? true : false)
     );
-    ResponseCode::success($aResponseData);
+    ResponseCode::success($aResponseData, 1120);
   }
 
   public static function RequestNewConfirmMailPOST()
@@ -138,10 +137,9 @@ admin@grepodata.com',
 
     // Response
     $aResponseData = array(
-      'status'        => 'Confirmation requested',
       'email_sent'    => (isset($Result)&&$Result>=1 ? true : false)
     );
-    ResponseCode::success($aResponseData);
+    ResponseCode::success($aResponseData, 1140);
   }
 
   public static function ConfirmMailGET()
@@ -221,14 +219,14 @@ admin@grepodata.com',
 
     // Login token
     $jwt = \Grepodata\Library\Router\Authentication::generateJWT($oUser);
+    $refresh_token = \Grepodata\Library\Router\Authentication::generateJWT($oUser, true);
 
     // Response
     $aResponse = array(
-      'status'        => 'User login',
       'access_token'  => $jwt,
-      'refresh_token' => $jwt
+      'refresh_token' => $refresh_token
     );
-    ResponseCode::success($aResponse);
+    ResponseCode::success($aResponse, 1110);
   }
 
   public static function ScriptLinkPOST()
@@ -308,11 +306,10 @@ admin@grepodata.com',
 
     // Response
     $aResponseData = array(
-      'status'        => 'Renewed access token',
       'access_token'  => $jwt,
       'is_confirmed'  => ($oUser->is_confirmed==true?true:false)
     );
-    ResponseCode::success($aResponseData, 200, 1100);
+    ResponseCode::success($aResponseData, 1100);
   }
 
   /**
@@ -333,12 +330,10 @@ admin@grepodata.com',
 
     // Response
     $aResponseData = array(
-      'status'        => 'Valid refresh token',
       'access_token'  => $jwt,
-      'refresh_token' => $refresh_token,
-      'is_confirmed'  => ($oUser->is_confirmed==true?true:false)
+      'refresh_token' => $refresh_token
     );
-    ResponseCode::success($aResponseData, 200, 1101);
+    ResponseCode::success($aResponseData, 1101);
   }
 
   /**
@@ -438,9 +433,7 @@ admin@grepodata.com',
     $oUser->save();
 
     // Response
-    $aResponse = array(
-      'status' => 'Password changed'
-    );
-    ResponseCode::success($aResponse);
+    $aResponse = array();
+    ResponseCode::success($aResponse, 1130);
   }
 }
