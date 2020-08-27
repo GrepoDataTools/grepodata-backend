@@ -30,6 +30,7 @@ class Authentication
       'uid' => $oUser->id,
       'mail' => $oUser->email,
       'username' => $oUser->username,
+      'mail_is_confirmed' => ($oUser->is_confirmed==true?true:false),
       'ref' => $bIsRefreshToken,
       'iat' => time(),
       'exp' => time() + $expirationWindow
