@@ -38,7 +38,7 @@ class Authentication
 
     // Encode
     try {
-      $jwt = Token::customPayload($aPayload, JWT_SECRET);
+      $jwt = Token::customPayload($aPayload, $bIsRefreshToken ? REFRESH_SECRET : JWT_SECRET);
     } catch (ValidateException $e) {
       return false;
     }
@@ -48,22 +48,24 @@ class Authentication
 
   /**
    * @param $JWT
+   * @param bool $bIsRefreshToken
    * @return bool|User
    */
-  public static function expiresIn($JWT)
+  public static function expiresIn($JWT, $bIsRefreshToken = false)
   {
-    $aPayload = Token::getPayload($JWT, JWT_SECRET);
+    $aPayload = Token::getPayload($JWT, $bIsRefreshToken ? REFRESH_SECRET : JWT_SECRET);
     return $aPayload['exp'] - time();
   }
 
   /**
    * @param $JWT
    * @param bool $bDieIfInvalid
+   * @param bool $bIsRefreshToken
    * @return bool|User
    */
-  public static function verifyJWT($JWT, $bDieIfInvalid = true)
+  public static function verifyJWT($JWT, $bDieIfInvalid = true, $bIsRefreshToken = false)
   {
-    $bValid = Token::validate($JWT, JWT_SECRET);
+    $bValid = Token::validate($JWT, $bIsRefreshToken ? REFRESH_SECRET : JWT_SECRET);
     if ($bValid === false) {
       if ($bDieIfInvalid) {
         self::invalidJWT();
@@ -72,7 +74,7 @@ class Authentication
       }
     }
 
-    $aPayload = Token::getPayload($JWT, JWT_SECRET);
+    $aPayload = Token::getPayload($JWT, $bIsRefreshToken ? REFRESH_SECRET : JWT_SECRET);
 
     try {
       $oUser = \Grepodata\Library\Controller\User::GetUserById($aPayload['uid']);

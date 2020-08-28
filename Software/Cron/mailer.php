@@ -24,14 +24,17 @@ Logger::debugInfo("Started mailer");
 $Start = Carbon::now();
 $oCronStatus = Common::markAsRunning(__FILE__, 2*60, false);
 
+$MaxAttempts = 3;
+
 // process mail jobs
 $Count = 0;
 $Fails = 0;
 try {
   /** @var \Grepodata\Library\Model\MailJobs $oMail */
-  $oMail = MailJobs::NextUnprocessedByIdAsc(-1);
+  $oMail = MailJobs::NextUnprocessedByIdAsc(-1, $MaxAttempts);
   while ($oMail !== false && $oMail !== null && $Count < 4) {
     $oMail->processing = true;
+    $oMail->attempts = $oMail->attempts + 1;
     $oMail->save();
 
     // Try sending mail
@@ -57,7 +60,7 @@ try {
       continue;
     }
 
-    $oMail = MailJobs::NextUnprocessedByIdAsc($oMail->id);
+    $oMail = MailJobs::NextUnprocessedByIdAsc($oMail->id, $MaxAttempts);
   }
 } catch (\Exception $e) {
   Logger::error("Error processing mail jobs: " . $e->getMessage());

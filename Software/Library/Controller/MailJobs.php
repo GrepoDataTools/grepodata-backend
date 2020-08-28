@@ -5,11 +5,12 @@ namespace Grepodata\Library\Controller;
 class MailJobs
 {
 
-  public static function NextUnprocessedByIdAsc($PreviousId)
+  public static function NextUnprocessedByIdAsc($PreviousId, $MaxAttempts = 5)
   {
     return \Grepodata\Library\Model\MailJobs::where('processed', '=', false, 'and')
       ->where('processing', '=', false, 'and')
-      ->where('id', '>', $PreviousId)
+      ->where('id', '>', $PreviousId, 'and')
+      ->where('attempts', '<', $MaxAttempts)
       ->orderBy('id', 'asc')
       ->first();
   }

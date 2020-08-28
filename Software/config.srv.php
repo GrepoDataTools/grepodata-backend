@@ -37,6 +37,7 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
   define('REPORT_DIRECTORY', 'X:/dev/grepodata/grepodata-backend/Temp/');
   define('CAPTCHA_SECRET', PRIVATE_CAPTCHA_KEY);
   define('JWT_SECRET',     PRIVATE_JWT_SECRET);
+  define('REFRESH_SECRET', PRIVATE_JWT_REFRESH);
 
   // Smarty dirs
   $SourceDir = 'X:/dev/grepodata/grepodata-backend/';
@@ -80,6 +81,7 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
 
   define('CAPTCHA_SECRET', PRIVATE_CAPTCHA_KEY);
   define('JWT_SECRET',     PRIVATE_JWT_SECRET);
+  define('REFRESH_SECRET', PRIVATE_JWT_REFRESH);
 
   // Smarty dirs
   $HomeDir = '/home/vps/grepodata/acceptance/grepodata-backend';
@@ -124,6 +126,7 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
 
   define('CAPTCHA_SECRET', PRIVATE_CAPTCHA_KEY);
   define('JWT_SECRET',     PRIVATE_JWT_SECRET);
+  define('REFRESH_SECRET', PRIVATE_JWT_REFRESH);
 
   // Smarty dirs
   $HomeDir = '/home/vps/grepodata/production/grepodata-backend';

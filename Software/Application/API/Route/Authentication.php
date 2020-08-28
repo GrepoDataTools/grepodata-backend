@@ -309,7 +309,7 @@ admin@grepodata.com',
       'expires_in'    => \Grepodata\Library\Router\Authentication::expiresIn($aParams['access_token']),
       'is_confirmed'  => ($oUser->is_confirmed==true?true:false)
     );
-    ResponseCode::success($aResponseData, 1100);
+    ResponseCode::success($aResponseData, 1102);
   }
 
   /**
@@ -321,8 +321,8 @@ admin@grepodata.com',
     // Validate params
     $aParams = self::validateParams(array('refresh_token'));
 
-    // Verify token
-    $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['refresh_token']);
+    // Verify with refresh token
+    $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['refresh_token'], true, true);
 
     // Renew login token
     $jwt = \Grepodata\Library\Router\Authentication::generateJWT($oUser);

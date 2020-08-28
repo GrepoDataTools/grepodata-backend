@@ -34,6 +34,7 @@ define('GD_ERROR_5004', 'Server was not able to build this image (internal error
 define('GD_SUCCESS_1000', 'Request processed successfully');
 define('GD_SUCCESS_1100', 'Renewed existing access token');
 define('GD_SUCCESS_1101', 'Renewed access token for valid refresh token');
+define('GD_SUCCESS_1102', 'Access token is valid');
 define('GD_SUCCESS_1110', 'User login successful');
 define('GD_SUCCESS_1120', 'Registration complete, user created');
 define('GD_SUCCESS_1130', 'Password changed');
