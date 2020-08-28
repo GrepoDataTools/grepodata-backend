@@ -19,12 +19,28 @@ class BaseRoute
     return json_encode($aData, JSON_PRETTY_PRINT);
   }
 
-  public static function validateParams($aParamNames = array())
+  /**
+   * Return array of request params. Returns error if missing param names
+   * @param array $aParamNames
+   * @param array $aCheckHeaders
+   * @return array|mixed
+   */
+  public static function validateParams($aParamNames = array(), $aCheckHeaders = array())
   {
     // Get params
     $aParams = array();
     if (self::$oRequestContext->getMethod() == 'GET') $aParams = self::getGetVars();
     else if (self::$oRequestContext->getMethod() == 'POST') $aParams = self::getPostVars();
+
+    // Check headers
+    if (!empty($aCheckHeaders)) {
+      $aHeaders = apache_request_headers();
+      foreach ($aCheckHeaders as $HeaderParamName) {
+        if (key_exists($HeaderParamName, $aHeaders) && !key_exists($HeaderParamName, $aParams)) {
+          $aParams[$HeaderParamName] = $aHeaders[$HeaderParamName];
+        }
+      }
+    }
 
     // Validate
     $aInvalidParams = array();

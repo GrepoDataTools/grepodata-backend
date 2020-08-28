@@ -307,7 +307,7 @@ admin@grepodata.com',
     $aResponseData = array(
       'access_token'  => $aParams['access_token'],
       'expires_in'    => \Grepodata\Library\Router\Authentication::expiresIn($aParams['access_token']),
-      'is_confirmed'  => ($oUser->is_confirmed==true?true:false)
+      'mail_is_confirmed' => ($oUser->is_confirmed==true?true:false)
     );
     ResponseCode::success($aResponseData, 1102);
   }

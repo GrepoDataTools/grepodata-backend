@@ -3,6 +3,7 @@
 namespace Grepodata\Cron;
 
 use Carbon\Carbon;
+use Grepodata\Library\Controller\IndexV2\Linked;
 use Grepodata\Library\Cron\Common;
 use Grepodata\Library\Import\Towns;
 use Grepodata\Library\Logger\Logger;
@@ -28,6 +29,28 @@ if ($worlds === false) {
   Common::endExecution(__FILE__);
 }
 
+// Get unconfirmed link requests
+$aUnconfirmedLinks = array();
+try {
+  $aUnconfirmedLinksRaw = Linked::getAllUnconfirmed();
+
+  // Check expiration
+  $Limit = Carbon::now();
+  $Limit = $Limit->subDays(30);
+  /** @var \Grepodata\Library\Model\IndexV2\Linked $oLinked */
+  foreach ($aUnconfirmedLinksRaw as $oLinked) {
+    if ($oLinked->created_at < $Limit) {
+      // Account link request expired
+      Logger::warning("Account link request expired for user ".$oLinked->user_id);
+      $oLinked->delete();
+    } else {
+      $aUnconfirmedLinks[] = $oLinked;
+    }
+  }
+} catch (\Exception $e) {
+  Logger::error("Town import: Unable to retrieve unconfirmed account links");
+}
+
 foreach ($worlds as $world) {
   // Check commands 'php SCRIPTNAME[=0] WORLD[=1]'
   if (isset($argv[1]) && $argv[1]!=null && $argv[1]!='' && $argv[1]!=$world->grep_id) continue;
@@ -38,7 +61,7 @@ foreach ($worlds as $world) {
 
     Towns::DataImportIslands($world);
 
-    Towns::DataImportTowns($world);
+    Towns::DataImportTowns($world, $aUnconfirmedLinks);
 
     Logger::silly("Finished updating towns.");
 

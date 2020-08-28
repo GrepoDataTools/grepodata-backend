@@ -22,6 +22,11 @@ define('GD_ERROR_3030', 'This email address is already in use');
 define('GD_ERROR_3031', 'Password is not strong enough. Your password should be at least 8 characters');
 define('GD_ERROR_3032', 'This username is already in use');
 
+// Profile
+define('GD_ERROR_4000', 'Unable to handle profile request');
+define('GD_ERROR_4100', 'Player not found for this id');
+define('GD_ERROR_4200', 'Unable to delete account link');
+
 // Discord
 define('GD_ERROR_5000', 'Unable to handle discord request');
 define('GD_ERROR_5001', 'This guild has not set a default index key required for this request');
@@ -40,6 +45,9 @@ define('GD_SUCCESS_1120', 'Registration complete, user created');
 define('GD_SUCCESS_1130', 'Password changed');
 define('GD_SUCCESS_1140', 'Account confirmation requested');
 
+define('GD_SUCCESS_4000', 'Profile request processed successfully');
+define('GD_SUCCESS_4200', 'Account unlinking was successful');
+
 
 class ResponseCode
 {
@@ -56,9 +64,11 @@ class ResponseCode
     }
     $aResponseData = array(
       'success' => true,
-      'success_code' => $SuccessCode,
-      'message' => $Message
+      'success_code' => $SuccessCode
     );
+    if (!key_exists('message', $aExtraResponseData)) {
+      $aResponseData['message'] = $Message;
+    }
     if (is_array($aExtraResponseData) && sizeof($aExtraResponseData)) {
       $aResponseData = array_merge($aResponseData, $aExtraResponseData);
     }

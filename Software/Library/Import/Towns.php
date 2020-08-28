@@ -8,6 +8,7 @@ use Grepodata\Library\Controller\Town;
 use Grepodata\Library\Cron\InnoData;
 use Grepodata\Library\Cron\LocalData;
 use Grepodata\Library\Logger\Logger;
+use Grepodata\Library\Model\IndexV2\Linked;
 use Grepodata\Library\Model\World;
 
 class Towns
@@ -58,7 +59,7 @@ class Towns
     return true;
   }
 
-  public static function DataImportTowns(World $oWorld)
+  public static function DataImportTowns(World $oWorld, $aUnconfirmedLinks = array())
   {
     // get endpoint data
     $aTownData = InnoData::loadTownData($oWorld->grep_id);
@@ -103,6 +104,22 @@ class Towns
             $oTown->$Key = $Value;
           }
           $oTown->save();
+
+          // Check unconfirmed links
+          try {
+            /** @var Linked $oLinked */
+            foreach ($aUnconfirmedLinks as $oLinked) {
+              if ($oTown->player_id == $oLinked->player_id
+                && $oTown->name == $oLinked->town_token
+                && substr($oTown->world, 0, 2) == $oLinked->server) {
+                // Account link confirmed!
+                Logger::warning("Account link confirmed ".$oLinked->id);
+                \Grepodata\Library\Controller\IndexV2\Linked::setConfirmed($oLinked);
+              }
+            }
+          } catch (\Exception $e) {
+            Logger::warning("Town import: Error updating account link" . $e->getMessage());
+          }
         }
       } catch (\Exception $e) {
         Logger::warning("Exception while updating town with id " . (isset($aData['grep_id'])?$aData['grep_id']:'?') . " (world ".$oWorld->grep_id.") [".$e->getMessage()."]");

@@ -4,8 +4,8 @@ use Symfony\Component\Routing\Route;
 
 $oRouter = \Grepodata\Library\Router\Service::GetInstance();
 
-$limit1PerMin = array(
-  'limit' => 1,
+$limit3PerMin = array(
+  'limit' => 3,
   'window' => 60
 );
 $limit10PerMin = array(
@@ -32,7 +32,7 @@ $oRouter->Add('confirmMail', new Route('/auth/confirm', array(
 $oRouter->Add('newConfirmMail', new Route('/auth/newconfirm', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
   '_method'     => 'RequestNewConfirmMail',
-  '_ratelimit'  => $limit1PerMin
+  '_ratelimit'  => $limit3PerMin
 )));
 //Verify
 $oRouter->Add('verifytoken', new Route('/auth/token', array(
@@ -50,19 +50,19 @@ $oRouter->Add('refreshtoken', new Route('/auth/refresh', array(
 $oRouter->Add('login', new Route('/auth/login', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
   '_method'     => 'Login',
-  '_ratelimit'  => $limit10PerMin
+  '_ratelimit'  => $limit100PerMin
 )));
 //Forgot
 $oRouter->Add('forgot', new Route('/auth/reset', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
   '_method'     => 'Forgot',
-  '_ratelimit'  => $limit1PerMin
+  '_ratelimit'  => $limit3PerMin
 )));
 //Reset password
 $oRouter->Add('changepassword', new Route('/auth/changepassword', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
   '_method'     => 'ChangePassword',
-  '_ratelimit'  => $limit1PerMin
+  '_ratelimit'  => $limit10PerMin
 )));
 
 
@@ -70,7 +70,24 @@ $oRouter->Add('changepassword', new Route('/auth/changepassword', array(
 //indexes
 $oRouter->Add('profileIndexes', new Route('/profile/indexes', array(
   '_controller' => '\Grepodata\Application\API\Route\Profile',
-  '_method'     => 'Indexes'
+  '_method'     => 'Indexes',
+  '_ratelimit'  => $limit100PerMin
+)));
+//linked accounts
+$oRouter->Add('profileLinkedAccounts', new Route('/profile/linked', array(
+  '_controller' => '\Grepodata\Application\API\Route\Profile',
+  '_method'     => 'LinkedAccounts',
+  '_ratelimit'  => $limit100PerMin
+)));
+$oRouter->Add('profileAddLinkedAccounts', new Route('/profile/addlinked', array(
+  '_controller' => '\Grepodata\Application\API\Route\Profile',
+  '_method'     => 'AddLinkedAccount',
+  '_ratelimit'  => $limit10PerMin
+)));
+$oRouter->Add('profileRemoveLinkedAccounts', new Route('/profile/removelinked', array(
+  '_controller' => '\Grepodata\Application\API\Route\Profile',
+  '_method'     => 'RemoveLinkedAccount',
+  '_ratelimit'  => $limit3PerMin
 )));
 
 // Scoreboard
