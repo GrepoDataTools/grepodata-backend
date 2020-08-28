@@ -59,24 +59,28 @@ class Service
 
         // Check rate limits (default limit applies if route does not specify)
         if (!bDevelopmentMode) {
-          $RateLimit = 200;
-          $RateWindow = 60;
-          if (isset($aMatchedParameters['_ratelimit']) && is_array($aMatchedParameters['_ratelimit'])) {
-            $RateLimit = $aMatchedParameters['_ratelimit']['limit'];
-            if (isset($aMatchedParameters['_ratelimit']['window'])) {
-              $RateWindow = $aMatchedParameters['_ratelimit']['window'];
-            }
-          }
-
-          $ResourceId = json_encode($aMatchedParameters);
-          $RateLimiter = \RateLimit\RateLimiterFactory::createRedisBackedRateLimiter([
-            'host' => REDIS_HOST,
-            'port' => REDIS_PORT,
-          ], $RateLimit, $RateWindow);
           try {
-            $RateLimiter->hit($ResourceId);
-          } catch (RateLimitExceededException $e) {
-            die(BaseRoute::OutputJson(array('message' => 'Too many requests. You have exceeded the rate limit for this specific resource. Please try again in a minute.'), 429));
+            $RateLimit = 200;
+            $RateWindow = 60;
+            if (isset($aMatchedParameters['_ratelimit']) && is_array($aMatchedParameters['_ratelimit'])) {
+              $RateLimit = $aMatchedParameters['_ratelimit']['limit'];
+              if (isset($aMatchedParameters['_ratelimit']['window'])) {
+                $RateWindow = $aMatchedParameters['_ratelimit']['window'];
+              }
+            }
+
+            $ResourceId = $aMatchedParameters['_controller'] . $MethodName . $_SERVER['REMOTE_ADDR'];
+            $RateLimiter = \RateLimit\RateLimiterFactory::createRedisBackedRateLimiter([
+              'host' => REDIS_HOST,
+              'port' => REDIS_PORT,
+            ], $RateLimit, $RateWindow);
+            try {
+              $RateLimiter->hit($ResourceId);
+            } catch (RateLimitExceededException $e) {
+              die(BaseRoute::OutputJson(array('message' => 'Too many requests. You have exceeded the rate limit for this specific resource. Please try again in a minute.'), 429));
+            }
+          } catch (\Exception $e) {
+            Logger::error("CRITICAL: Exception caught while handling redis rate limit => " . $e->getMessage() . "[".$e->getTraceAsString()."]");
           }
         }
 
