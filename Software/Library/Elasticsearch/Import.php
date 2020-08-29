@@ -139,8 +139,8 @@ class Import
   public static function SaveTownBatch($aTownBatch)
   {
     $aParams = array(
-      'index' => self::IndexIdentifier,
-      'type'  => self::TypePlayer,
+      'index' => self::IndexTown,
+      'type'  => self::TypeTown,
       'body'  => array()
     );
 

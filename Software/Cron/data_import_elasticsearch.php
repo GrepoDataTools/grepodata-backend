@@ -37,8 +37,8 @@ if (isset($argv[1]) && $argv[1]!=null && $argv[1]==='force-all') {
 
 foreach ($aWorlds as $oWorld) {
   // Check commands 'php SCRIPTNAME[=0] FORCEALL[=1] WORLD[=1 or 2]'
-  if (isset($argv[1]) && $argv[1]!=null && $argv[1]!='' && $argv[1]!=$oWorld->grep_id) continue;
   if (isset($argv[2]) && $argv[2]!=null && $argv[2]!='' && $argv[2]!=$oWorld->grep_id) continue;
+  else if (isset($argv[1]) && !isset($argv[2]) && $argv[1]!=null && $argv[1]!='' && $argv[1]!=$oWorld->grep_id) continue;
 
   try {
     Elasticsearch::DataImportElasticsearch($oWorld, $bForceAllObjects);

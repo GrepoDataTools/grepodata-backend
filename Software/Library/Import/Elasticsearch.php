@@ -101,7 +101,7 @@ class Elasticsearch
         $IndexedDocuments++;
         if (count($aBatch) % $BatchSize === 0) {
           try {
-            Import::SavePlayerBatch($aBatch);
+            Import::SaveTownBatch($aBatch);
           } catch (\Exception $e) {
             Logger::warning("ES batch error: " . $e->getMessage());
           }
