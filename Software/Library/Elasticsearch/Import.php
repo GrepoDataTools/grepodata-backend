@@ -7,12 +7,15 @@ use Grepodata\Library\Controller\World;
 use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\Alliance;
 use Grepodata\Library\Model\Player;
+use Grepodata\Library\Model\Town;
 
 class Import
 {
   const IndexIdentifier = "grepodata_dev";
+  const IndexTown       = "grepodata_towns";
   const TypePlayer      = "player";
   const TypeAlliance    = "alliance";
+  const TypeTown        = "town";
 
   public static function DeletePlayer(Player $oPlayer)
   {
@@ -52,6 +55,27 @@ class Import
         return false;
       } else {
         Logger::warning("Error deleting alliance from ES: " . $e->getMessage());
+        return false;
+      }
+    }
+  }
+
+  public static function DeleteTowns(Town $oTown)
+  {
+    try {
+      $_id = self::TypeTown . '_' . $oTown->grep_id . '_' . $oTown->world;
+      $ElasticsearchClient = \Grepodata\Library\Elasticsearch\Client::GetInstance(10);
+      $ElasticsearchClient->delete(array(
+        'id'    => $_id,
+        'index' => self::IndexTown,
+        'type'  => self::TypeTown,
+      ));
+      return true;
+    } catch (\Exception $e) {
+      if (strpos($e->getMessage(), '"not_found"') >= 0) {
+        return false;
+      } else {
+        Logger::warning("Error deleting town from ES: " . $e->getMessage());
         return false;
       }
     }
@@ -102,6 +126,50 @@ class Import
         'AttDef'       => $oPlayer->att + $oPlayer->def,
         'Towns'        => $oPlayer->towns,
         'Active'       => $Active,
+      );
+    }
+
+    // Upload to elasticsearch
+    $ElasticsearchClient = \Grepodata\Library\Elasticsearch\Client::GetInstance(10);
+    $ElasticsearchClient->bulk($aParams);
+
+    return true;
+  }
+
+  public static function SaveTownBatch($aTownBatch)
+  {
+    $aParams = array(
+      'index' => self::IndexIdentifier,
+      'type'  => self::TypePlayer,
+      'body'  => array()
+    );
+
+    /** @var Town $oTown */
+    foreach ($aTownBatch as $oTown) {
+
+      // Generate id
+      $_id = self::TypeTown . '_' . $oTown->grep_id . '_' . $oTown->world;
+
+      // index
+      $aParams['body'][] = array(
+        'index' => array(
+          '_index' => self::IndexTown,
+          '_type'  => self::TypeTown,
+          '_id'    => $_id,
+        )
+      );
+
+      // body
+      $aParams['body'][] = array(
+        'WorldId'   => $oTown->world,
+        'Server'    => substr($oTown->world, 0, 2),
+        'GrepId'    => $oTown->grep_id,
+        'PlayerId'  => $oTown->player_id,
+        'island_x'  => $oTown->island_x,
+        'island_y'  => $oTown->island_y,
+        'island_i'  => $oTown->island_i,
+        'Points'    => $oTown->points,
+        'Name'      => $oTown->name,
       );
     }
 
@@ -239,6 +307,74 @@ class Import
                   'Towns'        => array('type' => 'integer', 'store' => true),
                   'Members'      => array('type' => 'integer', 'store' => true),
                   'Active'       => array('type' => 'boolean', 'store' => true),
+                  'Name'         => array(
+                    'type' => 'text',
+                    'store' => true,
+                    'analyzer' => 'autocomplete',
+                  )
+                )
+              )
+            )
+          )
+        );
+
+        $ElasticsearchClient->indices()->create($aIndexParams);
+        return true;
+      } catch (\Exception $e) {
+        Logger::error('Error ensuring index: '.$IndexName.'. (' . $e->getMessage() . ')');
+        return false;
+      }
+    } else {
+      return true;
+    }
+  }
+
+  public static function EnsureTownIndex(&$IndexName = '', $bForceNewConnection = false)
+  {
+    $ElasticsearchClient = \Grepodata\Library\Elasticsearch\Client::GetInstance(5, $bForceNewConnection);
+
+    $IndexName = self::IndexTown;
+
+    if (!$ElasticsearchClient->indices()->exists(array('index' => $IndexName))) {
+      // Create index
+      try {
+        $aIndexParams = array(
+          'index' => $IndexName,
+          'body'  => array(
+            'settings' => array(
+              'number_of_shards'    => 1,
+              'number_of_replicas'  => 0,
+              'analysis'  => array(
+                "filter"  => array(
+                  "autocomplete_filter" => array (
+                    "type"      => "ngram",
+                    "min_gram"  => 2,
+                    "max_gram"  => 20
+                  )
+                ),
+                "analyzer" => array (
+                  "autocomplete" => array (
+                    "type"      => "custom",
+                    "tokenizer" => "keyword",
+                    "filter"    => array (
+                      "lowercase",
+                      "autocomplete_filter"
+                    )
+                  )
+                )
+              )
+            ),
+            'mappings' => array(
+              self::TypeTown => array(
+                'properties' => array(
+                  'WorldId'      => array('type' => 'keyword', 'store' => true),
+                  'Server'       => array('type' => 'keyword', 'store' => true),
+                  'GrepId'       => array('type' => 'integer', 'store' => true),
+                  'PlayerId'     => array('type' => 'integer', 'store' => true),
+                  'island_x'     => array('type' => 'integer', 'store' => true),
+                  'island_y'     => array('type' => 'integer', 'store' => true),
+                  'island_i'     => array('type' => 'integer', 'store' => true),
+                  'Points'       => array('type' => 'integer', 'store' => true),
                   'Name'         => array(
                     'type' => 'text',
                     'store' => true,

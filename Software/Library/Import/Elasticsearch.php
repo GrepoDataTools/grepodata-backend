@@ -3,6 +3,7 @@
 namespace Grepodata\Library\Import;
 
 use Carbon\Carbon;
+use Grepodata\Library\Controller\Town;
 use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\World;
 use Grepodata\Library\Controller\Alliance;
@@ -13,18 +14,23 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 class Elasticsearch
 {
 
-  public static function DataImportElasticsearch(World $oWorld)
+  public static function DataImportElasticsearch(World $oWorld, $bForceAllObjects = false)
   {
     Logger::silly("Running Elasticsearch import for " . $oWorld->grep_id);
     Import::EnsureIndex();
+    Import::EnsureTownIndex();
 
     $IndexErrors = 0;
     $IndexedDocuments = 0;
     $aAllianceNames = array();
 
     // Import alliances for this world
-    $DateLimit = Carbon::now()->subDays(16); // If updated within last 16 days
-    $aAlliances = Alliance::allByWorldAndUpdate($oWorld->grep_id, $DateLimit);
+    if ($bForceAllObjects) {
+      $aAlliances = Alliance::allByWorld($oWorld->grep_id);
+    } else {
+      $DateLimit = Carbon::now()->subDays(16); // If updated within last 16 days
+      $aAlliances = Alliance::allByWorldAndUpdate($oWorld->grep_id, $DateLimit);
+    }
     foreach ($aAlliances as $oAlliance) {
       try {
         Import::SaveAlliance($oAlliance);
@@ -78,6 +84,34 @@ class Elasticsearch
     unset($aBatch);
     unset($aAllianceNames);
     unset($aPlayers);
+
+    // Import towns
+    if ($bForceAllObjects) {
+      $aTowns = Town::allByWorld($oWorld->grep_id);
+    } else {
+      $DateLimit = Carbon::now()->subDays(3); // If updated within last 3 days
+      $aTowns = Town::allByWorldAndUpdate($oWorld->grep_id, $DateLimit);
+    }
+    $aBatch = array();
+    $BatchSize = 50;
+    foreach ($aTowns as $oTown) {
+      try {
+        // Add batch item
+        $aBatch[] = $oTown;
+        $IndexedDocuments++;
+        if (count($aBatch) % $BatchSize === 0) {
+          try {
+            Import::SavePlayerBatch($aBatch);
+          } catch (\Exception $e) {
+            Logger::warning("ES batch error: " . $e->getMessage());
+          }
+          $aBatch = array();
+        }
+
+      } catch (\Exception $e) {$IndexErrors++;}
+    }
+    unset($aBatch);
+    unset($aTowns);
 
     // Log error if there are too many errors (1 in 1000 is max allowed error rate)
     if ($IndexedDocuments/1000 < $IndexErrors) {

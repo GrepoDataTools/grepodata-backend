@@ -34,6 +34,28 @@ class Town
 
   /**
    * @param $World
+   * @param $UpdateLimit
+   * @return \Grepodata\Library\Model\Town Town
+   */
+  public static function allByWorldAndUpdate($World, $UpdateLimit)
+  {
+    return \Grepodata\Library\Model\Town::where('world', '=', $World, 'and')
+      ->where('updated_at', '>', $UpdateLimit)
+      ->get();
+  }
+
+  /**
+   * @param $World
+   * @return \Grepodata\Library\Model\Town Town
+   */
+  public static function allByWorld($World)
+  {
+    return \Grepodata\Library\Model\Town::where('world', '=', $World, 'and')
+      ->get();
+  }
+
+  /**
+   * @param $World
    * @param $TownName
    * @param $PlayerId
    * @return bool | \Grepodata\Library\Model\Town Town
