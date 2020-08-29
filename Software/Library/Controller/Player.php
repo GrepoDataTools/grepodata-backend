@@ -59,6 +59,18 @@ class Player
   }
 
   /**
+   * @param $Id
+   * @param $Server
+   * @return \Grepodata\Library\Model\Player Player
+   */
+  public static function firstByIdAndServer($Id, $Server)
+  {
+    return \Grepodata\Library\Model\Player::where('grep_id', '=', $Id, 'and')
+      ->where('world', 'LIKE', $Server.'%')
+      ->firstOrFail();
+  }
+
+  /**
    * @param $World
    * @return Collection|\Grepodata\Library\Model\Player[]
    */

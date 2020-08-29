@@ -82,7 +82,7 @@ class Profile extends BaseRoute
   public static function AddLinkedAccountPOST()
   {
     // Validate params
-    $aParams = self::validateParams(array('access_token', 'player_id', 'world'), array('access_token'));
+    $aParams = self::validateParams(array('access_token', 'player_id', 'player_name', 'server'), array('access_token'));
     $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
 
     // Email needs to be confirmed to continue
@@ -90,13 +90,7 @@ class Profile extends BaseRoute
       ResponseCode::errorCode(3010, array(), 403);
     }
 
-    try {
-      $oPlayer = \Grepodata\Library\Controller\Player::firstOrFail($aParams['player_id'], $aParams['world']);
-    } catch (ModelNotFoundException $e) {
-      ResponseCode::errorCode(4100);
-    }
-
-    $oLinked = Linked::newLinkedAccount($oUser, $oPlayer);
+    $oLinked = Linked::newLinkedAccount($oUser, $aParams['player_id'], $aParams['player_name'], $aParams['server']);
 
     $aResponse = array(
       'linked_account' => $oLinked->getPublicFields()
@@ -119,14 +113,14 @@ class Profile extends BaseRoute
       $oLinked = Linked::getByPlayerIdAndServer($oUser, $aParams['player_id'], $aParams['server']);
     } catch (ModelNotFoundException $e) {
       Logger::error("Unable to find account link for user ".$oUser->id);
-      ResponseCode::errorCode(4100);
+      ResponseCode::errorCode(4100, array(), 400);
     }
 
     try {
       Linked::unlink($oLinked);
     } catch (\Exception $e) {
       Logger::error("Unable to delete account link ".$oLinked->id. "; ".$e->getMessage());
-      ResponseCode::errorCode(4200);
+      ResponseCode::errorCode(4200, array(), 400);
     }
 
     $aResponse = array();

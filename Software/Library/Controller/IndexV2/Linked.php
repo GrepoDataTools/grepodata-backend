@@ -54,15 +54,17 @@ class Linked
   /**
    * Add a new link request between user and player
    * @param User $oUser
-   * @param Player $oPlayer
+   * @param $PlayerId
+   * @param $PlayerName
+   * @param $Server
    * @return \Grepodata\Library\Model\IndexV2\Linked
    */
-  public static function newLinkedAccount(User $oUser, Player $oPlayer) {
+  public static function newLinkedAccount(User $oUser, $PlayerId, $PlayerName, $Server) {
     $oLinked = new \Grepodata\Library\Model\IndexV2\Linked();
     $oLinked->user_id = $oUser->id;
-    $oLinked->player_id = $oPlayer->grep_id;
-    $oLinked->player_name = $oPlayer->name;
-    $oLinked->server = substr($oPlayer->world, 0, 2);
+    $oLinked->player_id = $PlayerId;
+    $oLinked->player_name = $PlayerName;
+    $oLinked->server = $Server;
     $oLinked->confirmed = false;
     $oLinked->town_token = IndexBuilderV2::generateIndexKey(20);
     $oLinked->save();
