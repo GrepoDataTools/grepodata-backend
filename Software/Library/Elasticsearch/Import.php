@@ -144,8 +144,13 @@ class Import
       'body'  => array()
     );
 
-    /** @var Town $oTown */
-    foreach ($aTownBatch as $oTown) {
+    foreach ($aTownBatch as $aBatchItem) {
+
+      /** @var Town $oTown */
+      $oTown = $aBatchItem['town'];
+      $PlayerName = $aBatchItem['player_name'];
+      $AllianceId = $aBatchItem['alliance_id'];
+      $AllianceName = $aBatchItem['alliance_name'];
 
       // Generate id
       $_id = self::TypeTown . '_' . $oTown->grep_id . '_' . $oTown->world;
@@ -161,15 +166,19 @@ class Import
 
       // body
       $aParams['body'][] = array(
-        'WorldId'   => $oTown->world,
-        'Server'    => substr($oTown->world, 0, 2),
-        'GrepId'    => $oTown->grep_id,
-        'PlayerId'  => $oTown->player_id,
-        'island_x'  => $oTown->island_x,
-        'island_y'  => $oTown->island_y,
-        'island_i'  => $oTown->island_i,
-        'Points'    => $oTown->points,
-        'Name'      => $oTown->name,
+        'WorldId'       => $oTown->world,
+        'Server'        => substr($oTown->world, 0, 2),
+        'GrepId'        => $oTown->grep_id,
+        'PlayerId'      => $oTown->player_id,
+        'PlayerName'    => $PlayerName,
+        'AllianceId'    => $AllianceId,
+        'AllianceName'  => $AllianceName,
+        'IslandX'       => $oTown->island_x,
+        'IslandY'       => $oTown->island_y,
+        'IslandI'       => $oTown->island_i,
+        'Points'        => $oTown->points,
+        'UpdatedAt'     => $oTown->getUpdatedTimestamp(),
+        'Name'          => $oTown->name,
       );
     }
 
@@ -371,10 +380,14 @@ class Import
                   'Server'       => array('type' => 'keyword', 'store' => true),
                   'GrepId'       => array('type' => 'integer', 'store' => true),
                   'PlayerId'     => array('type' => 'integer', 'store' => true),
-                  'island_x'     => array('type' => 'integer', 'store' => true),
-                  'island_y'     => array('type' => 'integer', 'store' => true),
-                  'island_i'     => array('type' => 'integer', 'store' => true),
+                  'PlayerName'   => array('type' => 'keyword', 'store' => true),
+                  'AllianceId'   => array('type' => 'integer', 'store' => true),
+                  'AllianceName' => array('type' => 'keyword', 'store' => true),
+                  'IslandX'      => array('type' => 'integer', 'store' => true),
+                  'IslandY'      => array('type' => 'integer', 'store' => true),
+                  'IslandI'      => array('type' => 'integer', 'store' => true),
                   'Points'       => array('type' => 'integer', 'store' => true),
+                  'UpdatedAt'    => array('type' => 'integer', 'store' => true),
                   'Name'         => array(
                     'type' => 'text',
                     'store' => true,

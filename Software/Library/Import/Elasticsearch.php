@@ -23,6 +23,8 @@ class Elasticsearch
     $IndexErrors = 0;
     $IndexedDocuments = 0;
     $aAllianceNames = array();
+    /** @var \Grepodata\Library\Model\Player[] $aPlayersIndexed */
+    $aPlayersIndexed = array();
 
     // Import alliances for this world
     if ($bForceAllObjects) {
@@ -76,13 +78,13 @@ class Elasticsearch
           $aBatch = array();
         }
 
+        $aPlayersIndexed[$oPlayer->grep_id] = $oPlayer;
       } catch (\Exception $e) {$IndexErrors++;}
     }
     if (count($aBatch) > 0) {
       Import::SavePlayerBatch($aBatch);
     }
     unset($aBatch);
-    unset($aAllianceNames);
     unset($aPlayers);
 
     // Import towns
@@ -96,8 +98,45 @@ class Elasticsearch
     $BatchSize = 50;
     foreach ($aTowns as $oTown) {
       try {
+        $PlayerId = 0;
+        $PlayerName = '';
+        $AllianceId = 0;
+        $AllianceName = '';
+        if ($oTown->player_id != '' && $oTown->player_id != 0) {
+          try {
+            if ($Name = $aPlayersIndexed[$oTown->player_id] ?? null) {
+              $PlayerId = $oTown->player_id;
+              $PlayerName = $aPlayersIndexed[$oTown->player_id]->name;
+              $AllianceId = $aPlayersIndexed[$oTown->player_id]->alliance_id;
+            } else {
+              $oPlayer = Player::firstOrFail($oTown->player_id, $oWorld->grep_id);
+              $PlayerId = $oPlayer->grep_id;
+              $PlayerName = $oPlayer->name;
+              $AllianceId = $oPlayer->alliance_id;
+            }
+          } catch (ModelNotFoundException $e) {}
+        }
+
+        if ($AllianceId != '' && $AllianceId != 0) {
+          try {
+            if ($Name = $aAllianceNames[$AllianceId] ?? null) {
+              $AllianceName = $Name;
+            } else {
+              $oAlliance = Alliance::firstOrFail($AllianceId, $oWorld->grep_id);
+              $AllianceName = $oAlliance->name;
+              $aAllianceNames[$oAlliance->grep_id] = $oAlliance->name;
+            }
+          } catch (ModelNotFoundException $e) {}
+        }
+
         // Add batch item
-        $aBatch[] = $oTown;
+        $aBatch[] = array(
+          'town' => $oTown,
+          'player_id' => $PlayerId,
+          'player_name' => $PlayerName,
+          'alliance_id' => $AllianceId,
+          'alliance_name' => $AllianceName,
+        );
         $IndexedDocuments++;
         if (count($aBatch) % $BatchSize === 0) {
           try {
@@ -112,6 +151,7 @@ class Elasticsearch
     }
     unset($aBatch);
     unset($aTowns);
+    unset($aPlayersIndexed);
 
     // Log error if there are too many errors (1 in 1000 is max allowed error rate)
     if ($IndexedDocuments/1000 < $IndexErrors) {

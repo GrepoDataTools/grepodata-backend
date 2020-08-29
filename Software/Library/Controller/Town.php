@@ -22,7 +22,7 @@ class Town
 
   /**
    * @param \Grepodata\Library\Model\Island oIsland
-   * @return \Grepodata\Library\Model\Town Town
+   * @return \Grepodata\Library\Model\Town[]
    */
   public static function allByIsland(\Grepodata\Library\Model\Island $oIsland)
   {
@@ -35,7 +35,7 @@ class Town
   /**
    * @param $World
    * @param $UpdateLimit
-   * @return \Grepodata\Library\Model\Town Town
+   * @return \Grepodata\Library\Model\Town[]
    */
   public static function allByWorldAndUpdate($World, $UpdateLimit)
   {
@@ -46,7 +46,7 @@ class Town
 
   /**
    * @param $World
-   * @return \Grepodata\Library\Model\Town Town
+   * @return \Grepodata\Library\Model\Town[]
    */
   public static function allByWorld($World)
   {
@@ -146,17 +146,24 @@ class Town
   }
 
   /**
-   * @param $World
-   * @param $Query string search query
+   * @param $aParams
    * @param int $Limit
-   * @return bool|Collection|\Grepodata\Library\Model\Town[]
+   * @return Collection
    */
-  public static function search($World, $Query, $Limit = 30)
+  public static function search($aParams, $Limit = 30)
   {
-    return \Grepodata\Library\Model\Town::where('name', 'LIKE', '%'.$Query.'%', 'and')
-      ->where('world', '=', $World)
-      ->orderBy('points', 'desc')
-      ->limit($Limit)
-      ->get();
+    if (isset($aParams['query']) && isset($aParams['world'])) {
+      return \Grepodata\Library\Model\Town::where('name', 'LIKE', '%'.$aParams['query'].'%', 'and')
+        ->where('world', '=', $aParams['world'])
+        ->orderBy('points', 'desc')
+        ->limit($Limit)
+        ->get();
+    } else if (isset($aParams['query'])) {
+      return \Grepodata\Library\Model\Town::where('name', 'LIKE', '%'.$aParams['query'].'%', 'and')
+        ->orderBy('points', 'desc')
+        ->limit($Limit)
+        ->get();
+    }
+    return false;
   }
 }

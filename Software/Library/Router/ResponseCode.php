@@ -34,6 +34,12 @@ define('GD_ERROR_5002', 'This guild has not set a default server required for th
 define('GD_ERROR_5003', 'Report not found for these parameters');
 define('GD_ERROR_5004', 'Server was not able to build this image (internal error)');
 
+// Search
+define('GD_ERROR_6000', 'Unable to handle search request');
+define('GD_ERROR_6100', 'No players found for these parameters');
+define('GD_ERROR_6200', 'No alliances found for these parameters');
+define('GD_ERROR_6300', 'No towns found for these parameters');
+
 
 // === Success codes
 define('GD_SUCCESS_1000', 'Request processed successfully');
@@ -58,9 +64,13 @@ class ResponseCode
    */
   public static function success($aExtraResponseData = array(), $SuccessCode = 1000, $HttpCode = 200)
   {
-    $Message = constant('GD_SUCCESS_'.$SuccessCode);
-    if (is_null($Message)) {
-      $Message = GD_SUCCESS_1000;
+    if (defined($SuccessCode)) {
+      $Message = $SuccessCode;
+    } else {
+      $Message = constant('GD_SUCCESS_'.$SuccessCode);
+      if (is_null($Message)) {
+        $Message = GD_SUCCESS_1000;
+      }
     }
     $aResponseData = array(
       'success' => true,
@@ -78,15 +88,19 @@ class ResponseCode
 
   /**
    * die with a predefined error code
-   * @param int $Code
+   * @param int $Code Error code or error constant
    * @param array $aExtraResponseData
    * @param int $HttpCode
    */
   public static function errorCode($Code = 1000, $aExtraResponseData = array(), $HttpCode = 200)
   {
-    $Message = constant('GD_ERROR_'.$Code);
-    if (is_null($Message)) {
-      $Message = GD_ERROR_0000;
+    if (defined($Code)) {
+      $Message = $Code;
+    } else {
+      $Message = constant('GD_ERROR_'.$Code);
+      if (is_null($Message)) {
+        $Message = GD_ERROR_0000;
+      }
     }
 
     $aResponseData = array(

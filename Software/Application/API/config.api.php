@@ -239,10 +239,10 @@ $oRouter->Add('playerTowns', new Route('/town/player', array(
 //  '_controller' => '\Grepodata\Application\API\Route\Town',
 //  '_method'     => 'TownDetails'
 //)));
-//$oRouter->Add('townSearch', new Route('/town/search', array(
-//  '_controller' => '\Grepodata\Application\API\Route\Town',
-//  '_method'     => 'Search'
-//)));
+$oRouter->Add('townSearch', new Route('/town/search', array(
+  '_controller' => '\Grepodata\Application\API\Route\Town',
+  '_method'     => 'Search'
+)));
 
 // Indexer v2
 $oRouter->Add('addReportForumV2', new Route('/indexer/v2/addreport', array(
