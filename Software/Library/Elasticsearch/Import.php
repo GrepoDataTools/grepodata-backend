@@ -60,7 +60,7 @@ class Import
     }
   }
 
-  public static function DeleteTowns(Town $oTown)
+  public static function DeleteTown(Town $oTown)
   {
     try {
       $_id = self::TypeTown . '_' . $oTown->grep_id . '_' . $oTown->world;
