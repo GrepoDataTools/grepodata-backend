@@ -40,6 +40,9 @@ define('GD_ERROR_6100', 'No players found for these parameters');
 define('GD_ERROR_6200', 'No alliances found for these parameters');
 define('GD_ERROR_6300', 'No towns found for these parameters');
 
+// Indexer
+define('GD_ERROR_7000', 'Unable to handle indexer request');
+define('GD_ERROR_7100', 'No verified players found for this user.');
 
 // === Success codes
 define('GD_SUCCESS_1000', 'Request processed successfully');

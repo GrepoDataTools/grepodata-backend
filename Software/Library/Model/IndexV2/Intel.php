@@ -7,7 +7,7 @@ use \Illuminate\Database\Eloquent\Model;
 
 /**
  * @property mixed id
- * @property mixed user_id
+ * @property mixed indexed_by_player_id
  * @property mixed hash
  * @property mixed world
  * @property mixed source_type
@@ -30,6 +30,8 @@ use \Illuminate\Database\Eloquent\Model;
  * @property mixed created_at
  * @property mixed updated_at
  * @property mixed soft_deleted
+ * @property mixed report_json
+ * @property mixed report_info
  */
 class Intel extends Model
 {

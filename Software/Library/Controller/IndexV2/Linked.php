@@ -29,7 +29,7 @@ class Linked
   }
 
   /**
-   * Remove a linked account
+   * Get linked account by player id and server
    * @param User $oUser
    * @param $PlayerId
    * @param $Server

@@ -261,6 +261,10 @@ $oRouter->Add('getIndexV2', new Route('/indexer/v2/getindex', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Index',
   '_method'     => 'GetIndex'
 )));
+$oRouter->Add('gettownintelV2', new Route('/indexer/v2/town', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Intel',
+  '_method'     => 'GetTown'
+)));
 
 // Indexer V1
 $oRouter->Add('stats', new Route('/indexer/stats', array(
