@@ -103,7 +103,7 @@ foreach ($aServers as $Server) {
           throw new \Exception("Islands import failed for new world.");
         }
         Logger::debugInfo('Towns import completed. Starting elasticsearch import for new world.');
-        if (Elasticsearch::DataImportElasticsearch($oNewWorld) !== true) {
+        if (Elasticsearch::DataImportElasticsearch($oNewWorld, true) !== true) {
           throw new \Exception("Elasticsearch import failed for new world.");
         }
 

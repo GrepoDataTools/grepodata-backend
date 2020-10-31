@@ -4,8 +4,10 @@ namespace Grepodata\Application\API\Route;
 
 use Grepodata\Library\Controller\Indexer\CityInfo;
 use Grepodata\Library\Controller\Indexer\IndexInfo;
+use Grepodata\Library\Elasticsearch\Search;
 use Grepodata\Library\Indexer\Validator;
 use Grepodata\Library\Logger\Logger;
+use Grepodata\Library\Router\ResponseCode;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class Town extends \Grepodata\Library\Router\BaseRoute
@@ -124,39 +126,60 @@ class Town extends \Grepodata\Library\Router\BaseRoute
     }
   }
 
-  /** @Unused */
   public static function SearchGET()
   {
     $aParams = array();
     try {
       // Validate params
-      $aParams = self::validateParams(array('query', 'index'));
+      $aParams = self::validateParams();
 
-      $oIndex = IndexInfo::firstOrFail($aParams['index']);
+//      if (isset($aParams['index'])) {
+//        $oIndex = IndexInfo::firstOrFail($aParams['index']);
+//        $aParams['world'] = $oIndex->world;
+//      }
 
-      $aTowns = \Grepodata\Library\Controller\Town::search($oIndex->world, $aParams['query']);
-      if ($aTowns == null || sizeof($aTowns) <= 0) throw new ModelNotFoundException();
+      if (isset($aParams['query']) && strlen($aParams['query']) > 30) {
+//        throw new \Exception("Search input exceeds limit: " . substr($aParams['query'], 0, 200));
+        Logger::debugInfo("Search input exceeds limit: " . substr($aParams['query'], 0, 200));
+        $aParams['query'] = substr($aParams['query'], 0, 30);
+      }
 
-      // Format sql results
-      $aResponse = array(
-        'success' => true,
-        'count'   => sizeof($aTowns),
-        'results' => array(),
-      );
-      foreach ($aTowns as $oTown) {
-        $aData = $oTown->getPublicFields();
-        $aData['id'] = $aData['grep_id']; unset($aData['grep_id']);
-        $aData['server'] = substr($aData['world'], 0, 2);
-        try {
-          $oPlayer = \Grepodata\Library\Controller\Player::firstOrFail($aData['player_id'], $aData['world']);
-          if ($oPlayer !== null) $aData['player_name'] = $oPlayer->name;
-        } catch (\Exception $e) {}
-        $aResponse['results'][] = $aData;
+      try {
+        $aElasticsearchResults = Search::FindTowns($aParams);
+      } catch (\Exception $e) {}
+
+      if (isset($aElasticsearchResults) && $aElasticsearchResults != false) {
+        $aResponse = $aElasticsearchResults;
+      } else {
+        // SQL fallback: Find model
+        $aTowns = \Grepodata\Library\Controller\Town::search($aParams['query'], 30);
+        if ($aTowns == null || sizeof($aTowns) <= 0) throw new ModelNotFoundException();
+
+        // Format sql results
+        $aResponse = array(
+          'success' => true,
+          'count'   => sizeof($aTowns),
+          'status'  => 'sql_fallback',
+          'results' => array(),
+        );
+        foreach ($aTowns as $oTown) {
+          $aData = $oTown->getPublicFields();
+          $aData['id'] = $aData['grep_id']; unset($aData['grep_id']);
+          $aData['server'] = substr($aData['world'], 0, 2);
+          try {
+            $oPlayer = \Grepodata\Library\Controller\Player::firstOrFail($aData['player_id'], $aData['world']);
+            if ($oPlayer !== null) $aData['player_name'] = $oPlayer->name;
+          } catch (\Exception $e) {}
+          $aResponse['results'][] = $aData;
+        }
+
+        return self::OutputJson($aResponse);
       }
 
       return self::OutputJson($aResponse);
 
-    } catch (ModelNotFoundException $e) {
+    } catch (\Exception $e) {
+      //ResponseCode::errorCode(GD_ERROR_6300, array(), 404);
       die(self::OutputJson(array(
         'message'     => 'No towns found for these parameters.',
         'parameters'  => $aParams

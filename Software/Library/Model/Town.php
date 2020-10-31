@@ -2,6 +2,7 @@
 
 namespace Grepodata\Library\Model;
 
+use Carbon\Carbon;
 use \Illuminate\Database\Eloquent\Model;
 
 /**
@@ -43,5 +44,12 @@ class Town extends Model
       'iy'      => $this->island_y,
       'ocean'   => (int) (floor($this->island_x/100) . floor($this->island_y/100)),
     );
+  }
+
+  public function getUpdatedTimestamp()
+  {
+    /** @var Carbon $updated */
+    $updated = $this->updated_at;
+    return $updated->getTimestamp();
   }
 }

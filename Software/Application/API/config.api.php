@@ -183,10 +183,10 @@ $oRouter->Add('playerTowns', new Route('/town/player', array(
 //  '_controller' => '\Grepodata\Application\API\Route\Town',
 //  '_method'     => 'TownDetails'
 //)));
-//$oRouter->Add('townSearch', new Route('/town/search', array(
-//  '_controller' => '\Grepodata\Application\API\Route\Town',
-//  '_method'     => 'Search'
-//)));
+$oRouter->Add('townSearch', new Route('/town/search', array(
+  '_controller' => '\Grepodata\Application\API\Route\Town',
+  '_method'     => 'Search'
+)));
 
 
 // Indexer

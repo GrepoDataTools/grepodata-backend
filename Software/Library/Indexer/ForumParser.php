@@ -3,6 +3,7 @@
 namespace Grepodata\Library\Indexer;
 
 use Carbon\Carbon;
+use Elasticsearch\Endpoints\Cat\Help;
 use Exception;
 use Grepodata\Library\Controller\Alliance;
 use Grepodata\Library\Controller\Player;
@@ -73,6 +74,10 @@ class ForumParser
       'day' => 'd/m/y', 'day_regex' => '/[0-9]{2}[\/]{1}[0-9]{2}[\/]{1}[0-9]{2}/',
       'time' => 'H:i:s', 'time_regex' => '/[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2}(?!.*[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2})/',
     ),
+    'fi' => array(
+      'day' => 'd.m.y', 'day_regex' => '/[0-9]{2}[\/]{1}[0-9]{2}[\/]{1}[0-9]{2}/',
+      'time' => 'H:i:s', 'time_regex' => '/[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2}(?!.*[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2})/',
+    ),
     'ro' => array(
       'day' => 'd.m.y', 'day_regex' => '/[0-9]{2}[.]{1}[0-9]{2}[.]{1}[0-9]{2}/',
       'time' => 'H:i:s', 'time_regex' => '/[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2}(?!.*[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2})/',
@@ -108,6 +113,7 @@ class ForumParser
     'enemy'    => 'enemy_attack',
     'conquest' => 'attack_on_conquest'
   );
+  const gods = array('zeus', 'poseidon', 'hera', 'athene', 'hades', 'artemis');
   const aUnitNames = array(
     // Misc
     "unknown_naval" => array('type' => 'unknown_naval', 'value' => null, 'god' => null),
@@ -498,7 +504,7 @@ class ForumParser
         break;
       case 'town-player-town-player':
       case 'town-player-player-town':
-      //case sizeof($aHeaderChainType) === 4:
+        //case sizeof($aHeaderChainType) === 4:
         $ReportType = self::report_types['conquest'];
         break;
       case 'town-player-town':
@@ -548,20 +554,32 @@ class ForumParser
         }
 
         // Check silver
-        if (isset($aReportData['content'][5]['content'][5]['content'][4]['content'][0])) {
-          $Silver = $aReportData['content'][5]['content'][5]['content'][4]['content'][0];
+        $aSilverItems = Helper::allByClass($aReportData, 'spy_payed');
+        if (count($aSilverItems) > 0) {
+          $aTextItems = Helper::allByClass($aSilverItems[0], 'small bold');
+          if (count($aTextItems) >= 2) {
+            $Silver = Helper::getTextContent($aTextItems[1], 0, true);
+            $Silver = preg_replace('/\s+/', '', $Silver);
+          }
 
           $cityInfo['silver_in_cave'] = $Silver;
-          $cityInfo['silver_in_cave'] = substr($cityInfo['silver_in_cave'], 5, strlen($cityInfo['silver_in_cave']) - 12);
-          if (strpos($cityInfo['silver_in_cave'], '(+') !== FALSE) {
-            $bonusPos = strpos($cityInfo['silver_in_cave'], '(+');
-            $bonusSilver = substr($cityInfo['silver_in_cave'], $bonusPos);
-            $mainSilver = substr($cityInfo['silver_in_cave'], 0, $bonusPos - 9);
-            $cityInfo['silver_in_cave'] = $mainSilver . $bonusSilver;
+          preg_match_all('/[0-9]{1,}/', $Silver, $numbers);
+          if (is_array($numbers[0]) && count($numbers[0]) == 2) {
+            $cityInfo['silver_in_cave'] = $numbers[0][0] + $numbers[0][1];
           }
         } else {
           Logger::warning("can not find silver in Forum parser: " . $ReportHash);
           $cityInfo['silver_in_cave'] = null;
+        }
+
+        // Check god
+        $aGodItems = Helper::allByClass($aReportData, 'god_display');
+        if (count($aGodItems) >= 1) {
+          $God = strtolower(Helper::getTextContent($aGodItems[0], 0, true));
+          $God = preg_replace('/\s+/', '', $God);
+          if (in_array($God, self::gods)) {
+            $cityInfo['god'] = $God;
+          }
         }
 
         //loop units
@@ -858,8 +876,8 @@ class ForumParser
 
         if ($bTitleTextPresent==true && $bSmallTextPresent==true && $bReportUnitsPresent==false) {
           if (
-          ($Locale == 'nl' && $SmallText!='Niet zichtbaar.') ||
-          ($Locale == 'de' && $SmallText!='Nicht sichtbar.')) {
+            ($Locale == 'nl' && $SmallText!='Niet zichtbaar.') ||
+            ($Locale == 'de' && $SmallText!='Nicht sichtbar.')) {
             throw new ForumParserExceptionError("Hidden troop check invalid for locale. string mismatch");
           }
           throw new ForumParserExceptionDebug("Report units are probably hidden.");

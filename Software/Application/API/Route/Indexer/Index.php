@@ -480,7 +480,7 @@ admin@grepodata.com',
 
           // Update conquest records
           try {
-            $aConquests = Conquest::allByIndex($oIndex, 5000);
+            $aConquests = Conquest::allByIndex($oIndex, 0, 5000);
             /** @var \Grepodata\Library\Model\Indexer\Conquest $oConquest */
             foreach ($aConquests as $oConquest) {
               $oConquest->index_key = $oNewIndex->key_code;
@@ -713,7 +713,7 @@ admin@grepodata.com',
       $aRecentConquests = array();
       try {
         $oWorld = World::getWorldById($oIndex->world);
-        $aConquests = Conquest::allByIndex($oIndex, 30);
+        $aConquests = Conquest::allByIndex($oIndex, 0, 30);
         $SearchLimit = 1;
         if (count($aConquests) > 3) $SearchLimit = 2;
         if (count($aConquests) > 6) $SearchLimit = 3;

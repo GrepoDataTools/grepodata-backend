@@ -10,9 +10,10 @@ use \Illuminate\Database\Eloquent\Model;
  * @property mixed message
  * @property mixed processing
  * @property mixed processed
+ * @property mixed attempts
  */
 class MailJobs extends Model
 {
   protected $table = 'Mail_jobs';
-  protected $fillable = array('to_mail', 'subject', 'message', 'processing', 'processed');
+  protected $fillable = array('to_mail', 'subject', 'message', 'processing', 'processed', 'attempts');
 }

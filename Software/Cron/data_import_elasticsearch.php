@@ -29,12 +29,19 @@ if ($aWorlds === false) {
   Common::endExecution(__FILE__);
 }
 
+$bForceAllObjects = false;
+if (isset($argv[1]) && $argv[1]!=null && $argv[1]==='force-all') {
+  Logger::error("ES import: forcing import of all objects");
+  $bForceAllObjects = true;
+}
+
 foreach ($aWorlds as $oWorld) {
-  // Check commands 'php SCRIPTNAME[=0] WORLD[=1]'
-  if (isset($argv[1]) && $argv[1]!=null && $argv[1]!='' && $argv[1]!=$oWorld->grep_id) continue;
+  // Check commands 'php SCRIPTNAME[=0] FORCEALL[=1] WORLD[=1 or 2]'
+  if (isset($argv[1]) && !isset($argv[2]) && $argv[1]!=null && $argv[1]!='' && $argv[1]!='force-all' && $argv[1]!=$oWorld->grep_id) continue;
+  else if (isset($argv[2]) && $argv[2]!=null && $argv[2]!='' && $argv[2]!=$oWorld->grep_id) continue;
 
   try {
-    Elasticsearch::DataImportElasticsearch($oWorld);
+    Elasticsearch::DataImportElasticsearch($oWorld, $bForceAllObjects);
   } catch (\Exception $e) {
     Logger::error("Error processing elasticsearch import for world " . $oWorld . " (".$e->getMessage().")");
     continue;

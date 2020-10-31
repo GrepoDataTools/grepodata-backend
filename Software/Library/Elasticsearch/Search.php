@@ -11,8 +11,10 @@ use Grepodata\Library\Model\World;
 class Search
 {
   const IndexIdentifier = "grepodata_dev";
+  const IndexTowns      = "grepodata_towns";
   const TypePlayer      = "player";
   const TypeAlliance    = "alliance";
+  const TypeTown        = "town";
 
   public static function FindPlayers($aOptions = array(), $buildForm = false)
   {
@@ -184,6 +186,139 @@ class Search
     return $aSearchOutput;
   }
 
+  public static function FindTowns($aOptions = array())
+  {
+    $oElasticsearchClient = \Grepodata\Library\Elasticsearch\Client::GetInstance(3);
+    if (!$oElasticsearchClient->indices()->exists(array('index' => self::IndexTowns))) return false;
+
+    // Initial search setup
+    $aSearchParams = array(
+      'size'  => 30,
+      'from'  => 0,
+      'query' => array(
+        'function_score' => array(
+          'query' => array(
+            'bool' => array(
+              'must' => array(
+                'match_all' => (object)[]
+              ),
+              'filter' => array(),
+              'should' => array()
+            ),
+          ),
+          'script_score' => array(
+            'script' => array(
+              'inline' => "_score"
+            )
+          )
+        )
+      ),
+      'aggregations'  => array(
+        'world'       => array('terms' => array('field' => 'WorldId', 'size' => 100)),
+        'server'      => array('terms' => array('field' => 'Server', 'size' => 30))
+      )
+    );
+
+    // Size filter
+    if (isset($aOptions['from'])) $aSearchParams['from'] = $aOptions['from'];
+    if (isset($aOptions['size']) && $aOptions['size'] <= 200) $aSearchParams['size'] = $aOptions['size'];
+
+    // Optional query
+    if (isset($aOptions['query'])) {
+//      $aSearchParams['query']['function_score']['query']['bool']['must'] = array(
+//        'fuzzy' => array(
+//          'Name' => array(
+//            'value' => $aOptions['query'],
+//            'boost' => 1.0,
+//            'fuzziness' => 1,
+//            'prefix_length' => 1,
+//            'max_expansions' => 50,
+//            'analyzer' => 'simple'
+//          )
+//        )
+//      );
+
+      // Boost exact match
+      $boost = 10000;
+      $aSearchParams['query']['function_score']['query']['bool']['should'][] = array(
+        'match' => array(
+          'Name' => array(
+            'query' => $aOptions['query'],
+            'boost' => $boost,
+          )
+        )
+      );
+    }
+
+    // Sort filters
+    if (isset($aOptions['sort_field'])) {
+      if (in_array($aOptions['sort_field'], ['Points', 'Name'])) {
+        $aSort = array(
+          $aOptions['sort_field'] => array(
+            'order' => ((isset($aOptions['sort_order'])) ? $aOptions['sort_order'] : 'desc')
+          )
+        );
+        $aSearchParams['sort'] = array($aSort);
+      }
+    }
+
+    // Optional player id filter
+    if (isset($aOptions['player_id'])) {
+      $aSearchParams['query']['function_score']['query']['bool']['filter'][] = array( 'term' => array( 'PlayerId' => $aOptions['player_id']) );
+    }
+
+    // Optional server filter
+    if (isset($aOptions['server'])) {
+      $aSearchParams['query']['function_score']['query']['bool']['filter'][] = array( 'term' => array( 'Server' => $aOptions['server']) );
+    }
+
+    // Optional world filter
+    if (isset($aOptions['world'])) {
+      $aSearchParams['query']['function_score']['query']['bool']['filter'][] = array( 'term' => array( 'WorldId' => $aOptions['world']) );
+    } else {
+      // Check active worlds only
+      $aWorlds = Common::getAllActiveWorlds(false);
+      if ($aWorlds !== false) {
+        $aWorldFilters = array('bool'=>array('should'=>array()));
+        /** @var World $oWorld */
+        foreach ($aWorlds as $oWorld) {
+          $aWorldFilters['bool']['should'][] = array(
+            'term' => array( 'WorldId' => $oWorld->grep_id)
+          );
+        }
+        $aSearchParams['query']['function_score']['query']['bool']['filter'][] = $aWorldFilters;
+      }
+    }
+
+    // Optional points filter
+    if (isset($aOptions['min_points']) || isset($aOptions['max_points'])) {
+      $aFilter = array('range' => array('Points' => array()));
+      if (isset($aOptions['min_points'])) $aFilter['range']['Points']['gte'] = $aOptions['min_points'];
+      if (isset($aOptions['max_points'])) $aFilter['range']['Points']['le'] = $aOptions['max_points'];
+      $aSearchParams['query']['function_score']['query']['bool']['filter'][] = $aFilter;
+    }
+
+    // Make sure empty filter has the right type
+    if (sizeof($aSearchParams['query']['function_score']['query']['bool']['filter']) == 0) $aSearchParams['query']['function_score']['query']['bool']['filter'] = (object)[];
+
+    // Execute
+    $aElasticsearchResult = $oElasticsearchClient->search(array(
+      'index' => self::IndexTowns,
+      'type'  => self::TypeTown,
+      'body'  => $aSearchParams
+    ));
+
+    // Format
+    $aSearchOutput = array(
+      'success' => true,
+      'count'   => $aElasticsearchResult['hits']['total'],
+      'results' => self::RenderTownResults($aElasticsearchResult),
+      'form'    => self::RenderTownForm($aElasticsearchResult),
+    );
+
+    return $aSearchOutput;
+  }
+
   private static function SearchPlayersEs($aOptions) {
     $oElasticsearchClient = \Grepodata\Library\Elasticsearch\Client::GetInstance(3);
     if (!$oElasticsearchClient->indices()->exists(array('index' => self::IndexIdentifier))) return false;
@@ -234,7 +369,7 @@ class Search
       $aSearchParams['query']['function_score']['query']['bool']['must'] = array(
         'fuzzy' => array(
           'Name' => array(
-            'value' => $aOptions['query'],
+            'value' => substr($aOptions['query'], 0, 20),
             'boost' => 1.0,
             'fuzziness' => 2,
             'prefix_length' => 4,
@@ -389,7 +524,7 @@ class Search
         'max'   => $aElasticsearchResults['aggregations']['max_points']['value'],
       ),
     );
-    
+
     usort($aForm['worlds'], function ($a, $b){
       if ($a['key'] == $b['key']) {
         return 0;
@@ -403,6 +538,22 @@ class Search
         'max'   => $aElasticsearchResults['aggregations']['max_members']['value'],
       );
     }
+
+    return $aForm;
+  }
+
+  private static function RenderTownForm($aElasticsearchResults) {
+    $aForm = array(
+      'servers' => $aElasticsearchResults['aggregations']['server']['buckets'],
+      'worlds'  => $aElasticsearchResults['aggregations']['world']['buckets']
+    );
+
+    usort($aForm['worlds'], function ($a, $b){
+      if ($a['key'] == $b['key']) {
+        return 0;
+      }
+      return ($a['key'] < $b['key']) ? 1 : -1;
+    });
 
     return $aForm;
   }
@@ -444,6 +595,28 @@ class Search
         'att'           => $aHit['_source']['Att'],
         'def'           => $aHit['_source']['Def'],
         'active'        => $aHit['_source']['Active'],
+      );
+    }
+    return $aResults;
+  }
+
+  private static function RenderTownResults($aElasticsearchResults) {
+    $aResults = array();
+    foreach ($aElasticsearchResults['hits']['hits'] as $aHit) {
+      $aResults[] = array(
+        'id'            => $aHit['_source']['GrepId'],
+        'world'         => $aHit['_source']['WorldId'],
+        'server'        => ($aHit['_source']['Server']!=''?$aHit['_source']['Server']:substr($aHit['_source']['WorldId'], 0, 2)),
+        'player_id'     => $aHit['_source']['PlayerId'],
+        'player_name'   => $aHit['_source']['PlayerName'],
+        'alliance_id'   => $aHit['_source']['AllianceId'],
+        'alliance_name' => $aHit['_source']['AllianceName'],
+        'island_x'      => $aHit['_source']['IslandX'],
+        'island_y'      => $aHit['_source']['IslandY'],
+        'island_i'      => $aHit['_source']['IslandI'],
+        'points'        => $aHit['_source']['Points'],
+        'updated_at'    => $aHit['_source']['UpdatedAt'],
+        'name'          => $aHit['_source']['Name'],
       );
     }
     return $aResults;

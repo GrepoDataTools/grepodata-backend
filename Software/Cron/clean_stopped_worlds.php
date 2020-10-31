@@ -77,6 +77,20 @@ foreach ($Worlds as $oWorld) {
     unset($aPlayers);
     Logger::debugInfo("Deleted $AllianceCount alliances from Elasticsearch. Failures: $FailCount");
 
+    // Elasticsearch towns
+    $aTowns = \Grepodata\Library\Controller\Town::allByWorld($oWorld->grep_id);
+    $TownCount = 0;
+    $FailCount = 0;
+    foreach ($aTowns as $oTown) {
+      $TownCount++;
+      $bDeleted = Import::DeleteTown($oTown);
+      if ($bDeleted === false) {
+        $FailCount++;
+      }
+    }
+    unset($aPlayers);
+    Logger::debugInfo("Deleted $TownCount towns from Elasticsearch. Failures: $FailCount");
+
     // Towns
     $Deleted = Town::where('world', '=', $oWorld->grep_id)->delete();
     Logger::debugInfo("Deleted $Deleted towns");

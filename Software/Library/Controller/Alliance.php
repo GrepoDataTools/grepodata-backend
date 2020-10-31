@@ -49,7 +49,7 @@ class Alliance
 
   /**
    * @param $World
-   * @return Collection
+   * @return Collection|\Grepodata\Library\Model\Alliance[]
    */
   public static function allByWorld($World)
   {

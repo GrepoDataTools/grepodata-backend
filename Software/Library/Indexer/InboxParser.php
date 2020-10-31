@@ -487,7 +487,7 @@ class InboxParser
           );
         } else if ($Locale == 'fr') {
           $aBuildingNames = array(
-            'main' => 'Sénat', 'hide' => 'Grotte', 'place' => 'Agora', 'lumber' => 'Scierie', 'stoner' => 'Carrière', 'ironer' => "Mine d'argent", 'market' => 'Marché', 'docks' => 'Port', 'barracks' => 'Caserne', 'wall' => 'Remparts', 'storage' => 'Entrepôt ', 'farm' => 'Ferme', 'academy' => 'Académie', 'temple' => 'Temple', 'theater' => 'Théâtre', 'thermal' => 'Thermes', 'library' => 'Bibliothèque', 'lighthouse' => 'Phare', 'tower' => 'Tour', 'statue' => 'Statue divine', 'oracle' => 'Oracle', 'trade_office' => 'Comptoir commercial', 
+            'main' => 'Sénat', 'hide' => 'Grotte', 'place' => 'Agora', 'lumber' => 'Scierie', 'stoner' => 'Carrière', 'ironer' => "Mine d'argent", 'market' => 'Marché', 'docks' => 'Port', 'barracks' => 'Caserne', 'wall' => 'Remparts', 'storage' => 'Entrepôt ', 'farm' => 'Ferme', 'academy' => 'Académie', 'temple' => 'Temple', 'theater' => 'Théâtre', 'thermal' => 'Thermes', 'library' => 'Bibliothèque', 'lighthouse' => 'Phare', 'tower' => 'Tour', 'statue' => 'Statue divine', 'oracle' => 'Oracle', 'trade_office' => 'Comptoir commercial',
           );
         } else if ($Locale == 'en') {
           $aBuildingNames = array(
@@ -641,8 +641,21 @@ class InboxParser
           throw new InboxParserExceptionDebug("spy failed; not enough silver");
         }
 
-        $Silver = $RightSide["content"][3]["content"][3]["content"][0];
-        $Silver = preg_replace('/\s+/', '', $Silver);
+        $aRightSideItems = Helper::allByClass($RightSide, 'spy_success_left_align');
+
+        $Silver = '?';
+        if (isset($aRightSideItems[0]) && is_array($aRightSideItems[0])) {
+          $Silver = Helper::getTextContent($aRightSideItems[0], 0, true) ?? '?';
+          $Silver = preg_replace('/\s+/', '', $Silver);
+        }
+        if (isset($aRightSideItems[2]) && is_array($aRightSideItems[2])) {
+          $God = Helper::getTextContent($aRightSideItems[2], 0, true) ?? null;
+          $God = strtolower(preg_replace('/\s+/', '', $God));
+          if (!key_exists($God, self::myth_units)) {
+            Logger::warning("InboxParser $ReportHash: found unknown god with name '$God'");
+          }
+          if ($God == '') $God = null;
+        }
 
         if (!isset($aSpyScript)||$aSpyScript==null) {
           // might be needed but probably not, throw error for now
@@ -687,15 +700,22 @@ class InboxParser
             && key_exists('attributes', $Element)
             && key_exists('id', $Element['attributes'])
             && $Element['attributes']['id'] == 'spy_buildings') {
-            foreach ($Element["content"] as $Building) {
-              if (is_array($Building) && key_exists('attributes', $Building)) {
-                $Name = $Building['attributes']['class'];
-                $Name = substr($Name, strlen("report_unit building_"));
-                $Level = $Building["content"][1]["content"][0];
-                if ($Name === 'wall') {
-                  $bHasWall = true;
+            foreach ($Element["content"] as $aBuildingElement) {
+              if (is_array($aBuildingElement)
+                && key_exists('attributes', $aBuildingElement)
+                && key_exists('class', $aBuildingElement['attributes'])
+                && $aBuildingElement['attributes']['class'] == 'spy_success_left_align') {
+                foreach ($aBuildingElement["content"] as $Building) {
+                  if (is_array($Building) && key_exists('attributes', $Building)) {
+                    $Name = $Building['attributes']['class'];
+                    $Name = substr($Name, strlen("report_unit building_"));
+                    $Level = $Building["content"][1]["content"][0];
+                    if ($Name === 'wall') {
+                      $bHasWall = true;
+                    }
+                    $aBuildings[$Name] = $Level;
+                  }
                 }
-                $aBuildings[$Name] = $Level;
               }
             }
           }

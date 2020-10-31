@@ -138,66 +138,66 @@ if (isset($_GET['flush'])) {
 </style>
 
 <script>
-  function clearFilters()
-  {
-    var url = window.location.href;
-    if(url.indexOf("?") > 0) {
-      url = url.substring(0,url.indexOf("?"));
-      window.location.href = url;
+    function clearFilters()
+    {
+        var url = window.location.href;
+        if(url.indexOf("?") > 0) {
+            url = url.substring(0,url.indexOf("?"));
+            window.location.href = url;
+        }
     }
-  }
-  function enableRefresh()
-  {
-    var url = window.location.href;
-    if(url.indexOf("?") > 0) {
-      url += "&refresh=5";
-    } else {
-      url += "?refresh=5";
+    function enableRefresh()
+    {
+        var url = window.location.href;
+        if(url.indexOf("?") > 0) {
+            url += "&refresh=5";
+        } else {
+            url += "?refresh=5";
+        }
+        window.location.href = url;
     }
-    window.location.href = url;
-  }
-  function flush_session()
-  {
-    var url = window.location.href;
-    if(url.indexOf("?") > 0) {
-      url = url.substring(0,url.indexOf("?"));
+    function flush_session()
+    {
+        var url = window.location.href;
+        if(url.indexOf("?") > 0) {
+            url = url.substring(0,url.indexOf("?"));
+        }
+        url += "?flush=1";
+        window.location.href = url;
     }
-    url += "?flush=1";
-    window.location.href = url;
-  }
-  function search()
-  {
-    var query = document.getElementById('query').value;
-    var level = document.getElementById('level').value;
-    var url = window.location.href;
-    if(url.indexOf("?") > 0) {
-      url += "&query="+query+"&level="+level;
-    } else {
-      url += "?query="+query+"&level="+level;
+    function search()
+    {
+        var query = document.getElementById('query').value;
+        var level = document.getElementById('level').value;
+        var url = window.location.href;
+        if(url.indexOf("?") > 0) {
+            url += "&query="+query+"&level="+level;
+        } else {
+            url += "?query="+query+"&level="+level;
+        }
+        window.location.href = url;
     }
-    window.location.href = url;
-  }
-  function searchJob(query)
-  {
-    var url = window.location.href;
-    if(url.indexOf("?") > 0) {
-      url = url.substring(0,url.indexOf("?"));
+    function searchJob(query)
+    {
+        var url = window.location.href;
+        if(url.indexOf("?") > 0) {
+            url = url.substring(0,url.indexOf("?"));
+        }
+        url += "?query="+query;
+        window.location.href = url;
     }
-    url += "?query="+query;
-    window.location.href = url;
-  }
-  function pid(pid)
-  {
-    var url = window.location.href;
-    if(url.indexOf("?") > 0) {
-      url = url.substring(0,url.indexOf("?"));
-      url += "?pid="+pid;
-      //url += "&pid="+pid;
-    } else {
-      url += "?pid="+pid;
+    function pid(pid)
+    {
+        var url = window.location.href;
+        if(url.indexOf("?") > 0) {
+            url = url.substring(0,url.indexOf("?"));
+            url += "?pid="+pid;
+            //url += "&pid="+pid;
+        } else {
+            url += "?pid="+pid;
+        }
+        window.location.href = url;
     }
-    window.location.href = url;
-  }
 </script>
 
 <?php
@@ -257,7 +257,7 @@ if (!isset($_SESSION['sql_html'])) {
   echo $_SESSION['sql_html'];
 }
 if (!isset($_SESSION['inno_html'])) {
-  if (InnoData::testEndpoint('nl73')) {
+  if (InnoData::testEndpoint('nl16')) {
     $inno_html = '<span class="server-health green">INNO API: OK</span>';
     $_SESSION['inno_html'] = $inno_html;
     echo $inno_html;
@@ -315,80 +315,80 @@ if ($aJobs !== false) {
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 
 <script type="text/javascript">
-  google.charts.load("current", {packages:['controls', 'corechart', "timeline"]});
-  google.charts.setOnLoadCallback(drawChart);
-  function drawChart() {
-    var container = document.getElementById('dashboard_div');
-    var dashboard = new google.visualization.Dashboard(container);
-    var dataTable = new google.visualization.DataTable();
+    google.charts.load("current", {packages:['controls', 'corechart', "timeline"]});
+    google.charts.setOnLoadCallback(drawChart);
+    function drawChart() {
+        var container = document.getElementById('dashboard_div');
+        var dashboard = new google.visualization.Dashboard(container);
+        var dataTable = new google.visualization.DataTable();
 
-    var dateRangeSlider = new google.visualization.ControlWrapper({
-      'controlType': 'NumberRangeFilter',
-      'containerId': 'filter_div',
-      'options': {
-        'filterColumnLabel': 'Filter',
-        // 'ui': {
-        //   // format: 'dd-MM-yyyy hh:mm',
-        //   // ticks: 10
-        // }
-      }
-    });
+        var dateRangeSlider = new google.visualization.ControlWrapper({
+            'controlType': 'NumberRangeFilter',
+            'containerId': 'filter_div',
+            'options': {
+                'filterColumnLabel': 'Filter',
+                // 'ui': {
+                //   // format: 'dd-MM-yyyy hh:mm',
+                //   // ticks: 10
+                // }
+            }
+        });
 
-    var chart = new google.visualization.ChartWrapper({
-      'chartType': 'Timeline',
-      'containerId': 'chart_div',
-      options: {
-        hAxis: {
-          format: 'HH:mm'
-        }
-      }
-    });
+        var chart = new google.visualization.ChartWrapper({
+            'chartType': 'Timeline',
+            'containerId': 'chart_div',
+            options: {
+                hAxis: {
+                    format: 'HH:mm'
+                }
+            }
+        });
 
-    dataTable.addColumn({ type: 'string', id: 'Script' });
-    dataTable.addColumn({ type: 'string', role: 'annotation' });
-    dataTable.addColumn({ type: 'number', role: 'annotation', label: 'Filter' });
-    dataTable.addColumn({ type: 'date', id: 'Start', label: 'Start' });
-    dataTable.addColumn({ type: 'date', id: 'End' });
+        dataTable.addColumn({ type: 'string', id: 'Script' });
+        dataTable.addColumn({ type: 'string', role: 'annotation' });
+        dataTable.addColumn({ type: 'number', role: 'annotation', label: 'Filter' });
+        dataTable.addColumn({ type: 'date', id: 'Start', label: 'Start' });
+        dataTable.addColumn({ type: 'date', id: 'End' });
 
-    dataTable.addRows([
-      <?php
-      try {
-        $Scripts = \Grepodata\Library\Model\Operation_scriptlog::query();
-        $Scripts->where('script', 'not like', '%builder.php%', 'and');
-        $Scripts->where('script', 'not like', '%mailer.php%');
-        $Scripts->orderBy('id', 'desc');
-        $Scripts->limit(500);
-        $Scripts = $Scripts->get();
-        $Data = "";
-        foreach ($Scripts as $script) {
-          $Data .= "[ '".substr($script->script, strrpos($script->script, '/'))."',
+        dataTable.addRows([
+          <?php
+          try {
+            $Scripts = \Grepodata\Library\Model\Operation_scriptlog::query();
+            $Scripts->where('script', 'not like', '%builder.php%', 'and');
+            $Scripts->where('script', 'not like', '%mailer.php%');
+            $Scripts->orderBy('id', 'desc');
+            $Scripts->limit(1000);
+            $Scripts = $Scripts->get();
+            $Data = "";
+            foreach ($Scripts as $script) {
+              $Data .= "[ '".substr($script->script, strrpos($script->script, '/'))."',
             '".$script->pid."',
             ".$script->id.",
             new Date(".(Carbon::parse($script->start)->timestamp*1000)."),
             new Date(".(Carbon::parse($script->end)->timestamp*1000).")
             ],";
+            }
+            echo $Data;
+          } catch (\Exception $e) {
+            echo "[ '1', 'George Washington', new Date(1789, 3, 30), new Date(1797, 2, 4) ],[ '2', 'John Adams',        new Date(1797, 2, 4),  new Date(1801, 2, 4) ],[ '3', 'Thomas Jefferson',  new Date(1801, 2, 4),  new Date(1809, 2, 4) ]";
+          }
+          ?>
+        ]);
+
+        // chart.draw(dataTable);
+
+        dashboard.bind(dateRangeSlider, chart);
+        dashboard.draw(dataTable);
+
+        google.visualization.events.addListener(chart, 'select', selectHandler);
+
+        function selectHandler() {
+            var selection = dashboard.getSelection();
+            if (selection.length > 0) {
+                pid(dataTable.getValue(selection[0].row, 1));
+            }
         }
-        echo $Data;
-      } catch (\Exception $e) {
-        echo "[ '1', 'George Washington', new Date(1789, 3, 30), new Date(1797, 2, 4) ],[ '2', 'John Adams',        new Date(1797, 2, 4),  new Date(1801, 2, 4) ],[ '3', 'Thomas Jefferson',  new Date(1801, 2, 4),  new Date(1809, 2, 4) ]";
-      }
-      ?>
-    ]);
-
-    // chart.draw(dataTable);
-
-    dashboard.bind(dateRangeSlider, chart);
-    dashboard.draw(dataTable);
-
-    google.visualization.events.addListener(chart, 'select', selectHandler);
-
-    function selectHandler() {
-      var selection = dashboard.getSelection();
-      if (selection.length > 0) {
-        pid(dataTable.getValue(selection[0].row, 1));
-      }
     }
-  }
 </script>
 
 <div id="dashboard_div">
@@ -417,13 +417,13 @@ if ($aJobs !== false) {
 <br/><br/>
 
 <script>
-  var input = document.getElementById("query");
-  input.addEventListener("keyup", function(event) {
-    event.preventDefault();
-    if (event.keyCode === 13) {
-      search();
-    }
-  });
+    var input = document.getElementById("query");
+    input.addEventListener("keyup", function(event) {
+        event.preventDefault();
+        if (event.keyCode === 13) {
+            search();
+        }
+    });
 </script>
 
 <?php
