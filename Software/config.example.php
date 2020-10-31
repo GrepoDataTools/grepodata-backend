@@ -24,7 +24,4 @@ define('PRIVATE_MAIL_TRANSPORT_KEY',  '');
 define('PRIVATE_LOG_AUTH', '');
 define('PRIVATE_DEBUG_AUTH', '');
 
-define('REDIS_HOST', '');
-define('REDIS_PORT', 0);
-
 define('OBFUSCATOR_EXEC', 'node javascript-obfuscator');

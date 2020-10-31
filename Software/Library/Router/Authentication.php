@@ -12,27 +12,16 @@ class Authentication
 
   /**
    * @param User $oUser
-   * @return string
+   * @return bool|string
    */
-  public static function generateJWT(User $oUser, $bIsRefreshToken = false)
+  public static function generateJWT(User $oUser)
   {
-    // access_token has en expiration of 24 hours
-    $expirationWindow = (24 * 60 * 60);
-
-    if ($bIsRefreshToken) {
-      // refresh_token has an expiration of 90 days
-      $expirationWindow = (90 * 24 * 60 * 60);
-    }
-
     // Payload
     $aPayload = array(
       'iss' => 'https://grepodata.com',
       'uid' => $oUser->id,
-      'mail' => $oUser->email,
-      'username' => $oUser->username,
-      'ref' => $bIsRefreshToken,
       'iat' => time(),
-      'exp' => time() + $expirationWindow
+      'exp' => time() + (24 * 60 * 60),
     );
 
     // Encode
@@ -43,16 +32,6 @@ class Authentication
     }
 
     return $jwt;
-  }
-
-  /**
-   * @param $JWT
-   * @return bool|User
-   */
-  public static function expiresIn($JWT)
-  {
-    $aPayload = Token::getPayload($JWT, JWT_SECRET);
-    return $aPayload['exp'] - time();
   }
 
   /**

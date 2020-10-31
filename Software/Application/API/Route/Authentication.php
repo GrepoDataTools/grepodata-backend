@@ -16,10 +16,10 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
   public static function RegisterPOST()
   {
     // Validate params
-    $aParams = self::validateParams(array('mail', 'password'));
+    $aParams = self::validateParams(array('mail', 'password', 'captcha'));
 
     // Validate captcha
-    if (!bDevelopmentMode && isset($aParams['captcha'])) {
+    if (!bDevelopmentMode) {
       BaseRoute::verifyCaptcha($aParams['captcha']);
     }
 
@@ -50,7 +50,6 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
 
     // Login token
     $jwt = \Grepodata\Library\Router\Authentication::generateJWT($oUser);
-    $refresh_token = \Grepodata\Library\Router\Authentication::generateJWT($oUser, true);
 
     // Create confirmation link
     $Token = bin2hex(random_bytes(16));
@@ -86,12 +85,11 @@ admin@grepodata.com',
 
     // Response
     $aResponseData = array(
+      'status'        => 'User created',
       'access_token'  => $jwt,
-      'refresh_token' => $refresh_token,
-      'expires_in'    => \Grepodata\Library\Router\Authentication::expiresIn($jwt),
       'email_sent'    => (isset($Result)&&$Result>=1 ? true : false)
     );
-    ResponseCode::success($aResponseData, 1120);
+    ResponseCode::success($aResponseData);
   }
 
   public static function RequestNewConfirmMailPOST()
@@ -138,9 +136,11 @@ admin@grepodata.com',
 
     // Response
     $aResponseData = array(
+      'status'        => 'Confirmation requested',
+      'access_token'  => $aParams['access_token'],
       'email_sent'    => (isset($Result)&&$Result>=1 ? true : false)
     );
-    ResponseCode::success($aResponseData, 1140);
+    ResponseCode::success($aResponseData);
   }
 
   public static function ConfirmMailGET()
@@ -193,10 +193,10 @@ admin@grepodata.com',
   public static function LoginPOST()
   {
     // Validate params
-    $aParams = self::validateParams(array('mail', 'password'));
+    $aParams = self::validateParams(array('mail', 'password', 'captcha'));
 
     // Validate captcha
-    if (!bDevelopmentMode && isset($aParams['captcha'])) {
+    if (!bDevelopmentMode) {
       BaseRoute::verifyCaptcha($aParams['captcha']);
     }
 
@@ -220,15 +220,13 @@ admin@grepodata.com',
 
     // Login token
     $jwt = \Grepodata\Library\Router\Authentication::generateJWT($oUser);
-    $refresh_token = \Grepodata\Library\Router\Authentication::generateJWT($oUser, true);
 
     // Response
     $aResponse = array(
-      'access_token'  => $jwt,
-      'refresh_token' => $refresh_token,
-      'expires_in'    => \Grepodata\Library\Router\Authentication::expiresIn($jwt)
+      'status'        => 'User login',
+      'access_token'  => $jwt
     );
-    ResponseCode::success($aResponse, 1110);
+    ResponseCode::success($aResponse);
   }
 
   public static function ScriptLinkPOST()
@@ -292,7 +290,7 @@ admin@grepodata.com',
   }
 
   /**
-   * Verify the access_token
+   * Verify the access_token and renew if valid
    * Returns 401 status code if token is invalid
    */
   public static function VerifyPOST()
@@ -303,38 +301,16 @@ admin@grepodata.com',
     // Verify token
     $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
 
-    // Response
-    $aResponseData = array(
-      'access_token'  => $aParams['access_token'],
-      'expires_in'    => \Grepodata\Library\Router\Authentication::expiresIn($aParams['access_token']),
-      'is_confirmed'  => ($oUser->is_confirmed==true?true:false)
-    );
-    ResponseCode::success($aResponseData, 1100);
-  }
-
-  /**
-   * Get a new access_token using a refresh_token
-   * Returns 401 status code if token is invalid
-   */
-  public static function RefreshPOST()
-  {
-    // Validate params
-    $aParams = self::validateParams(array('refresh_token'));
-
-    // Verify token
-    $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['refresh_token']);
-
     // Renew login token
     $jwt = \Grepodata\Library\Router\Authentication::generateJWT($oUser);
-    $refresh_token = \Grepodata\Library\Router\Authentication::generateJWT($oUser, true);
 
     // Response
     $aResponseData = array(
+      'status'        => 'Renew token',
       'access_token'  => $jwt,
-      'refresh_token' => $refresh_token,
-      'expires_in'    => \Grepodata\Library\Router\Authentication::expiresIn($jwt)
+      'is_confirmed'  => ($oUser->is_confirmed==true?true:false)
     );
-    ResponseCode::success($aResponseData, 1101);
+    ResponseCode::success($aResponseData);
   }
 
   /**
@@ -343,10 +319,10 @@ admin@grepodata.com',
   public static function ForgotPOST()
   {
     // Validate params
-    $aParams = self::validateParams(array('mail'));
+    $aParams = self::validateParams(array('mail', 'captcha'));
 
     // Validate captcha
-    if (!bDevelopmentMode && isset($aParams['captcha'])) {
+    if (!bDevelopmentMode) {
       BaseRoute::verifyCaptcha($aParams['captcha']);
     }
 
@@ -398,10 +374,10 @@ admin@grepodata.com',
   public static function ChangePasswordPOST()
   {
     // Validate params
-    $aParams = self::validateParams();
+    $aParams = self::validateParams(array('captcha'));
 
     // Validate captcha
-    if (!bDevelopmentMode && isset($aParams['captcha'])) {
+    if (!bDevelopmentMode) {
       BaseRoute::verifyCaptcha($aParams['captcha']);
     }
 
@@ -434,7 +410,9 @@ admin@grepodata.com',
     $oUser->save();
 
     // Response
-    $aResponse = array();
-    ResponseCode::success($aResponse, 1130);
+    $aResponse = array(
+      'status' => 'Password changed'
+    );
+    ResponseCode::success($aResponse);
   }
 }

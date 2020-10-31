@@ -13,7 +13,6 @@ use Grepodata\Library\Controller\Indexer\Notes;
 use Grepodata\Library\Controller\IndexV2\Roles;
 use Grepodata\Library\Controller\World;
 use Grepodata\Library\Indexer\IndexBuilder;
-use Grepodata\Library\Indexer\IndexBuilderV2;
 use Grepodata\Library\Indexer\Validator;
 use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Mail\Client;
@@ -200,7 +199,7 @@ class Index extends BaseRoute
       $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
 
       // New index
-      $oIndex = IndexBuilderV2::buildNewIndex($aParams['world'], $aParams['index_name'], $oUser->id);
+      $oIndex = IndexBuilder::buildNewIndex($aParams['world'], $aParams['index_name'], $oUser->id);
       if ($oIndex !== false && $oIndex !== null) {
 
         Roles::SetUserIndexRole($oUser, $oIndex, Roles::ROLE_OWNER);

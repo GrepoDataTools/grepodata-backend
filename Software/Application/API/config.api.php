@@ -8,11 +8,7 @@ $oRouter = \Grepodata\Library\Router\Service::GetInstance();
 //Register
 $oRouter->Add('register', new Route('/auth/register', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
-  '_method'     => 'Register',
-  '_ratelimit'  => array(
-    'limit' => 10,
-    'window' => 60
-  )
+  '_method'     => 'Register'
 )));
 $oRouter->Add('confirmMail', new Route('/auth/confirm', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
@@ -27,19 +23,10 @@ $oRouter->Add('verifytoken', new Route('/auth/token', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
   '_method'     => 'Verify'
 )));
-//Refresh token
-$oRouter->Add('refreshtoken', new Route('/auth/refresh', array(
-  '_controller' => '\Grepodata\Application\API\Route\Authentication',
-  '_method'     => 'Refresh'
-)));
 //Login
 $oRouter->Add('login', new Route('/auth/login', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
-  '_method'     => 'Login',
-  '_ratelimit'  => array(
-    'limit' => 10,
-    'window' => 60
-  )
+  '_method'     => 'Login'
 )));
 //Forgot
 $oRouter->Add('forgot', new Route('/auth/reset', array(
@@ -198,7 +185,7 @@ $oRouter->Add('allianceRanking', new Route('/ranking/alliance', array(
 
 // Towns
 $oRouter->Add('playerTowns', new Route('/town/player', array(
-  '_controller' => '\Grepodata\Application\API\Route\Town',
+  '_controllenour' => '\Grepodata\Application\API\Route\Town',
   '_method'     => 'PlayerTowns'
 )));
 //$oRouter->Add('allianceTowns', new Route('/town/alliance', array(

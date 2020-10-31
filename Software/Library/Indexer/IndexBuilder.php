@@ -12,42 +12,35 @@ class IndexBuilder
   public function __construct() {
   }
 
-  public static function buildNewIndex($World, $Mail) {
+  public static function buildNewIndex($World, $IndexName, $UserId) {
     // Find a new key
     $NewIndexKey = self::generateIndexKey(8);
     while (self::indexExists($NewIndexKey)) {
-      $NewIndexKey = self::generateIndexKey(8);
+        $NewIndexKey = self::generateIndexKey(8);
     }
 
     // Insert new index
     $oIndex = new IndexInfo();
     $oIndex->key_code = $NewIndexKey;
+    $oIndex->index_name = $IndexName;
+    $oIndex->created_by_user = $UserId;
     $oIndex->world = $World;
-    $oIndex->mail = $Mail;
+    $oIndex->mail = '';
     $oIndex->status = 'active';
     $oIndex->script_version = USERSCRIPT_VERSION;
-    $Result = $oIndex->save();
+    $oIndex->save();
 
-    if ($Result) {
-      try {
-        $oWorld = \Grepodata\Library\Controller\World::getWorldById($oIndex->world);
-        self::createUserscript($oIndex->key_code, $oWorld);
-      } catch (\Exception $e) {
-        Logger::error("Critical error while creating new userscript for index " . $NewIndexKey);
-      }
-      return $oIndex;
-    }
-    return false;
+    return $oIndex;
   }
 
   public static function generateIndexKey($length = 8) {
-    $characters = '0123456789abcdefghijklmnopqrstuvwxyz';
-    $charactersLength = strlen($characters);
-    $randomString = '';
-    for ($i = 0; $i < $length; $i++) {
-      $randomString .= $characters[rand(0, $charactersLength - 1)];
-    }
-    return $randomString;
+      $characters = '0123456789abcdefghijklmnopqrstuvwxyz';
+      $charactersLength = strlen($characters);
+      $randomString = '';
+      for ($i = 0; $i < $length; $i++) {
+          $randomString .= $characters[rand(0, $charactersLength - 1)];
+      }
+      return $randomString;
   }
 
   private static function indexExists($key) {
@@ -56,7 +49,17 @@ class IndexBuilder
     return true;
   }
 
+  /**
+   * @deprecated one script to rule them all: userscripts are no longer created on a per-index basis
+   * @param $key
+   * @param World $oWorld
+   * @param bool $bObfuscate
+   * @param bool $bMask
+   * @param string $version
+   * @return bool
+   */
   public static function createUserscript($key, World $oWorld, $bObfuscate = true, $bMask = true, $version = USERSCRIPT_VERSION) {
+
     try {
       $Encrypted = md5($key);
       $Mask = substr(str_shuffle("abcdefghijklmnopqrstuvwxyz"), 0, rand(1,4)).substr(md5(IndexBuilder::generateIndexKey(32).time()), 0, rand(4,12));
