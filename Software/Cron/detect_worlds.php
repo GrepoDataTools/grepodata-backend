@@ -131,20 +131,15 @@ try {
 
   /** @var \Grepodata\Library\Model\World $oWorld */
   foreach ($aWorlds as $oWorld) {
-    $bFound = false;
-
     $Server = substr($oWorld->grep_id, 0, 2);
 
+    $Code = $oWorld->grep_id;
     if (isset($aWorldsData[$Server][$oWorld->grep_id])) {
+      $Name = $aWorldsData[$Server][$oWorld->grep_id];
       Logger::warning("Found matching name for new world: $Code = $Name");
-      $oWorld->name = $aWorldsData[$Server][$oWorld->grep_id];
+      $oWorld->name = $Name;
       $oWorld->save();
-      $bFound = true;
-      continue;
-    }
-
-
-    if ($bFound === false) {
+    } else {
       Logger::warning("Unable to find world name for world: " . $oWorld->grep_id);
     }
   }
