@@ -9,6 +9,7 @@ require(__DIR__ . '/../config.php');
 use Carbon\Carbon;
 use Grepodata\Library\Controller\Indexer\CityInfo;
 use Grepodata\Library\Controller\World;
+use Grepodata\Library\Cron\WorldData;
 use Grepodata\Library\Indexer\IndexBuilder;
 use Grepodata\Library\Model\Operation_log;
 

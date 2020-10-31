@@ -16,6 +16,9 @@ define('PRIVATE_PUSHBULLET_TOKEN', '');
 define('PRIVATE_CAPTCHA_KEY', '');
 
 define('PRIVATE_JWT_SECRET', '');
+define('PRIVATE_JWT_REFRESH', '');
+
+define('WORLD_DATA_URL', '');
 
 define('PRIVATE_MAIL_TRANSPORT_HOST', '');
 define('PRIVATE_MAIL_TRANSPORT_NAME', '');
