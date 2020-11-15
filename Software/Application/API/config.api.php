@@ -245,13 +245,9 @@ $oRouter->Add('townSearch', new Route('/town/search', array(
 )));
 
 // Indexer v2
-$oRouter->Add('addReportForumV2', new Route('/indexer/v2/addreport', array(
+$oRouter->Add('addReportForumV2', new Route('/indexer/v2/indexreport', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Report',
-  '_method'     => 'AddReportFromForum'
-)));
-$oRouter->Add('addReportInboxV2', new Route('/indexer/v2/inboxreport', array(
-  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Report',
-  '_method'     => 'AddReportFromInbox'
+  '_method'     => 'indexReportPOST'
 )));
 $oRouter->Add('newIndexV2', new Route('/indexer/v2/newindex', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Index',

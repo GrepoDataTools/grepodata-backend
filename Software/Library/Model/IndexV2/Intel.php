@@ -7,11 +7,12 @@ use \Illuminate\Database\Eloquent\Model;
 
 /**
  * @property mixed id
- * @property mixed indexed_by_player_id
+ * @property mixed indexed_by_user_id
  * @property mixed hash
  * @property mixed world
  * @property mixed source_type
  * @property mixed report_type
+ * @property mixed script_version
  * @property mixed town_id
  * @property mixed town_name
  * @property mixed player_id
@@ -32,6 +33,8 @@ use \Illuminate\Database\Eloquent\Model;
  * @property mixed soft_deleted
  * @property mixed report_json
  * @property mixed report_info
+ * @property mixed parsing_failed
+ * @property mixed debug_explain
  */
 class Intel extends Model
 {

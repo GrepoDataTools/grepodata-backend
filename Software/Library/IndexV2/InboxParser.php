@@ -4,15 +4,13 @@ namespace Grepodata\Library\IndexV2;
 
 
 use Carbon\Carbon;
-use Exception;
 use Grepodata\Library\Controller\Alliance;
 use Grepodata\Library\Controller\Player;
-use Grepodata\Library\Controller\Town;
 use Grepodata\Library\Exception\InboxParserExceptionDebug;
 use Grepodata\Library\Exception\InboxParserExceptionError;
 use Grepodata\Library\Exception\InboxParserExceptionWarning;
+use Grepodata\Library\Indexer\Helper;
 use Grepodata\Library\Logger\Logger;
-use Grepodata\Library\Model\Indexer\City;
 use Grepodata\Library\Model\IndexV2\Intel;
 
 class InboxParser
@@ -55,20 +53,30 @@ class InboxParser
   const kolo       = 'colonize_ship';
 
   /**
-   * @param $IndexerPlayerId
+   * @param $UserId
    * @param $World
    * @param $aReportData
    * @param $ReportPoster
    * @param $PosterId
-   * @param $PosterAllyId
    * @param $ReportHash
+   * @param $ReportJson
+   * @param $ReportInfo
+   * @param $ScriptVersion
    * @param string $Locale
-   * @return bool|int Inserted city id
+   * @return int $Id inserted intel id
    * @throws InboxParserExceptionDebug
    * @throws InboxParserExceptionError
    * @throws InboxParserExceptionWarning
    */
-  public static function ParseReport($IndexerPlayerId, $World, $aReportData, $ReportPoster, $PosterId, $PosterAllyId, $ReportHash, $Locale='nl')
+  public static function ParseReport(
+    $UserId,
+    $World,
+    $aReportData,
+    $ReportPoster,
+    $PosterId,
+    $ReportHash,
+    $ScriptVersion,
+    $Locale='nl')
   {
     try {
       $ReportText = json_encode($aReportData);
@@ -758,45 +766,52 @@ class InboxParser
       }
 
       // Save Results
-      $oCity = new Intel();
-      $oCity->indexed_by_player_id = $IndexerPlayerId;
-      $oCity->town_id     = $TownId;
-      $oCity->town_name   = $TownName;
-      $oCity->player_id   = $PlayerId;
-      $oCity->player_name = $PlayerName;
-      $oCity->alliance_id = $AllianceId;
-//      $oCity->poster_player_id    = ($PosterId!=0?(int) $PosterId:null);
-//      $oCity->poster_alliance_id  = ($PosterAllyId!=0?(int) $PosterAllyId:null);
-      $oCity->report_date = $ReportDate;
-      $oCity->parsed_date = $ParsedDate;
-      $oCity->report_type = $ReportType;
-      $oCity->hero        = (isset($Hero)?$Hero:null);
-      $oCity->god         = (isset($God)?$God:null);
-      $oCity->silver      = (isset($Silver)?$Silver:null);
-      $oCity->buildings   = json_encode($aBuildings);
-      $oCity->land_units  = json_encode($aLandUnits);
-      $oCity->mythical_units = json_encode($aMythUnits);
-      $oCity->sea_units   = json_encode($aSeaUnits);
-      if (isset($Fireships)) {$oCity->fireships = $Fireships;}
-      $oCity->source_type = 'inbox';
+      $oIntel = new Intel();
+      $oIntel->indexed_by_user_id = $UserId;
+      $oIntel->hash        = $ReportHash;
+      $oIntel->world       = $World;
+      $oIntel->source_type = 'inbox';
+      $oIntel->report_type = $ReportType;
+      $oIntel->script_version = $ScriptVersion;
+
+      $oIntel->town_id     = $TownId;
+      $oIntel->town_name   = $TownName;
+      $oIntel->player_id   = $PlayerId;
+      $oIntel->player_name = $PlayerName;
+      $oIntel->alliance_id = $AllianceId;
+      $oIntel->report_date = $ReportDate;
+      $oIntel->parsed_date = $ParsedDate;
+      $oIntel->hero        = (isset($Hero)?$Hero:null);
+      $oIntel->god         = (isset($God)?$God:null);
+      $oIntel->silver      = (isset($Silver)?$Silver:null);
+      $oIntel->buildings   = json_encode($aBuildings);
+      $oIntel->land_units  = json_encode($aLandUnits);
+      $oIntel->sea_units   = json_encode($aSeaUnits);
+      if (isset($Fireships)) {$oIntel->fireships = $Fireships;}
+      $oIntel->mythical_units = json_encode($aMythUnits);
+
+      $oIntel->report_json = $ReportJson;
+      $oIntel->report_info = json_encode(substr($ReportInfo, 0, 100));
+      $oIntel->parsing_failed = false;
+      $oIntel->debug_explain = null;
 
       $bSaved = false;
       try {
-        $bSaved = $oCity->save();
+        $bSaved = $oIntel->save();
       }
       catch (\Exception $e) {
         if (strpos($e->getMessage(), 'Incorrect datetime value') !== false) {
           // Add an hour and try again to account for EU daylight saving time
           $ParsedDate->addHour();
-          $oCity->parsed_date = $ParsedDate;
-          $bSaved = $oCity->save();
+          $oIntel->parsed_date = $ParsedDate;
+          $bSaved = $oIntel->save();
         } else {
           throw new \Exception("Unable to save City record with error: " . $e->getMessage());
         }
       }
 
-      if ($bSaved == false || $oCity->id < 0) {
-        throw new InboxParserExceptionWarning("Unable to save City record: " . $oCity->toJson());
+      if ($bSaved == false || $oIntel->id < 0) {
+        throw new InboxParserExceptionWarning("Unable to save City record: " . $oIntel->toJson());
       }
 
       // TODO: check conquest
@@ -815,7 +830,7 @@ class InboxParser
 //        Logger::warning("InboxParser $ReportHash: unable to update conquest details after creating city object");
 //      }
 
-      return $oCity->id;
+      return $oIntel->id;
     }
     catch(InboxParserExceptionDebug $e) {throw $e;}
     catch(InboxParserExceptionWarning $e) {throw $e;}

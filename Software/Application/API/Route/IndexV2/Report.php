@@ -2,11 +2,10 @@
 
 namespace Grepodata\Application\API\Route\IndexV2;
 
+use Grepodata\Library\Controller\Indexer\IndexInfo;
 use Grepodata\Library\Controller\Indexer\ReportId;
 use Grepodata\Library\Controller\IndexV2\Intel;
 use Grepodata\Library\Controller\IndexV2\IntelShared;
-use Grepodata\Library\Controller\IndexV2\Linked;
-use Grepodata\Library\Controller\Player;
 use Grepodata\Library\Exception\ForumParserExceptionDebug;
 use Grepodata\Library\Exception\ForumParserExceptionError;
 use Grepodata\Library\Exception\ForumParserExceptionWarning;
@@ -14,11 +13,8 @@ use Grepodata\Library\Exception\InboxParserExceptionDebug;
 use Grepodata\Library\Exception\InboxParserExceptionError;
 use Grepodata\Library\Exception\InboxParserExceptionWarning;
 use Grepodata\Library\Indexer\ForumParser;
-use Grepodata\Library\Indexer\InboxParser;
 use Grepodata\Library\Indexer\Validator;
 use Grepodata\Library\Logger\Logger;
-use Grepodata\Library\Router\ResponseCode;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class Report extends \Grepodata\Library\Router\BaseRoute
 {
@@ -71,63 +67,70 @@ class Report extends \Grepodata\Library\Router\BaseRoute
     }
   }
 
-  public static function AddReportFromInboxPOST()
+  public static function indexReportPOST()
   {
     $aParams = array();
     try {
       // Validate params
-      $aParams = self::validateParams(array('access_token', 'world', 'report_hash', 'report_text', 'report_json', 'report_poster', 'report_poster_id', 'report_poster_ally_id', 'script_version'));
+      $aParams = self::validateParams(array('report_type', 'access_token', 'world', 'report_hash', 'report_text', 'report_json', 'report_poster', 'report_poster_id', 'script_version'));
       $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
 
       // Find linked player for this user and this world
-      $oLinkedPlayer = null;
-      try {
-        $oLinkedPlayer = Linked::getByPlayerIdAndServer($oUser, $aParams['report_poster_id'], substr($aParams['world'], 0, 2));
-        if (!$oLinkedPlayer->confirmed) {
-          $oLinkedPlayer = null;
-          throw new ModelNotFoundException();
-        }
-      } catch (ModelNotFoundException $e) {
-        // Try to find any other player object in this world, verified by this user
-        $aLinkedPlayers = Linked::getAllByUser($oUser);
-        /** @var \Grepodata\Library\Model\IndexV2\Linked $oLinkedPlayer */
-        foreach ($aLinkedPlayers as $oLinkedPlayerPotential) {
-          if ($oLinkedPlayerPotential->confirmed == true
-            && $oLinkedPlayerPotential->server == substr($aParams['world'], 0, 2)
-          ) {
-            $oPlayer = Player::firstById($aParams['world'], $oLinkedPlayerPotential->player_id);
-            if ($oPlayer !== false) {
-              $oLinkedPlayer = $oLinkedPlayerPotential;
-            }
-          }
-        }
-      }
-
-      if ($oLinkedPlayer == null) {
-        // Unable to find linked accounts, user should probably verify new account
-        ResponseCode::errorCode(7100, array(), 401);
-      }
-
-//      die($oLinkedPlayer->player_name);
+//      $oLinkedPlayer = null;
+//      try {
+//        $oLinkedPlayer = Linked::getByPlayerIdAndServer($oUser, $aParams['report_poster_id'], substr($aParams['world'], 0, 2));
+//        if (!$oLinkedPlayer->confirmed) {
+//          $oLinkedPlayer = null;
+//          throw new ModelNotFoundException();
+//        }
+//      } catch (ModelNotFoundException $e) {
+//        // Try to find any other player object in this world, verified by this user
+//        $aLinkedPlayers = Linked::getAllByUser($oUser);
+//        /** @var \Grepodata\Library\Model\IndexV2\Linked $oLinkedPlayer */
+//        foreach ($aLinkedPlayers as $oLinkedPlayerPotential) {
+//          if ($oLinkedPlayerPotential->confirmed == true
+//            && $oLinkedPlayerPotential->server == substr($aParams['world'], 0, 2)
+//          ) {
+//            $oPlayer = Player::firstById($aParams['world'], $oLinkedPlayerPotential->player_id);
+//            if ($oPlayer !== false) {
+//              $oLinkedPlayer = $oLinkedPlayerPotential;
+//            }
+//          }
+//        }
+//      }
+//
+//      if ($oLinkedPlayer == null) {
+//        // Unable to find linked accounts, user should probably verify new account
+//        ResponseCode::errorCode(7100, array(), 401);
+//      }
 
       // Get data
+      $ReportType = $aParams['report_type'];
       $ReportInfo = preg_replace('/\s+/', ' ', $aParams['report_text']);
       $ReportInfo = substr($ReportInfo, 0, 500);
       $ReportPoster = $aParams['report_poster'];
-      $ReportPosterAllyId = $aParams['report_poster_ally_id'];
       $ScriptVersion = $aParams['script_version'];
       $ReportRaw = $aParams['report_json'];
       $ReportJson = json_encode($ReportRaw);
-
-      // check if report already exists
       $ReportHash = $aParams['report_hash'];
       $ReportPosterId = $aParams['report_poster_id'];
+      $World = $aParams['world'];
+      $Locale = substr($World, 0, 2);
 
-      $oIntel = IntelShared::getByHashByPlayer($oLinkedPlayer->player_id, $aParams['world'], $ReportHash);
-      if ($oIntel !== null) {
+      // Get indexes for player
+      $aIndexes = IndexInfo::allByUserAndWorld($oUser, $World);
+
+      // Get all shared intel for this hash and user
+      $aSharedIntel = IntelShared::allByHashByUser($oUser, $World, $ReportHash);
+
+      if (sizeof($aSharedIntel) > 0) {
+        // Hash was already parsed
+        $IntelId = $aSharedIntel[0]->intel_id;
+
         // Update HTML for existing report
         try {
           $bSave = false;
+          $oIntel = Intel::getById($IntelId);
           if ($oIntel->report_json == '' || $oIntel->report_json == null) {
             $oIntel->report_json = $ReportJson;
             $bSave = true;
@@ -140,211 +143,111 @@ class Report extends \Grepodata\Library\Router\BaseRoute
             $oIntel->save();
           }
         } catch (\Exception $e) {
-          Logger::warning("Error updating html for report hash: $ReportHash and player: '';" . $e->getMessage());
+          Logger::warning("Error updating html for report hash: $ReportHash and user: ".$oUser->id.";" . $e->getMessage());
         }
+
+        // Check if all indexes for this user have the hash, if not add the hash to the missing index
+        $aIndexKeys = [];
+        foreach ($aSharedIntel as $oIntelShared) {
+          $aIndexKeys[] = $oIntelShared->index_key;
+        }
+        foreach ($aIndexes as $oIndex) {
+          if (!in_array($oIndex->key_code, $aIndexKeys)) {
+            IntelShared::saveHashToIndex($ReportHash, $IntelId, $oIndex);
+
+            // Toggle new report switch on index
+            if ($oIndex->new_report != 1) {
+              $oIndex->new_report = 1;
+              $oIndex->save();
+            }
+          }
+        }
+
         die(self::OutputJson(array(), 200));
-      }
+      } else {
+        // This is new intel, parse it
+        $IntelId = 0;
+        $LogPrefix = 'Unable to parse report with hash ' . $ReportHash . ' [user '.$oUser->id.' - v'.$ScriptVersion.' - world '.$World.' - '.$ReportType.']';
+        $Explain = null;
+        try {
+          switch ($ReportType) {
+            case 'inbox':
+              $IntelId = \Grepodata\Library\IndexV2\InboxParser::ParseReport(
+                $oUser->id,
+                $World,
+                $ReportRaw,
+                $ReportPoster,
+                $ReportPosterId,
+                $ReportHash,
+                $ReportJson,
+                $ReportInfo,
+                $ScriptVersion,
+                $Locale
+              );
+              break;
+            case 'forum':
+              $IntelId = \Grepodata\Library\IndexV2\ForumParser::ParseReport(
+                $oUser->id,
+                $World,
+                $ReportRaw,
+                $ReportHash,
+                $ReportJson,
+                $ReportInfo,
+                $ScriptVersion,
+                $Locale);
+              break;
+            default:
+              throw new \Exception("Unhandled report type: " . $ReportType);
+          }
+        } catch (InboxParserExceptionDebug $e) {
+          Logger::debugInfo($LogPrefix . ' ('.$e->getMessage().')');
+          $IntelId = -1;
+          $Explain = $e->getMessage();
+        } catch (InboxParserExceptionWarning $e) {
+          Logger::warning($LogPrefix . ' ('.$e->getMessage().')');
+          $Explain = $e->getMessage();
+        } catch (InboxParserExceptionError $e) {
+          Logger::error($LogPrefix . ' ('.$e->getMessage().')');
+          $Explain = $e->getMessage();
+        } catch (\Exception $e) {
+          Logger::error('UNEXPECTED: ' . $LogPrefix . ' ('.$e->getMessage().')');
+          $Explain = $e->getMessage();
+        }
 
-      // Add report
-      $City_id = 0;
-      $LogPrefix = 'Unable to parse inbox report with hash ' . $ReportHash . ' [user '.$oUser->id.' - v'.$ScriptVersion.' - world '.$aParams['world'].']';
-      $Explain = null;
-      try {
-        $City_id = \Grepodata\Library\IndexV2\InboxParser::ParseReport($oLinkedPlayer->player_id, $aParams['world'], $ReportRaw, $ReportPoster, $ReportPosterId, $ReportPosterAllyId, $ReportHash, substr($aParams['world'], 0, 2));
-      } catch (InboxParserExceptionDebug $e) {
-        Logger::debugInfo($LogPrefix . ' ('.$e->getMessage().')');
-        $City_id = -1;
-        $Explain = $e->getMessage();
-      } catch (InboxParserExceptionWarning $e) {
-        Logger::warning($LogPrefix . ' ('.$e->getMessage().')');
-        $Explain = $e->getMessage();
-      } catch (InboxParserExceptionError $e) {
-        Logger::error($LogPrefix . ' ('.$e->getMessage().')');
-        $Explain = $e->getMessage();
-      } catch (\Exception $e) {
-        Logger::error('UNEXPECTED: ' . $LogPrefix . ' ('.$e->getMessage().')');
-        $Explain = $e->getMessage();
-      }
+        if ($IntelId === null || $IntelId === false || $IntelId <= 0) {
+          // Parsing failed, save record debug info
+          $oIntel = new \Grepodata\Library\Model\IndexV2\Intel();
+          $oIntel->indexed_by_user_id = $oUser->id;
+          $oIntel->script_version = $ScriptVersion;
+          $oIntel->source_type = $ReportType;
+          $oIntel->report_type = 'parsing_failed';
+          $oIntel->hash = $ReportHash;
+          $oIntel->world = $World;
+          $oIntel->report_json = $ReportJson;
+          $oIntel->report_info = json_encode(substr($ReportInfo, 0, 100));
+          $oIntel->parsing_failed = true;
+          $oIntel->debug_explain = $Explain;
+          $IntelId = $oIntel->save();
+        }
 
-      if ($City_id === null || $City_id === false) {
-        $City_id = 0;
-        // TODO: craete table to save raw HTML to (will be used for failed parses AND report2img)
-      }
+        // Add the hash to all indexes for this user and add a hash record for self
+        /** @var \Grepodata\Library\Model\Indexer\IndexInfo $oIndex */
+        foreach ($aIndexes as $oIndex) {
+          IntelShared::saveHashToIndex($ReportHash, $IntelId, $oIndex);
 
-      $oReport = new \Grepodata\Library\Model\Indexer\Report();
-      $oReport->index_code      = $Key;
-      $oReport->type            = 'inbox';
-      $oReport->report_poster   = $ReportPoster;
-      $oReport->fingerprint     = $ReportHash;
-      $oReport->report_json     = $ReportJson;
-      $oReport->report_info     = json_encode(substr($ReportInfo, 0, 100));
-      $oReport->script_version  = $ScriptVersion;
-      if (isset($City_id)) {
-        $oReport->city_id = $City_id;
+          // Toggle new report switch on index
+          if ($oIndex->new_report != 1) {
+            $oIndex->new_report = 1;
+            $oIndex->save();
+          }
+        }
+        IntelShared::saveHashToUser($ReportHash, $IntelId, $oUser, $World);
       }
-      if ($Explain !== null) {
-        $oReport->debug_explain = $Explain;
-      }
-      $oReport->save();
-
-      $oReportId = new \Grepodata\Library\Model\Indexer\ReportId();
-      $oReportId->report_id = $ReportHash;
-      $oReportId->player_id = $ReportPosterId;
-      $oReportId->index_key = $Key;
-      $oReportId->index_report_id = (isset($oReport->id)?$oReport->id:0);
-      $oReportId->index_type = 'inbox';
-      $oReportId->save();
-
-      if ($oIndex->new_report != 1) {
-        $oIndex->new_report = 1;
-        $oIndex->save();
-      }
-
 
       die(self::OutputJson(array(), 200));
 
     } catch (\Exception $e){
       Logger::error('Error processing indexer add inbox report: ' . $e->getMessage());
-      die(self::OutputJson(array(), 200));
-    }
-  }
-
-  public static function AddReportFromForumPOST()
-  {
-    $aParams = array();
-    try {
-      // Validate params
-      $aParams = self::validateParams(array('report_hash', 'key', 'report_text', 'report_json', 'report_poster', 'script_version'));
-
-      if (!is_array($aParams['key'])) {
-        $aParams['key'] = array($aParams['key']);
-      }
-
-      foreach ($aParams['key'] as $Key) {
-        // Validate index
-        $bValidIndex = false;
-        $oIndex = null;
-        $Attempts = 0;
-        while (!$bValidIndex && $Attempts <= 50) {
-          $Attempts += 1;
-          $oIndex = Validator::IsValidIndex($Key);
-          if ($oIndex === null || $oIndex === false) {
-            die(self::OutputJson(array(), 200));
-          }
-          if (isset($oIndex->moved_to_index) && $oIndex->moved_to_index !== null && $oIndex->moved_to_index != '') {
-            $Key = $oIndex->moved_to_index; // redirect to new index
-          } else {
-            $bValidIndex = true;
-          }
-        }
-
-        $ReportPoster = $aParams['report_poster'];
-        $ScriptVersion = $aParams['script_version'];
-        $ReportRaw = $aParams['report_json'];
-        $ReportJson = json_encode($ReportRaw);
-
-        $ReportInfo = preg_replace('/\s+/', ' ', $aParams['report_text']);
-        $ReportInfo = substr($ReportInfo, 0, 500);
-
-        // Check if hash exists
-        $Hash = $aParams['report_hash'];
-        $ReportId = ReportId::getByHashIndex($Hash, $Key);
-        if ($ReportId !== null) {
-          // Update HTML for existing report
-          try {
-            $Report = \Grepodata\Library\Controller\Indexer\Report::firstById($ReportId->index_report_id);
-            $bSave = false;
-            if ($Report->report_json==''||$Report->report_json==null) {
-              $Report->report_json = $ReportJson;
-              $bSave = true;
-            }
-            if ($Report->report_info==''||$Report->report_info==null) {
-              $Report->report_info = json_encode(substr($ReportInfo, 0, 100));
-              $bSave = true;
-            }
-            if ($bSave == true) {
-              $Report->save();
-            }
-          } catch (\Exception $e) {
-            Logger::warning("Error updating html for existing report hash: $Hash and key: $Key;" . $e->getMessage());
-          }
-          continue;
-        }
-
-        // Save hash to db
-        $oReportId = new \Grepodata\Library\Model\Indexer\ReportId();
-        $oReportId->report_id = $Hash;
-        if (isset($_POST['report_poster_id']) && is_numeric($_POST['report_poster_id'])) {
-          $oReportId->player_id = (int) $_POST['report_poster_id'];
-        } else {
-          $oReportId->player_id = 0;
-        }
-        $oReportId->index_key = $Key;
-        $oReportId->index_report_id = 0;
-        $oReportId->index_type = 'forum';
-
-        // Add report
-        $Explain = null;
-        $lang = substr($oIndex->world, 0, 2);
-        $City_id = 0;
-        $LogPrefix = 'Unable to parse forum report with hash ' . $Hash . ' [index '.$oIndex->key_code.' - v'.$ScriptVersion.' - '.$lang.']';
-        try {
-          $aParseOutput = ForumParser::ParseReport($Key, $ReportRaw, $ReportPoster, $Hash, $lang);
-        } catch (ForumParserExceptionDebug $e) {
-          $City_id = -1;
-          $Explain = $e->getMessage();
-          Logger::debugInfo($LogPrefix . ' ('.$e->getMessage().')');
-        } catch (ForumParserExceptionWarning $e) {
-          $Explain = $e->getMessage();
-          Logger::warning($LogPrefix . ' ('.$e->getMessage().')');
-        } catch (ForumParserExceptionError $e) {
-          $Explain = $e->getMessage();
-          Logger::error($LogPrefix . ' ('.$e->getMessage().')');
-        } catch (\Exception $e) {
-          $Explain = $e->getMessage();
-          Logger::error('UNEXPECTED: ' . $LogPrefix . ' ('.$e->getMessage().')');
-        }
-
-        if ($City_id !== -1) {
-          if (!isset($aParseOutput) || $aParseOutput === null || $aParseOutput === false || !is_array($aParseOutput)) {
-            $City_id = 0;
-          } else if (isset($aParseOutput['id'])) {
-            $City_id = $aParseOutput['id'];
-          }
-        }
-
-        $oReport = new \Grepodata\Library\Model\Indexer\Report();
-        $oReport->index_code      = $Key;
-        $oReport->type            = 'default';
-        $oReport->report_poster   = $ReportPoster;
-        $oReport->fingerprint     = $Hash;
-        $oReport->report_json     = $ReportJson;
-        $oReport->report_info     = json_encode(substr($ReportInfo, 0, 100));
-        $oReport->script_version  = $ScriptVersion;
-        if (isset($City_id)) {
-          $oReport->city_id = $City_id;
-        }
-        if ($Explain !== null) {
-          $oReport->debug_explain = $Explain;
-        }
-        $oReport->save();
-
-        if (isset($oReportId)) {
-          $oReportId->index_report_id = (isset($oReport->id) ? $oReport->id : 0);
-          $oReportId->index_type = 'forum';
-          $oReportId->save();
-        }
-
-        if ($oIndex->new_report != 1) {
-          $oIndex->new_report = 1;
-          $oIndex->save();
-        }
-      }
-
-      die(self::OutputJson(array(), 200));
-
-    } catch (\Exception $e) {
-      Logger::warning('Error processing indexer add report: ' . $e->getMessage());
       die(self::OutputJson(array(), 200));
     }
   }

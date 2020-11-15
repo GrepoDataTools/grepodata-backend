@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Grepodata\Library\Cron\Common;
 use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\Indexer\Report;
+use Grepodata\Library\Model\IndexV2\Intel;
 use Grepodata\Library\Model\Operation_log;
 use Grepodata\Library\Model\Player;
 
@@ -139,15 +140,20 @@ try {
 //    ->where('updated_at', '<', Carbon::now()->subDays(7))
 //    ->update(['report_json' => '', 'report_info' => '']);
 
-  $LogsDeleted = Report::where('city_id', '!=', '0', 'and')
+  $LogsDeleted = Intel::where('parsing_failed', '!=', true, 'and')
     ->where('report_info', '!=', '', 'and')
-    ->where('created_at', '<', Carbon::now()->subDays(14))
+    ->where('updated_at', '<', Carbon::now()->subDays(7))
     ->update(['report_info' => '']);
 
-  $LogsDeleted += Report::where('city_id', '!=', '0', 'and')
+  $LogsDeleted += Intel::where('parsing_failed', '!=', true, 'and')
     ->where('report_json', '!=', '', 'and')
-    ->where('created_at', '<', Carbon::now()->subDays(21))
+    ->where('updated_at', '<', Carbon::now()->subDays(14))
     ->update(['report_json' => '']);
+
+  $LogsDeleted += Intel::where('updated_at', '<', Carbon::now()->subDays(31))
+    ->where('report_json', '!=', '', 'and')
+    ->where('report_info', '!=', '', 'and')
+    ->update(['report_json' => '', 'report_info' => '']);
 
   Logger::debugInfo("Updated " . $LogsDeleted . " old report info records.");
 } catch (\Exception $e) {

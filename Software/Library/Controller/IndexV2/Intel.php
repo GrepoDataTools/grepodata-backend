@@ -96,14 +96,12 @@ class Intel
   }
 
   /**
-   * @param $Key string Index identifier
    * @param $Id
-   * @return City
+   * @return \Grepodata\Library\Model\IndexV2\Intel
    */
-  public static function getById($Key, $Id)
+  public static function getById($Id)
   {
-    return \Grepodata\Library\Model\IndexV2\Intel::where('index_key', '=', $Key, 'and')
-      ->where('id', '=', $Id)
+    return \Grepodata\Library\Model\IndexV2\Intel::where('id', '=', $Id)
       ->firstOrFail();
   }
 
