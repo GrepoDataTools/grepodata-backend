@@ -216,6 +216,36 @@ class Helper
   }
 
   /**
+   * Returns the value of the specified attribute recursively
+   * @param $Element array Input node from forum or inbox parsers
+   * @param int $Depth
+   * @param bool $bOnlyParseContent
+   * @return string text content
+   * @throws ParserDefaultWarning
+   */
+  public static function getAttributeValue($Element, $Attribute, $Depth=0, $bOnlyParseContent = False)
+  {
+    if (!is_array($Element)) {
+      throw new ParserDefaultWarning("Element must be array");
+    }
+
+    if ($Depth > 100) {
+      throw new ParserDefaultWarning("Maximum search depth reached for element");
+    }
+
+    $textContent = array();
+    foreach ($Element as $Key => $Child) {
+      if (is_array($Child)) {
+        $textContent[] = self::getAttributeValue($Child, $Attribute, $Depth+1, $bOnlyParseContent);
+      } else if (is_string($Child) && $Key === $Attribute) {
+        $textContent[] = $Child;
+      }
+    }
+
+    return join(" ", $textContent);
+  }
+
+  /**
    * Returns all elements with the given class
    * @param $aParentElement
    * @param $ClassName

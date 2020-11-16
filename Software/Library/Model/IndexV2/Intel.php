@@ -45,6 +45,8 @@ class Intel extends Model
     return array(
       'id'          => $this->id,
       'hash'        => $this->hash,
+      'world'       => $this->world,
+      'source_type' => $this->source_type,
       'town_id'     => $this->town_id,
       'town_name'   => $this->town_name,
       'player_id'   => $this->player_id,
@@ -61,7 +63,8 @@ class Intel extends Model
       'land'        => json_decode($this->land_units, true),
       'sea'         => json_decode($this->sea_units, true),
       'air'         => json_decode($this->mythical_units, true),
-      'deleted'     => ($this->soft_deleted!=null?true:false)
+      'deleted'     => ($this->soft_deleted!=null?true:false),
+      'parsed'      => ($this->parsing_failed==0?true:false)
     );
   }
 

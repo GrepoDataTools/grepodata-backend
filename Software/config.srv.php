@@ -52,8 +52,8 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
   define('FRONTEND_URL', 'http://localhost:4200');
 } else if ('ACCEPTANCE' === PRIVATE_DEV_MACHINE_NAME) {
   // ACCEPTANCE:
-//  define('bDevelopmentMode', true);
-  define('bDevelopmentMode', false);
+  define('bDevelopmentMode', true);
+//  define('bDevelopmentMode', false);
   $g_aConfiguration = array(
     'mysql' => array(
       'driver'    => 'mysql',

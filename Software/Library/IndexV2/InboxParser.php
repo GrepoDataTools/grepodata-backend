@@ -661,7 +661,7 @@ class InboxParser
           $Silver = preg_replace('/\s+/', '', $Silver);
         }
         if (isset($aRightSideItems[2]) && is_array($aRightSideItems[2])) {
-          $God = Helper::getTextContent($aRightSideItems[2], 0, true) ?? null;
+          $God = Helper::getAttributeValue($aRightSideItems[2], 'title', 0, true) ?? null;
           $God = strtolower(preg_replace('/\s+/', '', $God));
           if (!key_exists($God, self::myth_units)) {
             Logger::warning("InboxParser $ReportHash: found unknown god with name '$God'");
