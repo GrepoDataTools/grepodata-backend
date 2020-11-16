@@ -6,6 +6,7 @@ namespace Grepodata\Library\IndexV2;
 use Carbon\Carbon;
 use Grepodata\Library\Controller\Alliance;
 use Grepodata\Library\Controller\Player;
+use Grepodata\Library\Exception\DuplicateIntelWarning;
 use Grepodata\Library\Exception\InboxParserExceptionDebug;
 use Grepodata\Library\Exception\InboxParserExceptionError;
 use Grepodata\Library\Exception\InboxParserExceptionWarning;
@@ -75,6 +76,8 @@ class InboxParser
     $ReportPoster,
     $PosterId,
     $ReportHash,
+    $ReportJson,
+    $ReportInfo,
     $ScriptVersion,
     $Locale='nl')
   {
@@ -837,7 +840,17 @@ class InboxParser
     catch(InboxParserExceptionError $e) {throw $e;}
     catch (\Exception $e) {
       if (strpos($e->getMessage(), 'Duplicate entry') !== false) {
-        throw new InboxParserExceptionDebug("Duplicate index city entry ignored.");
+        // try to find duplicate intel id
+        try {
+          $oIntel = Intel::where('town_id', '=', $TownId)
+            ->where('world', '=', $World)
+            ->where('parsed_date', '=', $ParsedDate)
+            ->where('report_type', '=', $ReportType)
+            ->firstOrFail();
+          return $oIntel->id;
+        } catch (\Exception $e) {
+          throw new InboxParserExceptionWarning("Unable to find duplicate intel entry");
+        }
       } else {
         throw new InboxParserExceptionError("Uncaught exception in inbox parser: " . $e->getMessage() . '. [' . $e->getTraceAsString() . ']');
       }

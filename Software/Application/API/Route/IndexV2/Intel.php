@@ -2,10 +2,52 @@
 
 namespace Grepodata\Application\API\Route\IndexV2;
 
+use Grepodata\Library\Router\ResponseCode;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class Intel extends \Grepodata\Library\Router\BaseRoute
 {
+
+  /**
+   * Returns all intel collected by this user, ordered by index date
+   */
+  public static function GetIntelForUserGet()
+  {
+    try {
+      $aParams = self::validateParams(array('access_token'));
+      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+
+      $From = $aParams['from'] ?? 0;
+      $Size = $aParams['size'] ?? 20;
+      $aIntel = \Grepodata\Library\Controller\IndexV2\Intel::allByUser($oUser, $From, $Size);
+
+      $aIntelData = array();
+      foreach ($aIntel as $oIntel) {
+        $aIntelData[] = $oIntel->getPublicFields();
+      }
+
+      if (sizeof($aIntel)>$Size) {
+        $Size = $From+$Size;
+        $Size .= '+';
+        array_pop($aIntelData);
+      } else {
+        $Size = $From+sizeof($aIntel);
+      }
+
+      $aResponse = array(
+        'size'    => $Size,
+        'items'   => $aIntelData
+      );
+
+      ResponseCode::success($aResponse);
+
+    } catch (ModelNotFoundException $e) {
+      die(self::OutputJson(array(
+        'message'     => 'No intel found on this town in this index.',
+        'parameters'  => $aParams
+      ), 404));
+    }
+  }
 
   public static function GetTownGET()
   {

@@ -245,9 +245,9 @@ $oRouter->Add('townSearch', new Route('/town/search', array(
 )));
 
 // Indexer v2
-$oRouter->Add('addReportForumV2', new Route('/indexer/v2/indexreport', array(
+$oRouter->Add('indexReportV2', new Route('/indexer/v2/indexreport', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Report',
-  '_method'     => 'indexReportPOST'
+  '_method'     => 'indexReport'
 )));
 $oRouter->Add('newIndexV2', new Route('/indexer/v2/newindex', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Index',
@@ -256,6 +256,10 @@ $oRouter->Add('newIndexV2', new Route('/indexer/v2/newindex', array(
 $oRouter->Add('getIndexV2', new Route('/indexer/v2/getindex', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Index',
   '_method'     => 'GetIndex'
+)));
+$oRouter->Add('getUserIntel', new Route('/indexer/v2/userintel', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Intel',
+  '_method'     => 'GetIntelForUser'
 )));
 $oRouter->Add('gettownintelV2', new Route('/indexer/v2/town', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Intel',

@@ -6,13 +6,14 @@ use Grepodata\Library\Controller\Indexer\IndexInfo;
 use Grepodata\Library\Controller\Indexer\ReportId;
 use Grepodata\Library\Controller\IndexV2\Intel;
 use Grepodata\Library\Controller\IndexV2\IntelShared;
+use Grepodata\Library\Exception\DuplicateIntelWarning;
 use Grepodata\Library\Exception\ForumParserExceptionDebug;
 use Grepodata\Library\Exception\ForumParserExceptionError;
 use Grepodata\Library\Exception\ForumParserExceptionWarning;
 use Grepodata\Library\Exception\InboxParserExceptionDebug;
 use Grepodata\Library\Exception\InboxParserExceptionError;
 use Grepodata\Library\Exception\InboxParserExceptionWarning;
-use Grepodata\Library\Indexer\ForumParser;
+use Grepodata\Library\Indexer\IndexBuilderV2;
 use Grepodata\Library\Indexer\Validator;
 use Grepodata\Library\Logger\Logger;
 
@@ -148,8 +149,16 @@ class Report extends \Grepodata\Library\Router\BaseRoute
 
         // Check if all indexes for this user have the hash, if not add the hash to the missing index
         $aIndexKeys = [];
+        $bUserHasHash = false;
         foreach ($aSharedIntel as $oIntelShared) {
-          $aIndexKeys[] = $oIntelShared->index_key;
+          if ($oIntelShared->user_id != null) {
+            $bUserHasHash = true;
+          } else {
+            $aIndexKeys[] = $oIntelShared->index_key;
+          }
+        }
+        if ($bUserHasHash == false) {
+          IntelShared::saveHashToUser($ReportHash, $IntelId, $oUser, $World);
         }
         foreach ($aIndexes as $oIndex) {
           if (!in_array($oIndex->key_code, $aIndexKeys)) {
@@ -199,14 +208,14 @@ class Report extends \Grepodata\Library\Router\BaseRoute
             default:
               throw new \Exception("Unhandled report type: " . $ReportType);
           }
-        } catch (InboxParserExceptionDebug $e) {
+        } catch (InboxParserExceptionDebug | ForumParserExceptionDebug $e) {
           Logger::debugInfo($LogPrefix . ' ('.$e->getMessage().')');
           $IntelId = -1;
           $Explain = $e->getMessage();
-        } catch (InboxParserExceptionWarning $e) {
+        } catch (InboxParserExceptionWarning | ForumParserExceptionWarning $e) {
           Logger::warning($LogPrefix . ' ('.$e->getMessage().')');
           $Explain = $e->getMessage();
-        } catch (InboxParserExceptionError $e) {
+        } catch (InboxParserExceptionError | ForumParserExceptionError $e) {
           Logger::error($LogPrefix . ' ('.$e->getMessage().')');
           $Explain = $e->getMessage();
         } catch (\Exception $e) {
@@ -220,7 +229,7 @@ class Report extends \Grepodata\Library\Router\BaseRoute
           $oIntel->indexed_by_user_id = $oUser->id;
           $oIntel->script_version = $ScriptVersion;
           $oIntel->source_type = $ReportType;
-          $oIntel->report_type = 'parsing_failed';
+          $oIntel->report_type = IndexBuilderV2::generateIndexKey(32); // Random string to ignore unique index violation
           $oIntel->hash = $ReportHash;
           $oIntel->world = $World;
           $oIntel->report_json = $ReportJson;

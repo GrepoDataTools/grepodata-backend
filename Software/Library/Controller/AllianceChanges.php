@@ -10,6 +10,8 @@ class AllianceChanges
   /**
    * @param $Id
    * @param $World
+   * @param int $From
+   * @param int $Size
    * @return \Illuminate\Database\Eloquent\Collection Alliance changes
    */
   public static function getChangesByPlayerId($Id, $World, $From = 0, $Size = 10)

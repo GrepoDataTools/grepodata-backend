@@ -5,6 +5,7 @@ namespace Grepodata\Library\Controller\IndexV2;
 use Carbon\Carbon;
 use Exception;
 use Grepodata\Library\Model\Indexer\City;
+use Grepodata\Library\Model\User;
 use Grepodata\Library\Model\World;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -494,5 +495,23 @@ class Intel
       );
     }
     return $aParsed;
+  }
+
+  /**
+   * @param User $oUser
+   * @param int $From
+   * @param int $Size
+   * @return \Grepodata\Library\Model\IndexV2\Intel[]
+   */
+  public static function allByUser(User $oUser, $From = 0, $Size = 20)
+  {
+    return \Grepodata\Library\Model\IndexV2\Intel::select(['Indexer_intel.*'])
+      ->join('Indexer_intel_shared', 'Indexer_intel_shared.intel_id', '=', 'Indexer_intel.id')
+      ->where('Indexer_intel_shared.user_id', '=', $oUser->id)
+      ->orderBy('created_at', 'desc')
+      ->distinct('Indexer_intel.id')
+      ->offset($From)
+      ->limit($Size+1)
+      ->get();
   }
 }

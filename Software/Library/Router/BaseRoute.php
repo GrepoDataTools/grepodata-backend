@@ -33,12 +33,15 @@ class BaseRoute
     else if (self::$oRequestContext->getMethod() == 'POST') $aParams = self::getPostVars();
 
     // Check headers
-    if (!empty($aCheckHeaders)) {
+    if (!empty($aCheckHeaders) || in_array('access_token', $aParamNames)) {
       $aHeaders = apache_request_headers();
       foreach ($aCheckHeaders as $HeaderParamName) {
         if (key_exists($HeaderParamName, $aHeaders) && !key_exists($HeaderParamName, $aParams)) {
           $aParams[$HeaderParamName] = $aHeaders[$HeaderParamName];
         }
+      }
+      if (key_exists('access_token', $aHeaders) && !key_exists('access_token', $aCheckHeaders)) {
+        $aParams['access_token'] = $aHeaders['access_token'];
       }
     }
 

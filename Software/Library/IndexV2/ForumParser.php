@@ -11,7 +11,6 @@ use Grepodata\Library\Exception\ForumParserExceptionError;
 use Grepodata\Library\Exception\ForumParserExceptionWarning;
 use Grepodata\Library\Indexer\Helper;
 use Grepodata\Library\Logger\Logger;
-use Grepodata\Library\Model\Indexer\City;
 use Grepodata\Library\Model\IndexV2\Intel;
 
 class ForumParser
@@ -318,7 +317,17 @@ class ForumParser
     catch(ForumParserExceptionError $e) {throw $e;}
     catch (\Exception $e) {
       if (strpos($e->getMessage(), 'Duplicate entry') !== false) {
-        throw new ForumParserExceptionDebug("Duplicate index city entry ignored.");
+        // try to find duplicate intel id
+        try {
+          $oIntel = Intel::where('town_id', '=', $aCityInfo['city_id'])
+            ->where('world', '=', $World)
+            ->where('parsed_date', '=', $aCityInfo['parsed_date'])
+            ->where('report_type', '=', $aCityInfo['report_type'])
+            ->firstOrFail();
+          return $oIntel->id;
+        } catch (\Exception $e) {
+          throw new ForumParserExceptionWarning("Unable to find duplicate intel entry");
+        }
       } else {
         throw new ForumParserExceptionError("uncaught exception in forum parser: " . $e->getMessage() . '. [' . $e->getTraceAsString() . ']');
       }
