@@ -273,7 +273,7 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
           \"has_intel\": true
       }";
 
-      die($DummyResponse);
+      return self::OutputJson(json_decode($DummyResponse, true));
 
     } catch (ModelNotFoundException $e) {
       die(self::OutputJson(array(

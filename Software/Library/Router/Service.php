@@ -86,7 +86,7 @@ class Service
 
         if ($oContext->getMethod() == 'OPTIONS') {
           header('Access-Control-Allow-Origin: *');
-          header('Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept');
+          header('Access-Control-Allow-Headers: access_token, Origin, X-Requested-With, Content-Type, Accept');
           die();
         } else if (method_exists($oController, $MethodName)) {
           header("Access-Control-Allow-Origin: *");

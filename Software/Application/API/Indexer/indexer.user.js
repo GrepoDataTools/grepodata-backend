@@ -4,7 +4,7 @@
 // @version      1.0.0
 // @author       grepodata.com
 // @updateURL    https://api.grepodata.com/script/indexer.user.js
-// @downloadURL	 https://api.grepodata.com/indexer.user.js
+// @downloadURL	 https://api.grepodata.com/script/indexer.user.js
 // @description  This script allows you to collect and share enemy city intelligence
 // @include      https://*.grepolis.com/game/*
 // @include      https://grepodata.com*
