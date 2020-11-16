@@ -182,14 +182,14 @@ class Intel
   }
 
   /**
-   * @param City $oCity
+   * @param \Grepodata\Library\Model\IndexV2\Intel $oIntel
    * @param World $oWorld
    * @param $aBuildings
    * @return array
    */
-  public static function formatAsTownIntel($oCity, $oWorld, &$aBuildings)
+  public static function formatAsTownIntel($oIntel, $oWorld, &$aBuildings)
   {
-    $aCityFields = $oCity->getMinimalFields();
+    $aCityFields = $oIntel->getMinimalFields();
     $aCityFields['sort_date'] = 0;
     try {
       if (isset($aCityFields['parsed_date']) && $aCityFields['parsed_date'] != null) {
@@ -200,7 +200,7 @@ class Intel
         $aCityFields['sort_date'] = Carbon::createFromFormat('d-m-y H:i:s', $aCityFields['date']);
       }
     } catch (Exception $e) {
-      $aCityFields['sort_date'] = $oCity->created_at;
+      $aCityFields['sort_date'] = $oIntel->created_at;
       $aCityFields['date'] = $aCityFields['sort_date']->format('d-m-y H:i:s');
     }
 
@@ -212,8 +212,8 @@ class Intel
 
     $Wall = '';
     $aStonehail = null;
-    if ($oCity->report_type !== "attack_on_conquest") {
-      $Build = $oCity->buildings;
+    if ($oIntel->report_type !== "attack_on_conquest") {
+      $Build = $oIntel->buildings;
       if ($Build != null && $Build != "" && $Build != "[]") {
         $aBuild = json_decode($Build, true);
         $NumBuildings = sizeof($aBuild);
@@ -333,7 +333,7 @@ class Intel
 
     // Format response
     $aFormatted = array(
-      'id'        => $oCity->id,
+      'id'        => $oIntel->id,
       'deleted'   => $aCityFields['deleted'] || false,
       'sort_date' => $aCityFields['sort_date'],
       'date'    => $aCityFields['date'],
@@ -342,7 +342,9 @@ class Intel
       'silver'  => (string) $Silver,
       'wall'    => $Wall,
       'stonehail' => $aStonehail,
-      'conquest_id' => $oCity->conquest_id > 0 ? $oCity->conquest_id : 0,
+// TODO: conquest ids
+//      'conquest_id' => $oIntel->conquest_id > 0 ? $oIntel->conquest_id : 0,
+      'conquest_id' => 0,
       'hero'    => strtolower($aCityFields['hero']),
       'god'     => strtolower($aCityFields['god']),
       'cost'    => (int) $IntelCost

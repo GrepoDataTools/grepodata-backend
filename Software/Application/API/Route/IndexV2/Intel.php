@@ -2,6 +2,8 @@
 
 namespace Grepodata\Application\API\Route\IndexV2;
 
+use Grepodata\Library\Controller\Alliance;
+use Grepodata\Library\Controller\World;
 use Grepodata\Library\Router\ResponseCode;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -22,8 +24,23 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
       $aIntel = \Grepodata\Library\Controller\IndexV2\Intel::allByUser($oUser, $From, $Size);
 
       $aIntelData = array();
+      $aWorlds = array();
       foreach ($aIntel as $oIntel) {
-        $aIntelData[] = $oIntel->getPublicFields();
+        if (!key_exists($oIntel->world, $aWorlds)) {
+          $aWorlds[$oIntel->world] = World::getWorldById($oIntel->world);
+        }
+        $aBuildings = array();
+        $aTownIntelRecord = \Grepodata\Library\Controller\IndexV2\Intel::formatAsTownIntel($oIntel, $aWorlds[$oIntel->world], $aBuildings);
+        $aTownIntelRecord['source_type'] = $oIntel->source_type;
+        $aTownIntelRecord['parsed'] = ($oIntel->parsing_failed==0?true:false);
+        $aTownIntelRecord['world'] = $oIntel->world;
+        $aTownIntelRecord['town_id'] = $oIntel->town_id;
+        $aTownIntelRecord['town_name'] = $oIntel->town_name;
+        $aTownIntelRecord['player_id'] = $oIntel->player_id;
+        $aTownIntelRecord['player_name'] = $oIntel->player_name;
+        $aTownIntelRecord['alliance_id'] = $oIntel->alliance_id;
+        $aTownIntelRecord['alliance_name'] = Alliance::first($oIntel->alliance_id, $oIntel->world)->name ?? '';
+        $aIntelData[] = $aTownIntelRecord;
       }
 
       if (sizeof($aIntel)>$Size) {
