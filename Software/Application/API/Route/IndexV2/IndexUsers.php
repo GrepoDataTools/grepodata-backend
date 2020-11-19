@@ -72,14 +72,19 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
       }
 
       if ($aParams['role'] == Roles::ROLE_OWNER) {
-        IndexManagement::verifyUserIsOwner($oUser, $aParams['index_key']);
+        // Only an owner can manage other owners
+        $oEditorRole = IndexManagement::verifyUserIsOwner($oUser, $aParams['index_key']);
       } else {
-        IndexManagement::verifyUserIsAdmin($oUser, $aParams['index_key']);
+        $oEditorRole = IndexManagement::verifyUserIsAdmin($oUser, $aParams['index_key']);
       }
-
 
       try {
         $oManagedUser = \Grepodata\Library\Controller\User::GetUserById($aParams['user_id']);
+        $oManagedUserRole = Roles::getUserIndexRole($oManagedUser, $aParams['index_key']);
+        if ($oManagedUserRole->role == Roles::ROLE_ADMIN && $oEditorRole->role != Roles::ROLE_OWNER) {
+          // Only an owner can manage other admins
+          ResponseCode::errorCode(7540);
+        }
       } catch (ModelNotFoundException $e) {
         ResponseCode::errorCode(2010);
       }
@@ -95,6 +100,47 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
       ResponseCode::success(array(
         'size' => 1,
         'data' => $oUserRole->getPublicFields()
+      ));
+
+    } catch (ModelNotFoundException $e) {
+      die(self::OutputJson(array(
+        'message'     => 'No intel found on this town in this index.',
+        'parameters'  => $aParams
+      ), 404));
+    }
+  }
+
+  /**
+   * Delete a users access from an index
+   * @throws \Exception
+   */
+  public static function IndexUsersDELETE()
+  {
+    try {
+      $aParams = self::validateParams(array('access_token', 'index_key', 'user_id'));
+      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+
+      if ($oUser->id == $aParams['user_id']) {
+        ResponseCode::errorCode(7520);
+      }
+
+      $oEditorRole = IndexManagement::verifyUserIsAdmin($oUser, $aParams['index_key']);
+
+      try {
+        $oManagedUser = \Grepodata\Library\Controller\User::GetUserById($aParams['user_id']);
+        $oManagedUserRole = Roles::getUserIndexRole($oManagedUser, $aParams['index_key']);
+        if (($oManagedUserRole->role == Roles::ROLE_ADMIN || $oManagedUserRole->role == Roles::ROLE_OWNER) && $oEditorRole->role != Roles::ROLE_OWNER) {
+          // Only an owner can manage other admins/owners
+          ResponseCode::errorCode(7540);
+        }
+      } catch (ModelNotFoundException $e) {
+        ResponseCode::errorCode(2010);
+      }
+
+      $bSuccess = $oManagedUserRole->delete();
+
+      ResponseCode::success(array(
+        'deleted' => $bSuccess
       ));
 
     } catch (ModelNotFoundException $e) {

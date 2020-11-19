@@ -33,6 +33,7 @@ class BaseRoute
     if (self::$oRequestContext->getMethod() == 'GET') $aParams = self::getGetVars();
     else if (self::$oRequestContext->getMethod() == 'POST') $aParams = self::getPostVars();
     else if (self::$oRequestContext->getMethod() == 'PUT') $aParams = self::getPutVars();
+    else if (self::$oRequestContext->getMethod() == 'DELETE') $aParams = self::getDeleteVars();
     else {
       throw new \Exception("Unhandled HTTP method: " . self::$oRequestContext->getMethod());
     }
@@ -84,6 +85,12 @@ class BaseRoute
   }
 
   private static function getPutVars()
+  {
+    parse_str(file_get_contents('php://input'), $_PUT);
+    return $_PUT;
+  }
+
+  private static function getDeleteVars()
   {
     parse_str(file_get_contents('php://input'), $_PUT);
     return $_PUT;

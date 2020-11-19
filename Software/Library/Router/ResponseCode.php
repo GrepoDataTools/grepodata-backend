@@ -53,8 +53,9 @@ define('GD_ERROR_7501', 'Unauthorized. You are not an owner on this index.');
 define('GD_ERROR_7502', 'Unauthorized. You are not an admin on this index.');
 define('GD_ERROR_7503', 'Unauthorized. You are not allowed to write to this index.');
 define('GD_ERROR_7504', 'Unauthorized. You are not allowed to read this index.');
-define('GD_ERROR_7520', 'You can not change your own role on this index.');
+define('GD_ERROR_7520', 'You can not edit your own rights on this index.');
 define('GD_ERROR_7530', "Invalid user role: role must be one of ['read', 'write', 'admin', 'owner']");
+define('GD_ERROR_7540', "Unauthorized. Only an index owner can change the rights of an index admin/owner.");
 
 // === Success codes
 define('GD_SUCCESS_1000', 'Request processed successfully');
