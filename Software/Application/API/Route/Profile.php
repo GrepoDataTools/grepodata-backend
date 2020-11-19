@@ -34,7 +34,7 @@ class Profile extends BaseRoute
       if (isset($aParams['expand_overview'])) {
         try {
           $oOverview = IndexOverview::firstOrFail($oIndex->key_code);
-          $aOverview = $oOverview->getPublicFields();
+          $aOverview = $oOverview->getMinimalFields();
         } catch (\Exception $e) {
           continue;
         }
@@ -47,7 +47,7 @@ class Profile extends BaseRoute
         'world' => $oIndex->world,
         'created_at' => $oIndex->created_at,
         'updated_at' => $oIndex->updated_at,
-        'overview' => $aOverview
+        'stats' => $aOverview
       );
     }
     $aResponse['rows'] = sizeof($aResponse['items']);
