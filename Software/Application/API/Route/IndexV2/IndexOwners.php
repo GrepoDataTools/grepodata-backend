@@ -6,6 +6,7 @@ use Grepodata\Library\Controller\Alliance;
 use Grepodata\Library\Controller\Indexer\IndexOverview;
 use Grepodata\Library\Controller\IndexV2\Roles;
 use Grepodata\Library\Controller\World;
+use Grepodata\Library\IndexV2\IndexManagement;
 use Grepodata\Library\Model\User;
 use Grepodata\Library\Router\ResponseCode;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -22,21 +23,14 @@ class IndexOwners extends \Grepodata\Library\Router\BaseRoute
       $aParams = self::validateParams(array('access_token', 'index_key'));
       $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
 
-      try {
-        $oUserRole = Roles::getUserIndexRole($oUser, $aParams['index_key']);
-        if (!in_array($oUserRole->role, array(Roles::ROLE_OWNER, Roles::ROLE_ADMIN))) {
-          ResponseCode::errorCode(7502);
-        }
-      } catch (\Exception $e) {
-        ResponseCode::errorCode(7500);
-      }
+      IndexManagement::verifyUserIsAdmin($oUser, $aParams['index_key']);
 
       $aResult = IndexOverview::firstOrFail($aParams['index_key']);
       $aItems = json_decode($aResult->owners);
 
       $aResponse = array(
         'size'    => sizeof($aItems),
-        'items'   => $aItems
+        'data'   => $aItems
       );
 
       ResponseCode::success($aResponse);
