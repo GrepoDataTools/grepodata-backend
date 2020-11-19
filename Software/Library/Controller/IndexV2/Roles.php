@@ -34,5 +34,29 @@ class Roles
     $oRole->save();
   }
 
+  /**
+   * @param $IndexKey
+   * @return \Grepodata\Library\Model\IndexV2\Roles[]
+   */
+  public static function getUsersByIndex($IndexKey)
+  {
+    return \Grepodata\Library\Model\IndexV2\Roles::select(['Indexer_roles.*', 'User.*'])
+      ->join('User', 'User.id', '=', 'Indexer_roles.user_id')
+      ->where('Indexer_roles.index_key', '=', $IndexKey)
+      ->get();
+  }
+
+  /**
+   * @param User $oUser
+   * @param $IndexKey
+   * @return \Grepodata\Library\Model\IndexV2\Roles
+   */
+  public static function getUserIndexRole(User $oUser, $IndexKey)
+  {
+    return \Grepodata\Library\Model\IndexV2\Roles::where('user_id', '=', $oUser->id)
+      ->where('index_key', '=', $IndexKey)
+      ->firstOrFail();
+  }
+
 
 }

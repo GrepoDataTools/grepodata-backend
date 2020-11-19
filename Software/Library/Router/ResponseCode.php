@@ -43,6 +43,10 @@ define('GD_ERROR_6300', 'No towns found for these parameters');
 // Indexer
 define('GD_ERROR_7000', 'Unable to handle indexer request');
 define('GD_ERROR_7100', 'No verified players found for this user.');
+define('GD_ERROR_7500', 'Unauthorized. You do not have access to this index.');
+define('GD_ERROR_7501', 'Unauthorized. You are not an owner on this index.');
+define('GD_ERROR_7502', 'Unauthorized. You are not an admin on this index.');
+define('GD_ERROR_7503', 'Unauthorized. You are not a user on this index.');
 
 // === Success codes
 define('GD_SUCCESS_1000', 'Request processed successfully');

@@ -266,6 +266,24 @@ $oRouter->Add('gettownintelV2', new Route('/indexer/v2/town', array(
   '_method'     => 'GetTown'
 )));
 
+// index settings
+$oRouter->Add('indexsettingsgetusers', new Route('/indexer/settings/users', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\IndexUsers',
+  '_method'     => 'IndexUsers'
+)));
+$oRouter->Add('indexsettingsgetowners', new Route('/indexer/settings/owners', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\IndexOwners',
+  '_method'     => 'IndexOwners'
+)));
+
+
+
+$oRouter->Add('discordlink', new Route('/user/discord-link', array(
+  '_controller' => '\Grepodata\Application\API\Route\Discord',
+  '_method'     => 'DiscordLink'
+)));
+##
+
 // Indexer V1
 $oRouter->Add('stats', new Route('/indexer/stats', array(
   '_controller' => '\Grepodata\Application\API\Route\Indexer\Index',

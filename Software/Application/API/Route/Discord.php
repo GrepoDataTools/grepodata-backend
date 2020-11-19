@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class Discord extends \Grepodata\Library\Router\BaseRoute
 {
+
   /**
    * @return string
    * @throws \Exception
@@ -198,6 +199,7 @@ class Discord extends \Grepodata\Library\Router\BaseRoute
       $aResponse = array(
         'success' => true,
         'url' => $Url,
+        'b64' => base64_encode(file_get_contents($Url)),
         'index' => null,
         'world' => $oIndex->world,
         'bb' => array()
