@@ -7,6 +7,11 @@ define('GD_ERROR_0000', 'Undefined error code');
 define('GD_ERROR_1000', 'Unable to handle request');
 define('GD_ERROR_1010', 'Bad request. Invalid or missing parameters');
 
+// Model not found
+define('GD_ERROR_2000', 'Model not found for these parameters.');
+define('GD_ERROR_2010', 'Unable to find a user with this id.');
+define('GD_ERROR_2020', 'Unable to find an index with this key.');
+
 // Authentication
 define('GD_ERROR_3000', 'Unable to handle authentication request');
 define('GD_ERROR_3001', 'Invalid credentials');
@@ -46,7 +51,10 @@ define('GD_ERROR_7100', 'No verified players found for this user.');
 define('GD_ERROR_7500', 'Unauthorized. You do not have access to this index.');
 define('GD_ERROR_7501', 'Unauthorized. You are not an owner on this index.');
 define('GD_ERROR_7502', 'Unauthorized. You are not an admin on this index.');
-define('GD_ERROR_7503', 'Unauthorized. You are not a user on this index.');
+define('GD_ERROR_7503', 'Unauthorized. You are not allowed to write to this index.');
+define('GD_ERROR_7504', 'Unauthorized. You are not allowed to read this index.');
+define('GD_ERROR_7520', 'You can not change your own role on this index.');
+define('GD_ERROR_7530', "Invalid user role: role must be one of ['read', 'write', 'admin', 'owner']");
 
 // === Success codes
 define('GD_SUCCESS_1000', 'Request processed successfully');

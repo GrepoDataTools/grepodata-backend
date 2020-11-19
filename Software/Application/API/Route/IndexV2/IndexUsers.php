@@ -3,6 +3,7 @@
 namespace Grepodata\Application\API\Route\IndexV2;
 
 use Grepodata\Library\Controller\Alliance;
+use Grepodata\Library\Controller\Indexer\IndexInfo;
 use Grepodata\Library\Controller\IndexV2\Roles;
 use Grepodata\Library\Controller\World;
 use Grepodata\Library\IndexV2\IndexManagement;
@@ -22,14 +23,7 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
       $aParams = self::validateParams(array('access_token', 'index_key'));
       $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
 
-      try {
-        $oUserRole = Roles::getUserIndexRole($oUser, $aParams['index_key']);
-        if (!in_array($oUserRole->role, array(Roles::ROLE_OWNER, Roles::ROLE_ADMIN))) {
-          ResponseCode::errorCode(7502);
-        }
-      } catch (\Exception $e) {
-        ResponseCode::errorCode(7500);
-      }
+      IndexManagement::verifyUserIsAdmin($oUser, $aParams['index_key']);
 
       $aResult = Roles::getUsersByIndex($aParams['index_key']);
       $aItems = array();
@@ -61,34 +55,47 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
 
   /**
    * Change a users role on an index
+   * @throws \Exception
    */
-  public static function IndexUsersPOST()
+  public static function IndexUsersPUT()
   {
     try {
       $aParams = self::validateParams(array('access_token', 'index_key', 'user_id', 'role'));
       $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
 
-      IndexManagement::verifyUserIsAdmin($oUser, $aParams['index_key']);
-
-      $aResult = Roles::getUsersByIndex($aParams['index_key']);
-      $aItems = array();
-      /** @var User $oUser */
-      foreach ($aResult as $oUser) {
-        $aItems[] = array(
-          'user_id' => $oUser->id,
-          'role' => $oUser->role,
-          'contribute' => $oUser->contribute,
-          'username' => $oUser->username,
-          'player_name' => 'TODO',
-        );
+      if ($oUser->id == $aParams['user_id']) {
+        ResponseCode::errorCode(7520);
       }
 
-      $aResponse = array(
-        'size'    => sizeof($aItems),
-        'data'   => $aItems
-      );
+      if (!in_array($aParams['role'], array(Roles::ROLE_READ, Roles::ROLE_WRITE, Roles::ROLE_ADMIN, Roles::ROLE_OWNER))) {
+        ResponseCode::errorCode(7530);
+      }
 
-      ResponseCode::success($aResponse);
+      if ($aParams['role'] == Roles::ROLE_OWNER) {
+        IndexManagement::verifyUserIsOwner($oUser, $aParams['index_key']);
+      } else {
+        IndexManagement::verifyUserIsAdmin($oUser, $aParams['index_key']);
+      }
+
+
+      try {
+        $oManagedUser = \Grepodata\Library\Controller\User::GetUserById($aParams['user_id']);
+      } catch (ModelNotFoundException $e) {
+        ResponseCode::errorCode(2010);
+      }
+
+      try {
+        $oIndex = IndexInfo::firstOrFail($aParams['index_key']);
+      } catch (ModelNotFoundException $e) {
+        ResponseCode::errorCode(2020);
+      }
+
+      $oUserRole = Roles::SetUserIndexRole($oManagedUser, $oIndex, $aParams['role']);
+
+      ResponseCode::success(array(
+        'size' => 1,
+        'data' => $oUserRole->getPublicFields()
+      ));
 
     } catch (ModelNotFoundException $e) {
       die(self::OutputJson(array(

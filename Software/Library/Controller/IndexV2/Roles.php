@@ -22,9 +22,14 @@ class Roles
    * @param User $oUser
    * @param IndexInfo $oIndex
    * @param $Role
+   * @return \Grepodata\Library\Model\IndexV2\Roles
+   * @throws Exception
    */
   public static function SetUserIndexRole(User $oUser, IndexInfo $oIndex, $Role)
   {
+    if (!in_array($Role, array(Roles::ROLE_READ, Roles::ROLE_WRITE, Roles::ROLE_ADMIN, Roles::ROLE_OWNER))) {
+      throw new Exception("Invalid user role.");
+    }
     /** @var \Grepodata\Library\Model\IndexV2\Roles $oRole */
     $oRole = \Grepodata\Library\Model\IndexV2\Roles::firstOrNew(array(
       'user_id' => $oUser->id,
@@ -32,6 +37,7 @@ class Roles
     ));
     $oRole->role = $Role;
     $oRole->save();
+    return $oRole;
   }
 
   /**

@@ -24,6 +24,7 @@ class BaseRoute
    * @param array $aParamNames
    * @param array $aCheckHeaders
    * @return array|mixed
+   * @throws \Exception
    */
   public static function validateParams($aParamNames = array(), $aCheckHeaders = array())
   {
@@ -31,6 +32,10 @@ class BaseRoute
     $aParams = array();
     if (self::$oRequestContext->getMethod() == 'GET') $aParams = self::getGetVars();
     else if (self::$oRequestContext->getMethod() == 'POST') $aParams = self::getPostVars();
+    else if (self::$oRequestContext->getMethod() == 'PUT') $aParams = self::getPutVars();
+    else {
+      throw new \Exception("Unhandled HTTP method: " . self::$oRequestContext->getMethod());
+    }
 
     // Check headers
     if (!empty($aCheckHeaders) || in_array('access_token', $aParamNames)) {
@@ -76,6 +81,11 @@ class BaseRoute
   private static function getPostVars()
   {
     return $_POST;
+  }
 
+  private static function getPutVars()
+  {
+    parse_str(file_get_contents('php://input'), $_PUT);
+    return $_PUT;
   }
 }
