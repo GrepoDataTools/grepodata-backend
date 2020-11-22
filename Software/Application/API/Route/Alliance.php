@@ -39,6 +39,48 @@ class Alliance extends \Grepodata\Library\Router\BaseRoute
     }
   }
 
+  public static function WarsGET()
+  {
+    $aParams = array();
+    try {
+      // Validate params
+      $aParams = self::validateParams(array('id', 'world'));
+
+      // TODO: change dummy response to actual scores
+
+      $aResponse = array(
+        'size' => 3,
+        'data' => array(
+          array(
+            'alliance_name' => 'Elite Golden Greeks',
+            'alliance_id' => 3,
+            'towns_gained_from' => 45,
+            'towns_lost_to' => 23
+          ),
+          array(
+            'alliance_name' => 'Elite Golden Greeks',
+            'alliance_id' => 3,
+            'towns_gained_from' => 45,
+            'towns_lost_to' => 23
+          ),
+          array(
+            'alliance_name' => 'Elite Golden Greeks',
+            'alliance_id' => 3,
+            'towns_gained_from' => 45,
+            'towns_lost_to' => 23
+          ),
+        )
+      );
+
+      ResponseCode::success($aResponse);
+    } catch (ModelNotFoundException $e) {
+      die(self::OutputJson(array(
+        'message'     => 'No alliance found for these parameters.',
+        'parameters'  => $aParams
+      ), 404));
+    }
+  }
+
   public static function AllianceInfoGET()
   {
     $aParams = array();
