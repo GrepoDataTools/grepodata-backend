@@ -7,10 +7,38 @@ use Exception;
 use Grepodata\Library\Controller\Indexer\IndexInfo;
 use Grepodata\Library\Elasticsearch\Search;
 use Grepodata\Library\Model\AllianceChanges;
+use Grepodata\Library\Router\ResponseCode;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class Alliance extends \Grepodata\Library\Router\BaseRoute
 {
+  public static function MailListGET()
+  {
+    $aParams = array();
+    try {
+      // Validate params
+      $aParams = self::validateParams(array('alliance_ids', 'world'));
+
+      $aMaillist = array();
+      foreach (mb_split(',', $aParams['alliance_ids']) as $AllianceId) {
+        $aPlayers = \Grepodata\Library\Controller\Alliance::getAllianceMembers($AllianceId, $aParams['world']);
+        foreach ($aPlayers as $oPlayer) {
+          $aMaillist[] = $oPlayer->name;
+        }
+      }
+
+      $aResponse = array(
+        'mail_list' => join('; ', $aMaillist) . '; '
+      );
+      ResponseCode::success($aResponse);
+    } catch (ModelNotFoundException $e) {
+      die(self::OutputJson(array(
+        'message'     => 'No alliance found for these parameters.',
+        'parameters'  => $aParams
+      ), 404));
+    }
+  }
+
   public static function AllianceInfoGET()
   {
     $aParams = array();
