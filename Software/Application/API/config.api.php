@@ -173,7 +173,7 @@ $oRouter->Add('allianceChanges', new Route('/alliance/changes', array(
   '_controller' => '\Grepodata\Application\API\Route\Alliance',
   '_method'     => 'AllianceChanges'
 )));
-$oRouter->Add('allianceMailList', new Route('/alliance/wars', array(
+$oRouter->Add('allianceWars', new Route('/alliance/wars', array(
   '_controller' => '\Grepodata\Application\API\Route\Alliance',
   '_method'     => 'Wars'
 )));
