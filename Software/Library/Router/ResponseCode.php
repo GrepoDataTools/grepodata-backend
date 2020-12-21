@@ -28,6 +28,7 @@ define('GD_ERROR_3031', 'Password is not strong enough. Your password should be 
 define('GD_ERROR_3032', 'This username is already in use');
 define('GD_ERROR_3040', 'Unlinked script token');
 define('GD_ERROR_3041', 'Invalid script token');
+define('GD_ERROR_3042', 'Expired script token');
 
 // Profile
 define('GD_ERROR_4000', 'Unable to handle profile request');
@@ -70,6 +71,7 @@ define('GD_SUCCESS_1120', 'Registration complete, user created');
 define('GD_SUCCESS_1130', 'Password changed');
 define('GD_SUCCESS_1140', 'Account confirmation requested');
 define('GD_SUCCESS_1150', 'Script token created');
+define('GD_SUCCESS_1151', 'Script token authenticated');
 
 define('GD_SUCCESS_4000', 'Profile request processed successfully');
 define('GD_SUCCESS_4200', 'Account unlinking was successful');

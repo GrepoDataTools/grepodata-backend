@@ -2,6 +2,7 @@
 
 namespace Grepodata\Application\API\Route;
 
+use Carbon\Carbon;
 use Grepodata\Library\Controller\Indexer\IndexInfo;
 use Grepodata\Library\Controller\IndexV2\ScriptToken;
 use Grepodata\Library\Controller\User;
@@ -263,6 +264,13 @@ admin@grepodata.com',
       ResponseCode::errorCode(3041, array(), 401);
     }
 
+    // Check expiration
+    $Limit = Carbon::now()->subDays(7);
+    if ($oToken->created_at < $Limit) {
+      // token expired
+      ResponseCode::errorCode(3042, array(), 401);
+    }
+
     // Check if a user is linked
     try {
       $oUser = User::GetUserById($oToken->user_id);
@@ -292,57 +300,31 @@ admin@grepodata.com',
      */
 
     // Validate params
-    $aParams = self::validateParams(array('access_token', 'uuid'));
+    $aParams = self::validateParams(array('access_token', 'script_token'));
 
-    die(self::OutputJson(array(
-      'message'     => 'Unauthorized.',
-    ), 401));
+    // Verify token
+    $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
 
-    // TODO userscript: API ScriptAuth has returned a 401: show login popups / flow
-    // TODO userscript: IF login flow initiated:
-    // TODO userscript:   generate userscript UID => uuid
-    // TODO userscript:   save uuid to cookie and local cache
-    // TODO userscript:   redirect user to grepodata.com/indexer/auth/{{uuid}}
+    // Get token
+    try {
+      $oToken = ScriptToken::GetScriptToken($aParams['script_token']);
+    } catch (ModelNotFoundException $e) {
+      ResponseCode::errorCode(3041, array(), 401);
+    }
 
-    // TODO frontend: show login screen if user is not logged in
-    // TODO frontend: when logged in: send a request to API ScriptLink with access_token and the uuid
+    // Check expiration
+    $Limit = Carbon::now()->subDays(7);
+    if ($oToken->created_at < $Limit) {
+      // token expired
+      ResponseCode::errorCode(3042, array(), 401);
+    }
 
-    // TODO API: validate access_token. if invalid => 401
-    // TODO API: if valid => link uuid to account => return 200
+    // Add script_token to user
+    $oToken->user_id = $oUser->id;
+    $oToken->save();
 
-    // TODO frontend: if 401 => back to login
-    // TODO frontend: if 200 => show: 'success! script now linked. go back to game window'
-
-    // TODO userscript: set a 2000ms timeout on the userscript that calls ScriptAuth for next few minutes
-    // TODO userscript: ScriptAuth will return 200 when the linking is complete
-  }
-
-  public static function ScriptAuthPOST()
-  {
-    /**
-     * @DEPRECATED
-     * This method is called by the userscript every time the script is loaded.
-     * Returns an access token if auth is successful based on supplied uuid OR userclient+ip.
-     * Otherwise returns a 401
-     */
-
-    // Validate params
-    $aParams = self::validateParams(array('uuid'));
-
-    die(self::OutputJson(array(
-      'message'     => 'Unauthorized.',
-    ), 401));
-
-    // TODO userscript: call ScriptAuth every time when script loads with the saved uuid. If uuid is not saved, try auth anyway with empty uuid.
-
-    // TODO API: if uuid is not empty: check auth for uuid and return access token
-    // TODO API: if uuid is empty: check auth for userclient+ip and try to find an older uuid anyway
-    // TODO API: if uuid is empty and an older uuid was found using userclient+ip, return the uuid AND an access token AND let userscript know the old uuid
-    // TODO API: if uuid is invalid or empty and userclient+ip is unknown: return 401
-
-    // TODO userscript: if a 401 is returned by API: Script is not yet linked!! show login popup
-    // TODO userscript: if a 401 is returned by API: Index buttons replaced by login popup buttons
-    // TODO userscript: if a 200 is returned by API: Script goes to active-linked mode => happy indexing!
+    // Response
+    ResponseCode::success(array(), 1151);
   }
 
   /**

@@ -80,7 +80,7 @@
     transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
 }
 .gd-login-btn{
-    width: 100%;
+    /*width: 100%;*/
     -webkit-tap-highlight-color: rgba(0,0,0,0);
     box-sizing: border-box;
     margin: 10px 0;
