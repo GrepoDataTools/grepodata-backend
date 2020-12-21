@@ -4,12 +4,17 @@ use Symfony\Component\Routing\Route;
 
 $oRouter = \Grepodata\Library\Router\Service::GetInstance();
 
+// Define rate limits
 $limit3PerMin = array(
   'limit' => 3,
   'window' => 60
 );
 $limit10PerMin = array(
   'limit' => 10,
+  'window' => 60
+);
+$limit50PerMin = array(
+  'limit' => 50,
   'window' => 60
 );
 $limit100PerMin = array(
@@ -50,7 +55,7 @@ $oRouter->Add('refreshtoken', new Route('/auth/refresh', array(
 $oRouter->Add('login', new Route('/auth/login', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
   '_method'     => 'Login',
-  '_ratelimit'  => $limit100PerMin
+  '_ratelimit'  => $limit50PerMin
 )));
 //Forgot
 $oRouter->Add('forgot', new Route('/auth/reset', array(
@@ -63,6 +68,22 @@ $oRouter->Add('changepassword', new Route('/auth/changepassword', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
   '_method'     => 'ChangePassword',
   '_ratelimit'  => $limit10PerMin
+)));
+//New Script Link Code
+$oRouter->Add('newscriptlink', new Route('/auth/newscriptlink', array(
+  '_controller' => '\Grepodata\Application\API\Route\Authentication',
+  '_method'     => 'NewScriptLink',
+  '_ratelimit'  => $limit50PerMin
+)));
+$oRouter->Add('verifyscriptlink', new Route('/auth/verifyscriptlink', array(
+  '_controller' => '\Grepodata\Application\API\Route\Authentication',
+  '_method'     => 'VerifyScriptLink',
+  '_ratelimit'  => $limit100PerMin
+)));
+$oRouter->Add('authenticatescriptlink', new Route('/auth/authenticatescriptlink', array(
+  '_controller' => '\Grepodata\Application\API\Route\Authentication',
+  '_method'     => 'AuthenticateScriptLink',
+  '_ratelimit'  => $limit100PerMin
 )));
 
 

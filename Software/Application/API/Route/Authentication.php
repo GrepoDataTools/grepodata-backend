@@ -3,6 +3,7 @@
 namespace Grepodata\Application\API\Route;
 
 use Grepodata\Library\Controller\Indexer\IndexInfo;
+use Grepodata\Library\Controller\IndexV2\ScriptToken;
 use Grepodata\Library\Controller\User;
 use Grepodata\Library\Indexer\IndexBuilder;
 use Grepodata\Library\Logger\Logger;
@@ -231,11 +232,63 @@ admin@grepodata.com',
     ResponseCode::success($aResponse, 1110);
   }
 
-  public static function ScriptLinkPOST()
+  public static function NewScriptLinkGET()
+  {
+    /**
+     * Generate a unique script identifier with expiration
+     */
+
+    $oToken = ScriptToken::NewScriptToken();
+
+    // Response
+    $aResponse = array(
+      'script_token'  => $oToken->token->toString(),
+    );
+    ResponseCode::success($aResponse, 1150);
+  }
+
+  public static function VerifyScriptLinkPOST()
+  {
+    /**
+     * Check if the script link token has been verified and return an access_token for the connected user if true
+     */
+
+    // Validate params
+    $aParams = self::validateParams(array('script_token'));
+
+    // Check token
+    try {
+      $oToken = ScriptToken::GetScriptToken($aParams['script_token']);
+    } catch (ModelNotFoundException $e) {
+      ResponseCode::errorCode(3041, array(), 401);
+    }
+
+    // Check if a user is linked
+    try {
+      $oUser = User::GetUserById($oToken->user_id);
+    } catch (ModelNotFoundException $e) {
+      ResponseCode::errorCode(3040, array(), 401);
+    }
+
+    // Get login token
+    $jwt = \Grepodata\Library\Router\Authentication::generateJWT($oUser);
+    $refresh_token = \Grepodata\Library\Router\Authentication::generateJWT($oUser, true);
+
+    // Response
+    $aResponse = array(
+      'access_token'  => $jwt,
+      'refresh_token' => $refresh_token,
+      'expires_in'    => \Grepodata\Library\Router\Authentication::expiresIn($jwt)
+    );
+
+    ResponseCode::success($aResponse, 1111);
+  }
+
+  public static function AuthenticateScriptLinkPOST()
   {
     /**
      * This method will Link the given script uuid to a user account
-     * Called from Angular frontend with uuid!!
+     * Called from Angular frontend with uuid
      */
 
     // Validate params
@@ -267,6 +320,7 @@ admin@grepodata.com',
   public static function ScriptAuthPOST()
   {
     /**
+     * @DEPRECATED
      * This method is called by the userscript every time the script is loaded.
      * Returns an access token if auth is successful based on supplied uuid OR userclient+ip.
      * Otherwise returns a 401

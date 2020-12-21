@@ -26,6 +26,8 @@ define('GD_ERROR_3011', 'Invalid email confirmation token.');
 define('GD_ERROR_3030', 'This email address is already in use');
 define('GD_ERROR_3031', 'Password is not strong enough. Your password should be at least 8 characters');
 define('GD_ERROR_3032', 'This username is already in use');
+define('GD_ERROR_3040', 'Unlinked script token');
+define('GD_ERROR_3041', 'Invalid script token');
 
 // Profile
 define('GD_ERROR_4000', 'Unable to handle profile request');
@@ -63,9 +65,11 @@ define('GD_SUCCESS_1100', 'Renewed existing access token');
 define('GD_SUCCESS_1101', 'Renewed access token for valid refresh token');
 define('GD_SUCCESS_1102', 'Access token is valid');
 define('GD_SUCCESS_1110', 'User login successful');
+define('GD_SUCCESS_1111', 'Script login successful');
 define('GD_SUCCESS_1120', 'Registration complete, user created');
 define('GD_SUCCESS_1130', 'Password changed');
 define('GD_SUCCESS_1140', 'Account confirmation requested');
+define('GD_SUCCESS_1150', 'Script token created');
 
 define('GD_SUCCESS_4000', 'Profile request processed successfully');
 define('GD_SUCCESS_4200', 'Account unlinking was successful');

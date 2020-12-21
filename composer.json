@@ -15,7 +15,8 @@
     "elasticsearch/elasticsearch": "^5.3",
     "smarty/smarty": "^3.1",
     "rbdwllr/reallysimplejwt": "^2.1",
-    "nikolaposa/rate-limit": "^1.0"
+    "nikolaposa/rate-limit": "^1.0",
+    "ramsey/uuid": "^3.9"
   },
   "autoload": {
     "psr-4": {
