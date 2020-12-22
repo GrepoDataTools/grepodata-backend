@@ -34,275 +34,6 @@ var verbose = false;
         return JSON.parse(jsonPayload);
     };
 
-    function getAccessToken() {
-        return new Promise(resolve => {
-            try {
-                // Get access token from local storage
-                access_token = localStorage.getItem('gd_indexer_access_token');
-                if (!access_token) {
-                    resolve(false);
-                }
-
-                // if timed out, get new access token using refresh token
-                let payload = parseJwt(access_token);
-                if (payload.hasOwnProperty('exp')) {
-                    let expiration = payload['exp'];
-
-                    let currentTime = new Date().getTime() / 1000;
-
-                    if (currentTime > expiration - 60) {
-                        // Token expired, try to refresh
-                        console.log("GrepoData: Access token expired.");
-                        refresh_token = localStorage.getItem('gd_indexer_refresh_token');
-                        if (!refresh_token) {
-                            // New login required
-                            localStorage.removeItem('gd_indexer_access_token');
-                            resolve(false);
-                        }
-
-                        // Get new access token
-                        $.ajax({
-                            url: backend_url + "/auth/refresh",
-                            data: {refresh_token: refresh_token},
-                            type: 'post',
-                            crossDomain: true,
-                            dataType: 'json',
-                            success: function (data) {
-                                if (data.success_code && data.success_code === 1101) {
-                                    console.log('GrepoData: Renewed access token.');
-                                    localStorage.setItem('gd_indexer_access_token', data.access_token);
-                                    localStorage.setItem('gd_indexer_refresh_token', data.refresh_token);
-                                    resolve(data.access_token);
-                                } else {
-                                    resolve(false);
-                                }
-                            },
-                            error: function (jqXHR, textStatus) {
-                                console.log("GrepoData: Error renewing access token");
-                                // New login required
-                                localStorage.removeItem('gd_indexer_access_token');
-                                resolve(false);
-                            },
-                            timeout: 30000
-                        });
-                    } else {
-                        resolve(access_token)
-                    }
-                } else {
-                    // otherwise show login screen
-                    resolve(false);
-                }
-            } catch (error) {
-                errorHandling(error, "getAccessToken");
-            }
-        });
-    }
-
-    function getScriptToken() {
-        return new Promise(resolve => {
-            try {
-                // Get script token from local storage
-                script_token = localStorage.getItem('gd_indexer_script_token');
-                if (!script_token) {
-                    // Get a new script token
-                    $.ajax({
-                        url: backend_url + "/auth/newscriptlink",
-                        data: {},
-                        type: 'get',
-                        crossDomain: true,
-                        dataType: 'json',
-                        success: function (data) {
-                            if (data.success_code && data.success_code === 1150) {
-                                console.log('GrepoData: Retrieved script token.');
-                                localStorage.setItem('gd_indexer_script_token', data.script_token);
-                                resolve(data.script_token);
-                            } else {
-                                console.log("GrepoData: Error retrieving script token");
-                                localStorage.removeItem('gd_indexer_script_token');
-                                resolve(false);
-                            }
-                        },
-                        error: function (jqXHR, textStatus) {
-                            console.log("GrepoData: Error retrieving script token");
-                            localStorage.removeItem('gd_indexer_script_token');
-                            resolve(false);
-                        },
-                        timeout: 30000
-                    });
-                } else {
-                    // Check if existing script token has already been linked
-                    setTimeout(checkScriptToken, 2000);
-                    resolve(script_token);
-                }
-            } catch (error) {
-                errorHandling(error, "getScriptToken");
-            }
-        });
-    }
-
-    function checkLogin() {
-        // Check if grepodata access token or refresh token is in local storage and use it to verify
-        // if not verified: loging required!
-        getAccessToken().then(access_token => {
-            if (access_token == false) {
-                showLoginPopup()
-            } else {
-                console.log("GrepoData: Succesful authentication.");
-            }
-        });
-    }
-
-    function checkPlayerNameVerificationStatus() {
-        // TODO: check player name verificaiton and show popup if unverified!!
-        console.log('TODO: checkPlayerNameVerificationStatus')
-        // Get verification status from API
-        // If unverfied, show change town name popup (auth token generated by API)
-    }
-
-    var login_window = null;
-    var script_token_interval = null;
-    var interval_count = 0;
-    function showLoginPopup() {
-        // This function is called when there is no access_token available
-
-        // First ensure we have a script token
-        getScriptToken().then(script_token => {
-
-            if (login_window != null) {
-                login_window.close();
-                login_window = null;
-            }
-            login_window = Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG,
-                '<a target="_blank" href="https://grepodata.com/login" class="write_message" style="background: ' + gd_icon + '">' +
-                '</a>&nbsp;&nbsp;GrepoData login required',
-                {position: ["bottom", 400], minimizable: true});
-            login_window.setWidth(630);
-            login_window.setHeight(470);
-
-            // Window content
-            var content = '<div class="gdloginpopup" style="width: 630px; height: 360px;"><div style="text-align: center">' +
-                // '<p style="font-size: 14px;"><strong>GrepoData city indexer:</strong> You need to be logged in to use the city indexer</p>' +
-                '</div></div>';
-            login_window.setContent(content);
-            var login_window_element = $('.gdloginpopup').parent();
-            $(login_window_element).css({ top: 43 });
-
-            // Build login form
-            formHtml = `
-            <form autocomplete="false" class="gd-login-form" id="gd_login_form" name="gdloginform">
-              <div style="text-align: center;font-weight: 800;font-size: 35px;">
-                <div style="display: inline-block;"><img src="https://grepodata.com/assets/images/grepodata_icon.ico" style="position: relative; top: 4px;"></div>
-                <span style="color: rgb(103, 103, 103)">GREPO</span>
-                <span style="color: rgb(24, 188, 156);margin-left: -12px;">DATA</span>
-              </div>
-              
-              <div id="gd-login-container" class="gd-login-container">
-                  <h4 class="gd-title" style="text-align: center;">To use the city indexer script, please login with your GrepoData account using the following link:</h4>
-                  <br/>
-                  <h3 class="gd-title" style="text-align: center; place-content: center; font-size: 18px;"><a id="gd_script_auth_link" href="https://grepodata.com/link/` + script_token + `" target="_blank" style="display: contents; color: #444; text-decoration: underline;">grepodata.com/link/` + script_token + `</a></h3>
-              
-                <div id="grepodatalerror" style="display: none; text-align: center; place-content: center; font-size: 16px;" class="gd-error-msg"><b>Unable to authenticate.</b></div>
-                
-                  <div class="gd-login-footer" style="margin-top: 50px; height: 60px;">
-                    <!--<a class="gd-link-btn" href="https://grepodata.com/forgot" target="_blank">Forgot password?</a>-->
-                    <!--<a class="gd-link-btn gd-register-btn" href="https://grepodata.com/register" target="_blank">Create a new account</a>-->
-                    <p id="gd-request-new-token-btn" class="gd-link-btn" style="margin-top: 18px;">Request new token</p>
-                    <p id="gd-request-token-check" class="gd-login-btn gd-register-btn" style="display: none;">Continue</p>
-                  </div>
-              </div>
-              
-              <div id="gd-script-linked" class="gd-login-container" style="display: none;">
-                  <h4 class="gd-title" style="text-align: center; place-content: center;">
-                    You are now logged in. Happy indexing!
-                  </h4>
-                  <br/>
-                  <p>Thank you for using GrepoData.</p>
-              </div>
-                          
-            </form>
-          
-        `;
-            $('.gdloginpopup').append(formHtml);
-
-            // Handle actions
-            $('#gd-request-new-token-btn').click(function () {
-                // try with new token
-                localStorage.removeItem('gd_indexer_script_token');
-                showLoginPopup();
-                clearInterval(script_token_interval);
-            });
-            $('#gd-request-token-check').click(function () {
-                checkScriptToken(true);
-            });
-            $('#gd_script_auth_link').click(function () {
-                console.log("GrepoData: script link clicked");
-                $('#gd-request-token-check').show();
-
-                clearInterval(script_token_interval);
-                interval_count = 0;
-                script_token_interval = setInterval(checkScriptToken, 3000);
-
-            });
-
-        });
-    }
-
-    function loginError(message, verbose = false) {
-        let errormsg = message==''?"Unable to authenticate. Please try again later":message;
-        $('#grepodatalerror').text(errormsg);
-        $('#grepodatalerror').show();
-        verbose ? HumanMessage.error(errormsg) : null;
-    }
-
-    function checkScriptToken(verbose=false) {
-        interval_count += 1;
-        if (interval_count>100) {
-            clearInterval(script_token_interval);
-        }
-        var script_token = localStorage.getItem('gd_indexer_script_token');
-        $.ajax({
-            url: backend_url + "/auth/verifyscriptlink",
-            data: {
-                script_token: script_token
-            },
-            type: 'post',
-            crossDomain: true,
-            dataType: 'json',
-            success: function (data) {
-                console.log(data);
-                if (data.success_code && data.success_code === 1111) {
-                    console.log('GrepoData: Script token verified.');
-                    localStorage.setItem('gd_indexer_access_token', data.access_token);
-                    localStorage.setItem('gd_indexer_refresh_token', data.refresh_token);
-                    localStorage.removeItem('gd_indexer_script_token');
-                    HumanMessage.success('GrepoData login succesful!');
-                    $('#gd-login-container').hide();
-                    $('#gd-script-linked').show();
-                    clearInterval(script_token_interval);
-                } else {
-                    // Unable
-                    loginError('Unknown error. Please try again later or let us know if this error persists.', verbose);
-                }
-            },
-            error: function (error, textStatus) {
-                if (error.responseJSON.error_code && (error.responseJSON.error_code === 3041 || error.responseJSON.error_code === 3042)) {
-                    // Unknown or expired script token. remove token and try again
-                    clearInterval(script_token_interval);
-                    localStorage.removeItem('gd_indexer_script_token');
-                    showLoginPopup();
-                    verbose ? setTimeout(loginError('Expired script token. Please try using the link again.'), 1000) : null;
-                } else if (error.responseJSON.error_code && error.responseJSON.error_code === 3040) {
-                    // Token is not yet linked
-                    verbose ? loginError('Your script token is not yet verified. Click the link to try again.') : null;
-                } else {
-                    // Unknown
-                    loginError('Unknown error. Please try again later or let us know if this error persists.', verbose);
-                }
-            },
-            timeout: 30000
-        });
-    }
-
     function loadCityIndex(key, globals) {
         // Settings
         var world = Game.world_id;
@@ -330,7 +61,6 @@ var verbose = false;
             }
         }, 500);
         checkLogin();
-        checkPlayerNameVerificationStatus();
 
         // Set locale
         var translate = {
@@ -556,6 +286,419 @@ var verbose = false;
                 $('#gd_context_intel').click(function() {
                     loadTownIntel(town_id, town_name, player_name);
                 });
+            }
+        }
+
+        function getAccessToken() {
+            return new Promise(resolve => {
+                try {
+                    // Get access token from local storage
+                    access_token = localStorage.getItem('gd_indexer_access_token');
+                    if (!access_token) {
+                        resolve(false);
+                    }
+
+                    // if timed out, get new access token using refresh token
+                    let payload = parseJwt(access_token);
+                    if (payload.hasOwnProperty('exp')) {
+                        let expiration = payload['exp'];
+
+                        let currentTime = new Date().getTime() / 1000;
+
+                        if (currentTime > expiration - 60) {
+                            // Token expired, try to refresh
+                            console.log("GrepoData: Access token expired.");
+                            refresh_token = localStorage.getItem('gd_indexer_refresh_token');
+                            if (!refresh_token) {
+                                // New login required
+                                localStorage.removeItem('gd_indexer_access_token');
+                                resolve(false);
+                            }
+
+                            // Get new access token
+                            $.ajax({
+                                url: backend_url + "/auth/refresh",
+                                data: {refresh_token: refresh_token},
+                                type: 'post',
+                                crossDomain: true,
+                                dataType: 'json',
+                                success: function (data) {
+                                    if (data.success_code && data.success_code === 1101) {
+                                        console.log('GrepoData: Renewed access token.');
+                                        localStorage.setItem('gd_indexer_access_token', data.access_token);
+                                        localStorage.setItem('gd_indexer_refresh_token', data.refresh_token);
+                                        resolve(data.access_token);
+                                    } else {
+                                        resolve(false);
+                                    }
+                                },
+                                error: function (jqXHR, textStatus) {
+                                    console.log("GrepoData: Error renewing access token");
+                                    // New login required
+                                    localStorage.removeItem('gd_indexer_access_token');
+                                    resolve(false);
+                                },
+                                timeout: 30000
+                            });
+                        } else {
+                            resolve(access_token)
+                        }
+                    } else {
+                        // otherwise show login screen
+                        resolve(false);
+                    }
+                } catch (error) {
+                    errorHandling(error, "getAccessToken");
+                }
+            });
+        }
+
+        function getScriptToken() {
+            return new Promise(resolve => {
+                try {
+                    // Get script token from local storage
+                    script_token = localStorage.getItem('gd_indexer_script_token');
+                    if (!script_token) {
+                        // Get a new script token
+                        $.ajax({
+                            url: backend_url + "/auth/newscriptlink",
+                            data: {},
+                            type: 'get',
+                            crossDomain: true,
+                            dataType: 'json',
+                            success: function (data) {
+                                if (data.success_code && data.success_code === 1150) {
+                                    console.log('GrepoData: Retrieved script token.');
+                                    localStorage.setItem('gd_indexer_script_token', data.script_token);
+                                    resolve(data.script_token);
+                                } else {
+                                    console.log("GrepoData: Error retrieving script token");
+                                    localStorage.removeItem('gd_indexer_script_token');
+                                    resolve(false);
+                                }
+                            },
+                            error: function (jqXHR, textStatus) {
+                                console.log("GrepoData: Error retrieving script token");
+                                localStorage.removeItem('gd_indexer_script_token');
+                                resolve(false);
+                            },
+                            timeout: 30000
+                        });
+                    } else {
+                        // Check if existing script token has already been linked
+                        setTimeout(checkScriptToken, 2000);
+                        resolve(script_token);
+                    }
+                } catch (error) {
+                    errorHandling(error, "getScriptToken");
+                }
+            });
+        }
+
+        var login_window = null;
+        var script_token_interval = null;
+        var interval_count = 0;
+        function showLoginPopup() {
+            // This function is called when there is no access_token available
+
+            // First ensure we have a script token
+            getScriptToken().then(script_token => {
+
+                if (login_window != null) {
+                    login_window.close();
+                    login_window = null;
+                }
+                login_window = Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG,
+                    '<a href="#" class="write_message" style="background: ' + gd_icon + '">' +
+                    '</a>&nbsp;&nbsp;GrepoData login required',
+                    {position: ['center','center'], width: 630, height: 405, minimizable: true});;
+
+                // Window content
+                var content = '<div class="gdloginpopup" style="width: 630px; height: 295px;"><div style="text-align: center">' +
+                    // '<p style="font-size: 14px;"><strong>GrepoData city indexer:</strong> You need to be logged in to use the city indexer</p>' +
+                    '</div></div>';
+                login_window.setContent(content);
+                var login_window_element = $('.gdloginpopup').parent();
+                $(login_window_element).css({ top: 43 });
+
+                // Build login form
+                formHtml = `
+            <form autocomplete="false" class="gd-login-form" id="gd_login_form" name="gdloginform">
+              <div style="text-align: center;font-weight: 800;font-size: 35px;">
+                <div style="display: inline-block;"><img src="https://grepodata.com/assets/images/grepodata_icon.ico" style="position: relative; top: 4px;"></div>
+                <span style="color: rgb(103, 103, 103)">GREPO</span>
+                <span style="color: rgb(24, 188, 156);margin-left: -12px;">DATA</span>
+              </div>
+              
+              <div id="gd-login-container" class="gd-login-container">
+                  <h4 class="gd-title" style="text-align: center;">To use the city indexer script, please login with your GrepoData account via this link:</h4>
+                  <br/>
+                  <h3 class="gd-title" style="text-align: center; place-content: center; font-size: 18px;"><a id="gd_script_auth_link" href="https://grepodata.com/link/` + script_token + `" target="_blank" style="display: contents; color: #444; text-decoration: underline;">grepodata.com/link/` + script_token + `</a></h3>
+              
+                <div id="grepodatalerror" style="display: none; text-align: center; place-content: center; font-size: 16px;" class="gd-error-msg"><b>Unable to authenticate.</b></div>
+                
+                  <div class="gd-login-footer" style="margin-top: 50px; height: 60px;">
+                    <!--<a class="gd-link-btn" href="https://grepodata.com/forgot" target="_blank">Forgot password?</a>-->
+                    <!--<a class="gd-link-btn gd-register-btn" href="https://grepodata.com/register" target="_blank">Create a new account</a>-->
+                    <p id="gd-request-new-token-btn" class="gd-link-btn" style="margin-top: 18px;">Request new token</p>
+                    <p id="gd-request-token-check" class="gd-login-btn gd-register-btn">Continue</p>
+                  </div>
+              </div>
+              
+              <div id="gd-script-linked" class="gd-login-container" style="display: none;">
+                  <h4 class="gd-title" style="text-align: center; place-content: center;">
+                    You are now logged in. Happy indexing!
+                  </h4>
+                  <br/>
+                  <p style="text-align: center; place-content: center;">Thank you for using GrepoData.</p>
+                  <!--<div class="gd-login-footer" style="margin-top: 30px; height: 60px;">-->
+                    <!--<p id="gd-script-settings" class="gd-login-btn gd-register-btn">Script settings</p>-->
+                  <!--</div>-->
+              </div>
+                          
+            </form>
+          
+        `;
+                $('.gdloginpopup').append(formHtml);
+
+                // Handle actions
+                $('#gd-request-new-token-btn').click(function () {
+                    // try with new token
+                    localStorage.removeItem('gd_indexer_script_token');
+                    showLoginPopup();
+                    clearInterval(script_token_interval);
+                });
+                $('#gd-request-token-check').click(function () {
+                    checkScriptToken(true);
+                });
+                // $('#gd-script-settings').click(function () {
+                //     gdsettings = true;
+                //     Layout.wnd.Create(GPWindowMgr.TYPE_PLAYER_SETTINGS, 'Settings');
+                // });
+                $('#gd_script_auth_link').click(function () {
+                    console.log("GrepoData: script link clicked");
+
+                    clearInterval(script_token_interval);
+                    interval_count = 0;
+                    script_token_interval = setInterval(checkScriptToken, 3000);
+
+                });
+
+            });
+        }
+
+        var playername_window = null;
+        function showPlayernamePopup(town_token, player_name) {
+            // This function is called when the current playername is unverified by the authenticated user
+
+            if (playername_window != null) {
+                playername_window.close();
+                playername_window = null;
+            }
+            playername_window = Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG,
+                '<a href="#" class="write_message" style="background: ' + gd_icon + '">' +
+                '</a>&nbsp;&nbsp;GrepoData: verify your playername',
+                {position: ['center','center'], width: 680, height: 500, minimizable: true});
+
+            // Window content
+            var content = '<div class="gdplayernamepopup" style="width: 680px; height: 390px;"><div style="text-align: center"></div></div>';
+            playername_window.setContent(content);
+            var playername_window_element = $('.gdplayernamepopup').parent();
+            $(playername_window_element).css({ top: 43 });
+
+            // Build form
+            formHtml = `
+        <form autocomplete="false" class="gd-login-form" id="gd_login_form" name="gdloginform">
+          <div style="text-align: center;font-weight: 800;font-size: 35px;">
+            <div style="display: inline-block;"><img src="https://grepodata.com/assets/images/grepodata_icon.ico" style="position: relative; top: 4px;"></div>
+            <span style="color: rgb(103, 103, 103)">GREPO</span>
+            <span style="color: rgb(24, 188, 156);margin-left: -12px;">DATA</span>
+          </div>
+          
+          <div id="gd-login-container" class="gd-login-container">
+              <h4 class="gd-title" style="text-align: center; place-content: center;">Your player name is not yet verified:&nbsp;&nbsp;<a><img src="https://gpnl.innogamescdn.com/images/game/icons/player.png" alt="" style="">`+player_name+`</a></h4>
+              <p style="text-align: center; place-content: center;">If you want to link your Grepolis account to your GrepoData account, you need to verify your player name. To do this, <strong>temporarily</strong> change one of your town names to the following token:</p>
+              
+              <div style="text-align: center; place-content: center;" class="gd-token-container">
+                <label>Town name required:</label>
+                <div style="display: inline-flex">
+                  <input type="text" class="gd-login-input gd_copy_input_playername" value="`+town_token+`" style="text-align: center;"> 
+                  <span class="gd_copy_done_playername" style="display: none; padding: 12px;"> Copied!</span>
+                </div>
+                <a href="#" class="gd_copy_command_playername">Copy to clipboard</a>
+              </div>
+              
+              <p style="text-align: center; place-content: center;">You will get an email when the verification is complete, you can then change your town name back to whatever you like.</p>
+              
+              <!--<div style="display: none; text-align: center; place-content: center; font-size: 16px;" class="gd_copy_done_playername"><b>Copied!</b></div>-->
+              
+              <div id="grepodatalerror" style="display: none; text-align: center; place-content: center; font-size: 16px;" class="gd-error-msg"><b>Unable to verify player name.</b></div>
+            
+              <div class="gd-login-footer" style="margin-top: 10px; height: 60px;">
+                <!--<div style="display: inline-grid; text-align: left;">-->
+                    <!--<p id="gd-request-token-check" class="gd-link-btn" style="text-align: left;">I don't want to share my intel</p>-->
+                <!--</div>-->
+                <p id="gd-playername-cancel" class="gd-link-btn" style="margin-top: 15px;">Cancel</p>
+                <p id="gd-playername-continue" class="gd-login-btn gd-register-btn">Continue</p>
+              </div>
+          </div>
+          
+          <div id="gd-script-linked" class="gd-login-container" style="display: none;">
+              <h4 class="gd-title" style="text-align: center; place-content: center;">
+                Your playername is now verified. Happy indexing!
+              </h4>
+              <br/>
+              <p style="text-align: center; place-content: center;">Thank you for using GrepoData.</p>
+          </div>
+                      
+        </form>
+      
+    `;
+            $('.gdplayernamepopup').append(formHtml);
+
+            // Handle actions
+            $(".gd-playername-cancel").click(function () {
+                playername_window.close();
+                playername_window = null;
+            });
+            $(".gd-playername-continue").click(function () {
+                alert("TODO");
+            });
+            $(".gd_copy_command_playername").click(function () {
+                $(".gd_copy_input_playername").select();
+                document.execCommand('copy');
+
+                $('.gd_copy_done_playername').get(0).style.display = 'block';
+                setTimeout(function () {
+                    if ($('.gd_copy_done_playername').get(0)) {
+                        $('.gd_copy_done_playername').get(0).style.display = 'none';
+                    }
+                }, 6000);
+            });
+
+        }
+
+        function loginError(message, verbose = false) {
+            let errormsg = message==''?"Unable to authenticate. Please try again later":message;
+            $('#grepodatalerror').text(errormsg);
+            $('#grepodatalerror').show();
+            verbose ? HumanMessage.error(errormsg) : null;
+        }
+
+        function checkScriptToken(verbose=false) {
+            interval_count += 1;
+            if (interval_count>100) {
+                clearInterval(script_token_interval);
+            }
+            var script_token = localStorage.getItem('gd_indexer_script_token');
+            $.ajax({
+                url: backend_url + "/auth/verifyscriptlink",
+                data: {
+                    script_token: script_token
+                },
+                type: 'post',
+                crossDomain: true,
+                dataType: 'json',
+                success: function (data) {
+                    console.log(data);
+                    if (data.success_code && data.success_code === 1111) {
+                        console.log('GrepoData: Script token verified.');
+                        localStorage.setItem('gd_indexer_access_token', data.access_token);
+                        localStorage.setItem('gd_indexer_refresh_token', data.refresh_token);
+                        localStorage.removeItem('gd_indexer_script_token');
+                        HumanMessage.success('GrepoData login succesful!');
+                        $('#gd-login-container').hide();
+                        $('#gd-script-linked').show();
+                        clearInterval(script_token_interval);
+                        checkPlayerNameVerificationStatus();
+                    } else {
+                        // Unable
+                        loginError('Unknown error. Please try again later or let us know if this error persists.', verbose);
+                    }
+                },
+                error: function (error, textStatus) {
+                    if (error.responseJSON.error_code && (error.responseJSON.error_code === 3041 || error.responseJSON.error_code === 3042)) {
+                        // Unknown or expired script token. remove token and try again
+                        clearInterval(script_token_interval);
+                        localStorage.removeItem('gd_indexer_script_token');
+                        showLoginPopup();
+                        verbose ? setTimeout(loginError('Expired script token. Please try using the link again.'), 1000) : null;
+                    } else if (error.responseJSON.error_code && error.responseJSON.error_code === 3040) {
+                        // Token is not yet linked
+                        verbose ? loginError('Your script token is not yet verified. Click the link to try again.') : null;
+                    } else {
+                        // Unknown
+                        loginError('Unknown error. Please try again later or let us know if this error persists.', verbose);
+                    }
+                },
+                timeout: 30000
+            });
+        }
+
+        function checkLogin() {
+            // Check if grepodata access token or refresh token is in local storage and use it to verify
+            // if not verified: loging required!
+            getAccessToken().then(access_token => {
+                if (access_token == false) {
+                    showLoginPopup()
+                } else {
+                    console.log("GrepoData: Succesful authentication.");
+                    checkPlayerNameVerificationStatus();
+                }
+            });
+        }
+
+        function checkPlayerNameVerificationStatus() {
+            return null;
+            try {
+                let playername = Game.player_name;
+                let playerid = Game.player_id;
+                let server = Game.world_id.substring(0, 2);
+                if (playername && playerid && server) {
+                    // Get verification status from API
+                    getAccessToken().then(access_token => {
+                        if (access_token !== false) {
+                            $.ajax({
+                                url: backend_url + "/profile/addlinked",
+                                data: {
+                                    access_token: access_token,
+                                    player_name: playername,
+                                    player_id: playerid,
+                                    server: server,
+                                },
+                                type: 'post',
+                                crossDomain: true,
+                                dataType: 'json',
+                                success: function (data) {
+                                    console.log(data);
+                                    if (data.success && 'linked_account' in data) {
+                                        if (data.linked_account.confirmed && data.linked_account.confirmed === true) {
+                                            console.log('GrepoData: playername is verified.');
+                                        } else if (data.linked_account.town_token) {
+                                            console.log('GrepoData: playername needs verification.');
+                                            let town_token = data.linked_account.town_token;
+                                            showPlayernamePopup(town_token, playername);
+                                        }
+                                    } else {
+                                        // Unable
+                                    }
+                                },
+                                error: function (error, textStatus) {
+                                    if (error.responseJSON.error_code && error.responseJSON.error_code === 3010) {
+                                        // TODO: Email needs to be confirmed
+                                    } else {
+                                        // Unknown
+                                    }
+                                },
+                                timeout: 30000
+                            });
+                        }
+                    });
+                }
+
+                // If unverfied, show change town name popup (auth token generated by API)
+            } catch (error) {
+                errorHandling(error, "checkPlayerNameVerificationStatus");
             }
         }
 
@@ -967,38 +1110,48 @@ var verbose = false;
             var reportJson = JSON.parse(mapDOM(reportElement, true));
             var reportText = reportElement.innerText;
 
-            var data = {
-                'report_type': 'forum',
-                'access_token': access_token,
-                'world': world,
-                'report_hash': reportHash,
-                'report_text': reportText,
-                'report_json': reportJson,
-                'script_version': gd_version,
-                'report_poster': reportPoster,
-                'report_poster_id': gd_w.Game.player_id || 0
-            };
+            getAccessToken().then(access_token => {
+                if (access_token == false) {
+                    HumanMessage.error('GrepoData: login required to index reports');
+                    showLoginPopup();
+                    $('.rh' + reportHash).each(function () {
+                        $(this).find('.middle').get(0).innerText = translate.ADD + ' +';
+                    });
+                } else {
+                    var data = {
+                        'report_type': 'forum',
+                        'access_token': access_token,
+                        'world': world,
+                        'report_hash': reportHash,
+                        'report_text': reportText,
+                        'report_json': reportJson,
+                        'script_version': gd_version,
+                        'report_poster': reportPoster,
+                        'report_poster_id': gd_w.Game.player_id || 0
+                    };
 
-            $('.rh' + reportHash).each(function () {
-                $(this).css("color", '#36cd5b');
-                $(this).find('.middle').get(0).innerText = translate.ADDED + ' ✓';
-                $(this).off("click");
+                    $('.rh' + reportHash).each(function () {
+                        $(this).css("color", '#36cd5b');
+                        $(this).find('.middle').get(0).innerText = translate.ADDED + ' ✓';
+                        $(this).off("click");
+                    });
+                    $.ajax({
+                        url: backend_url + "/indexer/v2/indexreport",
+                        data: data,
+                        type: 'post',
+                        crossDomain: true,
+                        dataType: 'json',
+                        success: function (data) {
+                        },
+                        error: function (jqXHR, textStatus) {
+                            console.log("error saving forum report");
+                        },
+                        timeout: 120000
+                    });
+                    pushForumHash(reportHash);
+                    gd_indicator();
+                }
             });
-            $.ajax({
-                url: backend_url + "/indexer/v2/indexreport",
-                data: data,
-                type: 'post',
-                crossDomain: true,
-                dataType: 'json',
-                success: function (data) {
-                },
-                error: function (jqXHR, textStatus) {
-                    console.log("error saving forum report");
-                },
-                timeout: 120000
-            });
-            pushForumHash(reportHash);
-            gd_indicator();
         }
 
         // Add the given inbox report to the index
@@ -1792,9 +1945,9 @@ var verbose = false;
                         var intelUrl = 'https://grepodata.com/indexer/town/'+index_key+'/'+world+'/'+id;
                         var intel_window = Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG,
                             '<a target="_blank" href="'+intelUrl+'" class="write_message" style="background: ' + gd_icon + '"></a>&nbsp;&nbsp;' + translate.TOWN_INTEL + ': ' + town_name + (player_name!=''?(' (' + player_name + ')'):''),
-                            {position: ["center", 110], minimizable: true});
-                        intel_window.setWidth(600);
-                        intel_window.setHeight(590);
+                            {position: ['center','center'], width: 600, height: 590, minimizable: true});
+                        // intel_window.setWidth(600);
+                        // intel_window.setHeight(590);
                         openIntelWindows[content_id] = intel_window;
 
                         // Window content
@@ -2509,3 +2662,16 @@ var verbose = false;
     }
 } catch(error) { console.error("GrepoData City Indexer crashed (please report a screenshot of this error to admin@grepodata.com): ", error); }
 })();
+
+
+// webhook_url = "https://discord.com/api/webhooks/a/b"
+//
+// function sendMessage() {
+//     var request = new XMLHttpRequest()
+//     request.open("POST", webhook_url)
+//     request.setRequestHeader('Content-type', 'application/json')
+//     var params = {
+//         embeds: [{"color": parseInt("#ffffff".replace("#",""), 16), "title": "title text", "description": "description text"}]
+//     }
+//     request.send(JSON.stringify(params))
+// }

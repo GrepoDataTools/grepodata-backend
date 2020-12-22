@@ -2,8 +2,13 @@
 
 namespace Grepodata\Application\API\Route\IndexV2;
 
+use Carbon\Carbon;
+use Exception;
 use Grepodata\Library\Controller\Alliance;
+use Grepodata\Library\Controller\Town;
 use Grepodata\Library\Controller\World;
+use Grepodata\Library\Logger\Logger;
+use Grepodata\Library\Model\Player;
 use Grepodata\Library\Router\ResponseCode;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -26,21 +31,25 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
       $aIntelData = array();
       $aWorlds = array();
       foreach ($aIntel as $oIntel) {
-        if (!key_exists($oIntel->world, $aWorlds)) {
-          $aWorlds[$oIntel->world] = World::getWorldById($oIntel->world);
+        try {
+          if (!key_exists($oIntel->world, $aWorlds)) {
+            $aWorlds[$oIntel->world] = World::getWorldById($oIntel->world);
+          }
+          $aBuildings = array();
+          $aTownIntelRecord = \Grepodata\Library\Controller\IndexV2\Intel::formatAsTownIntel($oIntel, $aWorlds[$oIntel->world], $aBuildings);
+          $aTownIntelRecord['source_type'] = $oIntel->source_type;
+          $aTownIntelRecord['parsed'] = ($oIntel->parsing_failed==0?true:false);
+          $aTownIntelRecord['world'] = $oIntel->world;
+          $aTownIntelRecord['town_id'] = $oIntel->town_id;
+          $aTownIntelRecord['town_name'] = $oIntel->town_name;
+          $aTownIntelRecord['player_id'] = $oIntel->player_id;
+          $aTownIntelRecord['player_name'] = $oIntel->player_name;
+          $aTownIntelRecord['alliance_id'] = $oIntel->alliance_id;
+          $aTownIntelRecord['alliance_name'] = Alliance::first($oIntel->alliance_id, $oIntel->world)->name ?? '';
+          $aIntelData[] = $aTownIntelRecord;
+        } catch (\Exception $e) {
+          Logger::warning("Unable to render user intel record: " . $e->getMessage());
         }
-        $aBuildings = array();
-        $aTownIntelRecord = \Grepodata\Library\Controller\IndexV2\Intel::formatAsTownIntel($oIntel, $aWorlds[$oIntel->world], $aBuildings);
-        $aTownIntelRecord['source_type'] = $oIntel->source_type;
-        $aTownIntelRecord['parsed'] = ($oIntel->parsing_failed==0?true:false);
-        $aTownIntelRecord['world'] = $oIntel->world;
-        $aTownIntelRecord['town_id'] = $oIntel->town_id;
-        $aTownIntelRecord['town_name'] = $oIntel->town_name;
-        $aTownIntelRecord['player_id'] = $oIntel->player_id;
-        $aTownIntelRecord['player_name'] = $oIntel->player_name;
-        $aTownIntelRecord['alliance_id'] = $oIntel->alliance_id;
-        $aTownIntelRecord['alliance_name'] = Alliance::first($oIntel->alliance_id, $oIntel->world)->name ?? '';
-        $aIntelData[] = $aTownIntelRecord;
       }
 
       if (sizeof($aIntel)>$Size) {
@@ -72,208 +81,114 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
       $aParams = self::validateParams(array('access_token', 'world', 'town_id'));
       $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
 
-      $DummyResponse = "{
-          \"world\": \"nl78\",
-          \"town_id\": \"66\",
-          \"name\": \"Aemon Targaryen*\",
-          \"ix\": 500,
-          \"iy\": 516,
-          \"player_id\": 1301519,
-          \"alliance_id\": 1043,
-          \"player_name\": \"jorah-mormont\",
-          \"has_stonehail\": false,
-          \"notes\": [],
-          \"buildings\": {
-              \"wall\": {
-                  \"level\": 0,
-                  \"date\": \"06-07-20 19:03:07\"
-              }
-          },
-          \"intel\": [
-              {
-                  \"id\": 2158602,
-                  \"deleted\": false,
-                  \"sort_date\": \"2020-08-01T07:14:39.000000Z\",
-                  \"date\": \"01-08-20 07:14:39\",
-                  \"units\": [
-                      {
-                          \"name\": \"manticore\",
-                          \"count\": 65,
-                          \"killed\": 65
-                      }
-                  ],
-                  \"type\": \"attack_on_conquest\",
-                  \"silver\": \"\",
-                  \"wall\": \"\",
-                  \"stonehail\": null,
-                  \"conquest_id\": 10942,
-                  \"hero\": \"\",
-                  \"god\": \"zeus\",
-                  \"cost\": 125
-              },
-              {
-                  \"id\": 2017446,
-                  \"deleted\": false,
-                  \"sort_date\": \"2020-07-06T19:03:07.000000Z\",
-                  \"date\": \"06-07-20 19:03:07\",
-                  \"units\": [
-                      {
-                          \"name\": \"militia\",
-                          \"count\": 375,
-                          \"killed\": 375
-                      }
-                  ],
-                  \"type\": \"friendly_attack\",
-                  \"silver\": \"\",
-                  \"wall\": \"0\",
-                  \"stonehail\": null,
-                  \"conquest_id\": 0,
-                  \"hero\": \"helen\",
-                  \"god\": \"\",
-                  \"cost\": 37
-              },
-              {
-                  \"id\": 2013670,
-                  \"deleted\": false,
-                  \"sort_date\": \"2020-07-05T22:21:18.000000Z\",
-                  \"date\": \"05-07-20 22:21:18\",
-                  \"units\": [
-                      {
-                          \"name\": \"attack_ship\",
-                          \"count\": 58,
-                          \"killed\": 58
-                      }
-                  ],
-                  \"type\": \"attack_on_conquest\",
-                  \"silver\": \"\",
-                  \"wall\": \"\",
-                  \"stonehail\": null,
-                  \"conquest_id\": 8858,
-                  \"hero\": \"\",
-                  \"god\": \"\",
-                  \"cost\": 17
-              },
-              {
-                  \"id\": 2013668,
-                  \"deleted\": false,
-                  \"sort_date\": \"2020-07-05T22:13:10.000000Z\",
-                  \"date\": \"05-07-20 22:13:10\",
-                  \"units\": [
-                      {
-                          \"name\": \"manticore\",
-                          \"count\": 31,
-                          \"killed\": 31
-                      }
-                  ],
-                  \"type\": \"attack_on_conquest\",
-                  \"silver\": \"\",
-                  \"wall\": \"\",
-                  \"stonehail\": null,
-                  \"conquest_id\": 8858,
-                  \"hero\": \"\",
-                  \"god\": \"zeus\",
-                  \"cost\": 12
-              },
-              {
-                  \"id\": 2010335,
-                  \"deleted\": false,
-                  \"sort_date\": \"2020-07-05T15:20:39.000000Z\",
-                  \"date\": \"05-07-20 15:20:39\",
-                  \"units\": [
-                      {
-                          \"name\": \"sword\",
-                          \"count\": 1,
-                          \"killed\": 1
-                      },
-                      {
-                          \"name\": \"militia\",
-                          \"count\": 375,
-                          \"killed\": 375
-                      },
-                      {
-                          \"name\": \"attack_ship\",
-                          \"count\": 218,
-                          \"killed\": 0
-                      }
-                  ],
-                  \"type\": \"friendly_attack\",
-                  \"silver\": \"\",
-                  \"wall\": \"0\",
-                  \"stonehail\": null,
-                  \"conquest_id\": 0,
-                  \"hero\": \"helen\",
-                  \"god\": \"\",
-                  \"cost\": 102
-              },
-              {
-                  \"id\": 2004033,
-                  \"deleted\": false,
-                  \"sort_date\": \"2020-07-04T15:07:23.000000Z\",
-                  \"date\": \"04-07-20 15:07:23\",
-                  \"units\": [],
-                  \"type\": \"friendly_attack\",
-                  \"silver\": \"\",
-                  \"wall\": \"0\",
-                  \"stonehail\": null,
-                  \"conquest_id\": 0,
-                  \"hero\": \"helen\",
-                  \"god\": \"\",
-                  \"cost\": 0
-              },
-              {
-                  \"id\": 1978700,
-                  \"deleted\": false,
-                  \"sort_date\": \"2020-06-29T21:33:41.000000Z\",
-                  \"date\": \"29-06-20 21:33:41\",
-                  \"units\": [
-                      {
-                          \"name\": \"rider\",
-                          \"count\": 126,
-                          \"killed\": 126
-                      },
-                      {
-                          \"name\": \"manticore\",
-                          \"count\": 40,
-                          \"killed\": 40
-                      }
-                  ],
-                  \"type\": \"attack_on_conquest\",
-                  \"silver\": \"\",
-                  \"wall\": \"\",
-                  \"stonehail\": null,
-                  \"conquest_id\": 8298,
-                  \"hero\": \"\",
-                  \"god\": \"zeus\",
-                  \"cost\": 28
-              },
-              {
-                  \"id\": 1835771,
-                  \"deleted\": false,
-                  \"sort_date\": \"2020-06-06T07:00:48.000000Z\",
-                  \"date\": \"06-06-20 07:00:48\",
-                  \"units\": [
-                      {
-                          \"name\": \"manticore\",
-                          \"count\": 68,
-                          \"killed\": 68
-                      }
-                  ],
-                  \"type\": \"attack_on_conquest\",
-                  \"silver\": \"\",
-                  \"wall\": \"\",
-                  \"stonehail\": null,
-                  \"conquest_id\": 6118,
-                  \"hero\": \"deimos\",
-                  \"god\": \"zeus\",
-                  \"cost\": 27
-              }
-          ],
-          \"latest_version\": \"4.0.3\",
-          \"update_message\": \"Bugfixes and index security improvements.\",
-          \"has_intel\": true
-      }";
+      // get world
+      $oWorld = World::getWorldById($aParams['world']);
 
-      return self::OutputJson(json_decode($DummyResponse, true));
+      // get town
+      $oTown = Town::firstOrFail($aParams['town_id'], $oWorld->grep_id);
+
+      // get intel
+      $aIntel = \Grepodata\Library\Controller\IndexV2\Intel::allByUserForTown($oUser, $oWorld->grep_id, $oTown->grep_id);
+
+      // Parse cities
+      $oNow = Carbon::now();
+      $aResponse = array(
+        'world' => $oWorld->grep_id,
+        'town_id' => $oTown->grep_id,
+        'name' => $oTown->name,
+        'ix' => $oTown->island_x,
+        'iy' => $oTown->island_y,
+        'player_id' => $oTown->player_id,
+        'alliance_id' => 0,
+        'player_name' => '',
+        'has_stonehail' => false,
+        'notes' => array(),
+        'buildings' => array(),
+        'intel' => array(),
+        'latest_version' => USERSCRIPT_VERSION,
+        'update_message' => USERSCRIPT_UPDATE_INFO,
+      );
+      $bHasIntel = false;
+      $aDuplicateCheck = array();
+      /** @var \Grepodata\Library\Model\IndexV2\Intel $oCity */
+      foreach ($aIntel as $oCity) {
+        if ($oCity->soft_deleted != null) {
+          $oSoftDeleted = Carbon::parse($oCity->soft_deleted);
+          if ($oNow->diffInHours($oSoftDeleted) > 24) {
+            continue;
+          }
+        }
+        $bHasIntel = true;
+
+        // Override newest info
+        $aResponse['player_id'] = $oCity->player_id;
+        $aResponse['player_name'] = $oCity->player_name;
+        $aResponse['alliance_id'] = $oCity->alliance_id;
+        $aResponse['name'] = $oCity->town_name;
+        $aResponse['latest_version'] = $oCity->script_version;
+
+        $citystring = "_".$oCity->town_id.$oCity->parsed_date;
+        $cityhash = md5($citystring);
+        if (!in_array($cityhash, $aDuplicateCheck)) {
+          $aDuplicateCheck[] = $cityhash;
+
+          $aRecord = \Grepodata\Library\Controller\IndexV2\Intel::formatAsTownIntel($oCity, $oWorld, $aResponse['buildings']);
+          if (!empty($aRecord['stonehail'])) {
+            $aResponse['has_stonehail'] = true;
+          }
+
+          $aResponse['intel'][] = $aRecord;
+        }
+      }
+      $aResponse['has_intel'] = $bHasIntel;
+
+      if ($bHasIntel == false) {
+        if ($oTown->player_id > 0) {
+          $oPlayer = \Grepodata\Library\Controller\Player::firstById($oWorld->grep_id, $oTown->player_id);
+          if ($oPlayer !== false) {
+            $aResponse['player_name'] = $oPlayer->name;
+            $aResponse['alliance_id'] = $oPlayer->alliance_id;
+          }
+        }
+      }
+
+      // TODO: get notes
+//      $aNotes = Notes::allByTownIdByKeys($aRawKeys, $TownId);
+//      $aDuplicates = array();
+//      foreach ($aNotes as $Note) {
+//        $aNote = $Note->getPublicFields();
+//        $Created = $Note->created_at;
+//        $Created->setTimezone($oWorld->php_timezone);
+//        $aNote['date'] = $Created->format('d-m-y H:i');
+//        if (!in_array($Note->note_id, $aDuplicates)) {
+//          $aResponse['notes'][] = $aNote;
+//          $aDuplicates[] = $Note->note_id;
+//        }
+//      }
+
+      try {
+        // TODO: Hide owner intel
+//        $aOwners = IndexOverview::getOwnerAllianceIds($oPrimaryIndex->key_code);
+//        if (isset($aResponse['alliance_id']) && $aResponse['alliance_id']!==null) {
+//          if (in_array($aResponse['alliance_id'], $aOwners)) {
+//            $aResponse['intel'] = array();
+//            $aResponse['hidden_owner_intel'] = true;
+//          }
+//        }
+      } catch (Exception $e) {}
+
+      // Sort intel by sort_date descending
+      //$aResponse['intel'] = array_reverse($aResponse['intel']);
+      usort($aResponse['intel'], function ($a, $b) {
+        return ($a['sort_date'] > $b['sort_date']) ? -1 : 1;
+      });
+
+      // Give newest record a cost boost
+      if (sizeof($aResponse['intel'])>0) {
+        $aResponse['intel'][0]['cost'] *= 5;
+      }
+
+      return self::OutputJson($aResponse);
 
     } catch (ModelNotFoundException $e) {
       die(self::OutputJson(array(

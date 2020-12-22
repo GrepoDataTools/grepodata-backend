@@ -90,7 +90,14 @@ class Profile extends BaseRoute
       ResponseCode::errorCode(3010, array(), 403);
     }
 
-    $oLinked = Linked::newLinkedAccount($oUser, $aParams['player_id'], $aParams['player_name'], $aParams['server']);
+    try {
+      // Check if link was already requested
+      $oLinked = Linked::getByPlayerIdAndServer($oUser, $aParams['player_id'], $aParams['server']);
+    } catch (ModelNotFoundException $e) {
+      // Create new link
+      $oLinked = Linked::newLinkedAccount($oUser, $aParams['player_id'], $aParams['player_name'], $aParams['server']);
+    }
+
 
     $aResponse = array(
       'linked_account' => $oLinked->getPublicFields()

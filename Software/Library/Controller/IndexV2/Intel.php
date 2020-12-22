@@ -516,4 +516,22 @@ class Intel
       ->limit($Size+1)
       ->get();
   }
+
+  /**
+   * @param User $oUser
+   * @param $World
+   * @param $TownId
+   * @return \Grepodata\Library\Model\IndexV2\Intel[]
+   */
+  public static function allByUserForTown(User $oUser, $World, $TownId)
+  {
+    return \Grepodata\Library\Model\IndexV2\Intel::select(['Indexer_intel.*'])
+      ->join('Indexer_intel_shared', 'Indexer_intel_shared.intel_id', '=', 'Indexer_intel.id')
+      ->where('Indexer_intel_shared.user_id', '=', $oUser->id, 'and')
+      ->where('Indexer_intel.town_id', '=', $TownId, 'and')
+      ->where('Indexer_intel.world', '=', $World)
+      ->orderBy('created_at', 'asc')
+      ->distinct('Indexer_intel.id')
+      ->get();
+  }
 }
