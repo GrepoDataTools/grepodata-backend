@@ -294,6 +294,14 @@ $oRouter->Add('gettownintelV2', new Route('/indexer/v2/town', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Intel',
   '_method'     => 'GetTown'
 )));
+$oRouter->Add('getplayerintelV2', new Route('/indexer/v2/player', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Browse',
+  '_method'     => 'GetPlayer'
+)));
+$oRouter->Add('getallianceintelV2', new Route('/indexer/v2/alliance', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Browse',
+  '_method'     => 'GetAlliance'
+)));
 // V2 notes
 $oRouter->Add('indexaddnotev2', new Route('/indexer/v2/addnote', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Notes',
