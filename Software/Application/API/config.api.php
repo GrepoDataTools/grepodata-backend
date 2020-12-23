@@ -294,6 +294,15 @@ $oRouter->Add('gettownintelV2', new Route('/indexer/v2/town', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Intel',
   '_method'     => 'GetTown'
 )));
+// V2 notes
+$oRouter->Add('indexaddnotev2', new Route('/indexer/v2/addnote', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Notes',
+  '_method'     => 'AddNote'
+)));
+$oRouter->Add('indexdelnotev2', new Route('/indexer/v2/delnote', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Notes',
+  '_method'     => 'DeleteNote'
+)));
 
 // index settings
 $oRouter->Add('indexsettingsgetusers', new Route('/indexer/settings/users', array(

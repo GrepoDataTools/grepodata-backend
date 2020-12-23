@@ -152,19 +152,20 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
         }
       }
 
-      // TODO: get notes
-//      $aNotes = Notes::allByTownIdByKeys($aRawKeys, $TownId);
-//      $aDuplicates = array();
-//      foreach ($aNotes as $Note) {
-//        $aNote = $Note->getPublicFields();
-//        $Created = $Note->created_at;
-//        $Created->setTimezone($oWorld->php_timezone);
-//        $aNote['date'] = $Created->format('d-m-y H:i');
-//        if (!in_array($Note->note_id, $aDuplicates)) {
-//          $aResponse['notes'][] = $aNote;
-//          $aDuplicates[] = $Note->note_id;
-//        }
-//      }
+      // Get notes
+      $aNotes = \Grepodata\Library\Controller\IndexV2\Notes::allByUserForTown($oUser, $oWorld->grep_id, $oTown->grep_id);
+      $aDuplicates = array();
+      /** @var \Grepodata\Library\Model\IndexV2\Notes $Note */
+      foreach ($aNotes as $Note) {
+        $aNote = $Note->getPublicFields();
+        $Created = $Note->created_at;
+        $Created->setTimezone($oWorld->php_timezone);
+        $aNote['date'] = $Created->format('d-m-y H:i');
+        if (!in_array($Note->note_id, $aDuplicates)) {
+          $aResponse['notes'][] = $aNote;
+          $aDuplicates[] = $Note->note_id;
+        }
+      }
 
       try {
         // TODO: Hide owner intel

@@ -28,6 +28,10 @@ class BaseRoute
    */
   public static function validateParams($aParamNames = array(), $aCheckHeaders = array())
   {
+    if (!is_array($aParamNames)) {
+      throw new \Exception("Param names must be array");
+    }
+
     // Get params
     $aParams = array();
     if (self::$oRequestContext->getMethod() == 'GET') $aParams = self::getGetVars();

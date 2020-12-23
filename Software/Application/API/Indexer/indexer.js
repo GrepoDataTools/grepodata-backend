@@ -2327,32 +2327,49 @@ var verbose = false;
 
         function saveNewNote(town_id, note, content_id) {
             try {
-                $.ajax({
-                    method: "get",
-                    url: "https://api.grepodata.com/indexer/addnote?keys=" + getActiveIndexes() + "&town_id=" + town_id + "&message=" + note + "&poster_name=" + Game.player_name + "&poster_id=" + Game.player_id
-                }).error(function (err) {
-                    console.log("Error saving note: ", err);
-                    $('#gd_new_note_'+content_id).after('<li class="even gd_note_error_msg" style="display: inherit; width: 100%;">'+
-                        '<div style="display: table-cell; padding: 0 7px;"><strong>Error saving note.</strong> please try again later or contact us if this error persists.</div>' +
-                        '</li>\n');
-                    $('#gd_add_note_'+content_id).show();
-                    $('#gd_adding_note_'+content_id).hide();
-                    $('#gd_note_input_'+content_id).prop('disabled',false);
-                }).done(function (response) {
-                    if (response.note) {
-                        $('#gd_new_note_'+content_id).after(getNoteRowHtml(response.note, content_id));
-                        $('#gd_note_input_'+content_id).val('');
-                        $('#gd_del_note_'+content_id+'_'+response.note.note_id).click(function () {
-                            var note_id = $(this).attr('gd-note-id');
-                            $(this).hide();
-                            $(this).after('<p style="margin: 0;">Note deleted</p>');
-                            $('#gd_note_'+content_id+'_'+note_id).css({ opacity: 0.4 });
-                            saveDelNote(note_id);
+                getAccessToken().then(access_token => {
+                    if (access_token !== false) {
+                        $.ajax({
+                            url: backend_url + "/indexer/v2/addnote",
+                            data: {
+                                access_token: access_token,
+                                town_id: town_id,
+                                message: note,
+                                world: Game.world_id,
+                                poster_name: Game.player_name,
+                                poster_id: Game.player_id,
+                            },
+                            type: 'post',
+                            crossDomain: true,
+                            dataType: 'json',
+                            timeout: 30000
+                        }).fail(function (err) {
+                            console.log("Error saving note: ", err);
+                            $('#gd_new_note_'+content_id).after('<li class="even gd_note_error_msg" style="display: inherit; width: 100%;">'+
+                                '<div style="display: table-cell; padding: 0 7px; color: #ce2508;"><strong>Error saving note.</strong> please try again later or contact us if this error persists.</div>' +
+                                '</li>\n');
+                            $('#gd_add_note_'+content_id).show();
+                            $('#gd_adding_note_'+content_id).hide();
+                            $('#gd_note_input_'+content_id).prop('disabled',false);
+                        }).done(function (response) {
+                            if (response.note) {
+                                $('#gd_new_note_'+content_id).after(getNoteRowHtml(response.note, content_id));
+                                $('#gd_note_input_'+content_id).val('');
+                                $('#gd_del_note_'+content_id+'_'+response.note.note_id).click(function () {
+                                    var note_id = $(this).attr('gd-note-id');
+                                    $(this).hide();
+                                    $(this).after('<p style="margin: 0;">Note deleted</p>');
+                                    $('#gd_note_'+content_id+'_'+note_id).css({ opacity: 0.4 });
+                                    saveDelNote(note_id);
+                                });
+                            }
+                            $('#gd_add_note_'+content_id).show();
+                            $('#gd_adding_note_'+content_id).hide();
+                            $('#gd_note_input_'+content_id).prop('disabled',false);
                         });
+                    } else {
+                        showLoginPopup();
                     }
-                    $('#gd_add_note_'+content_id).show();
-                    $('#gd_adding_note_'+content_id).hide();
-                    $('#gd_note_input_'+content_id).prop('disabled',false);
                 });
             } catch (error) {
                 errorHandling(error, "saveNewNote");
@@ -2361,19 +2378,27 @@ var verbose = false;
 
         function saveDelNote(note_id) {
             try {
-                indexes = [index_key];
-                if (globals.gdIndexScript.length > 1) {
-                    indexes = globals.gdIndexScript;
-                }
-                indexes = JSON.stringify(indexes);
-
-                $.ajax({
-                    method: "get",
-                    url: "https://api.grepodata.com/indexer/delnote?keys=" + indexes + "&note_id=" + note_id + "&poster_name=" + Game.player_name
-                }).error(function (err) {
-                    console.log("Error deleting note: ", err);
-                }).done(function (b) {
-                    console.log("Note deleted: ", b);
+                getAccessToken().then(access_token => {
+                    if (access_token !== false) {
+                        $.ajax({
+                            url: backend_url + "/indexer/v2/delnote",
+                            data: {
+                                access_token: access_token,
+                                note_id: note_id,
+                                world: Game.world_id,
+                            },
+                            type: 'post',
+                            crossDomain: true,
+                            dataType: 'json',
+                            timeout: 30000
+                        }).fail(function (err) {
+                            console.log("Error deleting note: ", err);
+                        }).done(function (response) {
+                            console.log("Note deleted: ", b);
+                        });
+                    } else {
+                        showLoginPopup();
+                    }
                 });
             } catch (error) {
                 errorHandling(error, "saveDeletedNote");

@@ -525,9 +525,14 @@ class Intel
    */
   public static function allByUserForTown(User $oUser, $World, $TownId)
   {
+    $Id = $oUser->id;
     return \Grepodata\Library\Model\IndexV2\Intel::select(['Indexer_intel.*'])
       ->join('Indexer_intel_shared', 'Indexer_intel_shared.intel_id', '=', 'Indexer_intel.id')
-      ->where('Indexer_intel_shared.user_id', '=', $oUser->id, 'and')
+      ->leftJoin('Indexer_roles', 'Indexer_roles.index_key', '=', 'Indexer_intel_shared.index_key')
+      ->where(function ($query) use ($Id) {
+        $query->where('Indexer_intel_shared.user_id', '=', $Id)
+          ->orWhere('Indexer_roles.user_id', '=', $Id);
+      })
       ->where('Indexer_intel.town_id', '=', $TownId, 'and')
       ->where('Indexer_intel.world', '=', $World)
       ->orderBy('created_at', 'asc')
