@@ -7,6 +7,7 @@ use Exception;
 use Grepodata\Library\Model\Indexer\City;
 use Grepodata\Library\Model\User;
 use Grepodata\Library\Model\World;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
 class Intel
@@ -158,26 +159,42 @@ class Intel
   }
 
   /**
+   * @param User $oUser
    * @param $Query string search query
-   * @param $Key
+   * @param $World
    * @return Collection
    */
-  public static function searchPlayer($Query, $Key)
+  public static function searchPlayer(User $oUser, $Query, $World = null)
   {
-    return \Grepodata\Library\Model\IndexV2\Intel::where('index_key', '=', $Key, 'and')
-      ->where('player_name', 'LIKE', '%'.$Query.'%')
+    $oQuery = self::selectByUser($oUser)
+      ->where('Indexer_intel.player_name', 'LIKE', '%'.$Query.'%');
+
+    if (!empty($World)) {
+      $oQuery->where('Indexer_intel.world', '=', $World);
+    }
+
+    return $oQuery->orderBy('id', 'desc')
+      ->distinct('Indexer_intel.id')
       ->get();
   }
 
   /**
+   * @param User $oUser
    * @param $Query string search query
-   * @param $Key
+   * @param $World
    * @return Collection
    */
-  public static function searchTown($Query, $Key)
+  public static function searchTown(User $oUser, $Query, $World = null)
   {
-    return \Grepodata\Library\Model\IndexV2\Intel::where('index_key', '=', $Key, 'and')
-      ->where('town_name', 'LIKE', '%'.$Query.'%')
+    $oQuery = self::selectByUser($oUser)
+      ->where('Indexer_intel.town_name', 'LIKE', '%'.$Query.'%');
+
+    if (!empty($World)) {
+      $oQuery->where('Indexer_intel.world', '=', $World);
+    }
+
+    return $oQuery->orderBy('id', 'desc')
+      ->distinct('Indexer_intel.id')
       ->get();
   }
 
@@ -521,18 +538,11 @@ class Intel
    * @param User $oUser
    * @param $World
    * @param $TownId
-   * @return \Grepodata\Library\Model\IndexV2\Intel[]
+   * @return \Grepodata\Library\Model\IndexV2\Intel[]|Builder[]|Collection
    */
   public static function allByUserForTown(User $oUser, $World, $TownId)
   {
-    $Id = $oUser->id;
-    return \Grepodata\Library\Model\IndexV2\Intel::select(['Indexer_intel.*'])
-      ->join('Indexer_intel_shared', 'Indexer_intel_shared.intel_id', '=', 'Indexer_intel.id')
-      ->leftJoin('Indexer_roles', 'Indexer_roles.index_key', '=', 'Indexer_intel_shared.index_key')
-      ->where(function ($query) use ($Id) {
-        $query->where('Indexer_intel_shared.user_id', '=', $Id)
-          ->orWhere('Indexer_roles.user_id', '=', $Id);
-      })
+    return self::selectByUser($oUser)
       ->where('Indexer_intel.town_id', '=', $TownId, 'and')
       ->where('Indexer_intel.world', '=', $World)
       ->orderBy('created_at', 'asc')
@@ -544,18 +554,11 @@ class Intel
    * @param User $oUser
    * @param $World
    * @param $PlayerId
-   * @return \Grepodata\Library\Model\IndexV2\Intel[]
+   * @return \Grepodata\Library\Model\IndexV2\Intel[]|Builder[]|Collection
    */
   public static function allByUserForPlayer(User $oUser, $World, $PlayerId)
   {
-    $Id = $oUser->id;
-    return \Grepodata\Library\Model\IndexV2\Intel::select(['Indexer_intel.*'])
-      ->join('Indexer_intel_shared', 'Indexer_intel_shared.intel_id', '=', 'Indexer_intel.id')
-      ->leftJoin('Indexer_roles', 'Indexer_roles.index_key', '=', 'Indexer_intel_shared.index_key')
-      ->where(function ($query) use ($Id) {
-        $query->where('Indexer_intel_shared.user_id', '=', $Id)
-          ->orWhere('Indexer_roles.user_id', '=', $Id);
-      })
+    return self::selectByUser($oUser)
       ->where('Indexer_intel.player_id', '=', $PlayerId, 'and')
       ->where('Indexer_intel.world', '=', $World)
       ->orderBy('id', 'desc')
@@ -567,9 +570,24 @@ class Intel
    * @param User $oUser
    * @param $World
    * @param $AllianceId
-   * @return \Grepodata\Library\Model\IndexV2\Intel[]
+   * @return \Grepodata\Library\Model\IndexV2\Intel[]|Builder[]|Collection
    */
   public static function allByUserForAlliance(User $oUser, $World, $AllianceId)
+  {
+    return self::selectByUser($oUser)
+      ->where('Indexer_intel.alliance_id', '=', $AllianceId, 'and')
+      ->where('Indexer_intel.world', '=', $World)
+      ->orderBy('id', 'desc')
+      ->distinct('Indexer_intel.id')
+      ->get();
+  }
+
+  /**
+   * Select all intel for a specific user, this includes intel collected by the user but also intel shared with the user
+   * @param User $oUser
+   * @return Builder
+   */
+  private static function selectByUser(User $oUser)
   {
     $Id = $oUser->id;
     return \Grepodata\Library\Model\IndexV2\Intel::select(['Indexer_intel.*'])
@@ -578,11 +596,6 @@ class Intel
       ->where(function ($query) use ($Id) {
         $query->where('Indexer_intel_shared.user_id', '=', $Id)
           ->orWhere('Indexer_roles.user_id', '=', $Id);
-      })
-      ->where('Indexer_intel.alliance_id', '=', $AllianceId, 'and')
-      ->where('Indexer_intel.world', '=', $World)
-      ->orderBy('id', 'desc')
-      ->distinct('Indexer_intel.id')
-      ->get();
+      });
   }
 }

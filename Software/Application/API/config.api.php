@@ -392,15 +392,15 @@ $oRouter->Add('gettownintel', new Route('/indexer/town', array(
   '_method'     => 'GetTown'
 )));
 $oRouter->Add('searchindexplayers', new Route('/indexer/search/player', array(
-  '_controller' => '\Grepodata\Application\API\Route\Indexer\Search',
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Search',
   '_method'     => 'SearchPlayers'
 )));
 $oRouter->Add('searchindextowns', new Route('/indexer/search/town', array(
-  '_controller' => '\Grepodata\Application\API\Route\Indexer\Search',
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Search',
   '_method'     => 'SearchTowns'
 )));
 $oRouter->Add('searchindexislands', new Route('/indexer/search/island', array(
-  '_controller' => '\Grepodata\Application\API\Route\Indexer\Search',
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Search',
   '_method'     => 'SearchIslands'
 )));
 $oRouter->Add('indexownersinclude', new Route('/indexer/owner/include', array(
