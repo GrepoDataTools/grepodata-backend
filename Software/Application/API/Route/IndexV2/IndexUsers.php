@@ -27,10 +27,10 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
 
       $aResult = Roles::getUsersByIndex($aParams['index_key']);
       $aItems = array();
-      /** @var User $oUser */
+      /** @var \Grepodata\Library\Model\IndexV2\Roles $oUser */
       foreach ($aResult as $oUser) {
         $aItems[] = array(
-          'user_id' => $oUser->id,
+          'user_id' => $oUser->user_id,
           'role' => $oUser->role,
           'contribute' => $oUser->contribute,
           'username' => $oUser->username,
@@ -47,7 +47,7 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
 
     } catch (ModelNotFoundException $e) {
       die(self::OutputJson(array(
-        'message'     => 'No intel found on this town in this index.',
+        'message'     => 'User role not found.',
         'parameters'  => $aParams
       ), 404));
     }
@@ -67,44 +67,63 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
         ResponseCode::errorCode(7520);
       }
 
-      if (!in_array($aParams['role'], array(Roles::ROLE_READ, Roles::ROLE_WRITE, Roles::ROLE_ADMIN, Roles::ROLE_OWNER))) {
-        ResponseCode::errorCode(7530);
-      }
-
-      if ($aParams['role'] == Roles::ROLE_OWNER) {
-        // Only an owner can manage other owners
-        $oEditorRole = IndexManagement::verifyUserIsOwner($oUser, $aParams['index_key']);
-      } else {
-        $oEditorRole = IndexManagement::verifyUserIsAdmin($oUser, $aParams['index_key']);
-      }
-
-      try {
-        $oManagedUser = \Grepodata\Library\Controller\User::GetUserById($aParams['user_id']);
-        $oManagedUserRole = Roles::getUserIndexRole($oManagedUser, $aParams['index_key']);
-        if ($oManagedUserRole->role == Roles::ROLE_ADMIN && $oEditorRole->role != Roles::ROLE_OWNER) {
-          // Only an owner can manage other admins
-          ResponseCode::errorCode(7540);
-        }
-      } catch (ModelNotFoundException $e) {
-        ResponseCode::errorCode(2010);
-      }
-
       try {
         $oIndex = IndexInfo::firstOrFail($aParams['index_key']);
       } catch (ModelNotFoundException $e) {
         ResponseCode::errorCode(2020);
       }
 
-      $oUserRole = Roles::SetUserIndexRole($oManagedUser, $oIndex, $aParams['role']);
+      if (!in_array($aParams['role'], array(Roles::ROLE_READ, Roles::ROLE_WRITE, Roles::ROLE_ADMIN, Roles::ROLE_OWNER))) {
+        ResponseCode::errorCode(7530);
+      }
+
+      // Get user
+      try {
+        $oManagedUser = \Grepodata\Library\Controller\User::GetUserById($aParams['user_id']);
+        $oManagedUserRole = Roles::getUserIndexRole($oManagedUser, $aParams['index_key']);
+      } catch (ModelNotFoundException $e) {
+        ResponseCode::errorCode(2010);
+      }
+
+      // Check update type
+      $OldRole = $oManagedUserRole->role;
+      $OldRoleNumber = array_search($OldRole, Roles::numbered_roles);
+      $NewRole = $aParams['role'];
+      $NewRoleNumber = array_search($NewRole, Roles::numbered_roles);
+      if ($OldRoleNumber >= $NewRoleNumber) {
+        // User is being demoted
+        $NewRoleNumber = max(0, $NewRoleNumber-1);
+        $NewRole = Roles::numbered_roles[$NewRoleNumber];
+      } else {
+        // User is being promoted
+      }
+
+      // Check role rules
+      if ($NewRole == Roles::ROLE_OWNER || $OldRole == Roles::ROLE_OWNER) {
+        // Only an owner can manage other owners
+        $oEditorRole = IndexManagement::verifyUserIsOwner($oUser, $aParams['index_key']);
+      } else {
+        // User has to be at least admin to manage users
+        $oEditorRole = IndexManagement::verifyUserIsAdmin($oUser, $aParams['index_key']);
+      }
+
+      if (($OldRole == Roles::ROLE_ADMIN || $NewRole == Roles::ROLE_ADMIN) && $oEditorRole->role != Roles::ROLE_OWNER) {
+        // Only an owner can manage other admins
+        ResponseCode::errorCode(7540);
+      }
+
+      $oUserRole = Roles::SetUserIndexRole($oManagedUser, $oIndex, $NewRole);
+      $aUpdatedUser = $oUserRole->getPublicFields();
+      $aUpdatedUser['username'] = $oManagedUser->username;
 
       ResponseCode::success(array(
         'size' => 1,
-        'data' => $oUserRole->getPublicFields()
+        'data' => $aUpdatedUser
       ));
 
     } catch (ModelNotFoundException $e) {
       die(self::OutputJson(array(
-        'message'     => 'No intel found on this town in this index.',
+        'message'     => 'User role not found.',
         'parameters'  => $aParams
       ), 404));
     }
@@ -145,7 +164,7 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
 
     } catch (ModelNotFoundException $e) {
       die(self::OutputJson(array(
-        'message'     => 'No intel found on this town in this index.',
+        'message'     => 'User role not found.',
         'parameters'  => $aParams
       ), 404));
     }

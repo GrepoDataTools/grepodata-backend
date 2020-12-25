@@ -87,6 +87,7 @@ class Service
         if ($oContext->getMethod() == 'OPTIONS') {
           header('Access-Control-Allow-Origin: *');
           header('Access-Control-Allow-Headers: access_token, Origin, X-Requested-With, Content-Type, Accept');
+          header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
           die();
         } else if (method_exists($oController, $MethodName)) {
           header("Access-Control-Allow-Origin: *");
@@ -97,7 +98,7 @@ class Service
       }
 
     } catch (ResourceNotFoundException $e) {
-      // Ignore
+      die(BaseRoute::OutputJson(array('message' => 'Resource not found'), 404));
     } catch (\Exception $e) {
       $LogMessage = "API server error! (" . $e->getMessage() . ")";
       try {

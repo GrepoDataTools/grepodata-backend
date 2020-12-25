@@ -37,7 +37,7 @@ class IndexOwners extends \Grepodata\Library\Router\BaseRoute
 
     } catch (ModelNotFoundException $e) {
       die(self::OutputJson(array(
-        'message'     => 'No intel found on this town in this index.',
+        'message'     => 'Index owner not found.',
         'parameters'  => $aParams
       ), 404));
     }

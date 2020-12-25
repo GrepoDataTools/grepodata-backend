@@ -3,11 +3,6 @@
 namespace Grepodata\Application\API\Route\IndexV2;
 
 use Exception;
-use Grepodata\Library\Controller\Indexer\CityInfo;
-use Grepodata\Library\Controller\Indexer\IndexOverview;
-use Grepodata\Library\Controller\Island;
-use Grepodata\Library\Controller\Town;
-use Grepodata\Library\Indexer\Validator;
 
 class Search extends \Grepodata\Library\Router\BaseRoute
 {

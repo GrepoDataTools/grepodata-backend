@@ -16,6 +16,12 @@ class Roles
   const ROLE_ADMIN = 'admin';
   const ROLE_WRITE = 'write';
   const ROLE_READ = 'read';
+  const numbered_roles = array(
+    0 => self::ROLE_READ,
+    1 => self::ROLE_WRITE,
+    2 => self::ROLE_ADMIN,
+    3 => self::ROLE_OWNER,
+  );
 
   /**
    * Sets the given user role on the given index
@@ -58,9 +64,10 @@ class Roles
    */
   public static function getUsersByIndex($IndexKey)
   {
-    return \Grepodata\Library\Model\IndexV2\Roles::select(['Indexer_roles.*', 'User.*'])
+    return \Grepodata\Library\Model\IndexV2\Roles::select(['Indexer_roles.*', 'User.username'])
       ->join('User', 'User.id', '=', 'Indexer_roles.user_id')
       ->where('Indexer_roles.index_key', '=', $IndexKey)
+      ->orderBy('Indexer_roles.created_at', 'asc')
       ->get();
   }
 
