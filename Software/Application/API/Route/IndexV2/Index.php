@@ -15,11 +15,13 @@ use Grepodata\Library\Controller\World;
 use Grepodata\Library\Indexer\IndexBuilder;
 use Grepodata\Library\Indexer\IndexBuilderV2;
 use Grepodata\Library\Indexer\Validator;
+use Grepodata\Library\IndexV2\IndexManagement;
 use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Mail\Client;
 use Grepodata\Library\Model\Indexer\Auth;
 use Grepodata\Library\Model\Indexer\Stats;
 use Grepodata\Library\Router\BaseRoute;
+use Grepodata\Library\Router\ResponseCode;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class Index extends BaseRoute
@@ -106,7 +108,11 @@ class Index extends BaseRoute
     $aParams = array();
     try {
       // Validate params
-      $aParams = self::validateParams(array('key'));
+      $aParams = self::validateParams(array('access_token', 'key'));
+      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+
+      $oIndexRole = IndexManagement::verifyUserCanRead($oUser, $aParams['key']);
+      $bUserIsAdmin = in_array($oIndexRole->role, array(Roles::ROLE_ADMIN, Roles::ROLE_OWNER));
 
       // Validate index key
       $oIndex = Validator::IsValidIndex($aParams['key']);
@@ -148,7 +154,7 @@ class Index extends BaseRoute
       }
 
       $aResponse = array(
-        'is_admin'          => false,
+        'is_admin'          => $bUserIsAdmin,
         'world'             => $oIndexOverview['world'],
         'total_reports'     => $oIndexOverview['total_reports'],
         'spy_reports'       => $oIndexOverview['spy_reports'],
@@ -159,6 +165,7 @@ class Index extends BaseRoute
         'recent_conquests'  => $aRecentConquests,
         'latest_version'    => $oIndex->script_version,
         'index_name'        => $oIndex->index_name,
+        'share_link'        => $bUserIsAdmin ? $oIndex->share_link : 'Unauthorized',
         'update_message'    => USERSCRIPT_UPDATE_INFO,
         'owners'            => json_decode(urldecode($oIndexOverview['owners'])),
         'contributors'      => json_decode(urldecode($oIndexOverview['contributors'])),
@@ -166,13 +173,6 @@ class Index extends BaseRoute
         'players_indexed'   => json_decode(urldecode($oIndexOverview['players_indexed'])),
         'latest_intel'      => json_decode(urldecode($oIndexOverview['latest_intel'])),
       );
-
-      if (isset($aParams['access_token'])) {
-        $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token'], false);
-        if ($oUser!=false && $oUser->is_confirmed==true && $oIndex->created_by_user == $oUser->id) {
-          $aResponse['is_admin'] = true;
-        }
-      }
 
       return self::OutputJson($aResponse);
 
@@ -217,6 +217,34 @@ class Index extends BaseRoute
 
     } catch (\Exception $e) {
       Logger::warning("Error building new index: " . $e->getMessage());
+      die(self::OutputJson(array(
+        'message'     => 'Error building new index.',
+        'parameters'  => $aParams
+      ), 404));
+    }
+  }
+
+  public static function NewShareLinkGET()
+  {
+    $aParams = array();
+    try {
+      // Validate params
+      $aParams = self::validateParams(array('access_token', 'index_key'));
+      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+
+      $oIndex = IndexInfo::firstOrFail($aParams['index_key']);
+
+      IndexManagement::verifyUserIsAdmin($oUser, $aParams['index_key']);
+
+      $oIndex->share_link = IndexBuilderV2::generateIndexKey(10);
+      $oIndex->save();
+
+      $aResponse = array(
+        'share_link' => $oIndex->share_link
+      );
+      ResponseCode::success($aResponse, 1200);
+
+    } catch (\Exception $e) {
       die(self::OutputJson(array(
         'message'     => 'Error building new index.',
         'parameters'  => $aParams

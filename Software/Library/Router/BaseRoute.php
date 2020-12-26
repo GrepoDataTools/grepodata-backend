@@ -96,6 +96,9 @@ class BaseRoute
 
   private static function getDeleteVars()
   {
+    if (is_array($_GET) && !empty($_GET)) {
+      return $_GET;
+    }
     parse_str(file_get_contents('php://input'), $_PUT);
     return $_PUT;
   }

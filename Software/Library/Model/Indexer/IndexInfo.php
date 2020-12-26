@@ -14,6 +14,7 @@ use \Illuminate\Database\Eloquent\Model;
  * @property mixed new_report
  * @property mixed status
  * @property mixed csa
+ * @property mixed share_link
  * @property mixed moved_to_index
  */
 class IndexInfo extends Model

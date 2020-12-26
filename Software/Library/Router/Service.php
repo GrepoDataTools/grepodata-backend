@@ -77,6 +77,7 @@ class Service
             try {
               $RateLimiter->hit($ResourceId);
             } catch (RateLimitExceededException $e) {
+              Logger::error("Rate limit exceeded on resource " . $ResourceId . " => " . $e->getMessage());
               die(BaseRoute::OutputJson(array('message' => 'Too many requests. You have exceeded the rate limit for this specific resource. Please try again in a minute.'), 429));
             }
           } catch (\Exception $e) {

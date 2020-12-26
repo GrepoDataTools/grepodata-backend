@@ -157,10 +157,13 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
       }
 
       $bSuccess = $oManagedUserRole->delete();
+      if ($bSuccess == false) {
+        ResponseCode::errorCode(7000);
+      }
 
       ResponseCode::success(array(
-        'deleted' => $bSuccess
-      ));
+        'deleted' => true
+      ), 1300);
 
     } catch (ModelNotFoundException $e) {
       die(self::OutputJson(array(

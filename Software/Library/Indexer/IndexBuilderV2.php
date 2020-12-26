@@ -27,6 +27,7 @@ class IndexBuilderV2
     $oIndex->world = $World;
     $oIndex->mail = '';
     $oIndex->status = 'active';
+    $oIndex->share_link = self::generateIndexKey(10);
     $oIndex->script_version = USERSCRIPT_VERSION;
     $oIndex->save();
 

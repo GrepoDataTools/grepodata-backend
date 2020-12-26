@@ -239,7 +239,7 @@ admin@grepodata.com',
      * Generate a unique script identifier with expiration
      */
 
-    $oToken = ScriptToken::NewScriptToken();
+    $oToken = ScriptToken::NewScriptToken($_SERVER['REMOTE_ADDR']);
 
     // Response
     $aResponse = array(
@@ -269,6 +269,12 @@ admin@grepodata.com',
     if ($oToken->created_at < $Limit) {
       // token expired
       ResponseCode::errorCode(3042, array(), 401);
+    }
+
+    // Check client
+    if ($oToken->client !== $_SERVER['REMOTE_ADDR']) {
+      // Invalid client
+      ResponseCode::errorCode(3043, array(), 401);
     }
 
     // Check if a user is linked
@@ -317,6 +323,12 @@ admin@grepodata.com',
     if ($oToken->created_at < $Limit) {
       // token expired
       ResponseCode::errorCode(3042, array(), 401);
+    }
+
+    // Check client
+    if ($oToken->client !== $_SERVER['REMOTE_ADDR']) {
+      // Invalid client
+      ResponseCode::errorCode(3043, array(), 401);
     }
 
     // Add script_token to user

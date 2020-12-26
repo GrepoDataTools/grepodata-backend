@@ -280,7 +280,13 @@ $oRouter->Add('indexReportV2', new Route('/indexer/v2/indexreport', array(
 )));
 $oRouter->Add('newIndexV2', new Route('/indexer/v2/newindex', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Index',
-  '_method'     => 'NewIndex'
+  '_method'     => 'NewIndex',
+  '_ratelimit'  => $limit100PerMin
+)));
+$oRouter->Add('newShareLink', new Route('/indexer/v2/newlink', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Index',
+  '_method'     => 'NewShareLink',
+  '_ratelimit'  => $limit10PerMin
 )));
 $oRouter->Add('getIndexV2', new Route('/indexer/v2/getindex', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Index',

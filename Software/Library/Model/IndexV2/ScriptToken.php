@@ -7,6 +7,7 @@ use \Illuminate\Database\Eloquent\Model;
 /**
  * @property mixed id
  * @property mixed token
+ * @property mixed client
  * @property mixed user_id
  */
 class ScriptToken extends Model

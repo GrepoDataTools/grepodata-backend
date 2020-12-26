@@ -39,15 +39,17 @@ class Profile extends BaseRoute
           continue;
         }
       }
+      $bUserIsAdmin = in_array($oIndex->role, array(Roles::ROLE_ADMIN, Roles::ROLE_OWNER));
       $aResponse['items'][] = array(
-        'key' => $oIndex->key_code,
-        'name' => $oIndex->index_name,
-        'role' => $oIndex->role,
-        'contribute' => $oIndex->contribute,
-        'world' => $oIndex->world,
-        'created_at' => $oIndex->created_at,
-        'updated_at' => $oIndex->updated_at,
-        'stats' => $aOverview
+        'key'         => $oIndex->key_code,
+        'name'        => $oIndex->index_name,
+        'role'        => $oIndex->role,
+        'contribute'  => $oIndex->contribute,
+        'share_link'  => $bUserIsAdmin ? $oIndex->share_link : 'Unauthorized',
+        'world'       => $oIndex->world,
+        'created_at'  => $oIndex->created_at,
+        'updated_at'  => $oIndex->updated_at,
+        'stats'       => $aOverview
       );
     }
     $aResponse['rows'] = sizeof($aResponse['items']);
