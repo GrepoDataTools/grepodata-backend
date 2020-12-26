@@ -5,6 +5,7 @@ namespace Grepodata\Library\Controller\IndexV2;
 use Carbon\Carbon;
 use Exception;
 use Grepodata\Library\Model\Indexer\City;
+use Grepodata\Library\Model\Indexer\IndexInfo;
 use Grepodata\Library\Model\User;
 use Grepodata\Library\Model\World;
 use Illuminate\Database\Eloquent\Builder;
@@ -57,44 +58,23 @@ class Intel
   const sea_monster = 'sea_monster';
 
   /**
-   * @param $Key string Index identifier
-   * @param $Id int Town identifier
-   * @return Collection
+   * @param IndexInfo $oIndex
+   * @return \Grepodata\Library\Model\IndexV2\Intel[]|Builder[]|Collection
    */
-  public static function allByTownId($Key, $Id)
+  public static function allByIndex(IndexInfo $oIndex)
   {
-    return \Grepodata\Library\Model\IndexV2\Intel::where('index_key', '=', $Key, 'and')
-      ->where('town_id', '=', $Id, 'and')
-      ->whereNull('soft_deleted')
-      ->orderBy('created_at', 'asc')
+    return self::selectByIndex($oIndex)
+      ->orderBy('id', 'desc')
       ->get();
   }
 
   /**
-   * @param $Keys array list of Index identifiers
-   * @param $Id int Town identifier
-   * @return Collection
+   * @param IndexInfo $oIndex
+   * @return string
    */
-  public static function allByTownIdByKeys($Keys, $Id)
+  public static function maxVersion(IndexInfo $oIndex)
   {
-    return \Grepodata\Library\Model\IndexV2\Intel::whereIn('index_key', $Keys, 'and')
-      ->where('town_id', '=', $Id, 'and')
-      ->whereNull('soft_deleted')
-      ->orderBy('created_at', 'asc')
-      ->get();
-  }
-
-  /**
-   * @param $Key string Index identifier
-   * @param $Name
-   * @return Collection
-   */
-  public static function allByName($Key, $Name)
-  {
-    return \Grepodata\Library\Model\IndexV2\Intel::where('index_key', '=', $Key, 'and')
-      ->where('town_name', 'LIKE', '%'.$Name.'%')
-      ->orderBy('created_at', 'desc')
-      ->get();
+    return self::selectByIndex($oIndex)->max('script_version');
   }
 
   /**
@@ -105,57 +85,6 @@ class Intel
   {
     return \Grepodata\Library\Model\IndexV2\Intel::where('id', '=', $Id)
       ->firstOrFail();
-  }
-
-  /**
-   * @param $Key string Index identifier
-   * @param $Id int Player identifier
-   * @return Collection
-   */
-  public static function allByPlayerId($Key, $Id)
-  {
-    return \Grepodata\Library\Model\IndexV2\Intel::where('index_key', '=', $Key, 'and')
-      ->where('player_id', '=', $Id)
-      ->orderBy('town_name', 'asc')
-      ->orderBy('id', 'desc')
-      ->get();
-  }
-
-  /**
-   * @param $Key string Index identifier
-   * @param $Id int Alliance identifier
-   * @return Collection
-   */
-  public static function allByAllianceId($Key, $Id)
-  {
-    return \Grepodata\Library\Model\IndexV2\Intel::where('index_key', '=', $Key, 'and')
-      ->where('alliance_id', '=', $Id)
-      ->orderBy('town_name', 'asc')
-      ->orderBy('id', 'desc')
-      ->get();
-  }
-
-  /**
-   * @param $Key string Index identifier
-   * @param $Id int Conquest identifier
-   * @return City[]
-   */
-  public static function allByConquestId($Key, $Id)
-  {
-    return \Grepodata\Library\Model\IndexV2\Intel::where('index_key', '=', $Key, 'and')
-      ->where('conquest_id', '=', $Id)
-      ->orderBy('parsed_date', 'desc')
-      ->get();
-  }
-
-  /**
-   * @param $Key string Index identifier
-   * @return Collection
-   */
-  public static function allByKey($Key)
-  {
-    return \Grepodata\Library\Model\IndexV2\Intel::where('index_key', '=', $Key)
-      ->get();
   }
 
   /**
@@ -597,5 +526,17 @@ class Intel
         $query->where('Indexer_intel_shared.user_id', '=', $Id)
           ->orWhere('Indexer_roles.user_id', '=', $Id);
       });
+  }
+
+  /**
+   * Select all intel for a specific index
+   * @param IndexInfo $oIndex
+   * @return Builder
+   */
+  private static function selectByIndex(IndexInfo $oIndex)
+  {
+    return \Grepodata\Library\Model\IndexV2\Intel::select(['Indexer_intel.*'])
+      ->join('Indexer_intel_shared', 'Indexer_intel_shared.intel_id', '=', 'Indexer_intel.id')
+      ->where('Indexer_intel_shared.index_key', '=', $oIndex->key_code);
   }
 }

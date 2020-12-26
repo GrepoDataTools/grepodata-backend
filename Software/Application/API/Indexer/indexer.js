@@ -625,6 +625,9 @@ var verbose = false;
                         localStorage.removeItem('gd_indexer_script_token');
                         showLoginPopup();
                         verbose ? setTimeout(loginError('Expired script token. Please try using the link again.'), 1000) : null;
+                    } else if (error.responseJSON.error_code && error.responseJSON.error_code === 3043) {
+                        // Invalid client
+                        verbose ? loginError('Your script token is not valid for this client. Please request a new token or contact us if this error persists.') : null;
                     } else if (error.responseJSON.error_code && error.responseJSON.error_code === 3040) {
                         // Token is not yet linked
                         verbose ? loginError('Your script token is not yet verified. Click the link to try again.') : null;
@@ -1128,8 +1131,9 @@ var verbose = false;
                         'report_text': reportText,
                         'report_json': reportJson,
                         'script_version': gd_version,
-                        'report_poster': reportPoster,
-                        'report_poster_id': gd_w.Game.player_id || 0
+                        'report_poster': reportPoster || 'Undefined',
+                        'report_poster_id': Game.player_id || 0,
+                        'report_poster_ally_id': Game.alliance_id || 0
                     };
 
                     $('.rh' + reportHash).each(function () {
@@ -1175,8 +1179,9 @@ var verbose = false;
                         'report_text': reportText,
                         'report_json': reportJson,
                         'script_version': gd_version,
-                        'report_poster': gd_w.Game.player_name || 'undefined',
-                        'report_poster_id': gd_w.Game.player_id || 0
+                        'report_poster': Game.player_name || 'undefined',
+                        'report_poster_id': Game.player_id || 0,
+                        'report_poster_ally_id': Game.alliance_id || 0
                     };
 
                     if (gd_settings.inbox === true) {

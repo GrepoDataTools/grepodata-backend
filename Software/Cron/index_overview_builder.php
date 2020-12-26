@@ -3,7 +3,7 @@
 namespace Grepodata\Cron;
 
 use Carbon\Carbon;
-use Grepodata\Library\Controller\Indexer\IndexOverview;
+use Grepodata\Library\Controller\IndexV2\IndexOverview;
 use Grepodata\Library\Cron\Common;
 use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\Indexer\IndexInfo;

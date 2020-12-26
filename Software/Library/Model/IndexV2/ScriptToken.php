@@ -13,6 +13,6 @@ use \Illuminate\Database\Eloquent\Model;
 class ScriptToken extends Model
 {
   protected $table = 'Indexer_script_token';
-  protected $fillable = array('token');
+  protected $fillable = array('token', 'client');
 
 }

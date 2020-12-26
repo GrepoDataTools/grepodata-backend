@@ -18,6 +18,9 @@ use \Illuminate\Database\Eloquent\Model;
  * @property mixed player_id
  * @property mixed player_name
  * @property mixed alliance_id
+ * @property mixed poster_player_name
+ * @property mixed poster_player_id
+ * @property mixed poster_alliance_id
  * @property mixed report_date
  * @property mixed parsed_date
  * @property mixed hero

@@ -111,9 +111,6 @@ class Index extends BaseRoute
       $aParams = self::validateParams(array('access_token', 'key'));
       $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
 
-      $oIndexRole = IndexManagement::verifyUserCanRead($oUser, $aParams['key']);
-      $bUserIsAdmin = in_array($oIndexRole->role, array(Roles::ROLE_ADMIN, Roles::ROLE_OWNER));
-
       // Validate index key
       $oIndex = Validator::IsValidIndex($aParams['key']);
       if ($oIndex === null || $oIndex === false) {
@@ -121,12 +118,17 @@ class Index extends BaseRoute
           'message'     => 'Unauthorized index key. Please enter the correct index key. You will be banned after 10 incorrect attempts.',
         ), 401));
       }
+
+      // TODO: ?
       if (isset($oIndex->moved_to_index) && $oIndex->moved_to_index !== null && $oIndex->moved_to_index != '') {
         die(self::OutputJson(array(
           'moved'       => true,
           'message'     => 'Index has moved!'
         ), 200));
       }
+
+      $oIndexRole = IndexManagement::verifyUserCanRead($oUser, $aParams['key']);
+      $bUserIsAdmin = in_array($oIndexRole->role, array(Roles::ROLE_ADMIN, Roles::ROLE_OWNER));
 
       $oIndexOverview = IndexOverview::firstOrFail($aParams['key']);
       if ($oIndexOverview == null) throw new ModelNotFoundException();
@@ -165,6 +167,8 @@ class Index extends BaseRoute
         'recent_conquests'  => $aRecentConquests,
         'latest_version'    => $oIndex->script_version,
         'index_name'        => $oIndex->index_name,
+        'role'              => $oIndexRole->role,
+        'contribute'        => $oIndexRole->contribute,
         'share_link'        => $bUserIsAdmin ? $oIndex->share_link : 'Unauthorized',
         'update_message'    => USERSCRIPT_UPDATE_INFO,
         'owners'            => json_decode(urldecode($oIndexOverview['owners'])),

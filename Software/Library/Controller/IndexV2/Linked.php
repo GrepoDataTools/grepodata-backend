@@ -2,17 +2,10 @@
 
 namespace Grepodata\Library\Controller\IndexV2;
 
-use Carbon\Carbon;
 use Exception;
-use Grepodata\Library\Cron\Common;
 use Grepodata\Library\Indexer\IndexBuilderV2;
 use Grepodata\Library\Logger\Logger;
-use Grepodata\Library\Model\Indexer\City;
-use Grepodata\Library\Model\Indexer\IndexInfo;
-use Grepodata\Library\Model\Player;
 use Grepodata\Library\Model\User;
-use Grepodata\Library\Model\World;
-use Illuminate\Database\Eloquent\Collection;
 
 class Linked
 {

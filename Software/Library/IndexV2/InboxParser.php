@@ -60,6 +60,7 @@ class InboxParser
    * @param $aReportData
    * @param $ReportPoster
    * @param $PosterId
+   * @param $PosterAllyId
    * @param $ReportHash
    * @param $ReportJson
    * @param $ReportInfo
@@ -76,6 +77,7 @@ class InboxParser
     $aReportData,
     $ReportPoster,
     $PosterId,
+    $PosterAllyId,
     $ReportHash,
     $ReportJson,
     $ReportInfo,
@@ -420,16 +422,17 @@ class InboxParser
             $bPlayerIsReceiver = true;
             $bIsOngoingConquest = true;
 
-            $oConquestDetails = new ConquestDetails();
-            try {
-              // try to parse conquest details
-              $oConquestDetails->siegeTownId = $ReceiverTownId;
-              $oConquestDetails->siegeTownName = $ReceiverTownName;
-              $oConquestDetails->siegePlayerId = $PosterId;
-              $oConquestDetails->siegePlayerName = $ReportPoster;
-            } catch (\Exception $e) {
-              Logger::warning("InboxParser $ReportHash: error parsing ongoing conquest details; " . $e->getMessage());
-            }
+            // TODO: parse conquests
+//            $oConquestDetails = new ConquestDetails();
+//            try {
+//              // try to parse conquest details
+//              $oConquestDetails->siegeTownId = $ReceiverTownId;
+//              $oConquestDetails->siegeTownName = $ReceiverTownName;
+//              $oConquestDetails->siegePlayerId = $PosterId;
+//              $oConquestDetails->siegePlayerName = $ReportPoster;
+//            } catch (\Exception $e) {
+//              Logger::warning("InboxParser $ReportHash: error parsing ongoing conquest details; " . $e->getMessage());
+//            }
           } else {
             // unable to identify owner!
             throw new InboxParserExceptionWarning("inbox report owner not found");
@@ -486,10 +489,11 @@ class InboxParser
         }
 
         // Parse conquest side
-        if ($bIsOngoingConquest == true && !is_null($oConquestDetails)) {
-          $aUnitsClean = self::parseSingleSideUnits($aCityUnitsDef);
-          $oConquestDetails->siegeUnits = $aUnitsClean;
-        }
+        // TODO: parse conquests
+//        if ($bIsOngoingConquest == true && !is_null($oConquestDetails)) {
+//          $aUnitsClean = self::parseSingleSideUnits($aCityUnitsDef);
+//          $oConquestDetails->siegeUnits = $aUnitsClean;
+//        }
 
         // Parse buildings (stonehail + wall)
         // TODO: get translations from client: Object.values(GameData.buildings).map(function(e) {tmp[e.controller] = e.name});
@@ -783,6 +787,9 @@ class InboxParser
       $oIntel->player_id   = $PlayerId;
       $oIntel->player_name = $PlayerName;
       $oIntel->alliance_id = $AllianceId;
+      $oIntel->poster_player_name = $ReportPoster;
+      $oIntel->poster_player_id   = $PosterId;
+      $oIntel->poster_alliance_id = $PosterAllyId;
       $oIntel->report_date = $ReportDate;
       $oIntel->parsed_date = $ParsedDate;
       $oIntel->hero        = (isset($Hero)?$Hero:null);

@@ -2,14 +2,9 @@
 
 namespace Grepodata\Library\Controller\IndexV2;
 
-use Carbon\Carbon;
-use Exception;
-use Grepodata\Library\Model\Indexer\City;
 use Grepodata\Library\Model\Indexer\IndexInfo;
 use Grepodata\Library\Model\User;
-use Grepodata\Library\Model\World;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Capsule\Manager as DB;
 
 class IntelShared
 {

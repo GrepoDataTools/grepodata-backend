@@ -73,48 +73,20 @@ class Report extends \Grepodata\Library\Router\BaseRoute
     $aParams = array();
     try {
       // Validate params
-      $aParams = self::validateParams(array('report_type', 'access_token', 'world', 'report_hash', 'report_text', 'report_json', 'report_poster', 'report_poster_id', 'script_version'));
+      $aParams = self::validateParams(array('report_type', 'access_token', 'world', 'report_hash', 'report_text', 'report_json', 'report_poster', 'report_poster_id', 'report_poster_ally_id', 'script_version'));
       $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
-
-      // Find linked player for this user and this world
-//      $oLinkedPlayer = null;
-//      try {
-//        $oLinkedPlayer = Linked::getByPlayerIdAndServer($oUser, $aParams['report_poster_id'], substr($aParams['world'], 0, 2));
-//        if (!$oLinkedPlayer->confirmed) {
-//          $oLinkedPlayer = null;
-//          throw new ModelNotFoundException();
-//        }
-//      } catch (ModelNotFoundException $e) {
-//        // Try to find any other player object in this world, verified by this user
-//        $aLinkedPlayers = Linked::getAllByUser($oUser);
-//        /** @var \Grepodata\Library\Model\IndexV2\Linked $oLinkedPlayer */
-//        foreach ($aLinkedPlayers as $oLinkedPlayerPotential) {
-//          if ($oLinkedPlayerPotential->confirmed == true
-//            && $oLinkedPlayerPotential->server == substr($aParams['world'], 0, 2)
-//          ) {
-//            $oPlayer = Player::firstById($aParams['world'], $oLinkedPlayerPotential->player_id);
-//            if ($oPlayer !== false) {
-//              $oLinkedPlayer = $oLinkedPlayerPotential;
-//            }
-//          }
-//        }
-//      }
-//
-//      if ($oLinkedPlayer == null) {
-//        // Unable to find linked accounts, user should probably verify new account
-//        ResponseCode::errorCode(7100, array(), 401);
-//      }
 
       // Get data
       $ReportType = $aParams['report_type'];
       $ReportInfo = preg_replace('/\s+/', ' ', $aParams['report_text']);
       $ReportInfo = substr($ReportInfo, 0, 500);
-      $ReportPoster = $aParams['report_poster'];
       $ScriptVersion = $aParams['script_version'];
       $ReportRaw = $aParams['report_json'];
       $ReportJson = json_encode($ReportRaw);
       $ReportHash = $aParams['report_hash'];
+      $ReportPoster = $aParams['report_poster'];
       $ReportPosterId = $aParams['report_poster_id'];
+      $ReportPosterAllyId = $aParams['report_poster_ally_id'];
       $World = $aParams['world'];
       $Locale = substr($World, 0, 2);
 
@@ -187,6 +159,7 @@ class Report extends \Grepodata\Library\Router\BaseRoute
                 $ReportRaw,
                 $ReportPoster,
                 $ReportPosterId,
+                $ReportPosterAllyId,
                 $ReportHash,
                 $ReportJson,
                 $ReportInfo,
@@ -202,6 +175,9 @@ class Report extends \Grepodata\Library\Router\BaseRoute
                 $ReportHash,
                 $ReportJson,
                 $ReportInfo,
+                $ReportPoster,
+                $ReportPosterId,
+                $ReportPosterAllyId,
                 $ScriptVersion,
                 $Locale);
               break;

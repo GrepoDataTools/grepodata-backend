@@ -184,6 +184,9 @@ class ForumParser
    * @param $ReportHash
    * @param $ReportJson
    * @param $ReportInfo
+   * @param $ReportPoster
+   * @param $ReportPosterId
+   * @param $ReportPosterAllyId
    * @param $ScriptVersion
    * @param string $Locale
    * @return Mixed
@@ -198,6 +201,9 @@ class ForumParser
     $ReportHash,
     $ReportJson,
     $ReportInfo,
+    $ReportPoster,
+    $ReportPosterId,
+    $ReportPosterAllyId,
     $ScriptVersion,
     $Locale)
   {
@@ -258,6 +264,9 @@ class ForumParser
       $oIntel->player_id   = $aCityInfo['player_id'];
       $oIntel->player_name = $aCityInfo['player_name'];
       $oIntel->alliance_id = $AllianceId;
+      $oIntel->poster_player_name = $ReportPoster;
+      $oIntel->poster_player_id   = $ReportPosterId;
+      $oIntel->poster_alliance_id = $ReportPosterAllyId;
       $oIntel->report_date = $aCityInfo['mutation_date'];
       if (isset($aCityInfo['parsed_date'])) {
         $oIntel->parsed_date = $aCityInfo['parsed_date'];
@@ -950,41 +959,39 @@ class ForumParser
         $cityInfo['player_id'] = $AttackingPlayer['id'];
 
         // Conquest details
-        $oConquestDetails = new ConquestDetails();
-        try {
-          if ($ReportChainString == 'town-player-town-player') {
-            $BesiegedTown = $aHeaderChainData[2];
-            $SiegeLeadBy = $aHeaderChainData[3];
-          } else if ($ReportChainString == 'town-player-player-town') {
-            $BesiegedTown = $aHeaderChainData[3];
-            $SiegeLeadBy = $aHeaderChainData[2];
-          } else {
-            throw new Exception("Unhandled conquest chain: " . $ReportChainString);
-          }
-
-          $oConquestDetails->siegeTownId = $BesiegedTown['id'];
-          $oConquestDetails->siegeTownName = $BesiegedTown['name'];
-          $oConquestDetails->siegePlayerId = $SiegeLeadBy['id'];
-          $oConquestDetails->siegePlayerName = $SiegeLeadBy['name'];
-          $oConquestDetails->wall = 0;
-
-          try {
-            // find wall level
-            $aReportStats = $aReportData['content'][5]['content'][1]['content'][3]['content'][1]['content'][1]['content'][2]['content'][1]['content'][1]['content'][1]['content'] ?? null;
-            if (empty($aReportStats)) {
-              throw new Exception("Unable to find forum report stats");
-            }
-            self::ParseForumReportStats($aParsedStats, $aReportStats, $ReportHash);
-            if (isset($aParsedStats['wall'])) {
-              $oConquestDetails->wall = $aParsedStats['wall'];
-            }
-          } catch (Exception $e) {
-            Logger::warning("ForumParser $ReportHash: error parsing ongoing conquest wall; " . $e->getMessage());
-          }
-
-        } catch (Exception $e) {
-          Logger::warning("ForumParser $ReportHash: error parsing ongoing conquest details; " . $e->getMessage());
-        }
+        // TODO parse conquests
+//        $oConquestDetails = new ConquestDetails();
+//        try {
+//          if ($ReportChainString == 'town-player-town-player') {
+//            $BesiegedTown = $aHeaderChainData[2];
+//            $SiegeLeadBy = $aHeaderChainData[3];
+//          } else if ($ReportChainString == 'town-player-player-town') {
+//            $BesiegedTown = $aHeaderChainData[3];
+//            $SiegeLeadBy = $aHeaderChainData[2];
+//          } else {
+//            throw new Exception("Unhandled conquest chain: " . $ReportChainString);
+//          }
+//          $oConquestDetails->siegeTownId = $BesiegedTown['id'];
+//          $oConquestDetails->siegeTownName = $BesiegedTown['name'];
+//          $oConquestDetails->siegePlayerId = $SiegeLeadBy['id'];
+//          $oConquestDetails->siegePlayerName = $SiegeLeadBy['name'];
+//          $oConquestDetails->wall = 0;
+//          try {
+//            // find wall level
+//            $aReportStats = $aReportData['content'][5]['content'][1]['content'][3]['content'][1]['content'][1]['content'][2]['content'][1]['content'][1]['content'][1]['content'] ?? null;
+//            if (empty($aReportStats)) {
+//              throw new Exception("Unable to find forum report stats");
+//            }
+//            self::ParseForumReportStats($aParsedStats, $aReportStats, $ReportHash);
+//            if (isset($aParsedStats['wall'])) {
+//              $oConquestDetails->wall = $aParsedStats['wall'];
+//            }
+//          } catch (Exception $e) {
+//            Logger::warning("ForumParser $ReportHash: error parsing ongoing conquest wall; " . $e->getMessage());
+//          }
+//        } catch (Exception $e) {
+//          Logger::warning("ForumParser $ReportHash: error parsing ongoing conquest details; " . $e->getMessage());
+//        }
 
         //loop units
         $aReportContents = $aReportData['content'][5]['content'][1]['content'] ?? null;
@@ -1008,22 +1015,24 @@ class ForumParser
         self::parseSingleSideConquestUnits($cityInfo, $aAttUnits);
 
         // parse siege units
-        try {
-          self::parseSingleSideConquestUnits($aSiegeUnits, $aDefUnits, true);
-          if (empty($aSiegeUnits)) throw new ForumParserExceptionWarning("Unable to parse siege units");
-          $oConquestDetails->siegeUnits = $aSiegeUnits;
+        // TODO: parse conquests
+//        try {
+//          self::parseSingleSideConquestUnits($aSiegeUnits, $aDefUnits, true);
+//          if (empty($aSiegeUnits)) throw new ForumParserExceptionWarning("Unable to parse siege units");
+//          $oConquestDetails->siegeUnits = $aSiegeUnits;
+//
+//          $cityInfo['conquest_details'] = $oConquestDetails;
+//        } catch (Exception $e) {
+//          // $aDefUnits[3]["attributes"]["class"] = "small"  => def units are not made visible
+//          Logger::warning("ForumParser $ReportHash: error parsing ongoing conquest units; " . $e->getMessage());
+//        }
+//
+//        if (isset($aSiegeUnits) && !empty($aSiegeUnits) && (key_exists('unknown_naval', $aSiegeUnits) || key_exists('unknown', $aSiegeUnits))) {
+//          // Friendly attack on conquest is ignored
+//          // TODO: consider it as a friendly attack on an enemy town and save wall level for besieged town
+//          throw new ForumParserExceptionDebug("Ignoring friendly attack on a conquest");
+//        }
 
-          $cityInfo['conquest_details'] = $oConquestDetails;
-        } catch (Exception $e) {
-          // $aDefUnits[3]["attributes"]["class"] = "small"  => def units are not made visible
-          Logger::warning("ForumParser $ReportHash: error parsing ongoing conquest units; " . $e->getMessage());
-        }
-
-        if (isset($aSiegeUnits) && !empty($aSiegeUnits) && (key_exists('unknown_naval', $aSiegeUnits) || key_exists('unknown', $aSiegeUnits))) {
-          // Friendly attack on conquest is ignored
-          // TODO: consider it as a friendly attack on an enemy town and save wall level for besieged town
-          throw new ForumParserExceptionDebug("Ignoring friendly attack on a conquest");
-        }
         break;
       default:
         throw new ForumParserExceptionWarning("Report type not handled: " . $ReportType);
