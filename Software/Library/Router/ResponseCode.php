@@ -11,6 +11,8 @@ define('GD_ERROR_1010', 'Bad request. Invalid or missing parameters');
 define('GD_ERROR_2000', 'Model not found for these parameters.');
 define('GD_ERROR_2010', 'Unable to find a user with this id.');
 define('GD_ERROR_2020', 'Unable to find an index with this key.');
+define('GD_ERROR_2030', 'Unable to find an owner with this id and key.');
+define('GD_ERROR_2040', 'Unable to find an alliance with this id.');
 
 // Authentication
 define('GD_ERROR_3000', 'Unable to handle authentication request');
@@ -59,7 +61,11 @@ define('GD_ERROR_7503', 'Unauthorized. You are not allowed to write to this inde
 define('GD_ERROR_7504', 'Unauthorized. You are not allowed to read this index.');
 define('GD_ERROR_7520', 'You can not edit your own rights on this index.');
 define('GD_ERROR_7530', "Invalid user role: role must be one of ['read', 'write', 'admin', 'owner']");
+define('GD_ERROR_7531', "Invalid owner status: is_hidden must be one of [true, false]");
+define('GD_ERROR_7532', "Invalid number of days: num_days must be >= 0 and <= 365");
+define('GD_ERROR_7533', "Invalid owner: alliance is already on owner list");
 define('GD_ERROR_7540', "Unauthorized. Only an index owner can change the rights of an index admin/owner.");
+define('GD_ERROR_7560', "Unable to update index owners.");
 
 // === Success codes
 define('GD_SUCCESS_1000', 'Request processed successfully');
@@ -74,6 +80,7 @@ define('GD_SUCCESS_1140', 'Account confirmation requested');
 define('GD_SUCCESS_1150', 'Script token created');
 define('GD_SUCCESS_1151', 'Script token authenticated');
 define('GD_SUCCESS_1200', 'Renewed share link');
+define('GD_SUCCESS_1250', 'Updated delete days');
 define('GD_SUCCESS_1300', 'User index access revoked');
 
 define('GD_SUCCESS_4000', 'Profile request processed successfully');

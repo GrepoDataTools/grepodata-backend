@@ -170,6 +170,7 @@ class Index extends BaseRoute
         'role'              => $oIndexRole->role,
         'contribute'        => $oIndexRole->contribute,
         'share_link'        => $bUserIsAdmin ? $oIndex->share_link : 'Unauthorized',
+        'num_days'          => $bUserIsAdmin ? $oIndex->delete_old_intel_days : 0,
         'update_message'    => USERSCRIPT_UPDATE_INFO,
         'owners'            => json_decode(urldecode($oIndexOverview['owners'])),
         'contributors'      => json_decode(urldecode($oIndexOverview['contributors'])),
@@ -253,6 +254,34 @@ class Index extends BaseRoute
         'message'     => 'Error building new index.',
         'parameters'  => $aParams
       ), 404));
+    }
+  }
+
+  public static function SetDeleteIntelDaysPUT()
+  {
+    try {
+      $aParams = self::validateParams(array('access_token', 'index_key', 'num_days'));
+      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+
+      $oIndex = IndexInfo::firstOrFail($aParams['index_key']);
+
+      IndexManagement::verifyUserIsAdmin($oUser, $aParams['index_key']);
+
+      $NumDays = (int) $aParams['num_days'];
+      if ($NumDays < 0 || $NumDays > 365) {
+        ResponseCode::errorCode(7532);
+      }
+
+      $oIndex->delete_old_intel_days = $NumDays;
+      $oIndex->save();
+
+      $aResponse = array(
+        'num_days' => $NumDays
+      );
+      ResponseCode::success($aResponse, 1250);
+
+    } catch (\Exception $e) {
+      ResponseCode::errorCode(1200);
     }
   }
 

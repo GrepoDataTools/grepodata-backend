@@ -67,6 +67,9 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
         ResponseCode::errorCode(7520);
       }
 
+      // User has to be at least admin to manage users
+      IndexManagement::verifyUserIsAdmin($oUser, $aParams['index_key']);
+
       try {
         $oIndex = IndexInfo::firstOrFail($aParams['index_key']);
       } catch (ModelNotFoundException $e) {
@@ -102,9 +105,6 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
       if ($NewRole == Roles::ROLE_OWNER || $OldRole == Roles::ROLE_OWNER) {
         // Only an owner can manage other owners
         $oEditorRole = IndexManagement::verifyUserIsOwner($oUser, $aParams['index_key']);
-      } else {
-        // User has to be at least admin to manage users
-        $oEditorRole = IndexManagement::verifyUserIsAdmin($oUser, $aParams['index_key']);
       }
 
       if (($OldRole == Roles::ROLE_ADMIN || $NewRole == Roles::ROLE_ADMIN) && $oEditorRole->role != Roles::ROLE_OWNER) {

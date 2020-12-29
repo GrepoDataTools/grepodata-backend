@@ -4,8 +4,10 @@ namespace Grepodata\Library\Controller\IndexV2;
 
 use Grepodata\Library\Controller\Alliance;
 use Grepodata\Library\Controller\World;
+use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\Indexer\City;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class IndexOverview
 {
@@ -59,13 +61,6 @@ class IndexOverview
     $aCityRecords = Intel::allByIndex($oIndex);
 
     $aOldOwners = IndexOverview::getOwnerAllianceIds($oIndex->key_code);
-
-    // Get settings and create new record if not existing
-    $oSettings = Settings::getSettingsByIndex($oIndex);
-    if ($oSettings->exists == false) {
-      $oSettings->save();
-      $oSettings = Settings::getSettingsByIndex($oIndex);
-    }
 
     // Process all records
     $aOwners = array();
@@ -159,6 +154,7 @@ class IndexOverview
       }
     }
 
+    // Build player contributions list
     $aRealContributors = array();
     arsort($aContributors);
     $aContributors = array_slice($aContributors, 0, 20, true);
@@ -169,18 +165,11 @@ class IndexOverview
       try {
         $oPlayer = \Grepodata\Library\Controller\Player::first($Contributor, $oIndex->world);
         if ($oPlayer !== null) {
-          $isOwner = true;
-//          $isOwner = false;
-//          foreach ($aRealOwners as $Owner) {
-//            if ($oPlayer->alliance_id == $Owner['alliance_id']) $isOwner = true;
-//          }
-          if ($isOwner) {
-            $aRealContributors[] = array(
-              'player_id' => $Contributor,
-              'player_name' => $oPlayer->name,
-              'count' => $Count,
-            );
-          }
+          $aRealContributors[] = array(
+            'player_id' => $Contributor,
+            'player_name' => $oPlayer->name,
+            'count' => $Count,
+          );
         }
       } catch (\Exception $e) {}
     }
@@ -213,19 +202,18 @@ class IndexOverview
       }
 
       // Handle exclusions
-      $aExcludes = json_decode($oCustomOwners->getOwnersExcluded());
+      $aExcludes = json_decode($oCustomOwners->getOwnersExcluded(), true);
       if ($aExcludes != null && is_array($aExcludes)) {
         $aOwnersExcluded = array();
         foreach ($aOwnersComputed as $aRealOwner) {
           $bExcluded = false;
           foreach ($aExcludes as $aExclude) {
-            $aExclude = (array)$aExclude;
             if ($aRealOwner['alliance_id'] == $aExclude['alliance_id']) {
               $bExcluded = true;
             }
           }
           if ($bExcluded === false) {
-            $aOwnersExcluded[] = $aRealOwner;
+            $aOwnersExcluded[$aRealOwner['alliance_id']] = $aRealOwner;
           }
         }
         $aOwnersComputed = $aOwnersExcluded;
@@ -236,8 +224,10 @@ class IndexOverview
       $aRealOwners = $aOwnersComputed;
       $oCustomOwners->save();
 
+    } catch (ModelNotFoundException $e) {
+      // no inclusions/exclusions found, continue without
     } catch (\Exception $e) {
-//      Logger::warning('error building index overview: ' . $e->getMessage());
+      Logger::error('Error building index overview for index '.$oIndex->key_code.': ' . $e->getMessage());
     }
 
     // Update existing owners actual
@@ -270,13 +260,13 @@ class IndexOverview
 
     // Create new actual records for missing owners
     foreach ($aRealOwners as $AllianceId => $RealOwner) {
-      if (!isset($RealOwner['exists_actual'])) {
+      if (!isset($RealOwner['exists_actual']) && isset($RealOwner['alliance_id'])) {
         // new actual owner
         $oOwnerActual = new \Grepodata\Library\Model\IndexV2\OwnersActual();
         $oOwnerActual->index_key = $oIndex->key_code;
-        $oOwnerActual->alliance_id = $AllianceId;
+        $oOwnerActual->alliance_id = $RealOwner['alliance_id'];
         $oOwnerActual->alliance_name = $RealOwner['alliance_name']??'';
-        $oOwnerActual->hide_intel = $oSettings->hide_allied_intel;
+        $oOwnerActual->hide_intel = true; // Default = true
         $oOwnerActual->share = (int) $RealOwner['contributions'] ?? 0;
         $oOwnerActual->save();
       } else {

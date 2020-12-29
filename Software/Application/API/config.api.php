@@ -327,6 +327,10 @@ $oRouter->Add('indexsettingsgetowners', new Route('/indexer/settings/owners', ar
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\IndexOwners',
   '_method'     => 'IndexOwners'
 )));
+$oRouter->Add('setdeleteinteldays', new Route('/indexer/settings/deletedays', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Index',
+  '_method'     => 'SetDeleteIntelDays'
+)));
 
 
 

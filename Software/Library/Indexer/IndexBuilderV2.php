@@ -4,7 +4,6 @@ namespace Grepodata\Library\Indexer;
 
 use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\Indexer\IndexInfo;
-use Grepodata\Library\Model\IndexV2\Settings;
 use Grepodata\Library\Model\World;
 
 class IndexBuilderV2
@@ -31,13 +30,6 @@ class IndexBuilderV2
     $oIndex->share_link = self::generateIndexKey(10);
     $oIndex->script_version = USERSCRIPT_VERSION;
     $oIndex->save();
-
-    // Insert settings => default settings
-    $oSettings = new Settings();
-    $oSettings->index_key = $NewIndexKey;
-    $oSettings->hide_allied_intel = true;
-    $oSettings->delete_old_intel_days = 0;
-    $oSettings->save();
 
     return $oIndex;
   }

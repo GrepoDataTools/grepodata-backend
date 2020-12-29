@@ -46,6 +46,7 @@ class Profile extends BaseRoute
         'role'        => $oIndex->role,
         'contribute'  => $oIndex->contribute,
         'share_link'  => $bUserIsAdmin ? $oIndex->share_link : 'Unauthorized',
+        'num_days'    => $bUserIsAdmin ? $oIndex->delete_old_intel_days : 0,
         'world'       => $oIndex->world,
         'created_at'  => $oIndex->created_at,
         'updated_at'  => $oIndex->updated_at,
