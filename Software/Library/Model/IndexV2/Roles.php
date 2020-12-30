@@ -21,7 +21,7 @@ class Roles extends Model
     return array(
       'user_id'     => $this->user_id,
       'index_key'   => $this->index_key,
-      'contribute'  => $this->contribute,
+      'contribute'  => $this->contribute ?? true,
       'role'        => $this->role,
     );
   }

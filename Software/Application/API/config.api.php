@@ -413,6 +413,10 @@ $oRouter->Add('searchindexislands', new Route('/indexer/search/island', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Search',
   '_method'     => 'SearchIslands'
 )));
+$oRouter->Add('searchindexusers', new Route('/indexer/search/user', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Search',
+  '_method'     => 'SearchUsers'
+)));
 $oRouter->Add('indexownersinclude', new Route('/indexer/owner/include', array(
   '_controller' => '\Grepodata\Application\API\Route\Indexer\Owners',
   '_method'     => 'IncludeAlliance'

@@ -130,6 +130,59 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
   }
 
   /**
+   * Add a new user to the index
+   * @throws \Exception
+   */
+  public static function IndexUsersPOST()
+  {
+    try {
+      $aParams = self::validateParams(array('access_token', 'index_key', 'user_id'));
+      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+
+      // User has to be at least admin to manage users
+      IndexManagement::verifyUserIsAdmin($oUser, $aParams['index_key']);
+
+      try {
+        $oIndex = IndexInfo::firstOrFail($aParams['index_key']);
+      } catch (ModelNotFoundException $e) {
+        ResponseCode::errorCode(2020);
+      }
+
+      // Get user
+      try {
+        $oManagedUser = \Grepodata\Library\Controller\User::GetUserById($aParams['user_id']);
+      } catch (ModelNotFoundException $e) {
+        ResponseCode::errorCode(2010);
+      }
+
+      // Get existing role user
+      try {
+        $oManagedUserRole = Roles::getUserIndexRole($oManagedUser, $aParams['index_key']);
+        if (!empty($oManagedUserRole)) {
+          // user already exists on this index
+          ResponseCode::errorCode(7570);
+        }
+      } catch (ModelNotFoundException $e) {}
+
+      // Create new role for user
+      $oUserRole = Roles::SetUserIndexRole($oManagedUser, $oIndex, Roles::ROLE_WRITE);
+      $aUpdatedUser = $oUserRole->getPublicFields();
+      $aUpdatedUser['username'] = $oManagedUser->username;
+
+      ResponseCode::success(array(
+        'size' => 1,
+        'data' => $aUpdatedUser
+      ));
+
+    } catch (ModelNotFoundException $e) {
+      die(self::OutputJson(array(
+        'message'     => 'User not found.',
+        'parameters'  => $aParams
+      ), 404));
+    }
+  }
+
+  /**
    * Delete a users access from an index
    * @throws \Exception
    */

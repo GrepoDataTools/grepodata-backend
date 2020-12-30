@@ -63,13 +63,19 @@ class User
     return $oUser;
   }
 
-//  public static function NewSession(\Grepodata\Library\Model\User $oUser)
-//  {
-//    $oUser = new \Grepodata\Library\Model\User();
-//    $oUser->email      = $Mail;
-//    $oUser->passphrase = $Passphrase;
-//    $oUser->role       = $Role;
-//    $oUser->save();
-//    return $oUser;
-//  }
+  /**
+   * Search users
+   * @param $query
+   * @param int $From
+   * @param int $Size
+   * @return \Grepodata\Library\Model\User[]
+   */
+  public static function SearchUser($query, $From=0, $Size=10)
+  {
+    return \Grepodata\Library\Model\User::where('username', 'LIKE', '%'.$query.'%')
+      ->offset($From)
+      ->limit($Size)
+      ->get();
+  }
+
 }

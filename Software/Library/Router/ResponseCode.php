@@ -50,6 +50,8 @@ define('GD_ERROR_6000', 'Unable to handle search request');
 define('GD_ERROR_6100', 'No players found for these parameters');
 define('GD_ERROR_6200', 'No alliances found for these parameters');
 define('GD_ERROR_6300', 'No towns found for these parameters');
+define('GD_ERROR_6400', 'Enter at least 4 characters to search in users.');
+define('GD_ERROR_6401', 'No user found for these parameters.');
 
 // Indexer
 define('GD_ERROR_7000', 'Unable to handle indexer request');
@@ -66,6 +68,7 @@ define('GD_ERROR_7532', "Invalid number of days: num_days must be >= 0 and <= 36
 define('GD_ERROR_7533', "Invalid owner: alliance is already on owner list");
 define('GD_ERROR_7540', "Unauthorized. Only an index owner can change the rights of an index admin/owner.");
 define('GD_ERROR_7560', "Unable to update index owners.");
+define('GD_ERROR_7570', "User is already a member of this index.");
 
 // === Success codes
 define('GD_SUCCESS_1000', 'Request processed successfully');
