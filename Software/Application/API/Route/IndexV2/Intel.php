@@ -88,7 +88,7 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
       $oTown = Town::firstOrFail($aParams['town_id'], $oWorld->grep_id);
 
       // get intel
-      $aIntel = \Grepodata\Library\Controller\IndexV2\Intel::allByUserForTown($oUser, $oWorld->grep_id, $oTown->grep_id);
+      $aIntel = \Grepodata\Library\Controller\IndexV2\Intel::allByUserForTown($oUser, $oWorld->grep_id, $oTown->grep_id, true);
 
       // Parse cities
       $oNow = Carbon::now();
@@ -166,17 +166,6 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
           $aDuplicates[] = $Note->note_id;
         }
       }
-
-      try {
-        // TODO: Hide owner intel
-//        $aOwners = IndexOverview::getOwnerAllianceIds($oPrimaryIndex->key_code);
-//        if (isset($aResponse['alliance_id']) && $aResponse['alliance_id']!==null) {
-//          if (in_array($aResponse['alliance_id'], $aOwners)) {
-//            $aResponse['intel'] = array();
-//            $aResponse['hidden_owner_intel'] = true;
-//          }
-//        }
-      } catch (Exception $e) {}
 
       // Sort intel by sort_date descending
       //$aResponse['intel'] = array_reverse($aResponse['intel']);

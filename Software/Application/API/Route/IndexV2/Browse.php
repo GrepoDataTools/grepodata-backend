@@ -144,14 +144,8 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
       $oPlayer = \Grepodata\Library\Controller\Player::firstOrFail($aParams['player_id'], $oWorld->grep_id);
 
       // Get intel
-      $aIntel = \Grepodata\Library\Controller\IndexV2\Intel::allByUserForPlayer($oUser, $oWorld->grep_id, $oPlayer->grep_id);
+      $aIntel = \Grepodata\Library\Controller\IndexV2\Intel::allByUserForPlayer($oUser, $oWorld->grep_id, $oPlayer->grep_id, true);
       if ($aIntel === null || sizeof($aIntel) <= 0) throw new ModelNotFoundException();
-
-
-      // TODO: Hide owner intel
-//      $aOwners = IndexOverview::getOwnerAllianceIds($aParams['key']);
-//      $oPlayer = Player::first($aParams['id'], $oIndex->world);
-//      if ($oPlayer !== null && in_array($oPlayer->alliance_id, $aOwners)) throw new ModelNotFoundException();
 
       $aResponse = self::FormatBrowseOutput($aIntel, $oWorld);
       $aResponse['script_version'] = USERSCRIPT_VERSION;
@@ -180,12 +174,8 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
       $oAlliance = \Grepodata\Library\Controller\Alliance::firstOrFail($aParams['alliance_id'], $oWorld->grep_id);
 
       // Get intel
-      $aIntel = \Grepodata\Library\Controller\IndexV2\Intel::allByUserForAlliance($oUser, $oWorld->grep_id, $oAlliance->grep_id);
+      $aIntel = \Grepodata\Library\Controller\IndexV2\Intel::allByUserForAlliance($oUser, $oWorld->grep_id, $oAlliance->grep_id, true);
       if ($aIntel === null || sizeof($aIntel) <= 0) throw new ModelNotFoundException();
-
-      // TODO: Hide owner intel
-//      $aOwners = IndexOverview::getOwnerAllianceIds($aParams['key']);
-//      if (in_array($aParams['id'], $aOwners)) throw new ModelNotFoundException();
 
       // If model is too big, only select latest intel for each town
       if (sizeof($aIntel) > 1200) {

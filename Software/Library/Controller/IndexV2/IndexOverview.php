@@ -233,7 +233,7 @@ class IndexOverview
     // Update existing owners actual
     $aCurrentOwnersActual = OwnersActual::getAllByIndex($oIndex);
     foreach ($aCurrentOwnersActual as $oOwnerActual) {
-      if (key_exists($oOwnerActual->alliance_id, $aRealOwners)) {
+      if (in_array($oOwnerActual->alliance_id, array_column($aRealOwners, 'alliance_id'))) {
         // update
         $aRealOwners[$oOwnerActual->alliance_id]['exists_actual'] = true;
         $bUpdate = false;

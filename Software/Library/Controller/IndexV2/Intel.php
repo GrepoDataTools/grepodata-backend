@@ -10,6 +10,7 @@ use Grepodata\Library\Model\User;
 use Grepodata\Library\Model\World;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 
 class Intel
 {
@@ -449,13 +450,11 @@ class Intel
    * @param User $oUser
    * @param int $From
    * @param int $Size
-   * @return \Grepodata\Library\Model\IndexV2\Intel[]
+   * @return \Grepodata\Library\Model\IndexV2\Intel[]|Builder[]|Collection
    */
   public static function allByUser(User $oUser, $From = 0, $Size = 20)
   {
-    return \Grepodata\Library\Model\IndexV2\Intel::select(['Indexer_intel.*'])
-      ->join('Indexer_intel_shared', 'Indexer_intel_shared.intel_id', '=', 'Indexer_intel.id')
-      ->where('Indexer_intel_shared.user_id', '=', $oUser->id)
+    return self::selectByUser($oUser, true)
       ->orderBy('created_at', 'desc')
       ->distinct('Indexer_intel.id')
       ->offset($From)
@@ -469,9 +468,9 @@ class Intel
    * @param $TownId
    * @return \Grepodata\Library\Model\IndexV2\Intel[]|Builder[]|Collection
    */
-  public static function allByUserForTown(User $oUser, $World, $TownId)
+  public static function allByUserForTown(User $oUser, $World, $TownId, $bCheckHiddenOwners=false)
   {
-    return self::selectByUser($oUser)
+    return self::selectByUser($oUser, $bCheckHiddenOwners)
       ->where('Indexer_intel.town_id', '=', $TownId, 'and')
       ->where('Indexer_intel.world', '=', $World)
       ->orderBy('created_at', 'asc')
@@ -485,9 +484,9 @@ class Intel
    * @param $PlayerId
    * @return \Grepodata\Library\Model\IndexV2\Intel[]|Builder[]|Collection
    */
-  public static function allByUserForPlayer(User $oUser, $World, $PlayerId)
+  public static function allByUserForPlayer(User $oUser, $World, $PlayerId, $bCheckHiddenOwners=false)
   {
-    return self::selectByUser($oUser)
+    return self::selectByUser($oUser, $bCheckHiddenOwners)
       ->where('Indexer_intel.player_id', '=', $PlayerId, 'and')
       ->where('Indexer_intel.world', '=', $World)
       ->orderBy('id', 'desc')
@@ -499,11 +498,12 @@ class Intel
    * @param User $oUser
    * @param $World
    * @param $AllianceId
+   * @param bool $bCheckHiddenOwners
    * @return \Grepodata\Library\Model\IndexV2\Intel[]|Builder[]|Collection
    */
-  public static function allByUserForAlliance(User $oUser, $World, $AllianceId)
+  public static function allByUserForAlliance(User $oUser, $World, $AllianceId, $bCheckHiddenOwners=false)
   {
-    return self::selectByUser($oUser)
+    return self::selectByUser($oUser, $bCheckHiddenOwners)
       ->where('Indexer_intel.alliance_id', '=', $AllianceId, 'and')
       ->where('Indexer_intel.world', '=', $World)
       ->orderBy('id', 'desc')
@@ -514,18 +514,49 @@ class Intel
   /**
    * Select all intel for a specific user, this includes intel collected by the user but also intel shared with the user
    * @param User $oUser
+   * @param bool $bCheckHiddenOwners
    * @return Builder
    */
-  private static function selectByUser(User $oUser)
+  private static function selectByUser(User $oUser, $bCheckHiddenOwners=false)
   {
     $Id = $oUser->id;
-    return \Grepodata\Library\Model\IndexV2\Intel::select(['Indexer_intel.*'])
+
+    // Select basic intel dimensions (joins on shared to get the index keys, left joins on roles to check user access)
+    $oQuery = \Grepodata\Library\Model\IndexV2\Intel::select(['Indexer_intel.*'])
       ->join('Indexer_intel_shared', 'Indexer_intel_shared.intel_id', '=', 'Indexer_intel.id')
-      ->leftJoin('Indexer_roles', 'Indexer_roles.index_key', '=', 'Indexer_intel_shared.index_key')
-      ->where(function ($query) use ($Id) {
+      ->leftJoin('Indexer_roles', 'Indexer_roles.index_key', '=', 'Indexer_intel_shared.index_key');
+
+    if ($bCheckHiddenOwners===true) {
+      // Left join index owners
+      $oQuery->leftJoin('Indexer_owners_actual', function($query)
+      {
+        $query->on('Indexer_owners_actual.index_key', '=', 'Indexer_intel_shared.index_key')
+          ->on('Indexer_owners_actual.alliance_id', '=', 'Indexer_intel.alliance_id');
+      });
+
+      // Keep records without owner data or if owner intel is not hidden
+      $oQuery->where(function ($query) {
+        $query->where('Indexer_owners_actual.hide_intel', '=', null)
+          ->orWhere('Indexer_owners_actual.hide_intel', '=', false);
+      });
+    }
+
+    // Filter records that belong to a specific user (can be either personal intel or shared intel)
+    $oQuery->where(function ($query) use ($Id) {
         $query->where('Indexer_intel_shared.user_id', '=', $Id)
           ->orWhere('Indexer_roles.user_id', '=', $Id);
       });
+
+    return $oQuery;
+
+//    SELECT * FROM Indexer_intel
+//    JOIN Indexer_intel_shared ON Indexer_intel.id = Indexer_intel_shared.intel_id
+//    LEFT JOIN Indexer_roles ON Indexer_roles.index_key = Indexer_intel_shared.index_key
+//    LEFT JOIN Indexer_owners_actual ON Indexer_owners_actual.index_key = Indexer_intel_shared.index_key AND Indexer_owners_actual.alliance_id = Indexer_intel.alliance_id
+//    WHERE (Indexer_owners_actual.hide_intel IS NULL OR Indexer_owners_actual.hide_intel = 0)
+//    AND (Indexer_intel_shared.user_id = 1 OR Indexer_roles.user_id = 1)
+//    AND Indexer_intel.world = 'nl84' AND Indexer_intel.town_id = 1662
+
   }
 
   /**
