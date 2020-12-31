@@ -12,6 +12,12 @@ class IndexBuilderV2
   public function __construct() {
   }
 
+  /**
+   * @param $World
+   * @param $IndexName
+   * @param $UserId
+   * @return IndexInfo
+   */
   public static function buildNewIndex($World, $IndexName, $UserId) {
     // Find a new key
     $NewIndexKey = self::generateIndexKey(8);

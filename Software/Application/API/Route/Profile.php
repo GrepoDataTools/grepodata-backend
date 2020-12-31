@@ -61,7 +61,7 @@ class Profile extends BaseRoute
   public static function LinkedAccountsGET()
   {
     // Validate params
-    $aParams = self::validateParams(array('access_token'), array('access_token'));
+    $aParams = self::validateParams(array('access_token'));
     $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
 
     // Email needs to be confirmed to continue
@@ -111,7 +111,7 @@ class Profile extends BaseRoute
   public static function RemoveLinkedAccountPOST()
   {
     // Validate params
-    $aParams = self::validateParams(array('access_token', 'player_id', 'server'), array('access_token'));
+    $aParams = self::validateParams(array('access_token', 'player_id', 'server'));
     $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
 
     // Email needs to be confirmed to continue

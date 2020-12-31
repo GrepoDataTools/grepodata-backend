@@ -216,7 +216,14 @@ class Index extends BaseRoute
           Logger::error("Error building index overview for new index " . $oIndex->key_code . " (".$e->getMessage().")");
         }
 
-        return self::OutputJson(array('status' => 'ok', 'key' => $oIndex->key_code));
+
+        $aResponse = array(
+          'status' => 'ok',
+          'key' => $oIndex->key_code,
+          'share_link' => $oIndex->share_link,
+        );
+
+        return self::OutputJson($aResponse);
       }
       else throw new \Exception();
 

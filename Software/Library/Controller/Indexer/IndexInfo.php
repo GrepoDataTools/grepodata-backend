@@ -51,7 +51,7 @@ class IndexInfo
     return \Grepodata\Library\Model\Indexer\IndexInfo::select(['Index_info.*', 'Indexer_roles.role', 'Indexer_roles.contribute'])
       ->join('Indexer_roles', 'Indexer_roles.index_key', '=', 'Index_info.key_code')
       ->where('Indexer_roles.user_id', '=', $oUser->id)
-      ->orderBy('Index_info.created_at', 'desc')
+      ->orderBy('Indexer_roles.id', 'desc')
       ->get();
   }
 
