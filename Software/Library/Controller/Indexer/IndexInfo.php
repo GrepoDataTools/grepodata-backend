@@ -45,10 +45,7 @@ class IndexInfo
    */
   public static function allByUser(User $oUser)
   {
-//    return \Grepodata\Library\Model\IndexV2\Roles::where('user_id', '=', $oUser->id)
-//      ->orderBy('created_at', 'desc')
-//      ->get();
-    return \Grepodata\Library\Model\Indexer\IndexInfo::select(['Index_info.*', 'Indexer_roles.role', 'Indexer_roles.contribute'])
+    return \Grepodata\Library\Model\Indexer\IndexInfo::select(['Index_info.*', 'Indexer_roles.role', 'Indexer_roles.contribute', 'Indexer_roles.id AS sort_id'])
       ->join('Indexer_roles', 'Indexer_roles.index_key', '=', 'Index_info.key_code')
       ->where('Indexer_roles.user_id', '=', $oUser->id)
       ->orderBy('Indexer_roles.id', 'desc')

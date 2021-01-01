@@ -24,14 +24,11 @@ class Profile extends BaseRoute
       ResponseCode::errorCode(3010, array(), 403);
     }
 
-    $aResponse = array(
-      'rows' => 0,
-      'items' => array(),
-    );
     $aIndexes = \Grepodata\Library\Controller\Indexer\IndexInfo::allByUser($oUser);
+    $aIndexItems = array();
     foreach ($aIndexes as $oIndex) {
       $aOverview = [];
-      if (isset($aParams['expand_overview'])) {
+      if (isset($aParams['expand_overview']) || isset($aParams['sort_by'])) {
         try {
           $oOverview = IndexOverview::firstOrFail($oIndex->key_code);
           $aOverview = $oOverview->getMinimalFields();
@@ -40,7 +37,7 @@ class Profile extends BaseRoute
         }
       }
       $bUserIsAdmin = in_array($oIndex->role, array(Roles::ROLE_ADMIN, Roles::ROLE_OWNER));
-      $aResponse['items'][] = array(
+      $aIndexItems[] = array(
         'key'         => $oIndex->key_code,
         'name'        => $oIndex->index_name,
         'role'        => $oIndex->role,
@@ -50,10 +47,34 @@ class Profile extends BaseRoute
         'world'       => $oIndex->world,
         'created_at'  => $oIndex->created_at,
         'updated_at'  => $oIndex->updated_at,
-        'stats'       => $aOverview
+        'stats'       => $aOverview,
+        'status'      => $oIndex->status
       );
     }
-    $aResponse['rows'] = sizeof($aResponse['items']);
+
+    // optional sort by number of reports descending
+    if (isset($aParams['sort_by'])) {
+      if ($aParams['sort_by'] == 'reports') {
+        usort($aIndexItems, function ($item1, $item2) {
+          return $item1['stats']['total_reports'] < $item2['stats']['total_reports'] ? 1 : -1;
+        });
+      }
+    }
+
+    // push inactive indexes to the back
+    usort($aIndexItems, function ($item1, $item2) {
+      return $item1['status'] === 'active' ? -1 : 1;
+    });
+
+    // Optional limit
+    if (isset($aParams['limit'])) {
+      $aIndexItems = array_slice($aIndexItems, 0, $aParams['limit']);
+    }
+
+    $aResponse = array(
+      'rows' => sizeof($aIndexItems),
+      'items' => $aIndexItems,
+    );
 
     ResponseCode::success($aResponse);
   }
