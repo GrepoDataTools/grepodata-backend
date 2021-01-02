@@ -10,22 +10,6 @@ class IntelShared
 {
 
   /**
-   * Returns all hashes for the given player_id on this world
-   * @param $PlayerId
-   * @param $World
-   * @param int $Limit
-   * @return Collection
-   */
-  public static function getHashlistForPlayer($PlayerId, $World, $Limit = 300)
-  {
-    return \Grepodata\Library\Model\IndexV2\IntelShared::where('world', '=', $World, 'and')
-      ->where('player_id', '=', $PlayerId)
-      ->orderBy('id', 'desc')
-      ->limit($Limit)
-      ->get();
-  }
-
-  /**
    * Returns a specific record if it exists for this hash
    * @param $World
    * @param $Hash
@@ -83,4 +67,5 @@ class IntelShared
     $oIntelShared->world = $World;
     $oIntelShared->save();
   }
+
 }

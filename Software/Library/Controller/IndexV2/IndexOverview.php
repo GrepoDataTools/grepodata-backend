@@ -221,8 +221,11 @@ class IndexOverview
 
       // Save results
       $oCustomOwners->setOwnersComputed($aOwnersComputed);
-      $aRealOwners = $aOwnersComputed;
+      $aRealOwners = array();
       $oCustomOwners->save();
+      foreach ($aOwnersComputed as $aRealOwner) {
+        $aRealOwners[$aRealOwner['alliance_id']] = $aRealOwner;
+      }
 
     } catch (ModelNotFoundException $e) {
       // no inclusions/exclusions found, continue without

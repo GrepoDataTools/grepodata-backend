@@ -6,7 +6,7 @@ use Grepodata\Library\Controller\Indexer\IndexInfo;
 use Grepodata\Library\Controller\Indexer\ReportId;
 use Grepodata\Library\Controller\IndexV2\Intel;
 use Grepodata\Library\Controller\IndexV2\IntelShared;
-use Grepodata\Library\Exception\DuplicateIntelWarning;
+use Grepodata\Library\Controller\IndexV2\Roles;
 use Grepodata\Library\Exception\ForumParserExceptionDebug;
 use Grepodata\Library\Exception\ForumParserExceptionError;
 use Grepodata\Library\Exception\ForumParserExceptionWarning;
@@ -17,6 +17,8 @@ use Grepodata\Library\Indexer\IndexBuilderV2;
 use Grepodata\Library\Indexer\Validator;
 use Grepodata\Library\Logger\Logger;
 
+use Illuminate\Database\Capsule\Manager as DB;
+
 class Report extends \Grepodata\Library\Router\BaseRoute
 {
   public static function LatestReportHashesGET()
@@ -24,42 +26,46 @@ class Report extends \Grepodata\Library\Router\BaseRoute
     $aParams = array();
     try {
       // Validate params
-      $aParams = self::validateParams(array('key', 'player_id'));
+      $aParams = self::validateParams(array('world', 'access_token'));
+      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
 
-      // Validate index
-      $bValidIndex = false;
-      $oIndex = null;
-      $Attempts = 0;
-      while (!$bValidIndex && $Attempts <= 50) {
-        $Attempts += 1;
-        $oIndex = Validator::IsValidIndex($aParams['key']);
-        if ($oIndex === null || $oIndex === false) {
-          die(self::OutputJson(array(), 200));
-        }
-        if (isset($oIndex->moved_to_index) && $oIndex->moved_to_index !== null && $oIndex->moved_to_index != '') {
-          $aParams['key'] = $oIndex->moved_to_index; // redirect to new index
-        } else {
-          $bValidIndex = true;
+      // Get all active indexes for this user in this world
+      $aIndexes = IndexInfo::allByUserAndWorld($oUser, $aParams['world']);
+      $aActiveIndexes = array();
+      foreach ($aIndexes as $oIndex) {
+        if ($oIndex->role != Roles::ROLE_READ && $oIndex->contribute == true) {
+          $aActiveIndexes[$oIndex->key_code] = $aActiveIndexes;
         }
       }
 
-      $aResponse = array('i'=>array(),'f'=>array());
-      // inbox history
-      $aHashes = ReportId::latestByIndexKeyByPlayer($oIndex->key_code, $aParams['player_id'], 50);
-      /** @var \Grepodata\Library\Model\Indexer\ReportId $Id */
-      foreach ($aHashes as $Id) {
-        $aResponse['i'][] = $Id->report_id;
+      // Number of recent hashes to return
+      $Window = 250;
+
+      // Get the latest n records that appear in all of these indexes or that were personally indexed by this user
+      $KeyString = "'" . join("', '", array_keys($aActiveIndexes)) . "'";
+      $aHashes = DB::select(DB::raw("
+          SELECT distinct report_hash FROM (
+            SELECT report_hash, min(id) as sort_id
+            FROM Indexer_intel_shared 
+            WHERE (index_key is NULL and user_id = ".$oUser->id.") or index_key IN (".$KeyString.")
+            GROUP BY report_hash, user_id
+            HAVING user_id = ".$oUser->id." or COUNT(index_key) = ".count($aActiveIndexes)."
+            ORDER BY sort_id DESC
+          ) as hashes
+          LIMIT ".$Window."
+        "));
+
+      $aHashlist = array();
+      foreach ($aHashes as $Hash) {
+        $Hash = (array) $Hash;
+        if (isset($Hash['report_hash'])) {
+          $aHashlist[] = $Hash['report_hash'];
+        }
       }
-      // forum history
-      $aHashes = ReportId::latestByIndexKey($oIndex->key_code, 300);
-      /** @var \Grepodata\Library\Model\Indexer\ReportId $Id */
-      foreach ($aHashes as $Id) {
-        $aResponse['f'][] = $Id->report_id;
-      }
-      if (isset($aParams['filter'])) {
-        // TODO: parse filter
-        Logger::indexDebug("filter => key: ".$aParams['key'].", id: ".$aParams['player_id'].", value: ".$aParams['filter']);
-      }
+
+      $aResponse = array(
+        'hashlist' => $aHashlist
+      );
 
       die(self::OutputJson($aResponse, 200));
     } catch (\Exception $e){
@@ -218,6 +224,10 @@ class Report extends \Grepodata\Library\Router\BaseRoute
         // Add the hash to all indexes for this user and add a hash record for self
         /** @var \Grepodata\Library\Model\Indexer\IndexInfo $oIndex */
         foreach ($aIndexes as $oIndex) {
+          if ($oIndex->role != Roles::ROLE_READ && $oIndex->contribute === true) {
+            // TODO: only save if user has write access on the index and if the user has chosen to contribute to this index
+          }
+
           IntelShared::saveHashToIndex($ReportHash, $IntelId, $oIndex);
 
           // Toggle new report switch on index

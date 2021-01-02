@@ -6,6 +6,7 @@ namespace Grepodata\Library\Router;
 define('GD_ERROR_0000', 'Undefined error code');
 define('GD_ERROR_1000', 'Unable to handle request');
 define('GD_ERROR_1010', 'Bad request. Invalid or missing parameters');
+define('GD_ERROR_1200', 'Unable to process request');
 
 // Model not found
 define('GD_ERROR_2000', 'Model not found for these parameters.');

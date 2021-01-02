@@ -378,7 +378,7 @@ $oRouter->Add('getWorlds', new Route('/indexer/worlds', array(
   '_method'     => 'GetWorlds'
 )));
 $oRouter->Add('reportHashList', new Route('/indexer/getlatest', array(
-  '_controller' => '\Grepodata\Application\API\Route\Indexer\Report',
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Report',
   '_method'     => 'LatestReportHashes'
 )));
 $oRouter->Add('addReportForum', new Route('/indexer/addreport', array(
