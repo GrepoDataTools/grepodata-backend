@@ -96,7 +96,7 @@ admin@grepodata.com',
     ResponseCode::success($aResponseData, 1120);
   }
 
-  public static function RequestNewConfirmMailPOST()
+  public static function RequestNewConfirmMailGET()
   {
     // Validate params
     $aParams = self::validateParams(array('access_token'));
@@ -120,7 +120,7 @@ admin@grepodata.com',
           'Grepodata account confirmation',
           'Hi,<br/>
 <br/>
-You are receiving this message because an account was created for your email address on grepodata.com.<br/>
+You are receiving this message because you requested a new activation link for this email address on grepodata.com.<br/>
 <br/>
 Please click on the following link to confirm your account:<br/>
 <br/>
@@ -138,9 +138,12 @@ admin@grepodata.com',
       }
     }
 
+    $Masked = self::maskEmail($oUser->email);
+
     // Response
     $aResponseData = array(
-      'email_sent'    => (isset($Result)&&$Result>=1 ? true : false)
+      'email_sent' => ((isset($Result)&&$Result>=1)||bDevelopmentMode ? true : false),
+      'masked' => $Masked
     );
     ResponseCode::success($aResponseData, 1140);
   }
@@ -154,13 +157,13 @@ admin@grepodata.com',
       try {
         $oUser = User::GetUserByToken($aParams['token']);
       } catch (ModelNotFoundException $e) {
-        header("Location: ".FRONTEND_URL."/auth/profile");
+        header("Location: ".FRONTEND_URL."/profile?token=invalid");
         die();
       }
 
       if ($oUser->is_confirmed == true) {
         // Already confirmed
-        header("Location: ".FRONTEND_URL."/auth/profile");
+        header("Location: ".FRONTEND_URL."/profile?token=confirmed");
         die();
       }
 
@@ -168,7 +171,7 @@ admin@grepodata.com',
       $oUser->token = null;
       $oUser->save();
 
-//      // transfer old indexes
+//      // TODO: Detect V1 indexes and asign user to index as owner
 //      try {
 //        $oIndexes = IndexInfo::allByMail($oUser->email);
 //        foreach ($oIndexes as $oIndex) {
@@ -184,10 +187,10 @@ admin@grepodata.com',
 //      }
 
       // Redirect to profile
-      header("Location: ".FRONTEND_URL."/auth/profile");
+      header("Location: ".FRONTEND_URL."/profile?token=confirmed");
       die();
     } catch (\Exception $e) {
-      header("Location: ".FRONTEND_URL."/auth/profile");
+      header("Location: ".FRONTEND_URL."/profile?token=failed");
       die();
     }
   }
@@ -485,4 +488,22 @@ admin@grepodata.com',
     $aResponse = array();
     ResponseCode::success($aResponse, 1130);
   }
+
+  private static function maskEmail($email) {
+    $mail_parts = explode("@", $email);
+    $length = strlen($mail_parts[0]);
+
+    if($length <= 4 & $length > 1)
+    {
+      $show = 1;
+    }else{
+      $show = floor($length/2);
+    }
+
+    $hide = $length - $show;
+    $replace = str_repeat("*", $hide);
+
+    return substr_replace ( $mail_parts[0] , $replace , $show, $hide ) . "@" . substr_replace($mail_parts[1], "**", 0, 2);
+  }
+
 }

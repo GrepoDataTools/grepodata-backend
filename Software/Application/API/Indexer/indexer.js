@@ -2499,7 +2499,7 @@ var verbose = false;
                         $.ajax({
                             method: "get",
                             headers: {"access_token": access_token},
-                            url: "https://api.grepodata.com/indexer/getlatest?world=" + Game.world_id
+                            url: backend_url + "/indexer/getlatest?world=" + Game.world_id
                         }).done(function (b) {
                             try {
                                 if (globals.reportsFound === undefined) {

@@ -454,8 +454,10 @@ class Intel
    */
   public static function allByUser(User $oUser, $From = 0, $Size = 20)
   {
-    return self::selectByUser($oUser, true)
-      ->orderBy('created_at', 'desc')
+    return \Grepodata\Library\Model\IndexV2\Intel::select(['Indexer_intel.*'])
+      ->join('Indexer_intel_shared', 'Indexer_intel_shared.intel_id', '=', 'Indexer_intel.id')
+      ->where('Indexer_intel_shared.user_id', '=', $oUser->id)
+      ->orderBy('Indexer_intel.id', 'desc')
       ->distinct('Indexer_intel.id')
       ->offset($From)
       ->limit($Size+1)

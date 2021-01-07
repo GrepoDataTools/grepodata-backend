@@ -26,6 +26,10 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
 
       $From = $aParams['from'] ?? 0;
       $Size = $aParams['size'] ?? 20;
+
+      if ($From > 1000 || $Size > 50) {
+        throw new ModelNotFoundException();
+      }
       $aIntel = \Grepodata\Library\Controller\IndexV2\Intel::allByUser($oUser, $From, $Size);
 
       $aIntelData = array();
