@@ -96,6 +96,9 @@ class Authentication
    */
   public static function verifyAccountToken($Token)
   {
+    if (empty($Token)) {
+      ResponseCode::errorCode(3006, array(), 401);
+    }
     try {
       $oUser = \Grepodata\Library\Controller\User::GetUserByToken($Token);
     } catch (ModelNotFoundException $e) {
