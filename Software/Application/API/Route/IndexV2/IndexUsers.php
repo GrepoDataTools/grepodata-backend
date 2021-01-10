@@ -68,7 +68,7 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
       }
 
       // User has to be at least admin to manage users
-      IndexManagement::verifyUserIsAdmin($oUser, $aParams['index_key']);
+      $oEditorRole = IndexManagement::verifyUserIsAdmin($oUser, $aParams['index_key']);
 
       try {
         $oIndex = IndexInfo::firstOrFail($aParams['index_key']);

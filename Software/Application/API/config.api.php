@@ -331,6 +331,10 @@ $oRouter->Add('setdeleteinteldays', new Route('/indexer/settings/deletedays', ar
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Index',
   '_method'     => 'SetDeleteIntelDays'
 )));
+$oRouter->Add('setindexcontribute', new Route('/indexer/settings/contribute', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Index',
+  '_method'     => 'IndexContribute'
+)));
 
 
 

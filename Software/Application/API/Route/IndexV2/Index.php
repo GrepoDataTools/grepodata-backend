@@ -119,14 +119,6 @@ class Index extends BaseRoute
         ), 401));
       }
 
-      // TODO: ?
-      if (isset($oIndex->moved_to_index) && $oIndex->moved_to_index !== null && $oIndex->moved_to_index != '') {
-        die(self::OutputJson(array(
-          'moved'       => true,
-          'message'     => 'Index has moved!'
-        ), 200));
-      }
-
       $oIndexRole = IndexManagement::verifyUserCanRead($oUser, $aParams['key']);
       $bUserIsAdmin = in_array($oIndexRole->role, array(Roles::ROLE_ADMIN, Roles::ROLE_OWNER));
 
@@ -134,26 +126,27 @@ class Index extends BaseRoute
       if ($oIndexOverview == null) throw new ModelNotFoundException();
 
       $aRecentConquests = array();
-      try {
-        $oWorld = World::getWorldById($oIndex->world);
-        $aConquests = Conquest::allByIndex($oIndex, 0, 30);
-        $SearchLimit = 1;
-        if (count($aConquests) > 3) $SearchLimit = 2;
-        if (count($aConquests) > 6) $SearchLimit = 3;
-        if (count($aConquests) >= 10) $SearchLimit = 4;
-        if (count($aConquests) >= 20) $SearchLimit = 5;
-        foreach ($aConquests as $oConquest) {
-          if ($oConquest->num_attacks_counted>=$SearchLimit) {
-            $aRecentConquests[] = $oConquest->getPublicFields($oWorld);
-          }
-          if (count($aRecentConquests) > 10) {
-            // only return top 10
-            break;
-          }
-        }
-      } catch (Exception $e) {
-        Logger::warning("Error loading recent conquests: " . $e->getMessage());
-      }
+      // TODO: index conquests
+//      try {
+//        $oWorld = World::getWorldById($oIndex->world);
+//        $aConquests = Conquest::allByIndex($oIndex, 0, 30);
+//        $SearchLimit = 1;
+//        if (count($aConquests) > 3) $SearchLimit = 2;
+//        if (count($aConquests) > 6) $SearchLimit = 3;
+//        if (count($aConquests) >= 10) $SearchLimit = 4;
+//        if (count($aConquests) >= 20) $SearchLimit = 5;
+//        foreach ($aConquests as $oConquest) {
+//          if ($oConquest->num_attacks_counted>=$SearchLimit) {
+//            $aRecentConquests[] = $oConquest->getPublicFields($oWorld);
+//          }
+//          if (count($aRecentConquests) > 10) {
+//            // only return top 10
+//            break;
+//          }
+//        }
+//      } catch (Exception $e) {
+//        Logger::warning("Error loading recent conquests: " . $e->getMessage());
+//      }
 
       $aResponse = array(
         'is_admin'          => $bUserIsAdmin,
@@ -186,6 +179,35 @@ class Index extends BaseRoute
         'message'     => 'No index overview found for these parameters.',
         'parameters'  => $aParams
       ), 404));
+    }
+  }
+
+  /**
+   * Enable or disable contributing to an index
+   */
+  public static function IndexContributePUT()
+  {
+    $aParams = array();
+    try {
+      // Validate params
+      $aParams = self::validateParams(array('access_token', 'index_key', 'contribute'));
+      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+
+      $oUserRole = IndexManagement::verifyUserCanWrite($oUser, $aParams['index_key']);
+
+      $bContribute = $aParams['contribute'] === true || $aParams['contribute'] === 'true';
+      $oUserRole->contribute = $bContribute;
+      $oUserRole->save();
+
+      $aUpdatedUser = $oUserRole->getPublicFields();
+
+      ResponseCode::success(array(
+        'size' => 1,
+        'data' => $aUpdatedUser
+      ));
+
+    } catch (\Exception $e) {
+      ResponseCode::errorCode(1200);
     }
   }
 

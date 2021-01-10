@@ -224,16 +224,15 @@ class Report extends \Grepodata\Library\Router\BaseRoute
         // Add the hash to all indexes for this user and add a hash record for self
         /** @var \Grepodata\Library\Model\Indexer\IndexInfo $oIndex */
         foreach ($aIndexes as $oIndex) {
-          if ($oIndex->role != Roles::ROLE_READ && $oIndex->contribute === true) {
-            // TODO: only save if user has write access on the index and if the user has chosen to contribute to this index
-          }
+          if ($oIndex->role != Roles::ROLE_READ && $oIndex->contribute == true) {
+            // only save if user has write access on the index and if the user has chosen to contribute to this index
+            IntelShared::saveHashToIndex($ReportHash, $IntelId, $oIndex);
 
-          IntelShared::saveHashToIndex($ReportHash, $IntelId, $oIndex);
-
-          // Toggle new report switch on index
-          if ($oIndex->new_report != 1) {
-            $oIndex->new_report = 1;
-            $oIndex->save();
+            // Toggle new report switch on index
+            if ($oIndex->new_report != 1) {
+              $oIndex->new_report = 1;
+              $oIndex->save();
+            }
           }
         }
         IntelShared::saveHashToUser($ReportHash, $IntelId, $oUser, $World);
