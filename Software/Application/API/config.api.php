@@ -86,6 +86,18 @@ $oRouter->Add('authenticatescriptlink', new Route('/auth/authenticatescriptlink'
   '_ratelimit'  => $limit100PerMin
 )));
 
+// Account removal
+$oRouter->Add('accountdeletemail', new Route('/auth/deleteaccount', array(
+  '_controller' => '\Grepodata\Application\API\Route\Authentication',
+  '_method'     => 'DeleteAccount',
+  '_ratelimit'  => $limit3PerMin
+)));
+$oRouter->Add('accountdeleteconfirm', new Route('/auth/deleteaccountconfirm', array(
+  '_controller' => '\Grepodata\Application\API\Route\Authentication',
+  '_method'     => 'DeleteAccountConfirmed',
+  '_ratelimit'  => $limit3PerMin
+)));
+
 
 // PROFILE
 //indexes

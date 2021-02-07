@@ -498,6 +498,92 @@ admin@grepodata.com',
     ResponseCode::success($aResponse, 1130);
   }
 
+  /**
+   * Change the user password
+   */
+  public static function DeleteAccountConfirmedPOST()
+  {
+    // Validate params
+    $aParams = self::validateParams(array('captcha', 'token', 'access_token'));
+
+    // Verify account login and token
+    $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+    $oUserToken = \Grepodata\Library\Router\Authentication::verifyAccountToken($aParams['token']);
+
+    // Validate captcha
+    if (!bDevelopmentMode) {
+      BaseRoute::verifyCaptcha($aParams['captcha']);
+    }
+
+    // Delete all personal data
+    $oUser->username = "DELETED_" . IndexBuilder::generateIndexKey(8);
+    $oUser->email = "DELETED_" . IndexBuilder::generateIndexKey(8);
+    $oUser->passphrase = password_hash(IndexBuilder::generateIndexKey(12), PASSWORD_BCRYPT);
+    $oUser->token = bin2hex(random_bytes(16));
+    $oUser->save();
+
+    Logger::error("Account removal completed: " . $oUser->id);
+
+    // Response
+    $aResponse = array(
+      'success' => true,
+      'status' => 'account removed'
+    );
+    ResponseCode::success($aResponse, 1160);
+  }
+
+  /**
+   * Change the user password
+   */
+  public static function DeleteAccountPOST()
+  {
+    // Validate params
+    $aParams = self::validateParams(array('access_token', 'password'));
+    $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+
+    Logger::error("Account removal requested: " . $oUser->id);
+
+    // verify password
+    $bValid = password_verify($aParams['password'], $oUser->passphrase);
+    if ($bValid === false) {
+      ResponseCode::errorCode(3005, array(), 401);
+    }
+
+    // Create new user token
+    $Token = bin2hex(random_bytes(16));
+    $oUser->token = $Token;
+    $oUser->save();
+
+    // Send confirmation email
+    $Result = Client::SendMail(
+      'admin@grepodata.com',
+      $oUser->email,
+      'Grepodata account removal',
+      'Hi,<br/>
+<br/>
+You are receiving this message because a request was made to delete your account on grepodata.com.<br/>
+<br/>
+Please confirm your request by clicking on the following link:<br/>
+<br/>
+<a href="https://grepodata.com/delete/'.$Token.'">https://grepodata.com/delete/'.$Token.'</a><br/>
+<br/>
+If you did not request this email, someone else may have access to your GrepoData account.<br/>
+You can ignore this email if you no longer wish to remove your account.<br/>
+<br/>
+Sincerely,<br/>
+admin@grepodata.com',
+      null,
+      true);
+
+    // Response
+    $aResponse = array(
+      'status' => 'Email sent',
+      'result' => ($Result >= 1 ? true : false)
+    );
+
+    return self::OutputJson($aResponse);
+  }
+
   private static function maskEmail($email) {
     $mail_parts = explode("@", $email);
     $length = strlen($mail_parts[0]);

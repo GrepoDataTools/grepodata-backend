@@ -83,6 +83,7 @@ define('GD_SUCCESS_1130', 'Password changed');
 define('GD_SUCCESS_1140', 'Account confirmation requested');
 define('GD_SUCCESS_1150', 'Script token created');
 define('GD_SUCCESS_1151', 'Script token authenticated');
+define('GD_SUCCESS_1160', 'Account removed');
 define('GD_SUCCESS_1200', 'Renewed share link');
 define('GD_SUCCESS_1250', 'Updated delete days');
 define('GD_SUCCESS_1300', 'User index access revoked');
