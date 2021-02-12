@@ -113,7 +113,7 @@ class ForumParser
     'enemy'    => 'enemy_attack',
     'conquest' => 'attack_on_conquest'
   );
-  const gods = array('zeus', 'poseidon', 'hera', 'athene', 'hades', 'artemis');
+  const gods = array('zeus', 'poseidon', 'hera', 'athene', 'hades', 'artemis', 'aphrodite');
   const aUnitNames = array(
     // Misc
     "unknown_naval" => array('type' => 'unknown_naval', 'value' => null, 'god' => null),
@@ -152,6 +152,8 @@ class ForumParser
     "unit_fury"               => array('type' => 'erinyes',     'value' => null,  'god' => 'Hades'),
     "unit_griffin"            => array('type' => 'griff',       'value' => null,  'god' => 'Artemis'),
     "unit_calydonian_boar"    => array('type' => 'boar',        'value' => null,  'god' => 'Artemis'),
+    "unit_siren"              => array('type' => 'siren',       'value' => null,  'god' => 'Aphrodite'),
+    "unit_satyr"              => array('type' => 'satyr',       'value' => null,  'god' => 'Aphrodite'),
 
     // Heros
     "unit_deimos"             => array('type' => 'hero',  'value' => 'Deimos',        'god' => null),

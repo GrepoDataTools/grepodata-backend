@@ -47,7 +47,8 @@ class InboxParser
     'zeus'      => array('minotaur','manticore'),
     'athena'    => array('centaur', 'pegasus'),
     'hades'     => array('cerberus', 'fury'),
-    'artemis'   => array('griffin', 'calydonian_boar'));
+    'artemis'   => array('griffin', 'calydonian_boar'),
+    'aphrodite' => array('satyr', 'siren'));
   const sea_units  = array('big_transporter', 'bireme', 'attack_ship', 'demolition_ship', 'small_transporter', 'trireme', 'colonize_ship');
   const heros      = array('cheiron', 'ferkyon', 'orpheus', 'terylea', 'andromeda', 'odysseus', 'democritus', 'apheledes', 'christopholus', 'aristotle', 'rekonos', 'ylestres', 'pariphaistes', 'daidalos', 'eurybia', 'leonidas', 'urephon', 'zuretha', 'hercules', 'helen', 'atalanta', 'iason', 'hector', 'agamemnon', 'deimos', 'pelops', 'themistokles', 'telemachos', 'medea', 'ajax', 'alexandrios');
   const fireships  = 'attack_ship';
