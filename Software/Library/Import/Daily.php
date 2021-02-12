@@ -72,14 +72,14 @@ class Daily
             // Update
             $NumUpdated++;
 
-            if ($oPlayer->rank_max == null || $oPlayer->rank < $aData['rank']) {
-              $oPlayer->rank_max = $oPlayer->rank;
-              $oPlayer->rank_date = Carbon::now();
-            }
-            if ($oPlayer->towns_max == null || $oPlayer->towns > $aData['towns']) {
-              $oPlayer->towns_max = $oPlayer->towns;
-              $oPlayer->towns_date = Carbon::now();
-            }
+//            if ($oPlayer->rank_max == null || $oPlayer->rank < $aData['rank']) {
+//              $oPlayer->rank_max = $oPlayer->rank;
+//              $oPlayer->rank_date = Carbon::now();
+//            }
+//            if ($oPlayer->towns_max == null || $oPlayer->towns > $aData['towns']) {
+//              $oPlayer->towns_max = $oPlayer->towns;
+//              $oPlayer->towns_date = Carbon::now();
+//            }
 
             try {
               //Detect alliance change
