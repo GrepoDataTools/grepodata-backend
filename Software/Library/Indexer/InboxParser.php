@@ -26,6 +26,7 @@ class InboxParser
     'ro' => array('date_format' => 'd.m.Y H:i:s'),
     'ru' => array('date_format' => 'd.m.Y H:i:s'),
     'sk' => array('date_format' => 'd.m.Y H:i:s'),
+    'tr' => array('date_format' => 'd.m.Y H:i:s'), // 09.02.2021 11:22:18
     'pl' => array('date_format' => 'd.m.Y H:i:s'),
     'cz' => array('date_format' => 'd.m.Y H:i:s'),
     'no' => array('date_format' => 'd.m.Y H:i:s'),
