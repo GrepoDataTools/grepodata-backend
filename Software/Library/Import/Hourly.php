@@ -61,7 +61,7 @@ class Hourly
           $bUpdated = true;
         }
       }
-      
+
       // DEF
       if ($aData = $aDefData[$oPlayer->grep_id] ?? null) {
         if ($oPlayer->def_rank_max == null || $oPlayer->def_rank == null || $aData['rank'] != $oPlayer->def_rank) {
@@ -74,7 +74,7 @@ class Hourly
           $bUpdated = true;
         }
       }
-      
+
       // KILLS
       if ($aData = $aAllData[$oPlayer->grep_id] ?? null) {
         if ($oPlayer->fight_rank_max == null || $oPlayer->fight_rank == null || $aData['rank'] != $oPlayer->fight_rank) {
@@ -395,7 +395,9 @@ class Hourly
     try {
       $oDominationScoreboard = DominationScoreboard::firstOrNew(array('world'=>$oWorld->grep_id, 'date'=>$ScoreboardDate));
       if (is_null($oDominationScoreboard->domination_json)) {
-        $oWorldDomination = WorldDomination::where('world', '=', $oWorld->grep_id)->first();
+        $oWorldDomination = WorldDomination::where('world', '=', $oWorld->grep_id)
+          ->where('updated_at', '>', Carbon::now()->subDays(7))
+          ->first();
         if (!is_null($oWorldDomination) && !is_null($oWorldDomination->domination_json)) {
           Logger::warning("Creating domination scoreboard for world " . $oWorld->grep_id . " on " . $ScoreboardDate);
           $oDominationScoreboard->domination_json = $oWorldDomination->domination_json;

@@ -39,12 +39,26 @@ foreach ($aWorlds as $oWorld) {
   // Check commands 'php SCRIPTNAME[=0] WORLD[=1]'
   if (isset($argv[1]) && $argv[1]!=null && $argv[1]!='' && $argv[1]!=$oWorld->grep_id) continue;
 
+
   // Get local town data
   $aTownsLocal = LocalData::getLocalTownData($oWorld->grep_id);
-  Logger::debugInfo("Towns local: " . sizeof($aTownsLocal));
+  if (sizeof($aTownsLocal) > 60000) {
+    // probably a legacy world? skip calculation as it would be too slow
+    Logger::debugInfo("Skipping domination calculation for world " . $oWorld->grep_id . " (" . sizeof($aTownsLocal) . " towns)");
+    continue;
+  } else {
+    Logger::debugInfo("Running domination calculation for world " . $oWorld->grep_id);
+  }
+  Logger::silly("Towns local: " . sizeof($aTownsLocal));
 
   // Get database town data
-  $aTowns = \Grepodata\Library\Model\Town::select(['Town.*', 'Player.alliance_id', 'Alliance.name AS alliance_name'])
+  $aTowns = \Grepodata\Library\Model\Town::select([
+    'Town.*',
+    'Player.alliance_id',
+    'Alliance.name AS alliance_name',
+    'Alliance.members AS alliance_members',
+    'Alliance.towns AS alliance_towns'
+  ])
     ->leftJoin('Player', function($join)
     {
       $join->on('Player.grep_id', '=', 'Town.player_id')
@@ -57,7 +71,7 @@ foreach ($aWorlds as $oWorld) {
     })
     ->where('Town.world', '=', $oWorld->grep_id, 'and')
     ->get();
-  Logger::debugInfo("Towns db: " . sizeof($aTowns));
+  Logger::silly("Towns db: " . sizeof($aTowns));
 
   // Parse towns into islands
   $aIslandsList = array();
@@ -145,6 +159,8 @@ foreach ($aWorlds as $oWorld) {
       if (!key_exists($AllianceId, $aAlliances)) {
         $aAlliances[$AllianceId] = array(
           'i' => $AllianceId,
+          'm' => $oTown->alliance_members ?? 1,
+          'tt' => $oTown->alliance_towns ?? 1,
           'n' => $oTown->alliance_name ?? 'No alliance / ghost',
           't' => 0
         );
@@ -160,7 +176,8 @@ foreach ($aWorlds as $oWorld) {
     // Add percentages
     $TotalTowns = sizeof($aDominationTowns);
     foreach ($aAlliances as $AllianceId => $aAlliance) {
-      $aAlliances[$AllianceId]['p'] = round(($aAlliance['t'] / $TotalTowns) * 100, 1);
+      $aAlliances[$AllianceId]['p'] = round(($aAlliance['t'] / $TotalTowns) * 100, 1); // domination percentage
+      $aAlliances[$AllianceId]['tpm'] = round($aAlliance['t'] / $aAlliance['m'], 1); // how many domination towns per alliance
 
       // keep only alliances with >1% domination
       if ($aAlliances[$AllianceId]['p'] < 1) {
@@ -174,8 +191,10 @@ foreach ($aWorlds as $oWorld) {
   }
 
   // log 80th percentile
-  foreach ($aDominationData[80] as $aAlliance) {
-    Logger::debugInfo($aAlliance['n'] . " = " . $aAlliance['t'] . " (" . $aAlliance['p'] . "%)");
+  if ($oWorld->grep_id == 'nl84') {
+    foreach ($aDominationData[90] as $aAlliance) {
+      Logger::silly($aAlliance['n'] . " = " . $aAlliance['t'] . " (" . $aAlliance['p'] . "%) (".$aAlliance['tpm']." towns per member)");
+    }
   }
 
   // Save to database
