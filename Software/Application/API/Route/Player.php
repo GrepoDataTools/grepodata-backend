@@ -24,6 +24,20 @@ class Player extends \Grepodata\Library\Router\BaseRoute
       $oPlayer = \Grepodata\Library\Controller\Player::firstOrFail($aParams['id'], $aParams['world']);
       $aResponse = $oPlayer->getPublicFields();
 
+      // Hours inactive
+      $aResponse['hours_inactive'] = null;
+      try {
+        if (!is_null($oPlayer->att_point_date) && !is_null($oPlayer->town_point_date)) {
+          $LastActivity = $oPlayer->att_point_date;
+          if ($oPlayer->town_point_date > $LastActivity) {
+            $LastActivity = $oPlayer->town_point_date;
+          }
+          $Now = Carbon::now();
+          $HoursInactive = $Now->diffInHours($LastActivity);
+          $aResponse['hours_inactive'] = $HoursInactive;
+        }
+      } catch (Exception $e) {}
+
       // Attach alliance name
       if (isset($aParams['a_name']) && ($aParams['a_name'] === true || $aParams['a_name'] === 'true')) {
         $aResponse['alliance_name'] = '';

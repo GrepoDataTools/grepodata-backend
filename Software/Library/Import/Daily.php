@@ -72,14 +72,25 @@ class Daily
             // Update
             $NumUpdated++;
 
-            if ($oPlayer->rank_max == null || $oPlayer->rank < $aData['rank']) {
-              $oPlayer->rank_max = $oPlayer->rank;
+            // Check max rank + towns
+            if ($oPlayer->rank_max == null
+              || ($oPlayer->rank < $aData['rank'] && $oPlayer->rank <= $oPlayer->rank_max)) {
+              $oPlayer->rank_max = $oPlayer->rank != null ? $oPlayer->rank : $aData['rank'];
               $oPlayer->rank_date = Carbon::now();
             }
-            if ($oPlayer->towns_max == null || $oPlayer->towns > $aData['towns']) {
-              $oPlayer->towns_max = $oPlayer->towns;
+            if ($oPlayer->towns_max == null
+              || ($oPlayer->towns > $aData['towns'] && $oPlayer->towns >= $oPlayer->towns_max)) {
+              $oPlayer->towns_max = $oPlayer->towns != null ? $oPlayer->towns : $aData['towns'];
               $oPlayer->towns_date = Carbon::now();
             }
+
+            try {
+              // Save time since last town point gained
+              if ((int) $oPlayer->points < (int) $aData['points']) {
+                $oPlayer->town_point_date = Carbon::now();
+              }
+            } catch (\Exception $e) {}
+            if ($oPlayer->points != $aData['points'])
 
             try {
               //Detect alliance change

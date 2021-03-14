@@ -2,4 +2,4 @@ pm2 start index.js --name grepodata-discord-prod --interpreter "node@13.8.0" --c
 
 pm2 start index.js --name grepodata-discord-acc --interpreter "node@13.8.0" --cwd active/
 
-sudo certbot --apache -d grepodata.com -d api.grepodata.com
+sudo certbot --apache -d grepodata.com -d api.grepodata.com -d ci.grepodata.com -d test.grepodata.com -d apitest.grepodata.com

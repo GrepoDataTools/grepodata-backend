@@ -30,6 +30,8 @@ use \Illuminate\Database\Eloquent\Model;
  * @property mixed att_rank_date
  * @property mixed def_rank_date
  * @property mixed fight_rank_date
+ * @property mixed att_point_date
+ * @property mixed town_point_date
  * @property mixed heatmap
  * @property mixed active
  * @property mixed data_update
@@ -67,6 +69,8 @@ class Player extends Model
       'att_rank_date'   => $this->att_rank_max < $this->att_rank ? $this->att_rank_date : $Now,
       'def_rank_date'   => $this->def_rank_max < $this->def_rank ? $this->def_rank_date : $Now,
       'fight_rank_date' => $this->fight_rank_max < $this->fight_rank ? $this->fight_rank_date : $Now,
+      'att_point_date' => $this->att_point_date ?? null,
+      'town_point_date' => $this->town_point_date ?? null,
       'heatmap' => (is_null($this->heatmap)? array() : json_decode($this->heatmap, true)),
     );
   }

@@ -172,7 +172,8 @@ class Hourly
     }
 
     // Save world status as updated
-    $oWorld->grep_server_time = date('Y-m-d H:i:s', strtotime($GrepServerTime));
+    $GrepServerTimeDate = date('Y-m-d H:i:s', strtotime($GrepServerTime));
+    $oWorld->grep_server_time = $GrepServerTimeDate;
     $oWorld->etag = $GrepEtag;
     $oWorld->save();
 
@@ -250,6 +251,10 @@ class Hourly
           $oPlayer->att = $aData['points'];
           if ($oPlayer->att_old == null) {
             $oPlayer->att_old = $oPlayer->att;
+          }
+          if ($Diff > 0) {
+            // Update time since last attack point
+            $oPlayer->att_point_date = Carbon::now();
           }
 
           $aPlayerAttDiffs[$aData['player_id']] = array(

@@ -59,7 +59,7 @@ foreach ($worlds as $world) {
         $NumElasticsearchErrors += 1;
         if (strpos($e->getMessage(), 'No alive nodes found in your cluster') !== false) {
           // Give ES a chance to reboot (systemctl should kick in)
-          Logger::warning("Daily import pausing for 30 seconds: no alive nodes in ES cluster");
+          Logger::error("Daily import pausing for 30 seconds: no alive nodes in ES cluster");
           sleep(30);
         } else {
           Logger::error("CRITICAL: aborting daily import; elasticsearch is offline. " . $e->getMessage());
