@@ -112,7 +112,21 @@ class Helper
               text-align: left;
               margin-left: 10px;
               display: inline-block;
-              padding-bottom: 10px;
+              padding-bottom: 25px;
+          }
+          .god_display {
+            text-align: center;
+            display: inline-grid;
+          }
+          [class*='indexer_footer'] {
+            display: none !important;
+          }
+          .gpwindow_content {
+            top: 0 !important;
+          }
+          ul.resource_list > li {
+            float: left;
+            margin-right: 20px;
           }
         </style>
       </head>

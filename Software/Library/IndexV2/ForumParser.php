@@ -88,6 +88,10 @@ class ForumParser
       'day' => 'd.m.y', 'day_regex' => '/[0-9]{2}[.]{1}[0-9]{2}[.]{1}[0-9]{2}/',
       'time' => 'H:i:s', 'time_regex' => '/[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2}(?!.*[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2})/',
     ),
+    'tr' => array(
+      'day' => 'd.m.y', 'day_regex' => '/[0-9]{2}[.]{1}[0-9]{2}[.]{1}[0-9]{2}/',
+      'time' => 'H:i:s', 'time_regex' => '/[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2}(?!.*[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2})/',
+    ),
     'pl' => array(
       'day' => 'd.m.y', 'day_regex' => '/[0-9]{2}[.]{1}[0-9]{2}[.]{1}[0-9]{2}/',
       'time' => 'H:i:s', 'time_regex' => '/[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2}(?!.*[0-9]{2}[:]{1}[0-9]{2}[:]{1}[0-9]{2})/',
@@ -111,7 +115,7 @@ class ForumParser
     'enemy'    => 'enemy_attack',
     'conquest' => 'attack_on_conquest'
   );
-  const gods = array('zeus', 'poseidon', 'hera', 'athene', 'hades', 'artemis');
+  const gods = array('zeus', 'ares', 'aphrodite', 'poseidon', 'hera', 'athene', 'hades', 'artemis');
   const aUnitNames = array(
     // Misc
     "unknown_naval" => array('type' => 'unknown_naval', 'value' => null, 'god' => null),
@@ -152,6 +156,8 @@ class ForumParser
     "unit_calydonian_boar"    => array('type' => 'boar',        'value' => null,  'god' => 'Artemis'),
     "unit_siren"              => array('type' => 'siren',       'value' => null,  'god' => 'Aphrodite'),
     "unit_satyr"              => array('type' => 'satyr',       'value' => null,  'god' => 'Aphrodite'),
+    "unit_spartoi"            => array('type' => 'spartoi',     'value' => null,  'god' => 'Ares'),
+    "unit_ladon"              => array('type' => 'ladon',       'value' => null,  'god' => 'Ares'),
 
     // Heros
     "unit_deimos"             => array('type' => 'hero',  'value' => 'Deimos',        'god' => null),
