@@ -7,6 +7,7 @@ use Elasticsearch\Endpoints\Cat\Help;
 use Exception;
 use Grepodata\Library\Controller\Alliance;
 use Grepodata\Library\Controller\Player;
+use Grepodata\Library\Controller\Town;
 use Grepodata\Library\Controller\World;
 use Grepodata\Library\Exception\ForumParserExceptionDebug;
 use Grepodata\Library\Exception\ForumParserExceptionError;
@@ -117,7 +118,7 @@ class ForumParser
     'enemy'    => 'enemy_attack',
     'conquest' => 'attack_on_conquest'
   );
-  const gods = array('zeus', 'poseidon', 'hera', 'athene', 'hades', 'artemis', 'aphrodite');
+  const gods = array('zeus', 'ares', 'poseidon', 'hera', 'athene', 'hades', 'artemis', 'aphrodite');
   const aUnitNames = array(
     // Misc
     "unknown_naval" => array('type' => 'unknown_naval', 'value' => null, 'god' => null),
@@ -158,6 +159,8 @@ class ForumParser
     "unit_calydonian_boar"    => array('type' => 'boar',        'value' => null,  'god' => 'Artemis'),
     "unit_siren"              => array('type' => 'siren',       'value' => null,  'god' => 'Aphrodite'),
     "unit_satyr"              => array('type' => 'satyr',       'value' => null,  'god' => 'Aphrodite'),
+    "unit_spartoi"            => array('type' => 'spartoi',     'value' => null,  'god' => 'Ares'),
+    "unit_ladon"              => array('type' => 'ladon',       'value' => null,  'god' => 'Ares'),
 
     // Heros
     "unit_deimos"             => array('type' => 'hero',  'value' => 'Deimos',        'god' => null),
@@ -459,20 +462,28 @@ class ForumParser
     foreach ($aHeaderItems as $aHeaderItem) {
       if (is_array($aHeaderItem) && key_exists('attributes', $aHeaderItem)) {
         $aAttributes = $aHeaderItem['attributes'];
-        if (key_exists('href', $aAttributes) && key_exists('class', $aAttributes)) {
+        if (key_exists('href', $aAttributes)) {
           $LinkDataEncoded = $aAttributes['href'];
-          $aLinkData = json_decode(base64_decode($LinkDataEncoded), true);
-          $Class = $aAttributes['class'];
-          if (str_contains($Class, 'gp_town_link')) {
-            $aHeaderChainData[] = $aLinkData;
-            $aHeaderChainType[] = 'town';
-          }
-          elseif (str_contains($Class, 'gp_player_link')) {
-            $aHeaderChainData[] = $aLinkData;
-            $aHeaderChainType[] = 'player';
-          }
-          else {
-            Logger::warning("Unhandled attribute class in forum report header: " . $Class);
+          if ($LinkDataEncoded == 'javascript:void(0)') {
+            // Alliance
+            if (key_exists('onclick', $aAttributes) && strpos($aAttributes['onclick'], 'allianceProfile')!==false) {
+              $aHeaderChainData[] = $aAttributes['onclick'];
+              $aHeaderChainType[] = 'alliance';
+            }
+          } elseif (key_exists('class', $aAttributes)) {
+            $aLinkData = json_decode(base64_decode($LinkDataEncoded), true);
+            $Class = $aAttributes['class'];
+            if (str_contains($Class, 'gp_town_link')) {
+              $aHeaderChainData[] = $aLinkData;
+              $aHeaderChainType[] = 'town';
+            }
+            elseif (str_contains($Class, 'gp_player_link')) {
+              $aHeaderChainData[] = $aLinkData;
+              $aHeaderChainType[] = 'player';
+            }
+            else {
+              Logger::warning("Unhandled attribute class in forum report header: " . $Class);
+            }
           }
         }
       } else if (is_string($aHeaderItem)) {
@@ -491,6 +502,7 @@ class ForumParser
     }
 
     $ReportType = 'UNKNOWN';
+    $bIsAttackOnTemple = false;
     switch ($ReportChainString) {
       case 'town-town-player':
       case 'town-town-ghost':
@@ -513,8 +525,15 @@ class ForumParser
         //case sizeof($aHeaderChainType) === 4:
         $ReportType = self::report_types['conquest'];
         break;
-      case 'town-player-town':
+      case 'town-player-town': // enemy attack on a friendly city
+      case 'town-player-player': // enemy attack on friendly conquest of a ghost city
         $ReportType = self::report_types['enemy'];
+        break;
+      case 'town-town-alliance':
+        // Attack on a temple
+        $bIsAttackOnTemple = true;
+        $ReportType = self::report_types['enemy'];
+        break;
         break;
       case 'town':
       case '':
@@ -806,9 +825,26 @@ class ForumParser
         $cityInfo['city_id'] = $AttackingCity['id'];
 
         // Player
-        $AttackingPlayer = $aHeaderChainData[1];
-        $cityInfo['player_name'] = $AttackingPlayer['name'];
-        $cityInfo['player_id'] = $AttackingPlayer['id'];
+        if ($bIsAttackOnTemple===false) {
+          $AttackingPlayer = $aHeaderChainData[1];
+          $cityInfo['player_name'] = $AttackingPlayer['name'];
+          $cityInfo['player_id'] = $AttackingPlayer['id'];
+        } else {
+          $cityInfo['player_name'] = 'Unknown';
+          $cityInfo['player_id'] = 0;
+          // Lookup temple attack info
+          try {
+            // player id
+            $oTown = Town::firstById($oIndex->world, $AttackingCity['id']);
+            $cityInfo['player_id'] = $oTown->player_id ?? 0;
+
+            // town
+            $oPlayer = Player::firstById($oIndex->world, $oTown->player_id);
+            $cityInfo['player_name'] = $oPlayer->name ?? 'Unknown';
+          } catch (Exception $e) {
+            Logger::warning("ForumParser " . $ReportHash . ": Error looking up town for temple attack. " . $e->getMessage());
+          }
+        }
 
         //loop units
         $unitsRootArr = $aReportData['content'][5]['content'][1]['content'][1]['content'];
