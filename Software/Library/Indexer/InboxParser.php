@@ -650,9 +650,10 @@ class InboxParser
           $Silver = Helper::getTextContent($aRightSideItems[0], 0, true) ?? '?';
           $Silver = preg_replace('/\s+/', '', $Silver);
         }
-        if (isset($aRightSideItems[2]) && is_array($aRightSideItems[2])) {
-          $God = Helper::getTextContent($aRightSideItems[2], 0, true) ?? null;
-          $God = strtolower(preg_replace('/\s+/', '', $God));
+
+        $GodMicro = Helper::allByClass($RightSide, 'god_micro');
+        if (isset($GodMicro[0]) && is_array($GodMicro[0])) {
+          $God = strtolower($GodMicro[0]['attributes']['title']) ?? null;
           if (!key_exists($God, self::myth_units)) {
             Logger::warning("InboxParser $ReportHash: found unknown god with name '$God'");
           }

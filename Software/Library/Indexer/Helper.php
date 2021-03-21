@@ -118,6 +118,16 @@ class Helper
             text-align: center;
             display: inline-grid;
           }
+          [class*='indexer_footer'] {
+            display: none !important;
+          }
+          .gpwindow_content {
+            top: 0 !important;
+          }
+          ul.resource_list > li {
+            float: left;
+            margin-right: 20px;
+          }
         </style>
       </head>
       <body>
