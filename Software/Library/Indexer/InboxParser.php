@@ -846,6 +846,8 @@ class InboxParser
           foreach ($aUnitInfo[$Moment] as $Unit => $Value) {
             if (!key_exists($Unit, $aCityUnitsFinal[$Moment])) {
               $aCityUnitsFinal[$Moment][$Unit] = $Value;
+            } else if ($Moment=='lost') {
+              $aCityUnitsFinal[$Moment][$Unit] += $Value;
             }
           }
         }
