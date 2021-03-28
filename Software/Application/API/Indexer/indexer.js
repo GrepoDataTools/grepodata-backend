@@ -1940,7 +1940,7 @@ var verbose = false;
                                 openIntelWindows[content_id].close();
                             } catch (e) {console.log("unable to close window", e);}
                         }
-                        var intelUrl = frontend_url + '/intel/town/'+world+'/'+id;
+                        var intelUrl = frontend_url + '/intel/town/'+Game.world_id+'/'+id;
                         var intel_window = Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG,
                             '<a target="_blank" href="'+intelUrl+'" class="write_message" style="background: ' + gd_icon + '"></a>&nbsp;&nbsp;' + translate.TOWN_INTEL + ': ' + town_name + (player_name!=''?(' (' + player_name + ')'):''),
                             {position: ['center','center'], width: 600, height: 590, minimizable: true});
@@ -1988,7 +1988,7 @@ var verbose = false;
             var intelUrl = 'https://grepodata.com/indexer';
             try {
                 console.log(data);
-                intelUrl = 'https://grepodata.com/intel/town/'+world+'/'+id;
+                intelUrl = 'https://grepodata.com/intel/town/'+Game.world_id+'/'+id;
                 var unitHeight = 255;
                 var notesHeight = 170;
 

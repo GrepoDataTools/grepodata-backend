@@ -67,6 +67,7 @@ define('GD_ERROR_7530', "Invalid user role: role must be one of ['read', 'write'
 define('GD_ERROR_7531', "Invalid owner status: is_hidden must be one of [true, false]");
 define('GD_ERROR_7532', "Invalid number of days: num_days must be >= 0 and <= 365");
 define('GD_ERROR_7533', "Invalid owner: alliance is already on owner list");
+define('GD_ERROR_7534', "Invalid option: can_join_with_v1_key must be true or false");
 define('GD_ERROR_7540', "Unauthorized. Only an index owner can change the rights of an index admin/owner.");
 define('GD_ERROR_7560', "Unable to update index owners.");
 define('GD_ERROR_7570', "User is already a member of this index.");
@@ -86,6 +87,7 @@ define('GD_SUCCESS_1151', 'Script token authenticated');
 define('GD_SUCCESS_1160', 'Account removed');
 define('GD_SUCCESS_1200', 'Renewed share link');
 define('GD_SUCCESS_1250', 'Updated delete days');
+define('GD_SUCCESS_1260', 'Updated v1 join status');
 define('GD_SUCCESS_1300', 'User index access revoked');
 
 define('GD_SUCCESS_4000', 'Profile request processed successfully');

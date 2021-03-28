@@ -44,11 +44,13 @@ class Profile extends BaseRoute
         'contribute'  => $oIndex->contribute,
         'share_link'  => $bUserIsAdmin ? $oIndex->share_link : 'Unauthorized',
         'num_days'    => $bUserIsAdmin ? $oIndex->delete_old_intel_days : 0,
+        'allow_join_v1_key' => $bUserIsAdmin ? $oIndex->allow_join_v1_key : 0,
         'world'       => $oIndex->world,
         'created_at'  => $oIndex->created_at,
         'updated_at'  => $oIndex->updated_at,
         'stats'       => $aOverview,
-        'status'      => $oIndex->status
+        'status'      => $oIndex->status,
+        'index_version' => $oIndex->index_version
       );
     }
 

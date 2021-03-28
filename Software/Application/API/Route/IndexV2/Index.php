@@ -20,6 +20,7 @@ use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Mail\Client;
 use Grepodata\Library\Model\Indexer\Auth;
 use Grepodata\Library\Model\Indexer\Stats;
+use Grepodata\Library\Router\Authentication;
 use Grepodata\Library\Router\BaseRoute;
 use Grepodata\Library\Router\ResponseCode;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -159,11 +160,13 @@ class Index extends BaseRoute
         'max_version'       => $oIndexOverview['max_version'],
         'recent_conquests'  => $aRecentConquests,
         'latest_version'    => $oIndex->script_version,
+        'index_version'     => $oIndex->index_version,
         'index_name'        => $oIndex->index_name,
         'role'              => $oIndexRole->role,
         'contribute'        => $oIndexRole->contribute,
         'share_link'        => $bUserIsAdmin ? $oIndex->share_link : 'Unauthorized',
         'num_days'          => $bUserIsAdmin ? $oIndex->delete_old_intel_days : 0,
+        'allow_join_v1_key' => $bUserIsAdmin ? $oIndex->allow_join_v1_key : 0,
         'update_message'    => USERSCRIPT_UPDATE_INFO,
         'owners'            => json_decode(urldecode($oIndexOverview['owners'])),
         'contributors'      => json_decode(urldecode($oIndexOverview['contributors'])),
@@ -308,6 +311,41 @@ class Index extends BaseRoute
         'num_days' => $NumDays
       );
       ResponseCode::success($aResponse, 1250);
+
+    } catch (\Exception $e) {
+      ResponseCode::errorCode(1200);
+    }
+  }
+
+  /**
+   * Toggle the allow_join_v1_key index setting which allows users to join a v1 index with the old 8 character v1 index key
+   */
+  public static function SetIndexJoinV1PUT()
+  {
+    try {
+      $aParams = self::validateParams(array('access_token', 'index_key', 'allow_join_v1_key'));
+      $oUser = Authentication::verifyJWT($aParams['access_token']);
+
+      $oIndex = IndexInfo::firstOrFail($aParams['index_key']);
+
+      IndexManagement::verifyUserIsAdmin($oUser, $aParams['index_key']);
+
+      if (in_array($aParams['allow_join_v1_key'], array("true", "false"))) {
+        $bCanJoin = $aParams['allow_join_v1_key'] === "true";
+      } else {
+        $bCanJoin = (bool) $aParams['allow_join_v1_key'];
+      }
+      if (is_null($bCanJoin)) {
+        ResponseCode::errorCode(7532);
+      }
+
+      $oIndex->allow_join_v1_key = $bCanJoin;
+      $oIndex->save();
+
+      $aResponse = array(
+        'allow_join_v1_key' => $bCanJoin
+      );
+      ResponseCode::success($aResponse, 1260);
 
     } catch (\Exception $e) {
       ResponseCode::errorCode(1200);
