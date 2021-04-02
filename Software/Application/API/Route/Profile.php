@@ -27,6 +27,12 @@ class Profile extends BaseRoute
     $aIndexes = \Grepodata\Library\Controller\Indexer\IndexInfo::allByUser($oUser);
     $aIndexItems = array();
     foreach ($aIndexes as $oIndex) {
+
+      // Optional filter by world
+      if (isset($aParams['world'])) {
+        if ($oIndex->world !== $aParams['world']) continue;
+      }
+
       $aOverview = [];
       if (isset($aParams['expand_overview']) || isset($aParams['sort_by'])) {
         try {

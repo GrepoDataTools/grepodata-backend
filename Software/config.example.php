@@ -27,5 +27,3 @@ define('PRIVATE_DEBUG_AUTH', '');
 
 define('REDIS_HOST', '');
 define('REDIS_PORT', 0);
-
-define('OBFUSCATOR_EXEC', 'node javascript-obfuscator');

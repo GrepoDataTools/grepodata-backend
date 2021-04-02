@@ -40,7 +40,7 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
   define('REFRESH_SECRET', PRIVATE_JWT_REFRESH);
 
   // Smarty dirs
-  $SourceDir = 'X:/dev/grepodata/grepodata-backend/';
+  $SourceDir = 'C:/dev/grepodata-backend/';
   define('SMARTY_TEMPLATE_DIR', "$SourceDir/Software/Templates/templates");
   define('SMARTY_COMPILE_DIR', "$SourceDir/Software/Templates/compiled");
   define('SMARTY_CACHE_DIR', "$SourceDir/Software/Templates/cache");

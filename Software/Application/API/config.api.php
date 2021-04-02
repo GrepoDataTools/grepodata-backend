@@ -347,7 +347,7 @@ $oRouter->Add('setindexcontribute', new Route('/indexer/settings/contribute', ar
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Index',
   '_method'     => 'IndexContribute'
 )));
-$oRouter->Add('setindexcontribute', new Route('/indexer/settings/joinv1', array(
+$oRouter->Add('setindexjoinv1', new Route('/indexer/settings/joinv1', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Index',
   '_method'     => 'SetIndexJoinV1'
 )));

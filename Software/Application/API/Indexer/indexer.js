@@ -1,6 +1,6 @@
 // Userscript DEV
 
-var gd_version = "4.0.3";
+var gd_version = "5.0.0";
 var verbose = false;
 
 (function() { try {
@@ -42,7 +42,8 @@ var verbose = false;
         readSettingsCookie();
         setTimeout(function () {
             if (gd_settings.inbox === true || gd_settings.forum === true) {
-                loadIndexHashlist(false);
+                loadIndexHashlist(false); // Get list of recently indexed report ids
+                // loadIndexesList(false, true); // Get list of indexes for this user
             }
         }, 1000);
         setTimeout(function () {
@@ -487,97 +488,6 @@ var verbose = false;
             return JSON.parse(jsonPayload);
         };
 
-        //     var playername_window = null;
-        //     function showPlayernamePopup(town_token, player_name) {
-        //         // This function is called when the current playername is unverified by the authenticated user
-        //
-        //         if (playername_window != null) {
-        //             playername_window.close();
-        //             playername_window = null;
-        //         }
-        //         playername_window = Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG,
-        //             '<a href="#" class="write_message" style="background: ' + gd_icon + '">' +
-        //             '</a>&nbsp;&nbsp;GrepoData: verify your playername',
-        //             {position: ['center','center'], width: 680, height: 500, minimizable: true});
-        //
-        //         // Window content
-        //         var content = '<div class="gdplayernamepopup" style="width: 680px; height: 390px;"><div style="text-align: center"></div></div>';
-        //         playername_window.setContent(content);
-        //         var playername_window_element = $('.gdplayernamepopup').parent();
-        //         $(playername_window_element).css({ top: 43 });
-        //
-        //         // Build form
-        //         formHtml = `
-        //     <form autocomplete="false" class="gd-login-form" id="gd_login_form" name="gdloginform">
-        //       <div style="text-align: center;font-weight: 800;font-size: 35px;">
-        //         <div style="display: inline-block;"><img src="https://grepodata.com/assets/images/grepodata_icon.ico" style="position: relative; top: 4px;"></div>
-        //         <span style="color: rgb(103, 103, 103)">GREPO</span>
-        //         <span style="color: rgb(24, 188, 156);margin-left: -12px;">DATA</span>
-        //       </div>
-        //
-        //       <div id="gd-login-container" class="gd-login-container">
-        //           <h4 class="gd-title" style="text-align: center; place-content: center;">Your player name is not yet verified:&nbsp;&nbsp;<a><img src="https://gpnl.innogamescdn.com/images/game/icons/player.png" alt="" style="">`+player_name+`</a></h4>
-        //           <p style="text-align: center; place-content: center;">If you want to link your Grepolis account to your GrepoData account, you need to verify your player name. To do this, <strong>temporarily</strong> change one of your town names to the following token:</p>
-        //
-        //           <div style="text-align: center; place-content: center;" class="gd-token-container">
-        //             <label>Town name required:</label>
-        //             <div style="display: inline-flex">
-        //               <input type="text" class="gd-login-input gd_copy_input_playername" value="`+town_token+`" style="text-align: center;">
-        //               <span class="gd_copy_done_playername" style="display: none; padding: 12px;"> Copied!</span>
-        //             </div>
-        //             <a href="#" class="gd_copy_command_playername">Copy to clipboard</a>
-        //           </div>
-        //
-        //           <p style="text-align: center; place-content: center;">You will get an email when the verification is complete, you can then change your town name back to whatever you like.</p>
-        //
-        //           <!--<div style="display: none; text-align: center; place-content: center; font-size: 16px;" class="gd_copy_done_playername"><b>Copied!</b></div>-->
-        //
-        //           <div id="grepodatalerror" style="display: none; text-align: center; place-content: center; font-size: 16px;" class="gd-error-msg"><b>Unable to verify player name.</b></div>
-        //
-        //           <div class="gd-login-footer" style="margin-top: 10px; height: 60px;">
-        //             <!--<div style="display: inline-grid; text-align: left;">-->
-        //                 <!--<p id="gd-request-token-check" class="gd-link-btn" style="text-align: left;">I don't want to share my intel</p>-->
-        //             <!--</div>-->
-        //             <p id="gd-playername-cancel" class="gd-link-btn" style="margin-top: 15px;">Cancel</p>
-        //             <p id="gd-playername-continue" class="gd-login-btn gd-register-btn">Continue</p>
-        //           </div>
-        //       </div>
-        //
-        //       <div id="gd-script-linked" class="gd-login-container" style="display: none;">
-        //           <h4 class="gd-title" style="text-align: center; place-content: center;">
-        //             Your playername is now verified. Happy indexing!
-        //           </h4>
-        //           <br/>
-        //           <p style="text-align: center; place-content: center;">Thank you for using GrepoData.</p>
-        //       </div>
-        //
-        //     </form>
-        //
-        // `;
-        //         $('.gdplayernamepopup').append(formHtml);
-        //
-        //         // Handle actions
-        //         $(".gd-playername-cancel").click(function () {
-        //             playername_window.close();
-        //             playername_window = null;
-        //         });
-        //         $(".gd-playername-continue").click(function () {
-        //             alert("TODO");
-        //         });
-        //         $(".gd_copy_command_playername").click(function () {
-        //             $(".gd_copy_input_playername").select();
-        //             document.execCommand('copy');
-        //
-        //             $('.gd_copy_done_playername').get(0).style.display = 'block';
-        //             setTimeout(function () {
-        //                 if ($('.gd_copy_done_playername').get(0)) {
-        //                     $('.gd_copy_done_playername').get(0).style.display = 'none';
-        //                 }
-        //             }, 6000);
-        //         });
-        //
-        //     }
-
         function loginError(message, verbose = false) {
             let errormsg = message==''?"Unable to authenticate. Please try again later":message;
             $('#grepodatalerror').text(errormsg);
@@ -610,7 +520,6 @@ var verbose = false;
                         $('#gd-login-container').hide();
                         $('#gd-script-linked').show();
                         clearInterval(script_token_interval);
-                        checkPlayerNameVerificationStatus();
                     } else {
                         // Unable
                         loginError('Unknown error. Please try again later or let us know if this error persists.', verbose);
@@ -646,63 +555,8 @@ var verbose = false;
                     showLoginPopup()
                 } else {
                     console.log("GrepoData: Succesful authentication.");
-                    checkPlayerNameVerificationStatus();
                 }
             });
-        }
-
-        function checkPlayerNameVerificationStatus() {
-            return null;
-            // try {
-            //     let playername = Game.player_name;
-            //     let playerid = Game.player_id;
-            //     let server = Game.world_id.substring(0, 2);
-            //     if (playername && playerid && server) {
-            //         // Get verification status from API
-            //         getAccessToken().then(access_token => {
-            //             if (access_token !== false) {
-            //                 $.ajax({
-            //                     url: backend_url + "/profile/addlinked",
-            //                     data: {
-            //                         access_token: access_token,
-            //                         player_name: playername,
-            //                         player_id: playerid,
-            //                         server: server,
-            //                     },
-            //                     type: 'post',
-            //                     crossDomain: true,
-            //                     dataType: 'json',
-            //                     success: function (data) {
-            //                         console.log(data);
-            //                         if (data.success && 'linked_account' in data) {
-            //                             if (data.linked_account.confirmed && data.linked_account.confirmed === true) {
-            //                                 console.log('GrepoData: playername is verified.');
-            //                             } else if (data.linked_account.town_token) {
-            //                                 console.log('GrepoData: playername needs verification.');
-            //                                 let town_token = data.linked_account.town_token;
-            //                                 showPlayernamePopup(town_token, playername);
-            //                             }
-            //                         } else {
-            //                             // Unable
-            //                         }
-            //                     },
-            //                     error: function (error, textStatus) {
-            //                         if (error.responseJSON.error_code && error.responseJSON.error_code === 3010) {
-            //                             // TODO: Email needs to be confirmed
-            //                         } else {
-            //                             // Unknown
-            //                         }
-            //                     },
-            //                     timeout: 30000
-            //                 });
-            //             }
-            //         });
-            //     }
-            //
-            //     // If unverfied, show change town name popup (auth token generated by API)
-            // } catch (error) {
-            //     errorHandling(error, "checkPlayerNameVerificationStatus");
-            // }
         }
 
         // Add command information to info panel
@@ -1715,19 +1569,24 @@ var verbose = false;
             if (!$("#gd_indexer").get(0)) {
                 $(".settings-menu ul:last").append('<li id="gd_li"><svg aria-hidden="true" data-prefix="fas" data-icon="university" class="svg-inline--fa fa-university fa-w-16" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="color: #2E4154;width: 16px;width: 15px;vertical-align: middle;margin-top: -2px;"><path fill="currentColor" d="M496 128v16a8 8 0 0 1-8 8h-24v12c0 6.627-5.373 12-12 12H60c-6.627 0-12-5.373-12-12v-12H24a8 8 0 0 1-8-8v-16a8 8 0 0 1 4.941-7.392l232-88a7.996 7.996 0 0 1 6.118 0l232 88A8 8 0 0 1 496 128zm-24 304H40c-13.255 0-24 10.745-24 24v16a8 8 0 0 0 8 8h464a8 8 0 0 0 8-8v-16c0-13.255-10.745-24-24-24zM96 192v192H60c-6.627 0-12 5.373-12 12v20h416v-20c0-6.627-5.373-12-12-12h-36V192h-64v192h-64V192h-64v192h-64V192H96z"></path></svg><a id="gd_indexer" href="#" style="    margin-left: 4px;">GrepoData City Indexer</a></li>');
 
+                // contact/update
+
                 // Intro
                 // var layoutUrl = 'https' + window.getComputedStyle(document.getElementsByClassName('icon')[0], null).background.split('("https')[1].split('"')[0];
                 var settingsHtml = '<div id="gd_settings_container" style="display: none; position: absolute; top: 0; bottom: 0; right: 0; left: 232px; padding: 0px; overflow: auto;">\n' +
                     '    <div id="gd_settings" style="position: relative;">\n' +
                     '\t\t<div class="section">\n' +
-                    '\t\t\t<div class="game_header bold" style="margin: -5px -10px 15px -10px; padding-left: 10px;">GrepoData city indexer settings</div>\n' +
+                    '\t\t\t<div class="game_header bold" style="margin: -5px -10px 5px -10px; padding-left: 10px;">GrepoData city indexer settings</div>\n' +
+                    '<a href="https://grepodata.com/message" target="_blank">Contact</a>' +
+                    '<p style="font-style: italic; font-size: 10px; float: right; margin:0px;">GrepoData city indexer v' + gd_version + ' [<a href="https://api.grepodata.com/script/indexer.user.js" target="_blank">' + translate.CHECK_UPDATE + '</a>]</p>' +
                     '\t\t\t<p>' + translate.ABOUT + '.</p>' +
                     '\t\t\t<p id="gdsettingslogged_in">' + translate.INDEX_LOGGED_IN + ' ' + '<a id="gdsettingslogout" href="#">Logout</a>' +
                     '</p>' + (count > 0 ? '<p>' + translate.COUNT_1 + count + translate.COUNT_2 + '.</p>' : '') +
-                    '<p id="gd_s_saved" style="display: none; position: absolute; left: 50px; margin: 0;"><strong>' + translate.SAVED + ' ✓</strong></p> ' +
+                    '<p id="gd_s_saved" style="display: none; position: absolute; left: 10px; margin: 0; color: green;"><strong>' + translate.SAVED + ' ✓</strong></p> ' +
                     '<br/>\n';
 
-                settingsHtml = settingsHtml + '<div style="max-height: '+(count > 0 ? 340 : 360)+'px; overflow-y: scroll; background: #FFEECA; border: 2px solid #d0be97;">';
+                // settings container
+                settingsHtml = settingsHtml + '<div style="max-height: '+(count > 0 ? 320 : 340)+'px; overflow-y: scroll; background: #FFEECA; border: 2px solid #d0be97;">';
 
                 // Forum intel settings
                 settingsHtml += '\t\t\t<p style="margin-bottom: 10px; margin-left: 10px;"><strong>' + translate.COLLECT_INTEL + '</strong></p>\n' +
@@ -1780,12 +1639,10 @@ var verbose = false;
                     '\t\t\t<div style="margin-left: 30px;" class="checkbox_new bug_reports_gd_enabled' + (gd_settings.bug_reports === true ? ' checked' : '') + '">\n' +
                     '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.BUG_REPORTS + '</div>\n' +
                     '\t\t\t</div>\n' +
-                    '\t\t\t<br><br><hr>\n';
+                    '\t\t\t<br><br>\n';
 
                 // Footer
                 settingsHtml += '</div>' +
-                    '<a href="https://grepodata.com/message" target="_blank">Contact</a>' +
-                    '<p style="font-style: italic; font-size: 10px; float: right; margin:0px;">GrepoData city indexer v' + gd_version + ' [<a href="https://api.grepodata.com/script/indexer.user.js" target="_blank">' + translate.CHECK_UPDATE + '</a>]</p>' +
                     '\t\t</div>\n' +
                     '    </div>\n' +
                     '</div>';
@@ -2516,6 +2373,35 @@ var verbose = false;
                 });
             } catch (error) {
                 errorHandling(error, "loadIndexHashlist");
+            }
+        }
+
+        // Loads a list of indexes for the current users.
+        function loadIndexesList(check_login, show_no_index_popup) {
+            try {
+                getAccessToken().then(access_token => {
+                    if (access_token == false && check_login == true) {
+                        showLoginPopup()
+                    } else {
+                        $.ajax({
+                            method: "get",
+                            headers: {"access_token": access_token},
+                            url: backend_url + "/profile/indexes?expand_overview=true&world=" + Game.world_id
+                        }).done(function (b) {
+                            try {
+                                if (b['items'] !== undefined) {
+                                    globals.indexes = [];
+                                    $.each(b['items'], function (b, d) {
+                                        globals.indexes.push(d)
+                                    });
+                                    console.log(globals.indexes);
+                                }
+                            } catch (u) {}
+                        });
+                    }
+                });
+            } catch (error) {
+                errorHandling(error, "loadIndexesList");
             }
         }
 
