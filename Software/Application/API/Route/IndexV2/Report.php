@@ -28,9 +28,10 @@ class Report extends \Grepodata\Library\Router\BaseRoute
       // Validate params
       $aParams = self::validateParams(array('world', 'access_token'));
       $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+      $World = $aParams['world'];
 
       // Get all active indexes for this user in this world
-      $aIndexes = IndexInfo::allByUserAndWorld($oUser, $aParams['world']);
+      $aIndexes = IndexInfo::allByUserAndWorld($oUser, $World);
       $aActiveIndexes = array();
       foreach ($aIndexes as $oIndex) {
         if ($oIndex->role != Roles::ROLE_READ && $oIndex->contribute == true) {
@@ -47,7 +48,7 @@ class Report extends \Grepodata\Library\Router\BaseRoute
           SELECT distinct report_hash FROM (
             SELECT report_hash, min(id) as sort_id
             FROM Indexer_intel_shared 
-            WHERE (index_key is NULL and user_id = ".$oUser->id.") or index_key IN (".$KeyString.")
+            WHERE (index_key is NULL and user_id = ".$oUser->id." and world = '".$World."') or index_key IN (".$KeyString.")
             GROUP BY report_hash, user_id
             HAVING user_id = ".$oUser->id." or COUNT(index_key) = ".count($aActiveIndexes)."
             ORDER BY sort_id DESC
