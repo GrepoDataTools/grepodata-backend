@@ -1868,18 +1868,6 @@ var verbose = false;
                     '<a href="'+intelUrl+'" class="gd_ext_ref" target="_blank" style="float: right;">View on grepodata.com</a></div>';
                 $('.gdintel_'+content_id).append(title);
 
-                // TODO: Version check
-                // if (data.hasOwnProperty('latest_version') && data.latest_version != null && data.latest_version.toString() !== gd_version) {
-                //     var updateHtml =
-                //         '<div class="gd_update_available" style=" background: #b93b3b; color: #fff; text-align: center; border-radius: 10px; padding-bottom: 2px;">' +
-                //         'New userscript version available: ' +
-                //         '<a href="https://api.grepodata.com/script/indexer.user.js" class="gd_ext_ref" target="_blank" ' +
-                //         'style="color: #ffffff; text-decoration: underline;">Update now!</a></div>';
-                //     $('.gdintel_'+content_id).append(updateHtml);
-                //     $('.gd_update_available').tooltip((data.hasOwnProperty('update_message') ? data.update_message : data.latest_version));
-                //     unitHeight -= 18;
-                // }
-
                 // Buildings
                 var build = '<div class="gd_build_' + id + '" style="padding-bottom: 4px;">';
                 var date = '';
@@ -2027,7 +2015,9 @@ var verbose = false;
 
                         tooltips.push({id: 'intel-unit-' + unit.name + '-' + id + '-' + j, text: unit.count + ' ' + (unit.name=='unknown'?'unknown land units':unit.name.replace('_',' '))});
                     }
-                    if (intel.hero != null) {
+
+                    // Append hero to unit list
+                    if (intel.hero != null && intel.hero != "") {
                         unitHtml = unitHtml +
                             '<div class="hero_icon_border golden_border intel-hero-' + id + '-' + j + '" style="display: inline-block;">\n' +
                             '    <div class="hero_icon_background">\n' +
@@ -2036,6 +2026,15 @@ var verbose = false;
                             '</div>';
                         tooltips.push({id: 'intel-hero-' + id + '-' + j, text: intel.hero.toLowerCase()});
                     }
+
+                    // Append god to unit list
+                    if (intel.god != null && intel.god != "") {
+                        unitHtml = unitHtml +
+                            '<div style="float: right; margin-top: -2px; margin-left: 30px;" ' +
+                            'class="god_micro ' + intel.god.toLowerCase() + '" title="' + intel.god + '"></div>';
+                        tooltips.push({id: 'intel-god-' + id + '-' + j, text: intel.god});
+                    }
+
                     row = row + '<div style="display: table-cell;"><div><div class="origin_town_units" style="padding-left: 30px; margin: 5px 0 5px 0; ' + (killed ? 'height: 37px;' : '') + '">' + unitHtml + '</div></div></div>';
 
                     // Wall
