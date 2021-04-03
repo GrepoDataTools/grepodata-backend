@@ -45,8 +45,8 @@ class IndexInfo
    */
   public static function allByUser(User $oUser)
   {
-    return \Grepodata\Library\Model\Indexer\IndexInfo::select(['Index_info.*', 'Indexer_roles.role', 'Indexer_roles.contribute', 'Indexer_roles.id AS sort_id'])
-      ->join('Indexer_roles', 'Indexer_roles.index_key', '=', 'Index_info.key_code')
+    return \Grepodata\Library\Model\Indexer\IndexInfo::select(['Indexer_info.*', 'Indexer_roles.role', 'Indexer_roles.contribute', 'Indexer_roles.id AS sort_id'])
+      ->join('Indexer_roles', 'Indexer_roles.index_key', '=', 'Indexer_info.key_code')
       ->where('Indexer_roles.user_id', '=', $oUser->id)
       ->orderBy('Indexer_roles.id', 'desc')
       ->get();
@@ -60,11 +60,11 @@ class IndexInfo
    */
   public static function allByUserAndWorld(User $oUser, $World)
   {
-    return \Grepodata\Library\Model\Indexer\IndexInfo::select(['Index_info.*', 'Indexer_roles.role', 'Indexer_roles.contribute'])
-      ->join('Indexer_roles', 'Indexer_roles.index_key', '=', 'Index_info.key_code')
+    return \Grepodata\Library\Model\Indexer\IndexInfo::select(['Indexer_info.*', 'Indexer_roles.role', 'Indexer_roles.contribute'])
+      ->join('Indexer_roles', 'Indexer_roles.index_key', '=', 'Indexer_info.key_code')
       ->where('Indexer_roles.user_id', '=', $oUser->id)
-      ->where('Index_info.world', '=', $World)
-      ->orderBy('Index_info.created_at', 'desc')
+      ->where('Indexer_info.world', '=', $World)
+      ->orderBy('Indexer_info.created_at', 'desc')
       ->get();
   }
 

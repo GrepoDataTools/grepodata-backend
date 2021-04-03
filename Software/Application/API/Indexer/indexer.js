@@ -2355,7 +2355,7 @@ var verbose = false;
                         $.ajax({
                             method: "get",
                             headers: {"access_token": access_token},
-                            url: backend_url + "/indexer/getlatest?world=" + Game.world_id
+                            url: backend_url + "/indexer/v2/getlatest?world=" + Game.world_id
                         }).done(function (b) {
                             try {
                                 if (globals.reportsFound === undefined) {
@@ -2441,7 +2441,7 @@ var verbose = false;
                 try {
                     $.ajax({
                         type: "POST",
-                        url: "https://api.grepodata.com/indexer/scripterror",
+                        url: "https://api.grepodata.com/indexer/v2/scripterror",
                         data: {error: e.stack.replace(/'/g, '"'), "function": fn, browser: getBrowser(), version: gd_version, world: world},
                         success: function (r) {}
                     });

@@ -22,8 +22,8 @@ $limit100PerMin = array(
   'window' => 60
 );
 
-// AUTH
-//Register
+// === AUTH
+// Register
 $oRouter->Add('register', new Route('/auth/register', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
   '_method'     => 'Register',
@@ -39,37 +39,39 @@ $oRouter->Add('newConfirmMail', new Route('/auth/newconfirm', array(
   '_method'     => 'RequestNewConfirmMail',
   '_ratelimit'  => $limit3PerMin
 )));
-//Verify
+// Verify
 $oRouter->Add('verifytoken', new Route('/auth/token', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
   '_method'     => 'Verify',
   '_ratelimit'  => $limit100PerMin
 )));
-//Refresh token
+// Refresh token
 $oRouter->Add('refreshtoken', new Route('/auth/refresh', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
   '_method'     => 'Refresh',
   '_ratelimit'  => $limit100PerMin
 )));
-//Login
+// Login
 $oRouter->Add('login', new Route('/auth/login', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
   '_method'     => 'Login',
   '_ratelimit'  => $limit50PerMin
 )));
-//Forgot
+// Forgot
 $oRouter->Add('forgot', new Route('/auth/reset', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
   '_method'     => 'Forgot',
   '_ratelimit'  => $limit3PerMin
 )));
-//Reset password
+// Reset password
 $oRouter->Add('changepassword', new Route('/auth/changepassword', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
   '_method'     => 'ChangePassword',
   '_ratelimit'  => $limit10PerMin
 )));
-//New Script Link Code
+// ===
+
+// Indexer V2: userscript linking
 $oRouter->Add('newscriptlink', new Route('/auth/newscriptlink', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
   '_method'     => 'NewScriptLink',
@@ -220,14 +222,6 @@ $oRouter->Add('allConquests', new Route('/conquest', array(
   '_controller' => '\Grepodata\Application\API\Route\Conquest',
   '_method'     => 'AllConquests'
 )));
-//$oRouter->Add('allianceConquests', new Route('/conquest/alliance', array(
-//  '_controller' => '\Grepodata\Application\API\Route\Conquest',
-//  '_method'     => 'AllianceConquests'
-//)));
-//$oRouter->Add('townConquests', new Route('/conquest/town', array(
-//  '_controller' => '\Grepodata\Application\API\Route\Conquest',
-//  '_method'     => 'TownConquests'
-//)));
 
 // Message
 $oRouter->Add('messageNew', new Route('/message/add', array(
@@ -272,20 +266,12 @@ $oRouter->Add('playerTowns', new Route('/town/player', array(
   '_controller' => '\Grepodata\Application\API\Route\Town',
   '_method'     => 'PlayerTowns'
 )));
-//$oRouter->Add('allianceTowns', new Route('/town/alliance', array(
-//  '_controller' => '\Grepodata\Application\API\Route\Town',
-//  '_method'     => 'AllianceTowns'
-//)));
-//$oRouter->Add('TownDetails', new Route('/town/details', array(
-//  '_controller' => '\Grepodata\Application\API\Route\Town',
-//  '_method'     => 'TownDetails'
-//)));
 $oRouter->Add('townSearch', new Route('/town/search', array(
   '_controller' => '\Grepodata\Application\API\Route\Town',
   '_method'     => 'Search'
 )));
 
-// Indexer v2
+// Indexer routes (V2)
 $oRouter->Add('indexReportV2', new Route('/indexer/v2/indexreport', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Report',
   '_method'     => 'indexReport'
@@ -308,6 +294,10 @@ $oRouter->Add('getUserIntel', new Route('/indexer/v2/userintel', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Intel',
   '_method'     => 'GetIntelForUser'
 )));
+$oRouter->Add('reportHashListV2', new Route('/indexer/v2/getlatest', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Report',
+  '_method'     => 'LatestReportHashes'
+)));
 $oRouter->Add('gettownintelV2', new Route('/indexer/v2/town', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Intel',
   '_method'     => 'GetTown'
@@ -320,7 +310,6 @@ $oRouter->Add('getallianceintelV2', new Route('/indexer/v2/alliance', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Browse',
   '_method'     => 'GetAlliance'
 )));
-// V2 notes
 $oRouter->Add('indexaddnotev2', new Route('/indexer/v2/addnote', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Notes',
   '_method'     => 'AddNote'
@@ -330,7 +319,7 @@ $oRouter->Add('indexdelnotev2', new Route('/indexer/v2/delnote', array(
   '_method'     => 'DeleteNote'
 )));
 
-// index settings
+// Indexer settings (V2)
 $oRouter->Add('indexsettingsgetusers', new Route('/indexer/settings/users', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\IndexUsers',
   '_method'     => 'IndexUsers'
@@ -352,15 +341,39 @@ $oRouter->Add('setindexjoinv1', new Route('/indexer/settings/joinv1', array(
   '_method'     => 'SetIndexJoinV1'
 )));
 
-
-
+// Discord link
 $oRouter->Add('discordlink', new Route('/user/discord-link', array(
   '_controller' => '\Grepodata\Application\API\Route\Discord',
   '_method'     => 'DiscordLink'
 )));
-##
 
-// Indexer V1
+// Reporting
+$oRouter->Add('indexerbugreportv2', new Route('/indexer/v2/scripterror', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Reporting',
+  '_method'     => 'BugReport'
+)));
+
+// google catpcha proxy
+$oRouter->Add('captcha', new Route('/captcha', array(
+  '_controller' => '\Grepodata\Application\API\Route\Captcha',
+  '_method'     => 'Verify'
+)));
+
+// Town
+$oRouter->Add('towninfo', new Route('/town', array(
+  '_controller' => '\Grepodata\Application\API\Route\Town',
+  '_method'     => 'GetTownInfo'
+)));
+
+// status
+$oRouter->Add('analyticsindexer', new Route('/analytics/indexer', array(
+  '_controller' => '\Grepodata\Application\API\Route\Status',
+  '_method'     => 'IndexerUsage'
+)));
+
+
+
+// === Indexer V1 (backwards compatible routes)
 $oRouter->Add('stats', new Route('/indexer/stats', array(
   '_controller' => '\Grepodata\Application\API\Route\Indexer\Index',
   '_method'     => 'Stats'
@@ -369,45 +382,13 @@ $oRouter->Add('isValid', new Route('/indexer/isvalid', array(
   '_controller' => '\Grepodata\Application\API\Route\Indexer\Index',
   '_method'     => 'IsValid'
 )));
-$oRouter->Add('getIndex', new Route('/indexer/getindex', array(
-  '_controller' => '\Grepodata\Application\API\Route\Indexer\Index',
-  '_method'     => 'GetIndex'
-)));
-$oRouter->Add('newIndex', new Route('/indexer/newindex', array(
-  '_controller' => '\Grepodata\Application\API\Route\Indexer\Index',
-  '_method'     => 'NewIndex'
-)));
-$oRouter->Add('newKey', new Route('/indexer/newkey', array(
-  '_controller' => '\Grepodata\Application\API\Route\Indexer\Index',
-  '_method'     => 'NewKeyRequest'
-)));
-$oRouter->Add('cleanupRequest', new Route('/indexer/cleanup', array(
-  '_controller' => '\Grepodata\Application\API\Route\Indexer\Index',
-  '_method'     => 'CleanupRequest'
-)));
-$oRouter->Add('forgotKey', new Route('/indexer/forgotkeys', array(
-  '_controller' => '\Grepodata\Application\API\Route\Indexer\Index',
-  '_method'     => 'ForgotKeysRequest'
-)));
-$oRouter->Add('confirmAction', new Route('/indexer/confirmaction', array(
-  '_controller' => '\Grepodata\Application\API\Route\Indexer\Index',
-  '_method'     => 'ConfirmAction'
-)));
 $oRouter->Add('getWorlds', new Route('/indexer/worlds', array(
   '_controller' => '\Grepodata\Application\API\Route\Indexer\Index',
   '_method'     => 'GetWorlds'
 )));
-$oRouter->Add('reportHashList', new Route('/indexer/getlatest', array(
-  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Report',
-  '_method'     => 'LatestReportHashes'
-)));
-$oRouter->Add('addReportForum', new Route('/indexer/addreport', array(
-  '_controller' => '\Grepodata\Application\API\Route\Indexer\Report',
-  '_method'     => 'AddReportFromForum'
-)));
-$oRouter->Add('addReportInbox', new Route('/indexer/inboxreport', array(
-  '_controller' => '\Grepodata\Application\API\Route\Indexer\Report',
-  '_method'     => 'AddReportFromInbox'
+$oRouter->Add('getIndex', new Route('/indexer/getindex', array(
+  '_controller' => '\Grepodata\Application\API\Route\Indexer\Index',
+  '_method'     => 'GetIndexV1'
 )));
 $oRouter->Add('getplayerintel', new Route('/indexer/player', array(
   '_controller' => '\Grepodata\Application\API\Route\Indexer\Browse',
@@ -438,42 +419,24 @@ $oRouter->Add('searchindexusers', new Route('/indexer/search/user', array(
   '_method'     => 'SearchUsers'
 )));
 $oRouter->Add('indexownersinclude', new Route('/indexer/owner/include', array(
-  '_controller' => '\Grepodata\Application\API\Route\Indexer\Owners',
+  '_controller' => '\Grepodata\Application\API\Route\Indexer\DeprecatedRoutesV1',
   '_method'     => 'IncludeAlliance'
 )));
 $oRouter->Add('indexownersexclude', new Route('/indexer/owner/exclude', array(
-  '_controller' => '\Grepodata\Application\API\Route\Indexer\Owners',
+  '_controller' => '\Grepodata\Application\API\Route\Indexer\DeprecatedRoutesV1',
   '_method'     => 'ExcludeAlliance'
 )));
 $oRouter->Add('indexownersreset', new Route('/indexer/owner/reset', array(
-  '_controller' => '\Grepodata\Application\API\Route\Indexer\Owners',
+  '_controller' => '\Grepodata\Application\API\Route\Indexer\DeprecatedRoutesV1',
   '_method'     => 'ResetOwners'
 )));
-
-// index API
+$oRouter->Add('indexerbugreportv1', new Route('/indexer/scripterror', array(
+  '_controller' => '\Grepodata\Application\API\Route\Indexer\DeprecatedRoutesV1',
+  '_method'     => 'BugReportDeprecated'
+)));
 $oRouter->Add('indexapitown', new Route('/indexer/api/town', array(
   '_controller' => '\Grepodata\Application\API\Route\Indexer\IndexApi',
   '_method'     => 'GetTown'
-)));
-$oRouter->Add('indexapidelete', new Route('/indexer/delete', array(
-  '_controller' => '\Grepodata\Application\API\Route\Indexer\IndexApi',
-  '_method'     => 'Delete'
-)));
-$oRouter->Add('indexapiundo', new Route('/indexer/undodelete', array(
-  '_controller' => '\Grepodata\Application\API\Route\Indexer\IndexApi',
-  '_method'     => 'DeleteUndo'
-)));
-$oRouter->Add('indexaddnote', new Route('/indexer/addnote', array(
-  '_controller' => '\Grepodata\Application\API\Route\Indexer\IndexApi',
-  '_method'     => 'AddNote'
-)));
-$oRouter->Add('indexdelnote', new Route('/indexer/delnote', array(
-  '_controller' => '\Grepodata\Application\API\Route\Indexer\IndexApi',
-  '_method'     => 'DeleteNote'
-)));
-$oRouter->Add('indexunitinfo', new Route('/indexer/movementspeed', array(
-  '_controller' => '\Grepodata\Application\API\Route\Indexer\IndexApi',
-  '_method'     => 'CalculateRuntime'
 )));
 $oRouter->Add('conquestreports', new Route('/indexer/conquest', array(
   '_controller' => '\Grepodata\Application\API\Route\Indexer\IndexApi',
@@ -483,42 +446,65 @@ $oRouter->Add('conquestsiegelist', new Route('/indexer/siegelist', array(
   '_controller' => '\Grepodata\Application\API\Route\Indexer\IndexApi',
   '_method'     => 'GetSiegelist'
 )));
+// ===
 
-// Reporting
-$oRouter->Add('indexerbugreport', new Route('/indexer/scripterror', array(
-  '_controller' => '\Grepodata\Application\API\Route\Indexer\Reporting',
-  '_method'     => 'BugReport'
+
+
+// === Indexer V1 (deprecated)
+$oRouter->Add('newIndex', new Route('/indexer/newindex', array(
+  '_controller' => '\Grepodata\Application\API\Route\Indexer\DeprecatedRoutesV1',
+  '_method'     => 'NewIndexV1'
 )));
-
-// old:
+$oRouter->Add('newKey', new Route('/indexer/newkey', array(
+  '_controller' => '\Grepodata\Application\API\Route\Indexer\DeprecatedRoutesV1',
+  '_method'     => 'NewKeyRequest'
+)));
+$oRouter->Add('cleanupRequest', new Route('/indexer/cleanup', array(
+  '_controller' => '\Grepodata\Application\API\Route\Indexer\DeprecatedRoutesV1',
+  '_method'     => 'CleanupRequest'
+)));
+$oRouter->Add('forgotKey', new Route('/indexer/forgotkeys', array(
+  '_controller' => '\Grepodata\Application\API\Route\Indexer\DeprecatedRoutesV1',
+  '_method'     => 'ForgotKeysRequest'
+)));
+$oRouter->Add('confirmAction', new Route('/indexer/confirmaction', array(
+  '_controller' => '\Grepodata\Application\API\Route\Indexer\DeprecatedRoutesV1',
+  '_method'     => 'ConfirmAction'
+)));
+$oRouter->Add('reportHashList', new Route('/indexer/getlatest', array(
+  '_controller' => '\Grepodata\Application\API\Route\Indexer\DeprecatedRoutesV1',
+  '_method'     => 'LatestReportHashes'
+)));
+$oRouter->Add('addReportForum', new Route('/indexer/addreport', array(
+  '_controller' => '\Grepodata\Application\API\Route\Indexer\DeprecatedRoutesV1',
+  '_method'     => 'AddReportFromForum'
+)));
+$oRouter->Add('addReportInbox', new Route('/indexer/inboxreport', array(
+  '_controller' => '\Grepodata\Application\API\Route\Indexer\DeprecatedRoutesV1',
+  '_method'     => 'AddReportFromInbox'
+)));
+$oRouter->Add('indexapidelete', new Route('/indexer/delete', array(
+  '_controller' => '\Grepodata\Application\API\Route\Indexer\DeprecatedRoutesV1',
+  '_method'     => 'Delete'
+)));
+$oRouter->Add('indexapiundo', new Route('/indexer/undodelete', array(
+  '_controller' => '\Grepodata\Application\API\Route\Indexer\DeprecatedRoutesV1',
+  '_method'     => 'DeleteUndo'
+)));
+$oRouter->Add('indexaddnote', new Route('/indexer/addnote', array(
+  '_controller' => '\Grepodata\Application\API\Route\Indexer\DeprecatedRoutesV1',
+  '_method'     => 'AddNote'
+)));
+$oRouter->Add('indexdelnote', new Route('/indexer/delnote', array(
+  '_controller' => '\Grepodata\Application\API\Route\Indexer\DeprecatedRoutesV1',
+  '_method'     => 'DeleteNote'
+)));
+$oRouter->Add('indexunitinfo', new Route('/indexer/movementspeed', array(
+  '_controller' => '\Grepodata\Application\API\Route\Indexer\DeprecatedRoutesV1',
+  '_method'     => 'CalculateRuntime'
+)));
 $oRouter->Add('resetOwners', new Route('/indexer/resetowners', array(
-  '_controller' => '\Grepodata\Application\API\Route\Indexer\Index',
-  '_method'     => 'ResetOwners'
+  '_controller' => '\Grepodata\Application\API\Route\Indexer\DeprecatedRoutesV1',
+  '_method'     => 'ResetIndexOwners'
 )));
-
-// google catpcha proxy
-$oRouter->Add('captcha', new Route('/captcha', array(
-  '_controller' => '\Grepodata\Application\API\Route\Captcha',
-  '_method'     => 'Verify'
-)));
-
-// Town
-$oRouter->Add('towninfo', new Route('/town', array(
-  '_controller' => '\Grepodata\Application\API\Route\Town',
-  '_method'     => 'GetTownInfo'
-)));
-
-// status
-$oRouter->Add('analyticsindexer', new Route('/analytics/indexer', array(
-  '_controller' => '\Grepodata\Application\API\Route\Status',
-  '_method'     => 'IndexerUsage'
-)));
-
-
-/** TODO:
- * index: account creation
- * index: index deleting
- * index: index forking
- * index: index merging
- * index: allow grcrt reports (image recognition)
- */
+// ===

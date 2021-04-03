@@ -20,7 +20,7 @@ use \Illuminate\Database\Eloquent\Model;
  * @property mixed allow_join_v1_key
  * @property mixed moved_to_index
  */
-class IndexInfo extends Model
+class IndexInfoV1 extends Model
 {
-  protected $table = 'Indexer_info';
+  protected $table = 'Index_info';
 }

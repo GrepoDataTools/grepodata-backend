@@ -2,23 +2,13 @@
 
 namespace Grepodata\Application\API\Route\IndexV2;
 
-use Carbon\Carbon;
-use Exception;
-use Grepodata\Library\Controller\Indexer\CityInfo;
-use Grepodata\Library\Controller\Indexer\Conquest;
 use Grepodata\Library\Controller\Indexer\IndexInfo;
 use Grepodata\Library\Controller\Indexer\IndexOverview;
-use Grepodata\Library\Controller\Indexer\IndexOwners;
-use Grepodata\Library\Controller\Indexer\Notes;
 use Grepodata\Library\Controller\IndexV2\Roles;
-use Grepodata\Library\Controller\World;
-use Grepodata\Library\Indexer\IndexBuilder;
 use Grepodata\Library\Indexer\IndexBuilderV2;
 use Grepodata\Library\Indexer\Validator;
 use Grepodata\Library\IndexV2\IndexManagement;
 use Grepodata\Library\Logger\Logger;
-use Grepodata\Library\Mail\Client;
-use Grepodata\Library\Model\Indexer\Auth;
 use Grepodata\Library\Model\Indexer\Stats;
 use Grepodata\Library\Router\Authentication;
 use Grepodata\Library\Router\BaseRoute;

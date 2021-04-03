@@ -14,6 +14,8 @@ class Search extends \Grepodata\Library\Router\BaseRoute
 
   public static function SearchPlayersGET()
   {
+    // TODO: implement v1 backwards compatibility
+    die(self::OutputJson(array('deprecated' => false), 200));
     $aParams = array();
     try {
       // Validate params
@@ -80,6 +82,8 @@ class Search extends \Grepodata\Library\Router\BaseRoute
 
   public static function SearchIslandsGET()
   {
+    // TODO: implement v1 backwards compatibility
+    die(self::OutputJson(array('deprecated' => false), 200));
     $aParams = array();
     try {
       // Validate params
@@ -170,6 +174,8 @@ class Search extends \Grepodata\Library\Router\BaseRoute
 
   public static function SearchTownsGET()
   {
+    // TODO: implement v1 backwards compatibility
+    die(self::OutputJson(array('deprecated' => false), 200));
     $aParams = array();
     try {
       // Validate params
@@ -229,7 +235,6 @@ class Search extends \Grepodata\Library\Router\BaseRoute
         'results' => $aCounts,
       );
       return self::OutputJson($aResponse);
-
 
     } catch (Exception $e) {
       die(self::OutputJson(array(

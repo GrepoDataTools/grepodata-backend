@@ -24,7 +24,7 @@ class OwnersActual extends Model
       'alliance_id'   => $this->alliance_id,
       'alliance_name' => $this->alliance_name,
       'share'         => $this->share,
-      'hide_intel'    => $this->hide_intel == 1 ? true : false,
+      'hide_intel'    => $this->hide_intel == 1,
     );
   }
 

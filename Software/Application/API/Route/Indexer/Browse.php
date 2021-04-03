@@ -132,6 +132,8 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
 
   public static function GetPlayerGET()
   {
+    // TODO: implement v1 backwards compatibility
+    die(self::OutputJson(array('deprecated' => false), 200));
     $aParams = array();
     try {
       // Validate params
@@ -178,6 +180,8 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
 
   public static function GetAllianceGET()
   {
+    // TODO: implement v1 backwards compatibility
+    die(self::OutputJson(array('deprecated' => false), 200));
     $aParams = array();
     try {
       // Validate params
@@ -238,6 +242,8 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
 
   public static function GetTownGET()
   {
+    // TODO: implement v1 backwards compatibility
+    die(self::OutputJson(array('deprecated' => false), 200));
     $aParams = array();
     try {
       // Validate params

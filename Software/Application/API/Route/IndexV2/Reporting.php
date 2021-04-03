@@ -1,11 +1,12 @@
 <?php
 
-namespace Grepodata\Application\API\Route\Indexer;
+namespace Grepodata\Application\API\Route\IndexV2;
 
 use Grepodata\Library\Logger\Logger;
 
 class Reporting extends \Grepodata\Library\Router\BaseRoute
 {
+
   public static function BugReportPOST()
   {
     try {
