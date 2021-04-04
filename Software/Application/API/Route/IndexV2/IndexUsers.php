@@ -240,8 +240,14 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
       // Parse array of index keys
       $aIndexKeys = $aParams['index_keys'];
       if (!is_array($aIndexKeys)) {
-        $aIndexKeys = array($aIndexKeys);
+        if (strlen($aIndexKeys)==8) {
+          $aIndexKeys = array($aIndexKeys);
+        } else {
+          $aIndexKeys = explode(',', $aIndexKeys);
+        }
       }
+
+      $bFailVerbose = isset($aParams['verbose']);
 
       // Import each key
       foreach ($aIndexKeys as $IndexKey) {
@@ -252,12 +258,18 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
           // Check if v1 importing is enabled
           if ($oIndex->allow_join_v1_key == false) {
             // V1 import is disabled, skip to next index
+            if ($bFailVerbose) {
+              ResponseCode::errorCode(7601);
+            }
             continue;
           }
 
           // Check if the key is an actual V1 key (V2 keys can not be imported in this way)
           if ($oIndex->index_version !== '1') {
             // This is not a V1 index, skip to next index
+            if ($bFailVerbose) {
+              ResponseCode::errorCode(7602);
+            }
             continue;
           }
 
@@ -268,6 +280,10 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
             Roles::SetUserIndexRole($oUser, $oIndex, Roles::ROLE_WRITE);
           }
 
+        } catch (ModelNotFoundException $e) {
+          if ($bFailVerbose) {
+            ResponseCode::errorCode(7101);
+          }
         } catch (\Exception $e) {
           Logger::warning("Unable to import V1 index key '" . $IndexKey . "' for user " . $oUser->id . ". " . $e->getMessage());
         }

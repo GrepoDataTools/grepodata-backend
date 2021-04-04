@@ -78,7 +78,7 @@ class Index extends BaseRoute
       // Validate index key
       if (!Validator::IsValidIndex($aParams['key'])) {
         die(self::OutputJson(array(
-          'message'     => 'Unauthorized index key. Please enter the correct index key. You will be banned after 10 incorrect attempts.',
+          'message'     => 'Unauthorized index key. Please enter the correct index key.',
         ), 401));
       }
 
@@ -106,7 +106,7 @@ class Index extends BaseRoute
       $oIndex = Validator::IsValidIndex($aParams['key']);
       if ($oIndex === null || $oIndex === false) {
         die(self::OutputJson(array(
-          'message'     => 'Unauthorized index key. Please enter the correct index key. You will be banned after 10 incorrect attempts.',
+          'message'     => 'Unauthorized index key. Please enter the correct index key.',
         ), 401));
       }
 

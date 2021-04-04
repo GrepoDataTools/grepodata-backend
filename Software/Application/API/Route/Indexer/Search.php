@@ -25,7 +25,7 @@ class Search extends \Grepodata\Library\Router\BaseRoute
       $oIndex = Validator::IsValidIndex($aParams['key']);
       if ($oIndex === null || $oIndex === false) {
         die(self::OutputJson(array(
-          'message'     => 'Unauthorized index key. Please enter the correct index key. You will be banned after 10 incorrect attempts.',
+          'message'     => 'Unauthorized index key. Please enter the correct index key.',
         ), 401));
       }
 
@@ -93,7 +93,7 @@ class Search extends \Grepodata\Library\Router\BaseRoute
       $oIndex = Validator::IsValidIndex($aParams['key']);
       if ($oIndex === null || $oIndex === false) {
         die(self::OutputJson(array(
-          'message'     => 'Unauthorized index key. Please enter the correct index key. You will be banned after 10 incorrect attempts.',
+          'message'     => 'Unauthorized index key. Please enter the correct index key.',
         ), 401));
       }
 
@@ -185,7 +185,7 @@ class Search extends \Grepodata\Library\Router\BaseRoute
       $oIndex = Validator::IsValidIndex($aParams['key']);
       if ($oIndex === null || $oIndex === false) {
         die(self::OutputJson(array(
-          'message'     => 'Unauthorized index key. Please enter the correct index key. You will be banned after 10 incorrect attempts.',
+          'message'     => 'Unauthorized index key. Please enter the correct index key.',
         ), 401));
       }
 

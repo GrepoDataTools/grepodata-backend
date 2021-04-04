@@ -40,7 +40,9 @@ class Profile extends BaseRoute
           $aOverview = $oOverview->getMinimalFields();
         } catch (\Exception $e) {
           // no overview for this index
-          $aOverview = array();
+          $aOverview = array(
+            'total_reports' => '?'
+          );
         }
       }
       $bUserIsAdmin = in_array($oIndex->role, array(Roles::ROLE_ADMIN, Roles::ROLE_OWNER));
@@ -63,7 +65,7 @@ class Profile extends BaseRoute
 
     // optional sort by number of reports descending
     if (isset($aParams['sort_by'])) {
-      if ($aParams['sort_by'] == 'reports') {
+      if ($aParams['sort_by'] == 'reports' && !empty($aOverview)) {
         usort($aIndexItems, function ($item1, $item2) {
           return $item1['stats']['total_reports'] < $item2['stats']['total_reports'] ? 1 : -1;
         });

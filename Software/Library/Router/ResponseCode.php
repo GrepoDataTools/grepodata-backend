@@ -57,6 +57,7 @@ define('GD_ERROR_6401', 'No user found for these parameters.');
 // Indexer
 define('GD_ERROR_7000', 'Unable to handle indexer request');
 define('GD_ERROR_7100', 'No verified players found for this user.');
+define('GD_ERROR_7101', 'No index found for this key.');
 define('GD_ERROR_7500', 'Unauthorized. You do not have access to this index.');
 define('GD_ERROR_7501', 'Unauthorized. You are not an owner on this index.');
 define('GD_ERROR_7502', 'Unauthorized. You are not an admin on this index.');
@@ -71,6 +72,8 @@ define('GD_ERROR_7534', "Invalid option: can_join_with_v1_key must be true or fa
 define('GD_ERROR_7540', "Unauthorized. Only an index owner can change the rights of an index admin/owner.");
 define('GD_ERROR_7560', "Unable to update index owners.");
 define('GD_ERROR_7570', "User is already a member of this index.");
+define('GD_ERROR_7601', "V1 key joining is disabled by owner.");
+define('GD_ERROR_7602', "Not a V1 index.");
 
 // === Success codes
 define('GD_SUCCESS_1000', 'Request processed successfully');
