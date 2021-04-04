@@ -341,6 +341,12 @@ $oRouter->Add('setindexjoinv1', new Route('/indexer/settings/joinv1', array(
   '_method'     => 'SetIndexJoinV1'
 )));
 
+// Import V1 index keys
+$oRouter->Add('importv1keys', new Route('/migrate/importv1keys', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\IndexUsers',
+  '_method'     => 'ImportV1Keys'
+)));
+
 // Discord link
 $oRouter->Add('discordlink', new Route('/user/discord-link', array(
   '_controller' => '\Grepodata\Application\API\Route\Discord',

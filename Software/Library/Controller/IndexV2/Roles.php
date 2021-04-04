@@ -83,5 +83,17 @@ class Roles
       ->firstOrFail();
   }
 
+  /**
+   * @param User $oUser
+   * @param $IndexKey
+   * @return \Grepodata\Library\Model\IndexV2\Roles
+   */
+  public static function getUserIndexRoleNoFail(User $oUser, $IndexKey)
+  {
+    return \Grepodata\Library\Model\IndexV2\Roles::where('user_id', '=', $oUser->id)
+      ->where('index_key', '=', $IndexKey)
+      ->first();
+  }
+
 
 }

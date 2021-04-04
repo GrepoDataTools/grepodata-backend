@@ -33,13 +33,14 @@ class Profile extends BaseRoute
         if ($oIndex->world !== $aParams['world']) continue;
       }
 
-      $aOverview = [];
+      $aOverview = array();
       if (isset($aParams['expand_overview']) || isset($aParams['sort_by'])) {
         try {
           $oOverview = IndexOverview::firstOrFail($oIndex->key_code);
           $aOverview = $oOverview->getMinimalFields();
         } catch (\Exception $e) {
-          continue;
+          // no overview for this index
+          $aOverview = array();
         }
       }
       $bUserIsAdmin = in_array($oIndex->role, array(Roles::ROLE_ADMIN, Roles::ROLE_OWNER));

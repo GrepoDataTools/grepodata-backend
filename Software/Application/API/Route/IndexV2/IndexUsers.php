@@ -7,6 +7,7 @@ use Grepodata\Library\Controller\Indexer\IndexInfo;
 use Grepodata\Library\Controller\IndexV2\Roles;
 use Grepodata\Library\Controller\World;
 use Grepodata\Library\IndexV2\IndexManagement;
+use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\User;
 use Grepodata\Library\Router\ResponseCode;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -226,4 +227,61 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
     }
   }
 
+  /**
+   * Import one or more v1 index keys for the authenticated user
+   * @throws \Exception
+   */
+  public static function ImportV1KeysPOST()
+  {
+    try {
+      $aParams = self::validateParams(array('access_token', 'index_keys'));
+      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+
+      // Parse array of index keys
+      $aIndexKeys = $aParams['index_keys'];
+      if (!is_array($aIndexKeys)) {
+        $aIndexKeys = array($aIndexKeys);
+      }
+
+      // Import each key
+      foreach ($aIndexKeys as $IndexKey) {
+        try {
+          // Check if the index exists
+          $oIndex = IndexInfo::firstOrFail($IndexKey);
+
+          // Check if v1 importing is enabled
+          if ($oIndex->allow_join_v1_key == false) {
+            // V1 import is disabled, skip to next index
+            continue;
+          }
+
+          // Check if the key is an actual V1 key (V2 keys can not be imported in this way)
+          if ($oIndex->index_version !== '1') {
+            // This is not a V1 index, skip to next index
+            continue;
+          }
+
+          // Check if user already has a role on the index (if role already exists, skip import for this index)
+          $oExistingRole = Roles::getUserIndexRoleNoFail($oUser, $oIndex->key_code);
+          if ($oExistingRole == null) {
+            // Add write role on the index
+            Roles::SetUserIndexRole($oUser, $oIndex, Roles::ROLE_WRITE);
+          }
+
+        } catch (\Exception $e) {
+          Logger::warning("Unable to import V1 index key '" . $IndexKey . "' for user " . $oUser->id . ". " . $e->getMessage());
+        }
+      }
+
+      ResponseCode::success(array(
+        'imported' => true
+      ), 1400);
+
+    } catch (ModelNotFoundException $e) {
+      die(self::OutputJson(array(
+        'message'     => 'User not found.',
+        'parameters'  => $aParams
+      ), 404));
+    }
+  }
 }

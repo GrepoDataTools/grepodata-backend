@@ -89,6 +89,7 @@ define('GD_SUCCESS_1200', 'Renewed share link');
 define('GD_SUCCESS_1250', 'Updated delete days');
 define('GD_SUCCESS_1260', 'Updated v1 join status');
 define('GD_SUCCESS_1300', 'User index access revoked');
+define('GD_SUCCESS_1400', 'V1 index key import successful');
 
 define('GD_SUCCESS_4000', 'Profile request processed successfully');
 define('GD_SUCCESS_4200', 'Account unlinking was successful');
