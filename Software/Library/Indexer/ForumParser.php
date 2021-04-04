@@ -218,7 +218,7 @@ class ForumParser
 
       $aBuildingIds = array('senate', 'wood', 'farm', 'stone', 'silver', 'baracks', 'temple', 'storage', 'trade', 'port', 'academy', 'wall', 'cave', 'special_1', 'special_2');
       $aLandUnitIds = array('militia', 'sword', 'sling', 'bow', 'spear', 'caval', 'strijd', 'kata', 'gezant', 'unknown');
-      $aMythUnitIds = array('mino', 'manti', 'sea_monster', 'harp', 'medusa', 'centaur', 'pegasus', 'cerberus', 'erinyes', 'cyclope', 'griff', 'boar');
+      $aMythUnitIds = array('siren', 'satyr', 'spartoi', 'ladon', 'mino', 'manti', 'sea_monster', 'harp', 'medusa', 'centaur', 'pegasus', 'cerberus', 'erinyes', 'cyclope', 'griff', 'boar');
       $aSeaUnitIds  = array('slow_tp', 'bir', 'brander', 'fast_tp', 'trireme', 'kolo', 'unknown_naval');
 
       $aBuildings = array();
