@@ -555,6 +555,32 @@ var verbose = false;
                     showLoginPopup()
                 } else {
                     console.log("GrepoData: Succesful authentication.");
+
+                    // Check for V1 keys
+                    var storage_key = 'gd_key_list_v1';
+                    var migration_complete = 'gd_key_migration_complete';
+                    if (localStorage.getItem(storage_key) && !localStorage.getItem(migration_complete)) {
+                        var keys = JSON.parse(localStorage.getItem(storage_key));
+                        console.log('Loaded V1 keys from local storage', keys);
+
+                        // Migrate to V2
+                        $.ajax({
+                            url: backend_url + "/migrate/importv1keys",
+                            data: {
+                                access_token: access_token,
+                                index_keys: keys
+                            },
+                            type: 'post',
+                            crossDomain: true,
+                            dataType: 'json',
+                            timeout: 30000
+                        }).fail(function (err) {
+                            console.log("Error importing V1 keys: ", err);
+                        }).done(function (response) {
+                            console.log("V1 keys imported: ", response);
+                            localStorage.setItem(migration_complete, 'true');
+                        });
+                    }
                 }
             });
         }
