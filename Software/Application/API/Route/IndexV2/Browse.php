@@ -4,14 +4,7 @@ namespace Grepodata\Application\API\Route\IndexV2;
 
 use Carbon\Carbon;
 use Exception;
-use Grepodata\Library\Controller\Alliance;
-use Grepodata\Library\Controller\Indexer\CityInfo;
-use Grepodata\Library\Controller\Indexer\IndexInfo;
-use Grepodata\Library\Controller\Indexer\IndexOverview;
-use Grepodata\Library\Controller\Player;
 use Grepodata\Library\Controller\World;
-use Grepodata\Library\Indexer\Validator;
-use Grepodata\Library\Model\Indexer\City;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class Browse extends \Grepodata\Library\Router\BaseRoute

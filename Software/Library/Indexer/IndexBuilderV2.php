@@ -18,7 +18,8 @@ class IndexBuilderV2
    * @param $UserId
    * @return IndexInfo
    */
-  public static function buildNewIndex($World, $IndexName, $UserId) {
+  public static function buildNewIndex($World, $IndexName, $UserId): IndexInfo
+  {
     // Find a new key
     $NewIndexKey = self::generateIndexKey(8);
     while (self::indexExists($NewIndexKey)) {
@@ -35,12 +36,14 @@ class IndexBuilderV2
     $oIndex->status = 'active';
     $oIndex->share_link = self::generateIndexKey(10);
     $oIndex->script_version = USERSCRIPT_VERSION;
+    $oIndex->index_version = '2';
     $oIndex->save();
 
     return $oIndex;
   }
 
-  public static function generateIndexKey($length = 8) {
+  public static function generateIndexKey($length = 8): string
+  {
       $characters = '0123456789abcdefghijklmnopqrstuvwxyz';
       $charactersLength = strlen($characters);
       $randomString = '';
@@ -50,7 +53,8 @@ class IndexBuilderV2
       return $randomString;
   }
 
-  private static function indexExists($key) {
+  private static function indexExists($key): bool
+  {
     $oIndex = \Grepodata\Library\Controller\Indexer\IndexInfo::first($key);
     if ($oIndex === null) return false;
     return true;

@@ -9,6 +9,7 @@ use \Illuminate\Database\Eloquent\Model;
  * @property mixed id
  * @property mixed indexed_by_user_id
  * @property mixed hash
+ * @property mixed v1_index
  * @property mixed world
  * @property mixed source_type
  * @property mixed report_type

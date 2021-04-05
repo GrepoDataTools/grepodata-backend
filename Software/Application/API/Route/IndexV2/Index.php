@@ -3,7 +3,7 @@
 namespace Grepodata\Application\API\Route\IndexV2;
 
 use Grepodata\Library\Controller\Indexer\IndexInfo;
-use Grepodata\Library\Controller\Indexer\IndexOverview;
+use Grepodata\Library\Controller\IndexV2\IndexOverview;
 use Grepodata\Library\Controller\IndexV2\Roles;
 use Grepodata\Library\Indexer\IndexBuilderV2;
 use Grepodata\Library\Indexer\Validator;
@@ -149,7 +149,7 @@ class Index extends BaseRoute
         'latest_report'     => $oIndexOverview['latest_report'],
         'max_version'       => $oIndexOverview['max_version'],
         'recent_conquests'  => $aRecentConquests,
-        'latest_version'    => $oIndex->script_version,
+        'latest_version'    => USERSCRIPT_VERSION,
         'index_version'     => $oIndex->index_version,
         'index_name'        => $oIndex->index_name,
         'role'              => $oIndexRole->role,

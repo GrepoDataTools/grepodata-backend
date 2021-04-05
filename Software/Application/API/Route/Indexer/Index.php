@@ -4,7 +4,7 @@ namespace Grepodata\Application\API\Route\Indexer;
 
 use Exception;
 use Grepodata\Library\Controller\Indexer\Conquest;
-use Grepodata\Library\Controller\Indexer\IndexOverview;
+use Grepodata\Library\Controller\IndexV2\IndexOverview;
 use Grepodata\Library\Controller\World;
 use Grepodata\Library\Indexer\Validator;
 use Grepodata\Library\Logger\Logger;

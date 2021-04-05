@@ -5,7 +5,6 @@ namespace Grepodata\Library\Cron;
 use Carbon\Carbon;
 use Grepodata\Library\Controller\Alliance;
 use Grepodata\Library\Controller\CronStatus;
-use Grepodata\Library\Controller\Indexer\IndexOverview;
 use Grepodata\Library\Controller\Indexer\ReportId;
 use Grepodata\Library\Controller\Player;
 use Grepodata\Library\Indexer\ForumParser;
@@ -169,7 +168,7 @@ class Common
         $Report->city_id = $aParsed;
         $Report->save();
         if ($bRebuildIndex === true) {
-          IndexOverview::buildIndexOverview($Info);
+          \Grepodata\Library\Controller\IndexV2\IndexOverview::buildIndexOverview($Info);
         }
       }
     } catch (\Exception $e) {

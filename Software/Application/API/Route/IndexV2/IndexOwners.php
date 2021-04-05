@@ -4,13 +4,9 @@ namespace Grepodata\Application\API\Route\IndexV2;
 
 use Grepodata\Library\Controller\Alliance;
 use Grepodata\Library\Controller\Indexer\IndexInfo;
-use Grepodata\Library\Controller\Indexer\IndexOverview;
 use Grepodata\Library\Controller\IndexV2\OwnersActual;
-use Grepodata\Library\Controller\IndexV2\Roles;
-use Grepodata\Library\Controller\World;
 use Grepodata\Library\IndexV2\IndexManagement;
 use Grepodata\Library\Logger\Logger;
-use Grepodata\Library\Model\User;
 use Grepodata\Library\Router\ResponseCode;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 

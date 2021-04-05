@@ -65,7 +65,7 @@ class Intel
   public static function allByIndex(IndexInfo $oIndex)
   {
     return self::selectByIndex($oIndex)
-      ->orderBy('id', 'desc')
+      ->orderBy('parsed_date', 'desc')
       ->get();
   }
 
@@ -103,8 +103,7 @@ class Intel
       $oQuery->where('Indexer_intel.world', '=', $World);
     }
 
-    return $oQuery->orderBy('id', 'desc')
-      ->distinct('Indexer_intel.id')
+    return $oQuery->distinct('Indexer_intel.id')
       ->get();
   }
 
@@ -123,8 +122,7 @@ class Intel
       $oQuery->where('Indexer_intel.world', '=', $World);
     }
 
-    return $oQuery->orderBy('id', 'desc')
-      ->distinct('Indexer_intel.id')
+    return $oQuery->distinct('Indexer_intel.id')
       ->get();
   }
 
@@ -457,7 +455,7 @@ class Intel
     return \Grepodata\Library\Model\IndexV2\Intel::select(['Indexer_intel.*'])
       ->join('Indexer_intel_shared', 'Indexer_intel_shared.intel_id', '=', 'Indexer_intel.id')
       ->where('Indexer_intel_shared.user_id', '=', $oUser->id)
-      ->orderBy('Indexer_intel.id', 'desc')
+      ->orderBy('Indexer_intel.parsed_date', 'desc')
       ->distinct('Indexer_intel.id')
       ->offset($From)
       ->limit($Size+1)
@@ -475,7 +473,6 @@ class Intel
     return self::selectByUser($oUser, $bCheckHiddenOwners)
       ->where('Indexer_intel.town_id', '=', $TownId, 'and')
       ->where('Indexer_intel.world', '=', $World)
-      ->orderBy('created_at', 'asc')
       ->distinct('Indexer_intel.id')
       ->get();
   }
@@ -491,7 +488,6 @@ class Intel
     return self::selectByUser($oUser, $bCheckHiddenOwners)
       ->where('Indexer_intel.player_id', '=', $PlayerId, 'and')
       ->where('Indexer_intel.world', '=', $World)
-      ->orderBy('id', 'desc')
       ->distinct('Indexer_intel.id')
       ->get();
   }
@@ -508,7 +504,7 @@ class Intel
     return self::selectByUser($oUser, $bCheckHiddenOwners)
       ->where('Indexer_intel.alliance_id', '=', $AllianceId, 'and')
       ->where('Indexer_intel.world', '=', $World)
-      ->orderBy('id', 'desc')
+      ->orderBy('parsed_date', 'desc')
       ->distinct('Indexer_intel.id')
       ->get();
   }
