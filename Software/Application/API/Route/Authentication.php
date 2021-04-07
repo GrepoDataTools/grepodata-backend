@@ -7,6 +7,7 @@ use Grepodata\Library\Controller\Indexer\IndexInfo;
 use Grepodata\Library\Controller\IndexV2\ScriptToken;
 use Grepodata\Library\Controller\User;
 use Grepodata\Library\Indexer\IndexBuilder;
+use Grepodata\Library\Indexer\IndexBuilderV2;
 use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Mail\Client;
 use Grepodata\Library\Router\BaseRoute;
@@ -33,6 +34,11 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
     } catch (ModelNotFoundException $e) {}
 
     // Validate username
+    if (strlen($aParams['username']) < 4) {
+      ResponseCode::errorCode(3033, array(), 422);
+    } else if (strlen($aParams['username']) > 32) {
+      ResponseCode::errorCode(3034, array(), 422);
+    }
     try {
       if (User::GetUserByUsername($aParams['username'])) {
         ResponseCode::errorCode(3032, array(), 409);
@@ -516,9 +522,9 @@ admin@grepodata.com',
     }
 
     // Delete all personal data
-    $oUser->username = "DELETED_" . IndexBuilder::generateIndexKey(8);
-    $oUser->email = "DELETED_" . IndexBuilder::generateIndexKey(8);
-    $oUser->passphrase = password_hash(IndexBuilder::generateIndexKey(12), PASSWORD_BCRYPT);
+    $oUser->username = "DELETED_" . IndexBuilderV2::generateIndexKey(8);
+    $oUser->email = "DELETED_" . IndexBuilderV2::generateIndexKey(8);
+    $oUser->passphrase = password_hash(IndexBuilderV2::generateIndexKey(12), PASSWORD_BCRYPT);
     $oUser->token = bin2hex(random_bytes(16));
     $oUser->save();
 

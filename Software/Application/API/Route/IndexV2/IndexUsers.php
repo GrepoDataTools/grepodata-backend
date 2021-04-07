@@ -9,6 +9,7 @@ use Grepodata\Library\Controller\World;
 use Grepodata\Library\IndexV2\IndexManagement;
 use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\User;
+use Grepodata\Library\Router\Authentication;
 use Grepodata\Library\Router\ResponseCode;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -22,7 +23,7 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
   {
     try {
       $aParams = self::validateParams(array('access_token', 'index_key'));
-      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+      $oUser = Authentication::verifyJWT($aParams['access_token']);
 
       IndexManagement::verifyUserIsAdmin($oUser, $aParams['index_key']);
 
@@ -62,7 +63,7 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
   {
     try {
       $aParams = self::validateParams(array('access_token', 'index_key', 'user_id', 'role'));
-      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+      $oUser = Authentication::verifyJWT($aParams['access_token']);
 
       if ($oUser->id == $aParams['user_id']) {
         ResponseCode::errorCode(7520);
@@ -138,7 +139,7 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
   {
     try {
       $aParams = self::validateParams(array('access_token', 'index_key', 'user_id'));
-      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+      $oUser = Authentication::verifyJWT($aParams['access_token']);
 
       // User has to be at least admin to manage users
       IndexManagement::verifyUserIsAdmin($oUser, $aParams['index_key']);
@@ -191,7 +192,7 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
   {
     try {
       $aParams = self::validateParams(array('access_token', 'index_key', 'user_id'));
-      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+      $oUser = Authentication::verifyJWT($aParams['access_token']);
 
       if ($oUser->id == $aParams['user_id']) {
         ResponseCode::errorCode(7520);
@@ -235,7 +236,7 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
   {
     try {
       $aParams = self::validateParams(array('access_token', 'index_keys'));
-      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+      $oUser = Authentication::verifyJWT($aParams['access_token']);
 
       // Parse array of index keys
       $aIndexKeys = $aParams['index_keys'];
@@ -300,4 +301,70 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
       ), 404));
     }
   }
+
+  /**
+   * Verify and process the given invite link
+   */
+  public static function VerifyInviteLinkPOST()
+  {
+    try {
+      $aParams = self::validateParams(array('access_token', 'invite_link'));
+      $oUser = Authentication::verifyJWT($aParams['access_token']);
+
+      $InviteLink = $aParams['invite_link'];
+      if (!is_string($InviteLink) || !in_array(strlen($InviteLink), array(8, 18))) {
+        ResponseCode::errorCode(3008);
+      }
+
+      // Parse invite link
+      $IndexKey = substr($InviteLink, 0, 8);
+      $InviteCode = substr($InviteLink, 8);
+
+      try {
+        $oIndex = IndexInfo::firstOrFail($IndexKey);
+      } catch (ModelNotFoundException $e) {
+        ResponseCode::errorCode(7101);
+      }
+
+      $oActiveRole = null;
+
+      $oUserRole = Roles::getUserIndexRoleNoFail($oUser, $oIndex->key_code);
+      if ($oUserRole != null) {
+        // User already has a role on the index
+        $oActiveRole = $oUserRole;
+      } else if (strlen($InviteCode)===10) {
+        if ($oIndex->share_link === $InviteCode) {
+          // Verified invite link
+          $oActiveRole = Roles::SetUserIndexRole($oUser, $oIndex, Roles::ROLE_WRITE);
+        } else {
+          // Expired (no longer valid)
+          ResponseCode::errorCode(3009);
+        }
+      } else if (strlen($InviteCode)===0) {
+        if ($oIndex->index_version === '1' && $oIndex->allow_join_v1_key === 1) {
+          // Allow for v1 redirects
+          $oActiveRole = Roles::SetUserIndexRole($oUser, $oIndex, Roles::ROLE_WRITE);
+        } else {
+          // Not a V1 index or v1 joining is disabled
+          ResponseCode::errorCode(7601);
+        }
+      }
+
+      // catch all: invalid invite link
+      if ($oActiveRole==null) {
+        ResponseCode::errorCode(3008);
+      }
+
+      $aResponse = array(
+        'verified' => true,
+        'user_role' => $oActiveRole->getPublicFields()
+      );
+      ResponseCode::success($aResponse, 1201);
+    } catch (\Exception $e) {
+      Logger::warning("Error handling invite link: " . $e->getMessage());
+      ResponseCode::errorCode(1200);
+    }
+  }
+
+
 }

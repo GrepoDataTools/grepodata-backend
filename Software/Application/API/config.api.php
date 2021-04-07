@@ -344,7 +344,15 @@ $oRouter->Add('setindexjoinv1', new Route('/indexer/settings/joinv1', array(
 // Import V1 index keys
 $oRouter->Add('importv1keys', new Route('/migrate/importv1keys', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\IndexUsers',
-  '_method'     => 'ImportV1Keys'
+  '_method'     => 'ImportV1Keys',
+  '_ratelimit'  => $limit100PerMin
+)));
+
+// Join via invite link
+$oRouter->Add('verifyInviteLink', new Route('/indexer/invite', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\IndexUsers',
+  '_method'     => 'VerifyInviteLink',
+  '_ratelimit'  => $limit100PerMin
 )));
 
 // Discord link

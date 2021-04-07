@@ -222,7 +222,7 @@ if ($bMigrateOwners) {
 
     $aOwners = json_decode($oIndexOverview->owners, true);
     foreach ($aOwners as $aOwner) {
-      try{
+      try {
         $oOwnerActual = new OwnersActual();
         $oOwnerActual->index_key = $oIndexOverview->key_code;
         $oOwnerActual->alliance_id = $aOwner['alliance_id'];
@@ -236,6 +236,7 @@ if ($bMigrateOwners) {
         } else {
           Logger::warning("Error adding new actual owner: ".$e->getMessage());
         }
+
       }
     }
   }
