@@ -4,6 +4,7 @@ namespace Grepodata\Application\API\Route;
 
 use Carbon\Carbon;
 use Grepodata\Library\Controller\Indexer\IndexInfo;
+use Grepodata\Library\Controller\IndexV2\Roles;
 use Grepodata\Library\Controller\IndexV2\ScriptToken;
 use Grepodata\Library\Controller\User;
 use Grepodata\Library\Indexer\IndexBuilder;
@@ -60,36 +61,9 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
     $jwt = \Grepodata\Library\Router\Authentication::generateJWT($oUser);
     $refresh_token = \Grepodata\Library\Router\Authentication::generateJWT($oUser, true);
 
-    // Create confirmation link
-    $Token = bin2hex(random_bytes(16));
-    $oUser->token = $Token;
-    $oUser->save();
-
     // Send confirmation email
     if (!bDevelopmentMode) {
-      try {
-        $Result = Client::SendMail(
-          'admin@grepodata.com',
-          $oUser->email,
-          'Grepodata account confirmation',
-          'Hi,<br/>
-<br/>
-You are receiving this message because an account was created on grepodata.com using this email address.<br/>
-<br/>
-Please click on the following link to confirm your account:<br/>
-<br/>
-<a href="https://api.grepodata.com/auth/confirm?token='.$Token.'">https://api.grepodata.com/auth/confirm?token='.$Token.'</a><br/>
-<br/>
-If you did not request this email, someone else may have entered your email address into our account registration form.<br/>
-You can ignore this email if you no longer wish to create an account for our website.<br/>
-<br/>
-Sincerely,<br/>
-admin@grepodata.com',
-          null,
-          true);
-      } catch (\Exception $e) {
-        Logger::error("Error sending confirmation link for new user (uid".$oUser->id.")");
-      }
+      $Result = self::sendRegistrationMail($oUser);
     }
 
     // Response
@@ -97,7 +71,7 @@ admin@grepodata.com',
       'access_token'  => $jwt,
       'refresh_token' => $refresh_token,
       'expires_in'    => \Grepodata\Library\Router\Authentication::expiresIn($jwt),
-      'email_sent'    => (isset($Result)&&$Result>=1 ? true : false)
+      'email_sent'    => isset($Result) && $Result>=1
     );
     ResponseCode::success($aResponseData, 1120);
   }
@@ -108,47 +82,15 @@ admin@grepodata.com',
     $aParams = self::validateParams(array('access_token'));
     $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
 
-    // Create confirmation link
-    if ($oUser->token != null) {
-      $Token = $oUser->token;
-    } else {
-      $Token = bin2hex(random_bytes(16));
-      $oUser->token = $Token;
-      $oUser->save();
-    }
-
-    // Send confirmation email
     if (!bDevelopmentMode) {
-      try {
-        $Result = Client::SendMail(
-          'admin@grepodata.com',
-          $oUser->email,
-          'Grepodata account confirmation',
-          'Hi,<br/>
-<br/>
-You are receiving this message because you requested a new activation link for this email address on grepodata.com.<br/>
-<br/>
-Please click on the following link to confirm your account:<br/>
-<br/>
-<a href="https://api.grepodata.com/auth/confirm?token='.$Token.'">https://api.grepodata.com/auth/confirm?token='.$Token.'</a><br/>
-<br/>
-If you did not request this email, someone else may have entered your email address into our account registration form.<br/>
-You can ignore this email if you no longer wish to create an account for our website.<br/>
-<br/>
-Sincerely,<br/>
-admin@grepodata.com',
-          null,
-          true);
-      } catch (\Exception $e) {
-        Logger::error("Error sending confirmation link for new user (uid".$oUser->id.")");
-      }
+      $Result = self::sendRegistrationMail($oUser);
     }
 
     $Masked = self::maskEmail($oUser->email);
 
     // Response
     $aResponseData = array(
-      'email_sent' => ((isset($Result)&&$Result>=1)||bDevelopmentMode ? true : false),
+      'email_sent' => (isset($Result)&&$Result>=1)||bDevelopmentMode,
       'masked' => $Masked
     );
     ResponseCode::success($aResponseData, 1140);
@@ -177,20 +119,21 @@ admin@grepodata.com',
       $oUser->token = null;
       $oUser->save();
 
-//      // TODO: Detect V1 indexes and asign user to index as owner
-//      try {
-//        $oIndexes = IndexInfo::allByMail($oUser->email);
-//        foreach ($oIndexes as $oIndex) {
-//          try {
-//            $oIndex->created_by_user = $oUser->id;
-//            $oIndex->save();
-//          } catch (\Exception $e) {
-//            Logger::error("Error transfering old index (".$oIndex->key_code.") ownership to new user: ". $e->getMessage());
-//          }
-//        }
-//      } catch (\Exception $e) {
-//        Logger::error("Error transfering old indexes to new user (uid ".$oUser->id."): ". $e->getMessage());
-//      }
+      // Detect V1 indexes and assign user to index as owner
+      try {
+        $oIndexes = IndexInfo::allByMail($oUser->email);
+        foreach ($oIndexes as $oIndex) {
+          try {
+            $oIndex->created_by_user = $oUser->id;
+            $oIndex->save();
+            Roles::SetUserIndexRole($oUser, $oIndex, Roles::ROLE_OWNER);
+          } catch (\Exception $e) {
+            Logger::error("Error transferring old index (".$oIndex->key_code.") ownership to new user: ". $e->getMessage());
+          }
+        }
+      } catch (\Exception $e) {
+        Logger::error("Error transferring old indexes to new user (uid ".$oUser->id."): ". $e->getMessage());
+      }
 
       // Redirect to profile
       header("Location: ".FRONTEND_URL."/profile?token=confirmed");
@@ -327,8 +270,13 @@ admin@grepodata.com',
       ResponseCode::errorCode(3041, array(), 401);
     }
 
+    // Already verified
+    if ($oToken->user_id === $oUser->id) {
+      ResponseCode::success(array(), 1151);
+    }
+
     // Check expiration
-    $Limit = Carbon::now()->subDays(7);
+    $Limit = Carbon::now()->subDays(100);
     if ($oToken->created_at < $Limit) {
       // token expired
       ResponseCode::errorCode(3042, array(), 401);
@@ -443,7 +391,7 @@ admin@grepodata.com',
     // Response
     $aResponse = array(
       'status' => 'Email sent',
-      'result' => ($Result >= 1 ? true : false)
+      'result' => $Result >= 1
     );
 
     return self::OutputJson($aResponse);
@@ -521,7 +469,7 @@ admin@grepodata.com',
       BaseRoute::verifyCaptcha($aParams['captcha']);
     }
 
-    // Delete all personal data
+    // Delete all personal data (linked data will be removed by cleanup script)
     $oUser->username = "DELETED_" . IndexBuilderV2::generateIndexKey(8);
     $oUser->email = "DELETED_" . IndexBuilderV2::generateIndexKey(8);
     $oUser->passphrase = password_hash(IndexBuilderV2::generateIndexKey(12), PASSWORD_BCRYPT);
@@ -605,6 +553,44 @@ admin@grepodata.com',
     $replace = str_repeat("*", $hide);
 
     return substr_replace ( $mail_parts[0] , $replace , $show, $hide ) . "@" . substr_replace($mail_parts[1], "**", 0, 2);
+  }
+
+  private static function sendRegistrationMail(\Grepodata\Library\Model\User $oUser) {
+    // Create confirmation link
+    if ($oUser->token != null) {
+      $Token = $oUser->token;
+    } else {
+      $Token = bin2hex(random_bytes(16));
+      $oUser->token = $Token;
+      $oUser->save();
+    }
+
+    $Result = false;
+    try {
+      $Result = Client::SendMail(
+        'admin@grepodata.com',
+        $oUser->email,
+        'GrepoData Account Confirmation',
+        'Hi,<br/>
+<br/>
+You are receiving this message because an account was created on grepodata.com using this email address.<br/>
+<br/>
+Please click on the following link to confirm your account:<br/>
+<br/>
+<a href="https://api.grepodata.com/confirm?token='.$Token.'">https://api.grepodata.com/confirm?token='.$Token.'</a><br/>
+<br/>
+If you did not request this email, someone else may have entered your email address into our account registration form.<br/>
+You can ignore this email if you no longer wish to create an account for our website.<br/>
+<br/>
+Sincerely,<br/>
+admin@grepodata.com',
+        null,
+        true);
+    } catch (\Exception $e) {
+      Logger::error("Error sending confirmation link for new user (uid".$oUser->id.")");
+    }
+
+    return $Result;
   }
 
 }

@@ -6,8 +6,7 @@ use DOMDocument;
 use DOMXPath;
 use Grepodata\Library\Exception\ParserDefaultWarning;
 use Grepodata\Library\Logger\Logger;
-use Grepodata\Library\Model\Indexer\City;
-use Grepodata\Library\Model\Indexer\Report;
+use Grepodata\Library\Model\IndexV2\Intel;
 
 class Helper
 {
@@ -50,10 +49,10 @@ class Helper
     return $html;
   }
 
-  public static function JsonToHtml(Report $Report, $bMinimal=false)
+  public static function JsonToHtml(Intel $Report, $bMinimal=false)
   {
     $Json = json_decode($Report->report_json, true);
-    $Type = $Report->type;
+    $Type = $Report->source_type;
     $innerhtml = self::parseElement($Json);
 
     // Wrapper
@@ -80,12 +79,12 @@ class Helper
   /**
    * Render the report json, if available, into an image and return the url of the image
    * @param $html
-   * @param Report $oReport
+   * @param Intel $oReport
    * @param $Hash
    * @return string Image url
    * @throws \Exception
    */
-  public static function reportToImage($html, Report $oReport, $Hash)
+  public static function reportToImage($html, Intel $oReport, $Hash)
   {
     // Fix domain to local
     $html = str_replace('https://gpnl.innogamescdn.com/images/game/', '../images/', $html);
@@ -140,7 +139,7 @@ class Helper
     $dom->loadHTML($completeHtml);
     $domx = new DOMXPath($dom);
 
-    if ($oReport->type === 'default') {
+    if ($oReport->source_type === 'default') {
       // remove forum index+ button
       foreach($domx->query('//div[contains(attribute::class, "gd_indexer_footer")]') as $e ) {
         $e->parentNode->removeChild($e);
@@ -149,7 +148,7 @@ class Helper
       foreach($domx->query('//div[contains(attribute::class, "fight_report_classic")]/div[last()]') as $e ) {
         $e->parentNode->removeChild($e);
       }
-    } else if ($oReport->type === 'inbox') {
+    } else if ($oReport->source_type === 'inbox') {
       // Remove inbox footer contents except for the date
       foreach($domx->query('//div[contains(attribute::class, "game_list_footer")]/*[not(contains(@id, "report_date"))]') as $e ) {
         $e->parentNode->removeChild($e);

@@ -2,12 +2,9 @@
 
 namespace Grepodata\Application\API\Route;
 
-use Grepodata\Library\Controller\Indexer\CityInfo;
-use Grepodata\Library\Controller\Indexer\IndexInfo;
-use Grepodata\Library\Controller\Indexer\Report;
 use Grepodata\Library\Indexer\Helper;
-use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\Indexer\ReportId;
+use Grepodata\Library\Model\IndexV2\Intel;
 use Grepodata\Library\Router\ResponseCode;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -147,6 +144,12 @@ class Discord extends \Grepodata\Library\Router\BaseRoute
    */
   public static function GetReportByHashGET()
   {
+    // TODO: add discord account linking for additional security
+    // 1. if a user wants to share a report, they must link their discord account to their grepodata account
+    // 2. sharing is then done using the discord user id and a report hash
+    // 3. grepodata user is derived from discord user id
+    // 4. list of indexes is derived from grepodata user
+    // 5. if the report hash occurs in the authenticated index list, only then we show the report
     $aParams = array();
     try {
       // Validate params
@@ -160,38 +163,25 @@ class Discord extends \Grepodata\Library\Router\BaseRoute
           $SearchHash = str_replace('r', '', $aParams['hash']);
           $SearchHash = str_replace('m', '-', $SearchHash);
           /** @var ReportId $oReportHash */
-          $oReportHash = \Grepodata\Library\Model\Indexer\ReportId::where('report_id', '=', $SearchHash)
-            ->where('index_report_id', '>', 0)
+          $oIntel = Intel::where('hash', '=', $SearchHash)
             ->orderBy('id', 'desc')
             ->firstOrFail();
         } else {
-          // Old hash version: get required settings
-          if ($oDiscord->index_key === null) {
-            ResponseCode::errorCode(5001); // index key required
-          }
-          $oReportHash = \Grepodata\Library\Controller\Indexer\ReportId::firstByIndexByHash($oDiscord->index_key, $aParams['hash']);
+          ResponseCode::errorCode(5000);
         }
       } catch (ModelNotFoundException $e) {
         // If this step fails, report has not been indexed yet
         ResponseCode::errorCode(5000);
       }
-      $oIndex = IndexInfo::firstOrFail($oReportHash->index_key);
 
-      try {
-        $oReport = Report::firstById($oReportHash->index_report_id);
-      } catch (ModelNotFoundException $e) {
-        // If this step fails, report has been indexed but we do not have the information about the report
-        ResponseCode::custom("Report has been indexed but we are unable to rebuild report for this hash (report info not found)", 5000);
-      }
-
-      if ($oReport->report_json == null || $oReport->report_json == '') {
+      if ($oIntel->report_json == null || $oIntel->report_json == '') {
         // if $oReport->report_json is empty, report html is not available and probably never will be
         ResponseCode::custom("Report has been indexed but we are unable to rebuild report for this hash (lost html)", 5000);
       }
 
       try {
-        $html = \Grepodata\Library\Indexer\Helper::JsonToHtml($oReport, true);
-        $Url = Helper::reportToImage($html, $oReport, $aParams['hash']);
+        $html = \Grepodata\Library\Indexer\Helper::JsonToHtml($oIntel, true);
+        $Url = Helper::reportToImage($html, $oIntel, $aParams['hash']);
       } catch (\Exception $e) {
         ResponseCode::errorCode(5004);
       }
@@ -201,26 +191,18 @@ class Discord extends \Grepodata\Library\Router\BaseRoute
         'url' => $Url,
         'b64' => base64_encode(file_get_contents($Url)),
         'index' => null,
-        'world' => $oIndex->world,
+        'world' => $oIntel->world,
         'bb' => array()
       );
 
       // Try to expand with info
       try {
-        if ($oDiscord->index_key === $oReport->index_code) {
-          $aResponse['index'] = $oIndex->key_code;
-          if (isset($oReport->city_id) && $oReport->city_id > 0) {
-            $oCity = CityInfo::getById($oReport->index_code, $oReport->city_id);
-            $aResponse['intel'] = $oCity->getPublicFields();
-          }
-        } else {
-          // Show BBcode only
-          preg_match_all('/#[a-zA-Z0-9]{18,1000}={0,2}/m', $html, $matches, PREG_SET_ORDER, 0);
-          foreach ($matches as $match) {
-            $aData = json_decode(base64_decode($match[0]), true);
-            if (is_array($aData) && sizeof($aData)>0) {
-              $aResponse['bb'][] = $aData;
-            }
+        // Show BBcode
+        preg_match_all('/#[a-zA-Z0-9]{18,1000}={0,2}/m', $html, $matches, PREG_SET_ORDER, 0);
+        foreach ($matches as $match) {
+          $aData = json_decode(base64_decode($match[0]), true);
+          if (is_array($aData) && sizeof($aData)>0) {
+            $aResponse['bb'][] = $aData;
           }
         }
       } catch (\Exception $e) {}

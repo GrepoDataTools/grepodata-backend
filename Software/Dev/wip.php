@@ -24,8 +24,6 @@ $aWorlds = \Grepodata\Library\Cron\Common::getAllActiveWorlds();
 //  $oConquest->save();
 //}
 
-$aCities = CityInfo::allByTownIdByKeys(array('5be6zv1s'), 10043);
-
 //$LinkDataEncoded = '#eyJpZCI6MTI4MTIsIml4Ijo0NzUsIml5Ijo1MTcsInRwIjoidG93biIsIm5hbWUiOiJGYW5mYXJlIHZhbiBob25nZXIifQ==';
 //$LinkDataEncoded = '#eyJuYW1lIjoibWFpb3IiLCJpZCI6NDEyNDkwfQ==';
 //$LinkDataEncoded = '#eyJpZCI6MjEzMDAsIml4Ijo0NzAsIml5Ijo1MTYsInRwIjoidG93biIsIm5hbWUiOiI0NS5BLjEgTGFzZXIifQ==';

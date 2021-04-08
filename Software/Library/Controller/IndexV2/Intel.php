@@ -10,7 +10,6 @@ use Grepodata\Library\Model\User;
 use Grepodata\Library\Model\World;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\DB;
 
 class Intel
 {
@@ -568,4 +567,22 @@ class Intel
       ->join('Indexer_intel_shared', 'Indexer_intel_shared.intel_id', '=', 'Indexer_intel.id')
       ->where('Indexer_intel_shared.index_key', '=', $oIndex->key_code);
   }
+
+  /**
+   * This routes returns all intel for a specific town given a V1 index key
+   * @param $Keys
+   * @param $Id
+   * @return mixed
+   * @deprecated
+   */
+  public static function allByTownIdByV1IndexKeys($Keys, $Id)
+  {
+    return \Grepodata\Library\Model\IndexV2\Intel::whereIn('v1_index', $Keys, 'and')
+      ->where('town_id', '=', $Id, 'and')
+      ->whereNull('soft_deleted')
+      ->orderBy('created_at', 'asc')
+      ->get();
+  }
+
+
 }

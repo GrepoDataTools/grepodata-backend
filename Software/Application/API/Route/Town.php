@@ -67,17 +67,7 @@ class Town extends \Grepodata\Library\Router\BaseRoute
 
       try {
         if (isset($aParams['index_key'])) {
-          // Check intel
-          $oIndex = Validator::IsValidIndex($aParams['key']);
           $aResponse['intel'] = array();
-          $aBuildings = array();
-          if ($oIndex != false) {
-            $oWorld = \Grepodata\Library\Controller\World::getWorldById($oIndex->world);
-            $aIntel = CityInfo::allByTownIdByKeys(array($oIndex->key_code), $aParams['id']);
-            foreach ($aIntel as $oCity) {
-              $aResponse['intel'][] = CityInfo::formatAsTownIntel($oCity, $oWorld, $aBuildings);
-            }
-          }
         }
       } catch (\Exception $e) {
         Logger::warning("Error expanding town info with params: ". json_encode($aParams));
