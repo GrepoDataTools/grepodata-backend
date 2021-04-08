@@ -14,15 +14,48 @@ class Message extends \Grepodata\Library\Router\BaseRoute
   public static function AddMessagePOST()
   {
     // Validate params
-    $aParams = self::validateParams(array('mail', 'message', 'captcha'));
+    $aParams = self::validateParams(array());
+
+    if (isset($aParams['data'])) {
+      $aParams = json_decode($aParams['data'], true);
+    }
 
     // Validate captcha
     if (!bDevelopmentMode) {
       BaseRoute::verifyCaptcha($aParams['captcha']);
     }
 
+    // Parse optional file
+    $aUploadedFiles = array();
+    $bHasFiles = false;
+    try {
+      $aFiles = $_FILES;
+      if (sizeof($aFiles)>0) {
+        foreach ($aFiles as $aFile) {
+          if ($aFile['error'] == UPLOAD_ERR_OK
+            && is_uploaded_file($aFile['tmp_name'])
+          ) {
+            $bHasFiles = true;
+            $Content = file_get_contents($aFile['tmp_name']);
+            $Filename = $aFile['name'];
+            $Filename = mb_ereg_replace("([^\w\s\d\-_~,;\[\]\(\).])", '', $Filename);
+            $Filename = mb_ereg_replace("([\.]{2,})", '', $Filename);
+            $Filename = 'bug_' . time() . $Filename;
+            file_put_contents(IMG_UPLOAD_DIR_REPORT . $Filename, $Content);
+            $aUploadedFiles[] = array(
+              'filename' => $aFile['name'],
+              'type' => $aFile['type'],
+              'path' => $Filename
+            );
+          }
+        }
+      }
+    } catch (\Exception $e) {
+      Logger::error("Error uploading bug report image: " . $e->getMessage());
+    }
+
     // Save to db
-    \Grepodata\Library\Controller\Message::AddMessage('_', $aParams['mail'], $aParams['message']);
+    \Grepodata\Library\Controller\Message::AddMessage($aParams['name']=='bug_report'?'bug_report':'_', $aParams['mail'], $aParams['message'], json_encode($aUploadedFiles));
 
     try {
       // Notify

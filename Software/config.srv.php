@@ -32,9 +32,9 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
     )
   );
 
-  define('TEMP_DIRECTORY',   'X:/dev/grepodata/grepodata-backend/Temp/');
-  define('MAP_DIRECTORY',    'X:/dev/grepodata/grepodata-backend/Temp/');
-  define('REPORT_DIRECTORY', 'X:/dev/grepodata/grepodata-backend/Temp/');
+  define('TEMP_DIRECTORY',   'C:/dev/grepodata-backend/Temp/');
+  define('MAP_DIRECTORY',    'C:/dev/grepodata-backend/Temp/');
+  define('REPORT_DIRECTORY', 'C:/dev/grepodata-backend/Temp/');
   define('CAPTCHA_SECRET', PRIVATE_CAPTCHA_KEY);
   define('JWT_SECRET',     PRIVATE_JWT_SECRET);
   define('REFRESH_SECRET', PRIVATE_JWT_REFRESH);
@@ -44,6 +44,9 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
   define('SMARTY_TEMPLATE_DIR', "$SourceDir/Software/Templates/templates");
   define('SMARTY_COMPILE_DIR', "$SourceDir/Software/Templates/compiled");
   define('SMARTY_CACHE_DIR', "$SourceDir/Software/Templates/cache");
+
+  // Image directories
+  define('IMG_UPLOAD_DIR_REPORT', 'C:/dev/grepodata-backend/Temp/');
 
   define('USERSCRIPT_INDEXER', $SourceDir."Software/Templates/compiled");
   define('USERSCRIPT_TEMP', $SourceDir."Software/Templates/compiled");
@@ -91,6 +94,9 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
   define('SMARTY_COMPILE_DIR', "$UserscriptDir/smarty/compiled");
   define('SMARTY_CACHE_DIR', "$UserscriptDir/smarty/cache");
 
+  // Image directories
+  define('IMG_UPLOAD_DIR_REPORT', $HomeDir."/Temp/bugreports/");
+
   define('USERSCRIPT_INDEXER', $UserscriptDir . '/v1');
   define('USERSCRIPT_TEMP', $UserscriptDir . '/v2');
   define('HASH2IMG_DIRECTORY', $HomeDir."/Temp/report2img/temp");
@@ -136,6 +142,9 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
   define('SMARTY_COMPILE_DIR', "$UserscriptDir/smarty/compiled");
   define('SMARTY_CACHE_DIR', "$UserscriptDir/smarty/cache");
 
+  // Image directories
+  define('IMG_UPLOAD_DIR_REPORT', $HomeDir."/Temp/bugreports/");
+
   define('USERSCRIPT_INDEXER', $UserscriptDir . '/v1');
   define('USERSCRIPT_TEMP', $UserscriptDir . '/v2');
   define('HASH2IMG_DIRECTORY', $HomeDir."/Temp/report2img/temp");
@@ -145,6 +154,7 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
   die("Unknown environment '$env'. make sure your config.private.php file is configured correctly");
 }
 
+// Mail
 define('MAIL_TRANSPORT_HOST', PRIVATE_MAIL_TRANSPORT_HOST);
 define('MAIL_TRANSPORT_NAME', PRIVATE_MAIL_TRANSPORT_NAME);
 define('MAIL_TRANSPORT_KEY',  PRIVATE_MAIL_TRANSPORT_KEY);
