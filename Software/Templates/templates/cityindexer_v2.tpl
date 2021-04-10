@@ -33,6 +33,7 @@
     try {
         var storage_key = 'gd_key_list_v1'
         var keys = [];
+        localStorage.setItem('gd_index_toggle_v1', '{/literal}{$key}{literal}');
         if (localStorage.getItem(storage_key)) {
             keys = JSON.parse(localStorage.getItem(storage_key));
         }
@@ -41,6 +42,7 @@
             localStorage.setItem(storage_key, JSON.stringify(keys));
         }
     } catch (e) {}
+
 })();
 
 {/literal}

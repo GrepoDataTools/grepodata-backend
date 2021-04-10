@@ -286,7 +286,20 @@ var verbose = true;
                 try {
                     // Get access token from local storage
                     access_token = localStorage.getItem('gd_indexer_access_token');
+                    access_player = localStorage.getItem('gd_indexer_player_id');
                     if (!access_token) {
+                        resolve(false);
+                    }
+
+                    // Check if player changed
+                    access_player = localStorage.getItem('gd_indexer_player_id');
+                    if (Game.player_id != access_player) {
+                        // The current player is not equal to the player that authenticated with grepodata, sign them out
+                        console.log("Player logout detected. Signing out of GrepoData account. New sign in required.")
+                        localStorage.removeItem('gd_indexer_access_token');
+                        localStorage.removeItem('gd_indexer_refresh_token');
+                        localStorage.removeItem('gd_indexer_player_id');
+                        access_token = null;
                         resolve(false);
                     }
 
@@ -317,6 +330,7 @@ var verbose = true;
                                 success: function (data) {
                                     if (data.success_code && data.success_code === 1101) {
                                         console.log('GrepoData: Renewed access token.');
+                                        localStorage.setItem('gd_indexer_player_id', Game.player_id);
                                         localStorage.setItem('gd_indexer_access_token', data.access_token);
                                         localStorage.setItem('gd_indexer_refresh_token', data.refresh_token);
                                         resolve(data.access_token);
@@ -388,6 +402,7 @@ var verbose = true;
         }
 
         var login_window = null;
+        var is_v1_migrated = null;
         var script_token_interval = null;
         var refreshing_scripttoken = false;
         var interval_count = 0;
@@ -413,6 +428,27 @@ var verbose = true;
                 var login_window_element = $('.gdloginpopup').parent();
                 $(login_window_element).css({ top: 43 });
 
+                // Check if user migrated from a v1 script
+                var migration_complete = 'gd_key_migration_complete';
+                var v1_toggle_key = 'gd_index_toggle_v1';
+                if (localStorage.getItem(v1_toggle_key) && !localStorage.getItem(migration_complete)) {
+                    is_v1_migrated = localStorage.getItem(v1_toggle_key);
+                }
+
+                // Form Content
+                login_form_content = ''
+                if (is_v1_migrated == null) {
+                    login_form_content = `<h4 class="gd-title" style="text-align: center; font-size: 18px; display: block;">
+                                            Click the link below to sign in with your GrepoData account</h4>
+                                            <p style="display: block; text-align: center;">Sign in is required to use the city indexer userscript</p>`
+                } else {
+                    login_form_content = `<h4 class="gd-title" style="text-align: center; font-size: 16px; display: block; margin-top: -15px;">
+                            As of April 2021, a GrepoData login is required to use the city indexer.</h4>
+                        <p style="display: block; text-align: center;">We made this change in order to get approval for our city indexer tool.
+                            A GrepoData account is required to guarantee the security of the intel you collect and the people you share it with. 
+                        <a href="https://grepodata.com/indexer">read more</a></p>`
+                }
+
                 // Build login form
                 formHtml = `
             <form autocomplete="false" class="gd-login-form" id="gd_login_form" name="gdloginform">
@@ -422,12 +458,11 @@ var verbose = true;
                 <span style="color: rgb(24, 188, 156);margin-left: -12px;">DATA</span>
               </div>
               <div id="gd-login-container" class="gd-login-container">
-                  <h4 class="gd-title" style="text-align: center;">To use the city indexer script, sign in with a GrepoData account via this link:</h4>
-                  <br/>
-                  <h3 class="gd-title" style="text-align: center; place-content: center; font-size: 18px;"><a id="gd_script_auth_link" href="https://grepodata.com/link/` + script_token + `" target="_blank" style="display: contents; color: #444; text-decoration: underline;">grepodata.com/link/` + script_token + `<div>` + launch_icon + `</div></a></h3>
+                  `+login_form_content+`
+                  <h3 class="gd-title" style="text-align: center; place-content: center; font-size: 17px;"><a id="gd_script_auth_link" href="https://grepodata.com/link/` + script_token + `" target="_blank" style="display: contents; color: #444; text-decoration: underline;">grepodata.com/link/` + script_token + `<div>` + launch_icon + `</div></a></h3>
                   <div id="grepodatalerror" style="display: none; text-align: center; place-content: center; font-size: 16px;" class="gd-error-msg"><b>Unable to authenticate.</b></div>
                   <p id="grepodataltip" style="display: none; text-align: center; margin-bottom: -50px;">Follow the instructions on this page to link your userscript to your GrepoData account.<br/>Click 'Continue' below once your userscript is linked.<br/>Feel free to contact us if you run into any issues.</p>
-                  <div class="gd-login-footer" style="margin-top: 50px; height: 60px;">
+                  <div class="gd-login-footer" style="margin-top: 35px; height: 50px;">
                     <p id="gd-request-new-token-btn" class="gd-link-btn" style="margin-top: 18px;">
                     Request new token
                     </p>
@@ -517,7 +552,8 @@ var verbose = true;
                 success: function (data) {
                     console.log(data);
                     if (data.success_code && data.success_code === 1111) {
-                        console.log('GrepoData: Script token verified.');
+                        console.log('GrepoData: Script token verified for player '+Game.player_id);
+                        localStorage.setItem('gd_indexer_player_id', Game.player_id);
                         localStorage.setItem('gd_indexer_access_token', data.access_token);
                         localStorage.setItem('gd_indexer_refresh_token', data.refresh_token);
                         localStorage.removeItem('gd_indexer_script_token');
@@ -525,6 +561,7 @@ var verbose = true;
                         $('#gd-login-container').hide();
                         $('#gd-script-linked').show();
                         clearInterval(script_token_interval);
+                        checkV1KeyMigration(data.access_token);
                     } else {
                         // Unable
                         loginError('Unknown error. Please try again later or let us know if this error persists.', verbose);
@@ -554,40 +591,43 @@ var verbose = true;
 
         function checkLogin() {
             // Check if grepodata access token or refresh token is in local storage and use it to verify
-            // if not verified: loging required!
+            // if not verified: login required!
             getAccessToken().then(access_token => {
                 if (access_token == false) {
                     showLoginPopup()
                 } else {
-                    console.log("GrepoData: Succesful authentication.");
-
-                    // Check for V1 keys
-                    var storage_key = 'gd_key_list_v1';
-                    var migration_complete = 'gd_key_migration_complete';
-                    if (localStorage.getItem(storage_key) && !localStorage.getItem(migration_complete)) {
-                        var keys = JSON.parse(localStorage.getItem(storage_key));
-                        console.log('Loaded V1 keys from local storage', keys);
-
-                        // Migrate to V2
-                        $.ajax({
-                            url: backend_url + "/migrate/importv1keys",
-                            data: {
-                                access_token: access_token,
-                                index_keys: keys
-                            },
-                            type: 'post',
-                            crossDomain: true,
-                            dataType: 'json',
-                            timeout: 30000
-                        }).fail(function (err) {
-                            console.log("Error importing V1 keys: ", err);
-                        }).done(function (response) {
-                            console.log("V1 keys imported: ", response);
-                            localStorage.setItem(migration_complete, 'true');
-                        });
-                    }
+                    console.log("GrepoData: Succesful authentication for player "+Game.player_id);
+                    checkV1KeyMigration(access_token);
                 }
             });
+        }
+
+        // V1 key migration
+        function checkV1KeyMigration(access_token) {
+            var storage_key = 'gd_key_list_v1';
+            var migration_complete = 'gd_key_migration_complete';
+            if (localStorage.getItem(storage_key) && !localStorage.getItem(migration_complete)) {
+                var keys = JSON.parse(localStorage.getItem(storage_key));
+                console.log('Loaded old V1 keys from local storage', keys);
+
+                // Migrate to V2
+                $.ajax({
+                    url: backend_url + "/migrate/importv1keys",
+                    data: {
+                        access_token: access_token,
+                        index_keys: keys
+                    },
+                    type: 'post',
+                    crossDomain: true,
+                    dataType: 'json',
+                    timeout: 30000
+                }).fail(function (err) {
+                    console.log("Error importing V1 keys: ", err);
+                }).done(function (response) {
+                    console.log("V1 keys imported: ", response);
+                    localStorage.setItem(migration_complete, 'true');
+                });
+            }
         }
 
         // Add command information to info panel
@@ -1683,6 +1723,7 @@ var verbose = true;
                     $("#gdsettingslogged_in").hide();
                     localStorage.removeItem('gd_indexer_access_token');
                     localStorage.removeItem('gd_indexer_refresh_token');
+                    localStorage.removeItem('gd_indexer_player_id');
                     HumanMessage.success('GrepoData logged out succesfully.');
                     showLoginPopup();
                 });
@@ -2097,7 +2138,7 @@ var verbose = true;
                     table = table + '<li class="even" style="display: inherit; width: 100%;"><div style="text-align: center;">' +
                         '<strong>No unit intelligence available</strong><br/>' +
                         'You have not yet indexed any reports about this town.<br/><br/>' +
-                        '<span style="font-style: italic;">note: intel about your allies (index contributors) is hidden by default</span></div></li>\n';
+                        '<span style="font-style: italic;">note: intel about index owners may be hidden by the index admin</span></div></li>\n';
                 }
 
                 table = table + '</ul></div></div>';
@@ -2372,8 +2413,10 @@ var verbose = true;
         function loadIndexHashlist(check_login) {
             try {
                 getAccessToken().then(access_token => {
-                    if (access_token == false && check_login == true) {
-                        showLoginPopup()
+                    if (access_token == false) {
+                        if (check_login == true) {
+                            showLoginPopup()
+                        }
                     } else {
                         $.ajax({
                             method: "get",
