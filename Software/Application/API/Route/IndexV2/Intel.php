@@ -30,7 +30,11 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
       if ($From > 1000 || $Size > 50) {
         throw new ModelNotFoundException();
       }
-      $aIntel = \Grepodata\Library\Controller\IndexV2\Intel::allByUser($oUser, $From, $Size);
+      $Start = round(microtime(true) * 1000);
+      $aIntelResult = \Grepodata\Library\Controller\IndexV2\Intel::allByUser($oUser, $From, $Size);
+      $aIntel = $aIntelResult[0];
+      $Total = $aIntelResult[1];
+      $ElapsedMs = round(microtime(true) * 1000) - $Start;
 
       $aIntelData = array();
       $aWorlds = array();
@@ -50,23 +54,20 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
           $aTownIntelRecord['player_name'] = $oIntel->player_name;
           $aTownIntelRecord['alliance_id'] = $oIntel->alliance_id;
           $aTownIntelRecord['alliance_name'] = Alliance::first($oIntel->alliance_id, $oIntel->world)->name ?? '';
+          if (isset($oIntel['shared_via_indexes'])) {
+            $aTownIntelRecord['shared_via_indexes'] = $oIntel['shared_via_indexes'];
+          }
           $aIntelData[] = $aTownIntelRecord;
         } catch (\Exception $e) {
           Logger::warning("Unable to render user intel record: " . $e->getMessage());
         }
       }
 
-      if (sizeof($aIntel)>$Size) {
-        $Size = $From+$Size;
-        $Size .= '+';
-        array_pop($aIntelData);
-      } else {
-        $Size = $From+sizeof($aIntel);
-      }
-
       $aResponse = array(
-        'size'    => $Size,
-        'items'   => $aIntelData
+        'query_ms'    => $ElapsedMs,
+        'batch_size'  => sizeof($aIntel),
+        'total_items' => $Total,
+        'items'       => $aIntelData
       );
 
       ResponseCode::success($aResponse);
@@ -92,11 +93,14 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
       $oTown = Town::firstOrFail($aParams['town_id'], $oWorld->grep_id);
 
       // get intel
+      $Start = round(microtime(true) * 1000);
       $aIntel = \Grepodata\Library\Controller\IndexV2\Intel::allByUserForTown($oUser, $oWorld->grep_id, $oTown->grep_id, true);
+      $ElapsedMs = round(microtime(true) * 1000) - $Start;
 
       // Parse cities
       $oNow = Carbon::now();
       $aResponse = array(
+        'query_ms' => $ElapsedMs,
         'world' => $oWorld->grep_id,
         'town_id' => $oTown->grep_id,
         'name' => $oTown->name,
@@ -139,6 +143,13 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
           $aRecord = \Grepodata\Library\Controller\IndexV2\Intel::formatAsTownIntel($oCity, $oWorld, $aResponse['buildings']);
           if (!empty($aRecord['stonehail'])) {
             $aResponse['has_stonehail'] = true;
+          }
+
+          if (isset($oCity['shared_via_indexes'])) {
+            $aRecord['shared_via_indexes'] = $oCity['shared_via_indexes'];
+          }
+          if (isset($oCity['indexed_by_users'])) {
+            $aRecord['indexed_by_users'] = $oCity['indexed_by_users'];
           }
 
           $aResponse['intel'][] = $aRecord;

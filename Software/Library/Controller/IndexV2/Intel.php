@@ -11,6 +11,8 @@ use Grepodata\Library\Model\World;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
+use Illuminate\Database\Capsule\Manager as DB;
+
 class Intel
 {
   const land_units = array(
@@ -102,7 +104,7 @@ class Intel
       $oQuery->where('Indexer_intel.world', '=', $World);
     }
 
-    return $oQuery->distinct('Indexer_intel.id')
+    return $oQuery->groupBy('Indexer_intel.id')
       ->get();
   }
 
@@ -121,7 +123,7 @@ class Intel
       $oQuery->where('Indexer_intel.world', '=', $World);
     }
 
-    return $oQuery->distinct('Indexer_intel.id')
+    return $oQuery->groupBy('Indexer_intel.id')
       ->get();
   }
 
@@ -133,7 +135,21 @@ class Intel
    */
   public static function formatAsTownIntel($oIntel, $oWorld, &$aBuildings)
   {
-    $aCityFields = $oIntel->getMinimalFields();
+    $aCityFields = array(
+      'id'          => $oIntel->id,
+      'date'        => $oIntel->report_date,
+      'type'        => $oIntel->report_type,
+      'hero'        => $oIntel->hero,
+      'god'         => $oIntel->god,
+      'silver'      => $oIntel->silver,
+      'fireships'   => $oIntel->fireships,
+      'parsed_date' => $oIntel->parsed_date,
+      'buildings'   => json_decode($oIntel->buildings, true),
+      'land'        => json_decode($oIntel->land_units, true),
+      'sea'         => json_decode($oIntel->sea_units, true),
+      'air'         => json_decode($oIntel->mythical_units, true),
+      'deleted'     => ($oIntel->soft_deleted!=null?true:false)
+    );
     $aCityFields['sort_date'] = 0;
     try {
       if (isset($aCityFields['parsed_date']) && $aCityFields['parsed_date'] != null) {
@@ -451,14 +467,53 @@ class Intel
    */
   public static function allByUser(User $oUser, $From = 0, $Size = 20)
   {
-    return \Grepodata\Library\Model\IndexV2\Intel::select(['Indexer_intel.*'])
-      ->join('Indexer_intel_shared', 'Indexer_intel_shared.intel_id', '=', 'Indexer_intel.id')
-      ->where('Indexer_intel_shared.user_id', '=', $oUser->id)
-      ->orderBy('Indexer_intel.parsed_date', 'desc')
-      ->distinct('Indexer_intel.id')
+//    $query = \Grepodata\Library\Model\IndexV2\Intel::select(['Indexer_intel.*'])
+//      ->join('Indexer_intel_shared', 'Indexer_intel_shared.intel_id', '=', 'Indexer_intel.id')
+//      ->where('Indexer_intel_shared.user_id', '=', $oUser->id)
+//      ->orderBy('Indexer_intel.parsed_date', 'desc')
+//      ->distinct('Indexer_intel.id');
+//    $Total = $query->count();
+//    $aIntel = $query->offset($From)->limit($Size+1)->get();
+
+//    return \Grepodata\Library\Model\IndexV2\Intel::select(['Indexer_intel.*'])
+//      ->join('Indexer_intel_shared', 'Indexer_intel_shared.intel_id', '=', 'Indexer_intel.id')
+//      ->where('Indexer_intel_shared.user_id', '=', $oUser->id)
+//      ->orderBy('Indexer_intel.parsed_date', 'desc')
+//      ->distinct('Indexer_intel.id')
+//      ->offset($From)
+//      ->limit($Size+1)
+//      ->get();
+
+    // Query to expand initial result with list of indexes that the intel was shared with
+    $query = \Grepodata\Library\Model\IndexV2\IntelShared::select([
+        'Indexer_intel.*',
+        DB::raw("group_concat(Indexer_intel_shared.index_key SEPARATOR ', ') as shared_via_indexes")
+      ])
+      ->join(DB::raw('(
+        SELECT Indexer_intel.*
+        FROM Indexer_intel
+        JOIN Indexer_intel_shared ON Indexer_intel_shared.intel_id = Indexer_intel.id
+        WHERE Indexer_intel_shared.user_id = "' . $oUser->id . '"
+      ) as Indexer_intel'),
+      function($join)
+      {
+        $join->on('Indexer_intel_shared.intel_id', '=', 'Indexer_intel.id');
+      });
+
+    // If this is the first query, count the total rows
+    $Total = null;
+    if ($From==0) {
+      $Total = $query->distinct('Indexer_intel.id')->count('Indexer_intel.id');
+    }
+
+    // Get the paginated records
+    $aIntel = $query->groupBy('Indexer_intel.id')
+      ->orderBy('Indexer_intel.id', 'desc')
       ->offset($From)
-      ->limit($Size+1)
+      ->limit($Size)
       ->get();
+
+    return [$aIntel, $Total];
   }
 
   /**
@@ -469,10 +524,10 @@ class Intel
    */
   public static function allByUserForTown(User $oUser, $World, $TownId, $bCheckHiddenOwners=false)
   {
-    return self::selectByUser($oUser, $bCheckHiddenOwners)
+    return self::selectByUser($oUser, $bCheckHiddenOwners, true)
       ->where('Indexer_intel.town_id', '=', $TownId, 'and')
       ->where('Indexer_intel.world', '=', $World)
-      ->distinct('Indexer_intel.id')
+      ->groupBy('Indexer_intel.id')
       ->get();
   }
 
@@ -484,10 +539,10 @@ class Intel
    */
   public static function allByUserForPlayer(User $oUser, $World, $PlayerId, $bCheckHiddenOwners=false)
   {
-    return self::selectByUser($oUser, $bCheckHiddenOwners)
+    return self::selectByUser($oUser, $bCheckHiddenOwners, false)
       ->where('Indexer_intel.player_id', '=', $PlayerId, 'and')
       ->where('Indexer_intel.world', '=', $World)
-      ->distinct('Indexer_intel.id')
+      ->groupBy('Indexer_intel.id')
       ->get();
   }
 
@@ -500,26 +555,36 @@ class Intel
    */
   public static function allByUserForAlliance(User $oUser, $World, $AllianceId, $bCheckHiddenOwners=false)
   {
-    return self::selectByUser($oUser, $bCheckHiddenOwners)
+    return self::selectByUser($oUser, $bCheckHiddenOwners, false)
       ->where('Indexer_intel.alliance_id', '=', $AllianceId, 'and')
       ->where('Indexer_intel.world', '=', $World)
       ->orderBy('parsed_date', 'desc')
-      ->distinct('Indexer_intel.id')
+      ->groupBy('Indexer_intel.id')
       ->get();
   }
 
   /**
    * Select all intel for a specific user, this includes intel collected by the user but also intel shared with the user
    * @param User $oUser
-   * @param bool $bCheckHiddenOwners
+   * @param bool $bCheckHiddenOwners If set to true, the query is joined on index owners to filter hidden records
+   * @param bool $bAggregateSharedInfo If set to true, an aggregation is done on columns from the shared table
    * @return Builder
    */
-  private static function selectByUser(User $oUser, $bCheckHiddenOwners=false)
+  private static function selectByUser(User $oUser, $bCheckHiddenOwners=false, $bAggregateSharedInfo=false)
   {
     $Id = $oUser->id;
 
+    $aSelectRange = array('Indexer_intel.*');
+    if ($bAggregateSharedInfo) {
+      // Aggregate list of indexes
+      $aSelectRange[] = DB::raw("group_concat(Indexer_intel_shared.index_key SEPARATOR ', ') as shared_via_indexes");
+
+      // Aggeragate list of indexers (= Not the same as Indexer_intel.indexed_by_user_id! multiple users can index the same report)
+      $aSelectRange[] = DB::raw("group_concat(Indexer_intel_shared.user_id SEPARATOR ', ') as indexed_by_users");
+    }
+
     // Select basic intel dimensions (joins on shared to get the index keys, left joins on roles to check user access)
-    $oQuery = \Grepodata\Library\Model\IndexV2\Intel::select(['Indexer_intel.*'])
+    $oQuery = \Grepodata\Library\Model\IndexV2\Intel::select($aSelectRange)
       ->join('Indexer_intel_shared', 'Indexer_intel_shared.intel_id', '=', 'Indexer_intel.id')
       ->leftJoin('Indexer_roles', 'Indexer_roles.index_key', '=', 'Indexer_intel_shared.index_key');
 

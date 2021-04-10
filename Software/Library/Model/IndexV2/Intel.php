@@ -90,4 +90,5 @@ class Intel extends Model
       'deleted'     => ($this->soft_deleted!=null?true:false)
     );
   }
+
 }

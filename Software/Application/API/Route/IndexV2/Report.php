@@ -137,6 +137,7 @@ class Report extends \Grepodata\Library\Router\BaseRoute
           }
         }
         if ($bUserHasHash == false) {
+          // Add a shared record for this user (to indicate that this user ALSO indexed the report)
           IntelShared::saveHashToUser($ReportHash, $IntelId, $oUser, $World);
         }
         foreach ($aIndexes as $oIndex) {

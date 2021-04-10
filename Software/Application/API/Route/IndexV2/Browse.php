@@ -137,12 +137,15 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
       $oPlayer = \Grepodata\Library\Controller\Player::firstOrFail($aParams['player_id'], $oWorld->grep_id);
 
       // Get intel
+      $Start = round(microtime(true) * 1000);
       $aIntel = \Grepodata\Library\Controller\IndexV2\Intel::allByUserForPlayer($oUser, $oWorld->grep_id, $oPlayer->grep_id, true);
+      $ElapsedMs = round(microtime(true) * 1000) - $Start;
       if ($aIntel === null || sizeof($aIntel) <= 0) throw new ModelNotFoundException();
 
       $aResponse = self::FormatBrowseOutput($aIntel, $oWorld);
       $aResponse['script_version'] = USERSCRIPT_VERSION;
       $aResponse['update_message'] = USERSCRIPT_UPDATE_INFO;
+      $aResponse['query_ms'] = $ElapsedMs;
       return self::OutputJson($aResponse);
 
     } catch (ModelNotFoundException $e) {
@@ -167,7 +170,9 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
       $oAlliance = \Grepodata\Library\Controller\Alliance::firstOrFail($aParams['alliance_id'], $oWorld->grep_id);
 
       // Get intel
+      $Start = round(microtime(true) * 1000);
       $aIntel = \Grepodata\Library\Controller\IndexV2\Intel::allByUserForAlliance($oUser, $oWorld->grep_id, $oAlliance->grep_id, true);
+      $ElapsedMs = round(microtime(true) * 1000) - $Start;
       if ($aIntel === null || sizeof($aIntel) <= 0) throw new ModelNotFoundException();
 
       // If model is too big, only select latest intel for each town
@@ -187,6 +192,7 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
       $aResponse = self::FormatBrowseOutput($aIntel, $oWorld);
       $aResponse['script_version'] = USERSCRIPT_VERSION;
       $aResponse['update_message'] = USERSCRIPT_UPDATE_INFO;
+      $aResponse['query_ms'] = $ElapsedMs;
       return self::OutputJson($aResponse);
 
     } catch (ModelNotFoundException $e) {
