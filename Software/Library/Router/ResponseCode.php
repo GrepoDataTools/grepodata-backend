@@ -78,6 +78,7 @@ define('GD_ERROR_7560', "Unable to update index owners.");
 define('GD_ERROR_7570', "User is already a member of this index.");
 define('GD_ERROR_7601', "V1 key joining is disabled by owner.");
 define('GD_ERROR_7602', "Not a V1 index.");
+define('GD_ERROR_7610', "Owner can not leave the index if there are still other members and no other owners.");
 
 // === Success codes
 define('GD_SUCCESS_1000', 'Request processed successfully');
@@ -98,6 +99,7 @@ define('GD_SUCCESS_1250', 'Updated delete days');
 define('GD_SUCCESS_1260', 'Updated v1 join status');
 define('GD_SUCCESS_1300', 'User index access revoked');
 define('GD_SUCCESS_1400', 'V1 index key import successful');
+define('GD_SUCCESS_1500', 'User left index successfully');
 
 define('GD_SUCCESS_4000', 'Profile request processed successfully');
 define('GD_SUCCESS_4200', 'Account unlinking was successful');

@@ -72,6 +72,20 @@ class Roles
   }
 
   /**
+   * @param $IndexKey
+   * @return \Grepodata\Library\Model\IndexV2\Roles[]
+   */
+  public static function getOwnersByIndex($IndexKey)
+  {
+    return \Grepodata\Library\Model\IndexV2\Roles::select(['Indexer_roles.*', 'User.username'])
+      ->join('User', 'User.id', '=', 'Indexer_roles.user_id')
+      ->where('Indexer_roles.index_key', '=', $IndexKey)
+      ->where('Indexer_roles.role', '=', self::ROLE_OWNER)
+      ->orderBy('Indexer_roles.created_at', 'asc')
+      ->get();
+  }
+
+  /**
    * @param User $oUser
    * @param $IndexKey
    * @return \Grepodata\Library\Model\IndexV2\Roles

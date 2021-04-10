@@ -271,7 +271,49 @@ class Index extends BaseRoute
 
     } catch (\Exception $e) {
       die(self::OutputJson(array(
-        'message'     => 'Error building new index.',
+        'message'     => 'Error getting new share link.',
+        'parameters'  => $aParams
+      ), 404));
+    }
+  }
+
+  public static function LeaveIndexPOST()
+  {
+    $aParams = array();
+    try {
+      // Validate params
+      $aParams = self::validateParams(array('access_token', 'index_key'));
+      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+
+      $oIndex = IndexInfo::firstOrFail($aParams['index_key']);
+
+      $oRole = Roles::getUserIndexRoleNoFail($oUser, $oIndex->key_code);
+      if ($oRole == null) {
+        // user has no role on index, nothing to delete
+        ResponseCode::success(array(),1500);
+      }
+
+      if ($oRole->role === Roles::ROLE_OWNER) {
+        // User is owner
+        $aAllOwners = Roles::getOwnersByIndex($oIndex->key_code);
+        if (count($aAllOwners) === 1) {
+          // User is the last owner
+          $aAllMembers = Roles::getUsersByIndex($oIndex->key_code);
+          if (count($aAllMembers) > 1) {
+            // User is not the last member (owner can only leave if they are the very last member of that index)
+            ResponseCode::errorCode(7610);
+          }
+        }
+      }
+
+      // Leave index
+      $oRole->delete();
+
+      ResponseCode::success(array(),1500);
+
+    } catch (\Exception $e) {
+      die(self::OutputJson(array(
+        'message'     => 'Error leaving index.',
         'parameters'  => $aParams
       ), 404));
     }

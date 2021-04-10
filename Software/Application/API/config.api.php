@@ -344,6 +344,10 @@ $oRouter->Add('setindexjoinv1', new Route('/indexer/settings/joinv1', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Index',
   '_method'     => 'SetIndexJoinV1'
 )));
+$oRouter->Add('leaveindex', new Route('/indexer/settings/leave', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Index',
+  '_method'     => 'LeaveIndex'
+)));
 
 // Intel search (V2)
 $oRouter->Add('searchindexplayers', new Route('/indexer/search/player', array(
