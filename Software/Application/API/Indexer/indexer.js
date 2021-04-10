@@ -14,7 +14,7 @@ var verbose = true;
     var gd_icon = "url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAXCAYAAAAV1F8QAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAYdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjAuNvyMY98AAAG0SURBVEhLYwACASA2AGIHGmGQ2SA7GGzf7oj4//5g7v/3B7L+vz+U///NVv//r9ZY/3+7K/b/683e/9/tSSTIf7M9DGhGzv8PR4r/v9uX9v/D0TKw+MdTzf9BdoAsSnm13gnEoQn+dLYLRKcAMUPBm62BYMH/f/9QFYPMfL3JE0QXQCzaFkIziz6d60FYBApvdIt07AJQ+ORgkJlfrs2DW1T9ar0jxRZJ7JkDxshiIDPf744B0dUgiwrebA8l2iJsBuISB5l5q58dREOC7u3OKJpZdHmKEsKi1xvdybIIpAamDpdFbze5ISzClrypZdGLZboIiz6d7cRrES4DibHozdYghEWfL0ygmUVvtwcjLPpwuJBmFj1ZpImw6N3uBNpZNE8ByaK9KXgtIheDzHy12gJuUfG7falYLSIHI5sBMvPlCiMQXQy2CFQPoVtEDQwy88VScByBLSqgpUVQH0HjaH8GWJAWGFR7A2mwRSkfjlUAM1bg/9cbXMAVFbhaBib5N9uCwGxQdU2ID662T9aDMag5AKrOQVX9u73JIIvANSyoPl8CxOdphEFmg9sMdGgFMQgAAH4W0yWXhEbUAAAAAElFTkSuQmCC')";
     var gd_icon_intel = "url('data:image/png;base64,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')";
     var gd_icon_svg = '<svg aria-hidden="true" data-prefix="fas" data-icon="university" class="svg-inline--fa fa-university fa-w-16" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="color: #18bc9c; width: 18px;"><path fill="currentColor" d="M496 128v16a8 8 0 0 1-8 8h-24v12c0 6.627-5.373 12-12 12H60c-6.627 0-12-5.373-12-12v-12H24a8 8 0 0 1-8-8v-16a8 8 0 0 1 4.941-7.392l232-88a7.996 7.996 0 0 1 6.118 0l232 88A8 8 0 0 1 496 128zm-24 304H40c-13.255 0-24 10.745-24 24v16a8 8 0 0 0 8 8h464a8 8 0 0 0 8-8v-16c0-13.255-10.745-24-24-24zM96 192v192H60c-6.627 0-12 5.373-12 12v20h416v-20c0-6.627-5.373-12-12-12h-36V192h-64v192h-64V192h-64v192h-64V192H96z"></path></svg>';
-    // var refresh_icon_svg = '<svg class="gd-refresh-icon" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512;" xml:space="preserve"><g><g><path d="M493.815,70.629c-11.001-1.003-20.73,7.102-21.733,18.102l-2.65,29.069C424.473,47.194,346.429,0,256,0C158.719,0,72.988,55.522,30.43,138.854c-5.024,9.837-1.122,21.884,8.715,26.908c9.839,5.024,21.884,1.123,26.908-8.715C102.07,86.523,174.397,40,256,40c74.377,0,141.499,38.731,179.953,99.408l-28.517-20.367c-8.989-6.419-21.48-4.337-27.899,4.651c-6.419,8.989-4.337,21.479,4.651,27.899l86.475,61.761c12.674,9.035,30.155,0.764,31.541-14.459l9.711-106.53C512.919,81.362,504.815,71.632,493.815,70.629z"/></g></g><g><g><path d="M472.855,346.238c-9.838-5.023-21.884-1.122-26.908,8.715C409.93,425.477,337.603,472,256,472c-74.377,0-141.499-38.731-179.953-99.408l28.517,20.367c8.989,6.419,21.479,4.337,27.899-4.651c6.419-8.989,4.337-21.479-4.651-27.899l-86.475-61.761c-12.519-8.944-30.141-0.921-31.541,14.459l-9.711,106.53c-1.003,11,7.102,20.73,18.101,21.733c11.014,1.001,20.731-7.112,21.733-18.102l2.65-29.069C87.527,464.806,165.571,512,256,512c97.281,0,183.012-55.522,225.57-138.854C486.594,363.309,482.692,351.262,472.855,346.238z"/></g></g></svg>';
+    var launch_icon = '<svg aria-hidden="true" data-prefix="fas" data-icon="external-link" style="height: 20px; margin-left: 7px;" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="svg-inline--fa fa-external-link fa-w-16 fa-lg"><path fill="currentColor" d="M432,320H400a16,16,0,0,0-16,16V448H64V128H208a16,16,0,0,0,16-16V80a16,16,0,0,0-16-16H48A48,48,0,0,0,0,112V464a48,48,0,0,0,48,48H400a48,48,0,0,0,48-48V336A16,16,0,0,0,432,320ZM474.67,0H316a28,28,0,0,0-28,28V46.71A28,28,0,0,0,316.79,73.9L384,72,135.06,319.09l-.06.06a24,24,0,0,0,0,33.94l23.94,23.85.06.06a24,24,0,0,0,33.91-.09L440,128l-1.88,67.22V196a28,28,0,0,0,28,28H484a28,28,0,0,0,28-28V37.33h0A37.33,37.33,0,0,0,474.67,0Z" class=""></path></svg>';
 
     // Ensure jquery
     if (window.jQuery) {
@@ -424,7 +424,7 @@ var verbose = true;
               <div id="gd-login-container" class="gd-login-container">
                   <h4 class="gd-title" style="text-align: center;">To use the city indexer script, sign in with a GrepoData account via this link:</h4>
                   <br/>
-                  <h3 class="gd-title" style="text-align: center; place-content: center; font-size: 18px;"><a id="gd_script_auth_link" href="https://grepodata.com/link/` + script_token + `" target="_blank" style="display: contents; color: #444; text-decoration: underline;">https://grepodata.com/link/` + script_token + `</a></h3>
+                  <h3 class="gd-title" style="text-align: center; place-content: center; font-size: 18px;"><a id="gd_script_auth_link" href="https://grepodata.com/link/` + script_token + `" target="_blank" style="display: contents; color: #444; text-decoration: underline;">grepodata.com/link/` + script_token + `<div>` + launch_icon + `</div></a></h3>
                   <div id="grepodatalerror" style="display: none; text-align: center; place-content: center; font-size: 16px;" class="gd-error-msg"><b>Unable to authenticate.</b></div>
                   <p id="grepodataltip" style="display: none; text-align: center; margin-bottom: -50px;">Follow the instructions on this page to link your userscript to your GrepoData account.<br/>Click 'Continue' below once your userscript is linked.<br/>Feel free to contact us if you run into any issues.</p>
                   <div class="gd-login-footer" style="margin-top: 50px; height: 60px;">
@@ -2502,18 +2502,25 @@ var verbose = true;
         console.log("initiated grepodata.com viewer");
         grepodataObserver('');
 
-        // Watch for angular app route change
+        // Watch for angular app route changes
         function grepodataObserver(path) {
             var initWatcher = setInterval(function () {
-                if (gd_w.location.pathname.indexOf("/profile") >= 0 &&
-                    gd_w.location.pathname.indexOf("/intel") >= 0 &&
-                    gd_w.location.pathname != path) {
+                // If route is one of the indexer routes AND path has changed
+                if ((
+                    gd_w.location.pathname.indexOf("/profile") >= 0 ||
+                    gd_w.location.pathname.indexOf("/intel") >= 0 ||
+                    gd_w.location.pathname.indexOf("/points") >= 0
+                ) && gd_w.location.pathname != path) {
+
+                    // stop looking for route changes and start looking for update message
                     clearInterval(initWatcher);
                     messageObserver();
-                } else if (path != "" && gd_w.location.pathname != path) {
+
+                } else if (path != '' && gd_w.location.pathname != path) {
+                    // there was a route change but not to an indexer route
                     path = '';
                 }
-            }, 300);
+            }, 500);
         }
 
         // Hide install message on grepodata.com/indexer
@@ -2522,20 +2529,22 @@ var verbose = true;
             var initWatcher = setInterval(function () {
                 timeout = timeout - 100;
                 if ($('#help_by_contributing').get(0)) {
-                    clearInterval(initWatcher);
+                    clearInterval(initWatcher); // stop watching for update messages
+
                     // Hide install banner if script is already running
                     $('#help_by_contributing').get(0).style.display = 'none';
-                    if ($('#new_index_install_tips').get(0) && $('#new_index_waiting').get(0)) {
-                        $('#new_index_waiting').get(0).style.display = 'block';
-                        $('#new_index_install_tips').get(0).style.display = 'none';
-                    }
+
+                    // Ingest version
                     if ($('#userscript_version').get(0)) {
                         $('#userscript_version').append('<div id="script_version">' + gd_version + '</div>');
                     }
+
+                    // Start looking for route changes
                     grepodataObserver(gd_w.location.pathname);
+
                 } else if (timeout <= 0) {
-                    clearInterval(initWatcher);
-                    grepodataObserver(gd_w.location.pathname);
+                    clearInterval(initWatcher); // stop watching for update messages
+                    grepodataObserver(gd_w.location.pathname); // start looking for route changes
                 }
             }, 100);
         }
