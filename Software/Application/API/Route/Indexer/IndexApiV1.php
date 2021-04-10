@@ -9,6 +9,7 @@ use Grepodata\Library\Controller\Player;
 use Grepodata\Library\Controller\Town;
 use Grepodata\Library\Controller\World;
 use Grepodata\Library\Indexer\Validator;
+use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\Indexer\City;
 use Grepodata\Library\Model\Indexer\IndexInfo;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -29,6 +30,7 @@ class IndexApiV1 extends \Grepodata\Library\Router\BaseRoute
     try {
       // Validate params
       $aParams = self::validateParams();
+      Logger::v2Migration("GetTownV1 ".json_encode($aParams));
 
       $aInputKeys = array();
       if (isset($aParams['key'])) {

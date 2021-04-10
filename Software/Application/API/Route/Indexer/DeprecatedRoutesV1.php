@@ -7,6 +7,7 @@ use Grepodata\Library\Controller\Indexer\Conquest;
 use Grepodata\Library\Controller\IndexV2\IndexOverview;
 use Grepodata\Library\Controller\World;
 use Grepodata\Library\Indexer\Validator;
+use Grepodata\Library\Logger\Logger;
 
 class DeprecatedRoutesV1 extends \Grepodata\Library\Router\BaseRoute
 {
@@ -97,6 +98,7 @@ class DeprecatedRoutesV1 extends \Grepodata\Library\Router\BaseRoute
   // === \Report
   public static function LatestReportHashesGET()
   {
+    //Logger::v2Migration("GetReportHashesV1");
     die(self::OutputJson(array(
       'i' => array(),
       'f' => array(),

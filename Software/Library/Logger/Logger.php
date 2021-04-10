@@ -13,6 +13,7 @@ class Logger
   const level_debug   = 3;
   const level_silly   = 4;
   const level_index   = 10;
+  const level_v2_migration = 100;
 
   /**
    * Enable local output (for testing purposes)
@@ -55,6 +56,15 @@ class Logger
     self::writeLogMessage(array(
       'message' => $Message,
       'level'   => self::level_index,
+      'pid'     => self::getPid()
+    ));
+  }
+
+  public static function v2Migration($Message)
+  {
+    self::writeLogMessage(array(
+      'message' => $Message,
+      'level'   => self::level_v2_migration,
       'pid'     => self::getPid()
     ));
   }

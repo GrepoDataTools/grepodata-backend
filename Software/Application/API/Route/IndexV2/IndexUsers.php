@@ -238,6 +238,8 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
       $aParams = self::validateParams(array('access_token', 'index_keys'));
       $oUser = Authentication::verifyJWT($aParams['access_token']);
 
+      Logger::v2Migration("ImportV1Keys ".json_encode($aParams));
+
       // Parse array of index keys
       $aIndexKeys = $aParams['index_keys'];
       if (!is_array($aIndexKeys)) {
@@ -256,9 +258,16 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
           // Check if the index exists
           $oIndex = IndexInfo::firstOrFail($IndexKey);
 
+          // Check if user already has a role on the index (if role already exists, skip import for this index)
+          $oExistingRole = Roles::getUserIndexRoleNoFail($oUser, $oIndex->key_code);
+          if ($oExistingRole != null) {
+            continue;
+          }
+
           // Check if v1 importing is enabled
           if ($oIndex->allow_join_v1_key == false) {
             // V1 import is disabled, skip to next index
+            Logger::v2Migration("Failed attempt to join via v1 redirect (v1 joining disabled) ".json_encode($aParams));
             if ($bFailVerbose) {
               ResponseCode::errorCode(7601);
             }
@@ -268,17 +277,17 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
           // Check if the key is an actual V1 key (V2 keys can not be imported in this way)
           if ($oIndex->index_version !== '1') {
             // This is not a V1 index, skip to next index
+            Logger::v2Migration("Failed attempt to join via v1 redirect (not a v1 index) ".json_encode($aParams));
             if ($bFailVerbose) {
               ResponseCode::errorCode(7602);
             }
             continue;
           }
 
-          // Check if user already has a role on the index (if role already exists, skip import for this index)
-          $oExistingRole = Roles::getUserIndexRoleNoFail($oUser, $oIndex->key_code);
           if ($oExistingRole == null) {
             // Add write role on the index
             Roles::SetUserIndexRole($oUser, $oIndex, Roles::ROLE_WRITE);
+            Logger::v2Migration("Successful import of a v1 key ".$oIndex->key_code." ".$oUser->id);
           }
 
         } catch (ModelNotFoundException $e) {
@@ -286,7 +295,7 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
             ResponseCode::errorCode(7101);
           }
         } catch (\Exception $e) {
-          Logger::warning("Unable to import V1 index key '" . $IndexKey . "' for user " . $oUser->id . ". " . $e->getMessage());
+          Logger::v2Migration("WARNING: Exception while importing V1 index key '" . $IndexKey . "' for user " . $oUser->id . ". " . $e->getMessage());
         }
       }
 
@@ -344,8 +353,10 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
         if ($oIndex->index_version === '1' && $oIndex->allow_join_v1_key === 1) {
           // Allow for v1 redirects
           $oActiveRole = Roles::SetUserIndexRole($oUser, $oIndex, Roles::ROLE_WRITE);
+          Logger::v2Migration("Successful join via v1 redirect ".$oIndex->key_code." ".$oUser->id);
         } else {
           // Not a V1 index or v1 joining is disabled
+          Logger::v2Migration("Failed attempt to join via v1 redirect (not a v1 index or v1 joining disabled) ".json_encode($aParams));
           ResponseCode::errorCode(7601);
         }
       }
