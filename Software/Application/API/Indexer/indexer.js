@@ -1218,6 +1218,11 @@ var verbose = true;
                             hashText += reportContent;
                         }
 
+                        // add player id to hash to avoid inbox conflicts
+                        if (Game.player_id > 0) {
+                            hashText += Game.player_id;
+                        }
+
                         reportHash = hashText.report_hash();
                         if (verbose) console.log('Parsed inbox report with hash: ' + reportHash);
 
@@ -1476,6 +1481,7 @@ var verbose = true;
                                     var reportUnits = reportElement.getElementsByClassName('unit_icon40x40');
                                     var reportBuildings = reportElement.getElementsByClassName('report_unit');
                                     var reportDetails = reportElement.getElementsByClassName('report_details');
+                                    var reportResources = reportElement.getElementsByClassName('resources');
                                     var reportContent = '';
                                     for (var u = 0; u < reportUnits.length; u++) {
                                         reportContent += reportUnits[u].outerHTML;
@@ -1485,6 +1491,9 @@ var verbose = true;
                                     }
                                     if (reportDetails.length === 1) {
                                         reportContent += reportDetails[0].innerText;
+                                    }
+                                    if (reportResources.length === 1) {
+                                        reportContent += reportResources[0].innerText;
                                     }
                                 } catch (error) {
                                     errorHandling(error, "parseForumReportReportUnits");
@@ -1511,74 +1520,27 @@ var verbose = true;
                                 }
                             }
 
-                            var shareBtn = document.createElement('a');
-                            var shareInput = document.createElement('input');
-                            var rightShareSpan = document.createElement('span');
-                            var leftShareSpan = document.createElement('span');
-                            var txtShareSpan = document.createElement('span');
-                            shareInput.setAttribute('type', 'text');
-                            shareInput.setAttribute('id', 'gd_share_rep_inp');
-                            shareInput.setAttribute('style', 'float: right;');
-                            txtShareSpan.setAttribute('id', 'gd_share_rep_txt');
-                            txtShareSpan.setAttribute('class', 'middle');
-                            txtShareSpan.setAttribute('style', 'min-width: 50px;');
-                            rightShareSpan.setAttribute('class', 'right');
-                            leftShareSpan.setAttribute('class', 'left');
-                            leftShareSpan.appendChild(rightShareSpan);
-                            rightShareSpan.appendChild(txtShareSpan);
-                            shareBtn.appendChild(leftShareSpan);
-                            shareBtn.setAttribute('href', '#');
-                            shareBtn.setAttribute('id', 'gd_share_rep_');
-                            shareBtn.setAttribute('class', 'button gd_btn_share');
-                            shareBtn.setAttribute('style', 'float: right;');
-
-                            txtShareSpan.innerText = translate.SHARE;
-
-
-                            shareBtn.addEventListener('click', () => {
-                                if ($('#gd_share_rep_txt').get(0)) {
-                                    var hashI = ('r' + reportHash).replace('-', 'm');
-                                    var content = '<b>Share this report on Discord:</b><br><ul>' +
-                                        '    <li>1. Install the GrepoData bot in your Discord server (<a href="https://grepodata.com/discord" target="_blank">link</a>).</li>' +
-                                        '    <li>2. Insert the following code in your Discord server.<br/>The bot will then create the screenshot for you!' +
-                                        '    </ul><br/><input type="text" class="gd_copy_input_' + reportHash + '" value="' + `!gd report ${hashI}` + '"> <a href="#" class="gd_copy_command_' + reportHash + '">Copy to clipboard</a><span class="gd_copy_done_' + reportHash + '" style="display: none; float: right;"> Copied!</span>' +
-                                        '    <br /><br /><small>Thank you for using <a href="https://grepodata.com" target="_blank">GrepoData</a>!</small>';
-
-                                    Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG).setContent(content);
-                                    addForumReportById($('#gd_index_f_' + reportId).attr('report_id'), $('#gd_index_f_' + reportId).attr('report_hash'));
-
-                                    $(".gd_copy_command_" + reportHash).click(function () {
-                                        $(".gd_copy_input_" + reportHash).select();
-                                        document.execCommand('copy');
-
-                                        $('.gd_copy_done_' + reportHash).get(0).style.display = 'block';
-                                        setTimeout(function () {
-                                            if ($('.gd_copy_done_' + reportHash).get(0)) {
-                                                $('.gd_copy_done_' + reportHash).get(0).style.display = 'none';
-                                            }
-                                        }, 3000);
-                                    });
-                                }
-                            })
-
                             if (reportHash == null) {
                                 reportHash = '';
                             }
+                            let index_btn_f_html = '<a href="#" id="gd_index_f_' + reportId + '" report_hash="' + reportHash + '" report_id="' + reportId + '" class="button rh' + reportHash + ' gd_btn_index" style="float: right;"><span class="left"><span class="right"><span id="gd_index_f_txt_' + reportId + '" class="middle" style="min-width: 50px;">' + translate.ADD + ' +</span></span></span></a>\n';
+                            let share_btn_f_html = '<a href="#" id="gd_share_f_' + reportId + '" report_hash="' + reportHash + '" report_id="' + reportId + '" class="button gd_btn_share" style="float: right;"><span class="left"><span class="right"><span id="gd_sharae_f_txt_' + reportId + '" class="middle" style="min-width: 50px;">' + translate.SHARE + '</span></span></span></a>\n';
                             if (bSpy === true) {
                                 $(reportElement).append('<div class="gd_indexer_footer" style="background: #fff; height: 28px; margin-top: -28px;">\n' +
-                                    '    <a href="#" id="gd_index_f_' + reportId + '" report_hash="' + reportHash + '" report_id="' + reportId + '" class="button rh' + reportHash + ' gd_btn_index" style="float: right;"><span class="left"><span class="right"><span id="gd_index_f_txt_' + reportId + '" class="middle" style="min-width: 50px;">' + translate.ADD + ' +</span></span></span></a>\n' +
+                                    index_btn_f_html +
+                                    share_btn_f_html +
                                     '    </div>');
                                 $(reportElement).find('.resources, .small').css("text-align", "left");
                             } else {
                                 $(reportElement).append('<div class="gd_indexer_footer" style="background: url(https://gpnl.innogamescdn.com/images/game/border/odd.png); height: 28px; margin-top: -52px;">\n' +
-                                    '    <a href="#" id="gd_index_f_' + reportId + '" report_hash="' + reportHash + '" report_id="' + reportId + '" class="button rh' + reportHash + ' gd_btn_index" style="float: right;"><span class="left"><span class="right"><span id="gd_index_f_txt_' + reportId + '" class="middle" style="min-width: 50px;">' + translate.ADD + ' +</span></span></span></a>\n' +
+                                    index_btn_f_html +
+                                    share_btn_f_html +
                                     '    </div>');
                                 $(reportElement).find('.button, .simulator, .all').parent().css("padding-top", "24px");
                                 $(reportElement).find('.button, .simulator, .all').siblings("span").css("margin-top", "-24px");
                             }
 
-                            $(reportElement).find('.gd_indexer_footer').append(shareBtn);
-
+                            // Index click
                             if (exists === true) {
                                 $('#gd_index_f_' + reportId).get(0).style.color = '#36cd5b';
                                 $('#gd_index_f_txt_' + reportId).get(0).innerText = translate.ADDED + ' ✓';
@@ -1587,6 +1549,36 @@ var verbose = true;
                                     addForumReportById($(this).attr('report_id'), $(this).attr('report_hash'));
                                 });
                             }
+
+                            // Share click
+                            $('#gd_share_f_' + reportId).click(function () {
+                                console.log('jquery hash: ',$(this).attr('report_hash'));
+                                console.log('jquery id: ',$(this).attr('report_id'));
+                                var reportHash = $(this).attr('report_hash');
+                                var reportId = $(this).attr('report_id');
+
+                                var hashI = ('r' + reportHash).replace('-', 'm');
+                                var content = '<b>Share this report on Discord:</b><br><ul>' +
+                                    '    <li>1. Install the GrepoData bot in your Discord server (<a href="https://grepodata.com/discord" target="_blank">link</a>).</li>' +
+                                    '    <li>2. Insert the following code in your Discord server.<br/>The bot will then create the screenshot for you!' +
+                                    '    </ul><br/><input type="text" class="gd_copy_input_' + reportHash + '" value="' + `!gd report ${hashI}` + '"> <a href="#" class="gd_copy_command_' + reportHash + '">Copy to clipboard</a><span class="gd_copy_done_' + reportHash + '" style="display: none; float: right;"> Copied!</span>' +
+                                    '    <br /><br /><small>Thank you for using <a href="https://grepodata.com" target="_blank">GrepoData</a>!</small>';
+
+                                Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG).setContent(content);
+                                addForumReportById(reportId, reportHash);
+
+                                $(".gd_copy_command_" + reportHash).click(function () {
+                                    $(".gd_copy_input_" + reportHash).select();
+                                    document.execCommand('copy');
+
+                                    $('.gd_copy_done_' + reportHash).get(0).style.display = 'block';
+                                    setTimeout(function () {
+                                        if ($('.gd_copy_done_' + reportHash).get(0)) {
+                                            $('.gd_copy_done_' + reportHash).get(0).style.display = 'none';
+                                        }
+                                    }, 3000);
+                                });
+                            });
                         }
                     }
                 }
