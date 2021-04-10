@@ -460,6 +460,17 @@ class Intel
   }
 
   /**
+   * Get all intel for a given world
+   * @param World $oWorld
+   * @return \Grepodata\Library\Model\IndexV2\Intel[]
+   */
+  public static function allByWorld(World $oWorld)
+  {
+    return \Grepodata\Library\Model\IndexV2\Intel::where('world', '=', $oWorld->grep_id)->get();
+  }
+
+  /**
+   * Get all intel that was indexed by a specific user
    * @param User $oUser
    * @param int $From
    * @param int $Size
@@ -517,6 +528,7 @@ class Intel
   }
 
   /**
+   * Get all intel that the user has access to for a specific town
    * @param User $oUser
    * @param $World
    * @param $TownId
@@ -532,6 +544,7 @@ class Intel
   }
 
   /**
+   * Get all intel that the user has access to for a specific player
    * @param User $oUser
    * @param $World
    * @param $PlayerId
@@ -547,6 +560,7 @@ class Intel
   }
 
   /**
+   * Get all intel that the user has access to for a specific alliance
    * @param User $oUser
    * @param $World
    * @param $AllianceId

@@ -15,6 +15,8 @@ use Grepodata\Library\Model\Indexer\City;
 use Grepodata\Library\Model\Indexer\IndexInfo;
 use Grepodata\Library\Model\Indexer\Report;
 use Grepodata\Library\Model\Indexer\ReportId;
+use Grepodata\Library\Model\IndexV2\Intel;
+use Grepodata\Library\Model\IndexV2\IntelShared;
 use Grepodata\Library\Model\Island;
 use Grepodata\Library\Model\Player;
 use Grepodata\Library\Model\PlayerHistory;
@@ -131,17 +133,11 @@ foreach ($Worlds as $oWorld) {
     $Deleted = Player::where('world', '=', $oWorld->grep_id)->delete();
     Logger::debugInfo("Deleted $Deleted players");
 
-    // Indexes
-    $aIndexes = IndexInfo::where('world', '=', $oWorld->grep_id)->get();
-    $Deleted = 0;
-    logger::debugInfo("Cleaning " . sizeof($aIndexes) . " indexes..");
-    /** @var IndexInfo $oIndex */
-    foreach ($aIndexes as $oIndex) {
-      ReportId::where('index_key', '=', $oIndex->key_code)->delete();
-      Report::where('index_code', '=', $oIndex->key_code)->delete();
-      $Deleted += City::where('index_key', '=', $oIndex->key_code)->delete();
-    }
+    // Intel
+    $Deleted = Intel::where('world', '=', $oWorld->grep_id)->delete();
     Logger::debugInfo("Deleted $Deleted intel records");
+    $Deleted = IntelShared::where('world', '=', $oWorld->grep_id)->delete();
+    Logger::debugInfo("Deleted $Deleted intel link records");
 
     $oWorld->cleaned = 1;
     $oWorld->save();

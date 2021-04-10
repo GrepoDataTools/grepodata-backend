@@ -68,7 +68,7 @@ class IndexManagement extends \Smarty
       }
       return $oUserRole;
     } catch (ModelNotFoundException $e) {
-      ResponseCode::errorCode(7500);
+      ResponseCode::errorCode($ErrorCode);
     }
   }
 }

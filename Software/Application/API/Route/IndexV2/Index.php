@@ -105,9 +105,7 @@ class Index extends BaseRoute
       // Validate index key
       $oIndex = Validator::IsValidIndex($aParams['key']);
       if ($oIndex === null || $oIndex === false) {
-        die(self::OutputJson(array(
-          'message'     => 'Unauthorized index key. Please enter the correct index key.',
-        ), 401));
+        ResponseCode::errorCode(7101, array());
       }
 
       $oIndexRole = IndexManagement::verifyUserCanRead($oUser, $aParams['key']);

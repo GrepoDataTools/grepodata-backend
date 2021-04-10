@@ -45,7 +45,6 @@ foreach ($aIndex as $oIndex) {
       }
     }
 
-
   } catch (\Exception $e) {
     Logger::error("Error building overview for index " . $oIndex->key_code . ": " . $e->getMessage());
   }
