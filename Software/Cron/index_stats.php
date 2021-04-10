@@ -5,6 +5,7 @@ namespace Grepodata\Cron;
 use Carbon\Carbon;
 use Exception;
 use Grepodata\Library\Controller\Indexer\CityInfo;
+use Grepodata\Library\Controller\IndexV2\Intel;
 use Grepodata\Library\Cron\Common;
 use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\Indexer\Stats;
@@ -27,6 +28,11 @@ if ($aIndex === false) {
   Logger::error("Terminating execution of stat builder: Error retrieving index keys from database.");
   Common::endExecution(__FILE__);
 }
+$worlds = Common::getAllActiveWorlds();
+if ($worlds === false) {
+  Logger::error("Terminating execution of stat builder: Error retrieving active worlds from database.");
+  Common::endExecution(__FILE__);
+}
 
 $Total_reports = 0;
 $Index_count = sizeof($aIndex);
@@ -39,11 +45,9 @@ $Def_count = 0;
 $Fire_count = 0;
 $Myth_count = 0;
 
-foreach ($aIndex as $oIndex) {
-  // Get all cities
-  $Key = $oIndex->key_code;
-  $World = $oIndex->world;
-  $aCityRecords = CityInfo::allByKey($Key);
+foreach ($worlds as $oWorld) {
+  // Get all cities for this world
+  $aCityRecords = Intel::allByWorld($oWorld);
 
   // Found
   $aFoundTowns = array();

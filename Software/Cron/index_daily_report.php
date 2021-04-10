@@ -30,8 +30,8 @@ use Illuminate\Database\Capsule\Manager as DB;
 
 // Count total indexed reports
 $aIndexedPerDay = DB::select( DB::raw("
-select count(*) as count, date(created_at) as date 
-from Index_report_hash 
+select count(distinct report_hash) as count, date(created_at) as date 
+from Indexer_intel_shared 
 where created_at >= date_sub(curdate(), interval 1 year) 
 and DATE(created_at) <> DATE(NOW())
 group by date"
@@ -44,8 +44,8 @@ $oReport->save();
 
 // Count total indexes used per day
 $aIndexedPerDay = DB::select( DB::raw("
-select count(distinct(index_key)) as count, date(created_at) as date 
-from Index_report_hash 
+select count(distinct index_key) as count, date(created_at) as date 
+from Indexer_intel_shared 
 where created_at >= date_sub(curdate(), interval 1 year) 
 and DATE(created_at) <> DATE(NOW())
 group by date"
@@ -56,10 +56,10 @@ $oReport->title = "Number of unique indexes used per day";
 $oReport->data = json_encode($aIndexedPerDay);
 $oReport->save();
 
-// Count total indexing players per day
+// Count total indexing users per day
 $aIndexedPerDay = DB::select( DB::raw("
-select count(distinct(player_id)) as count, date(created_at) as date 
-from Index_report_hash 
+select count(distinct poster_player_id) as count, date(created_at) as date 
+from Indexer_intel 
 where created_at >= date_sub(curdate(), interval 1 year) 
 and DATE(created_at) <> DATE(NOW())
 group by date"
@@ -73,10 +73,10 @@ $oReport->save();
 // Count total indexed reports from inbox
 $aIndexedPerDay = DB::select( DB::raw("
 select count(*) as count, date(created_at) as date
-from Index_report_hash
+from Indexer_intel
 where created_at >= date_sub(curdate(), interval 1 year)
 and DATE(created_at) <> DATE(NOW())
-and index_type = 'inbox'
+and source_type = 'inbox'
 group by date"
 ));
 $oReport = DailyReport::firstOrNew(array('type' => 'indexer_num_inbox_per_day'));
@@ -87,10 +87,10 @@ $oReport->save();
 // Count total indexed reports from forum
 $aIndexedPerDay = DB::select( DB::raw("
 select count(*) as count, date(created_at) as date
-from Index_report_hash
+from Indexer_intel
 where created_at >= date_sub(curdate(), interval 1 year)
 and DATE(created_at) <> DATE(NOW())
-and index_type = 'forum'
+and source_type = 'forum'
 group by date"
 ));
 $oReport = DailyReport::firstOrNew(array('type' => 'indexer_num_forum_per_day'));
@@ -114,9 +114,9 @@ $oReport->save();
 // index error rate
 $aStats = DB::select( DB::raw("
 select count(*) as count, date(created_at) as date 
-from Index_report 
+from Indexer_intel
 where created_at >= date_sub(curdate(), interval 1 year) 
-and city_id = 0 
+and parsing_failed != 0 
 group by date"
 ));
 $oReport = DailyReport::firstOrNew(array('type' => 'indexer_error_rate'));
@@ -140,7 +140,7 @@ $oReport->save();
 // Worlds
 $aStats = DB::select( DB::raw("
 select substr(world,1,2) as country, count(*) as count
-from Index_info
+from Indexer_info
 where created_at >= date_sub(curdate(), interval 3 month) 
 group by substr(world,1,2)
 order by count DESC"
@@ -153,7 +153,7 @@ $oReport->save();
 // Script version
 $aStats = DB::select( DB::raw("
 SELECT script_version, count(*) as count, date(created_at) as date 
-FROM `Index_report` 
+FROM `Indexer_intel` 
 WHERE created_at >= date_sub(curdate(), interval 1 year) 
 GROUP BY date, script_version"
 ));
