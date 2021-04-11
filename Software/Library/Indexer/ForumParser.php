@@ -428,15 +428,20 @@ class ForumParser
           $oDateMax = new Carbon();
           $oDateMax->addHours(26);
           if ($ParsedDate > $oDateMax) {
-            throw new Exception("Parsed date is in the future");
-          } else {
-            $oDateMin = new Carbon();
-            $oDateMin->subDays(150);
-            if ($ParsedDate < $oDateMin) {
-              Logger::warning("InboxParser ". $ReportHash . ": Parsed date is too far in the past");
-            } else {
-              $cityInfo['parsed_date'] = $ParsedDate;
+            // subtract 1 day and try again
+            Logger::warning("ForumParser ". $ReportHash . ": Parsed date is in the future, subtracting 1 day.");
+            $ParsedDate->subDays(1);
+            if ($ParsedDate > $oDateMax) {
+              throw new Exception("Parsed date is in the future");
             }
+          }
+
+          $oDateMin = new Carbon();
+          $oDateMin->subDays(150);
+          if ($ParsedDate < $oDateMin) {
+            Logger::warning("ForumParser ". $ReportHash . ": Parsed date is too far in the past");
+          } else {
+            $cityInfo['parsed_date'] = $ParsedDate;
           }
         }
       } catch (Exception $e) {
