@@ -55,6 +55,7 @@ class Scoreboard extends \Grepodata\Library\Router\BaseRoute
       }
 
       // Optional world
+      $bUsingLatestDefault = false;
       if (!isset($aParams['world']) || $aParams['world'] == '') {
         $aParams['world'] = DEFAULT_WORLD;
         try {
@@ -62,6 +63,8 @@ class Scoreboard extends \Grepodata\Library\Router\BaseRoute
           $Server = DEFAULT_SERVER;
           if (isset($aParams['server']) && $aParams['server'] != '') {
             $Server = $aParams['server'];
+          } else {
+            $bUsingLatestDefault = true;
           }
 
           $oLatestWorld = \Grepodata\Library\Controller\World::getLatestByServer($Server);
@@ -85,7 +88,14 @@ class Scoreboard extends \Grepodata\Library\Router\BaseRoute
       $bFallback = false;
       if (!isset($aScoreboard) || is_null($aScoreboard) || !isset($aScoreboard['date'])) {
         if (isset($aParams['date']) && $aParams['date'] != '') $bFallback = true; // Detect fallback usage
-        $aScoreboard = PlayerScoreboard::latestByWorldOrFail($aParams['world']);
+        try {
+          $aScoreboard = PlayerScoreboard::latestByWorldOrFail($aParams['world']);
+        } catch (\Exception $e) {
+          if ($bUsingLatestDefault) {
+            // try again with real default
+            $aScoreboard = PlayerScoreboard::latestByWorldOrFail(DEFAULT_WORLD);
+          }
+        }
       }
 
       // Find min date

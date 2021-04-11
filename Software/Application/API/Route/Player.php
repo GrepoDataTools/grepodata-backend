@@ -187,12 +187,23 @@ class Player extends \Grepodata\Library\Router\BaseRoute
       $aParams = self::validateParams();
 
       if (isset($aParams['index'])) {
+        Logger::v2Migration("Received player search request with index param: ". json_encode($aParams));
         $oIndex = IndexInfo::firstOrFail($aParams['index']);
         $aParams['world'] = $oIndex->world;
       }
 
       if (isset($aParams['query']) && strlen($aParams['query']) > 30) {
         throw new Exception("Search input exceeds limit: " . substr($aParams['query'], 0, 200));
+      }
+
+      // Optional guild preference
+      $bGuildHasServer = false;
+      if (isset($aParams['guild']) && $aParams['guild'] !== '') {
+        $oDiscord = \Grepodata\Library\Controller\Discord::firstOrNew($aParams['guild']);
+        if ($oDiscord->server !== null) {
+          $bGuildHasServer = true;
+          $aParams['server'] = substr($oDiscord->server, 0, 2);
+        }
       }
 
       $bBuildForm = true;
@@ -234,12 +245,29 @@ class Player extends \Grepodata\Library\Router\BaseRoute
                 $aResponse['results'][$i][$Field] = $Value;
                 //}
               }
+
+              // Hours inactive
+              $aResponse['results'][$i]['hours_inactive'] = null;
+              try {
+                if (!is_null($oPlayer->att_point_date) && !is_null($oPlayer->town_point_date)) {
+                  $LastActivity = $oPlayer->att_point_date;
+                  if ($oPlayer->town_point_date > $LastActivity) {
+                    $LastActivity = $oPlayer->town_point_date;
+                  }
+                  $Now = Carbon::now();
+                  $HoursInactive = $Now->diffInHours($LastActivity);
+                  $aResponse['results'][$i]['hours_inactive'] = 0;
+//                  $aResponse['results'][$i]['hours_inactive'] = $HoursInactive;
+                }
+              } catch (Exception $e) {}
+
               if ($aBestMatch == null
                 && isset($aParams['query'])
                 && strtolower($oPlayer->name) === strtolower($aParams['query'])) {
                 $aBestMatch = $aResponse['results'][$i];
                 $BestIndex = $i;
               }
+
             }
           }
 
@@ -277,11 +305,28 @@ class Player extends \Grepodata\Library\Router\BaseRoute
               if ($oAlliance !== null) $aData['alliance_name'] = $oAlliance->name;
             } catch (ModelNotFoundException $e) {}//Ignore optional alliance name fail
           }
+
+          // Hours inactive
+          $aData['hours_inactive'] = null;
+          try {
+            if (!is_null($oPlayer->att_point_date) && !is_null($oPlayer->town_point_date)) {
+              $LastActivity = $oPlayer->att_point_date;
+              if ($oPlayer->town_point_date > $LastActivity) {
+                $LastActivity = $oPlayer->town_point_date;
+              }
+              $Now = Carbon::now();
+              $HoursInactive = $Now->diffInHours($LastActivity);
+              $aData['hours_inactive'] = $HoursInactive;
+            }
+          } catch (Exception $e) {}
           
           $aResponse['results'][] = $aData;
         }
       }
 
+      $aResponse['discord'] = array(
+        'guild_has_world' => $bGuildHasServer
+      );
       return self::OutputJson($aResponse);
 
     } catch (Exception $e) {

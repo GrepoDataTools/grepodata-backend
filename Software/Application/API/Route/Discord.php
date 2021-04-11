@@ -154,7 +154,7 @@ class Discord extends \Grepodata\Library\Router\BaseRoute
     try {
       // Validate params
       $aParams = self::validateParams(array('guild', 'hash'));
-      $oDiscord = \Grepodata\Library\Controller\Discord::firstOrNew($aParams['guild']);
+//      $oDiscord = \Grepodata\Library\Controller\Discord::firstOrNew($aParams['guild']);
 
       // Find hash
       try {
@@ -189,23 +189,28 @@ class Discord extends \Grepodata\Library\Router\BaseRoute
       $aResponse = array(
         'success' => true,
         'url' => $Url,
-        'b64' => base64_encode(file_get_contents($Url)),
+        'b64' => '',
+        //'b64' => base64_encode(file_get_contents($Url)),
         'index' => null,
         'world' => $oIntel->world,
+        'town_id' => $oIntel->town_id,
+        'town_name' => $oIntel->town_name,
+        'player_id' => $oIntel->player_id,
+        'player_name' => $oIntel->player_name,
         'bb' => array()
       );
 
-      // Try to expand with info
-      try {
-        // Show BBcode
-        preg_match_all('/#[a-zA-Z0-9]{18,1000}={0,2}/m', $html, $matches, PREG_SET_ORDER, 0);
-        foreach ($matches as $match) {
-          $aData = json_decode(base64_decode($match[0]), true);
-          if (is_array($aData) && sizeof($aData)>0) {
-            $aResponse['bb'][] = $aData;
-          }
-        }
-      } catch (\Exception $e) {}
+//      // Try to expand with info
+//      try {
+//        // Show BBcode
+//        preg_match_all('/#[a-zA-Z0-9]{18,1000}={0,2}/m', $html, $matches, PREG_SET_ORDER, 0);
+//        foreach ($matches as $match) {
+//          $aData = json_decode(base64_decode($match[0]), true);
+//          if (is_array($aData) && sizeof($aData)>0) {
+//            $aResponse['bb'][] = $aData;
+//          }
+//        }
+//      } catch (\Exception $e) {}
 
       return self::OutputJson($aResponse);
 

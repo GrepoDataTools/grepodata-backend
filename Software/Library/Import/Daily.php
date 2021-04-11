@@ -90,7 +90,6 @@ class Daily
                 $oPlayer->town_point_date = Carbon::now();
               }
             } catch (\Exception $e) {}
-            if ($oPlayer->points != $aData['points'])
 
             try {
               //Detect alliance change
