@@ -256,8 +256,7 @@ class Player extends \Grepodata\Library\Router\BaseRoute
                   }
                   $Now = Carbon::now();
                   $HoursInactive = $Now->diffInHours($LastActivity);
-                  $aResponse['results'][$i]['hours_inactive'] = 0;
-//                  $aResponse['results'][$i]['hours_inactive'] = $HoursInactive;
+                  $aResponse['results'][$i]['hours_inactive'] = $HoursInactive;
                 }
               } catch (Exception $e) {}
 

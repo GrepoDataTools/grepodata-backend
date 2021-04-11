@@ -138,6 +138,8 @@ class Daily
           $oPlayer->$Key = $Value;
         }
         $oPlayer->active = true;
+        $oPlayer->att_point_date = Carbon::now();
+        $oPlayer->town_point_date = Carbon::now();
         $oPlayer->data_update = Carbon::now();
         $oPlayer->save();
       } catch (\Exception $e) {
