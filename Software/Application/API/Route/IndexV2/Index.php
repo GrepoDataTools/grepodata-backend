@@ -5,6 +5,7 @@ namespace Grepodata\Application\API\Route\IndexV2;
 use Grepodata\Library\Controller\Indexer\IndexInfo;
 use Grepodata\Library\Controller\IndexV2\IndexOverview;
 use Grepodata\Library\Controller\IndexV2\Roles;
+use Grepodata\Library\Controller\World;
 use Grepodata\Library\Indexer\IndexBuilderV2;
 use Grepodata\Library\Indexer\Validator;
 use Grepodata\Library\IndexV2\IndexManagement;
@@ -108,6 +109,8 @@ class Index extends BaseRoute
         ResponseCode::errorCode(7101, array());
       }
 
+      $oWorld = World::getWorldById($oIndex->world);
+
       $oIndexRole = IndexManagement::verifyUserCanRead($oUser, $aParams['key']);
       $bUserIsAdmin = in_array($oIndexRole->role, array(Roles::ROLE_ADMIN, Roles::ROLE_OWNER));
 
@@ -149,6 +152,7 @@ class Index extends BaseRoute
         'recent_conquests'  => $aRecentConquests,
         'latest_version'    => USERSCRIPT_VERSION,
         'index_version'     => $oIndex->index_version,
+        'world_stopped'     => $oWorld->stopped == 1,
         'index_name'        => $oIndex->index_name,
         'role'              => $oIndexRole->role,
         'contribute'        => $oIndexRole->contribute,

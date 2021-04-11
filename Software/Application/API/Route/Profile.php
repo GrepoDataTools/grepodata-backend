@@ -5,6 +5,7 @@ namespace Grepodata\Application\API\Route;
 use Grepodata\Library\Controller\IndexV2\IndexOverview;
 use Grepodata\Library\Controller\IndexV2\Linked;
 use Grepodata\Library\Controller\IndexV2\Roles;
+use Grepodata\Library\Controller\World;
 use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Router\BaseRoute;
 use Grepodata\Library\Router\ResponseCode;
@@ -32,6 +33,9 @@ class Profile extends BaseRoute
         if ($oIndex->world !== $aParams['world']) continue;
       }
 
+      // Check world
+      $oWorld = World::getWorldById($oIndex->world);
+
       $aOverview = array();
       if (isset($aParams['expand_overview']) || isset($aParams['sort_by'])) {
         try {
@@ -58,7 +62,8 @@ class Profile extends BaseRoute
         'updated_at'  => $oIndex->updated_at,
         'stats'       => $aOverview,
         'status'      => $oIndex->status,
-        'index_version' => $oIndex->index_version
+        'index_version' => $oIndex->index_version,
+        'world_stopped' => $oWorld->stopped == 1,
       );
     }
 
@@ -74,6 +79,11 @@ class Profile extends BaseRoute
     // push inactive indexes to the back
     usort($aIndexItems, function ($item1, $item2) {
       return $item1['status'] === 'active' ? -1 : 1;
+    });
+
+    // push stopped worlds to the back
+    usort($aIndexItems, function ($item1, $item2) {
+      return $item1['world_stopped'] === false ? -1 : 1;
     });
 
     // Optional limit
