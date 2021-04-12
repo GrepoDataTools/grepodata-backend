@@ -338,9 +338,11 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
       $oActiveRole = null;
 
       $oUserRole = Roles::getUserIndexRoleNoFail($oUser, $oIndex->key_code);
+      $bIsNewAccessGranted = true;
       if ($oUserRole != null) {
         // User already has a role on the index
         $oActiveRole = $oUserRole;
+        $bIsNewAccessGranted = false;
       } else if (strlen($InviteCode)===10) {
         if ($oIndex->share_link === $InviteCode) {
           // Verified invite link
@@ -368,6 +370,8 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
 
       $aResponse = array(
         'verified' => true,
+        'is_new_access' => $bIsNewAccessGranted,
+        'index_name' => $oIndex->index_name,
         'user_role' => $oActiveRole->getPublicFields()
       );
       ResponseCode::success($aResponse, 1201);
