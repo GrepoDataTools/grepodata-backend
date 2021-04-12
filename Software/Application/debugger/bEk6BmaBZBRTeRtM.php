@@ -3,6 +3,7 @@
 namespace Grepodata\Application\debugger;
 
 use Grepodata\Library\Model\Indexer\Report;
+use Grepodata\Library\Model\IndexV2\Intel;
 
 function isLocalhost($whitelist = ['127.0.0.1', '::1']) {
   return in_array($_SERVER['REMOTE_ADDR'], $whitelist);
@@ -118,10 +119,10 @@ error_reporting(0);
 <input id="failed" type="checkbox" name="failed" <?php echo ($_GET['failed']=='true'?'checked':'') ?>> Only show failed reports
 <input placeholder="by index key" id="query" type="text" name="text" onsubmit="search()" value="<?php echo $_GET['query'];?>"/>
 <input placeholder="by report hash" id="reporthash" type="text" name="reporthash" autocomplete="off" onsubmit="search()" value="<?php echo $_GET['reporthash'];?>"/>
-<input placeholder="by city id" id="cityid" type="text" name="cityid" autocomplete="off" onsubmit="search()" value="<?php echo $_GET['cityid'];?>"/>
+<input placeholder="by intel id" id="cityid" type="text" name="cityid" autocomplete="off" onsubmit="search()" value="<?php echo $_GET['cityid'];?>"/>
 <select id="level" name="level">
     <option value="all" <?php echo isset($_GET['level']) && $_GET['level'] == 'all' ? 'selected':''?>>All</option>
-    <option value="default" <?php echo isset($_GET['level']) && $_GET['level'] == 'default' ? 'selected':''?>>Forum</option>
+    <option value="default" <?php echo isset($_GET['level']) && $_GET['level'] == 'forum' ? 'selected':''?>>Forum</option>
     <option value="inbox" <?php echo isset($_GET['level']) && $_GET['level'] == 'inbox' ? 'selected':''?>>Inbox</option>
 </select>
 <button onclick="search()">Go</button>
@@ -156,23 +157,22 @@ error_reporting(0);
 try {
 
   // Reports
-  $Reports = Report::orderBy('Index_report.created_at', 'desc');
+  $Reports = Intel::orderBy('Indexer_intel.created_at', 'desc');
   if (isset($_GET['level']) && $_GET['level'] != '' && $_GET['level'] != 'all') {
-    $Reports->where('Index_report.type', $_GET['level']);
+    $Reports->where('Indexer_intel.source_type', $_GET['level']);
   }
 
   if (isset($_GET['reporthash']) && $_GET['reporthash'] != '') {
-    $Reports->join('Index_report_hash', 'Index_report_hash.index_report_id', '=', 'Index_report.id');
-    $Reports->where('Index_report_hash.report_id', '=', $_GET['reporthash']);
+    $Reports->where('Indexer_intel.hash', '=', $_GET['reporthash']);
   } else {
-    if (isset($_GET['query']) && $_GET['query'] != '') {
-      $Reports->where('Index_report.index_code', '=', $_GET['query']);
-    }
+//    if (isset($_GET['query']) && $_GET['query'] != '') {
+//      $Reports->where('Index_report.index_code', '=', $_GET['query']);
+//    }
     if (isset($_GET['cityid']) && $_GET['cityid'] != '') {
-      $Reports->where('Index_report.city_id', '=', $_GET['cityid']);
+      $Reports->where('Indexer_intel.id', '=', $_GET['cityid']);
     }
     if (isset($_GET['failed']) && $_GET['failed'] == 'true') {
-      $Reports->where('Index_report.city_id', '=', 0);
+      $Reports->where('Indexer_intel.parsing_failed', '=', 1);
     }
   }
 
@@ -181,25 +181,25 @@ try {
     echo '<table style="width: 100%;">
         <tr>
             <th>Date</th>
-            <th>Index</th>
-            <th>City id</th>
+            <th>Hash</th>
+            <th>Intel id</th>
             <th>Type</th>
             <th style="width: 40%;">Debug explain</th>
             <th style="width: 30%;">Report info</th>
             <th>JSON</th>
             <th>Action</th>
         </tr>';
-    /** @var Report $Report */
+    /** @var Intel $Report */
     foreach ($Reports as $Report) {
-      echo '<tr class="' . ($Report->city_id === 0 && $_GET['failed'] !== 'true' ? 'error' : '') . '">
+      echo '<tr class="' . ($Report->parsing_failed === 1 && $_GET['failed'] !== 'true' ? 'error' : '') . '">
 <td>' . $Report->created_at . '</td>
-<td><a class="link" href="https://grepodata.com/indexer/' . $Report->index_code . '">' . $Report->index_code . '<a/></td>
-<td>' . $Report->city_id . '</td>
-<td>' . $Report->type . '</td>
+<td>' . $Report->hash . '</td>
+<td>' . $Report->id . '</td>
+<td>' . $Report->source_type . '</td>
 <td style="width: 40%; text-align: left;">' . $Report->debug_explain . '</td>
 <td style="width: 30%; text-align: left;">' . $Report->report_info . '</td>
 <td><pre style="overflow: hidden;">'.$Report->report_json.'</pre></td>
-<td><a class="link" onclick="debug('.(isset($Report->index_report_id)?$Report->index_report_id:$Report->id).')" target="_blank">Debug ></a></td>
+<td><a class="link" onclick="debug('.$Report->id.')" target="_blank">Debug ></a></td>
 </tr>';
       //      echo $Log->created_at . ' --- ' . $Log->level . ' --- <a class="link" onclick="pid(' . $Log->pid . ')">' . $Log->pid . '<a/> --- ' . $Log->message . '<br/>';
     }

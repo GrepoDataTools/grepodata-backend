@@ -69,8 +69,8 @@ class InboxParser
    * @param $ReportInfo
    * @param $ScriptVersion
    * @param string $Locale
+   * @param Intel $DebugReparseIntel
    * @return int $Id inserted intel id
-   * @throws InboxParserExceptionDebug
    * @throws InboxParserExceptionError
    * @throws InboxParserExceptionWarning
    */
@@ -85,7 +85,9 @@ class InboxParser
     $ReportJson,
     $ReportInfo,
     $ScriptVersion,
-    $Locale='nl')
+    $Locale='nl',
+    $DebugReparseIntel=null
+  )
   {
     try {
       $ReportText = json_encode($aReportData);
@@ -778,7 +780,14 @@ class InboxParser
       }
 
       // Save Results
-      $oIntel = new Intel();
+      if (is_null($DebugReparseIntel)) {
+        $oIntel = new Intel();
+        $oIntel->report_json = $ReportJson;
+        $oIntel->report_info = json_encode(substr($ReportInfo, 0, 100));
+      } else {
+        // Reparse existing record in debugger
+        $oIntel = $DebugReparseIntel;
+      }
       $oIntel->indexed_by_user_id = $UserId;
       $oIntel->hash        = $ReportHash;
       $oIntel->world       = $World;
@@ -805,8 +814,6 @@ class InboxParser
       if (isset($Fireships)) {$oIntel->fireships = $Fireships;}
       $oIntel->mythical_units = json_encode($aMythUnits);
 
-      $oIntel->report_json = $ReportJson;
-      $oIntel->report_info = json_encode(substr($ReportInfo, 0, 100));
       $oIntel->parsing_failed = false;
       $oIntel->debug_explain = null;
 

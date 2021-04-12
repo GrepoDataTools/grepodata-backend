@@ -5,14 +5,12 @@ namespace Grepodata\Library\Cron;
 use Carbon\Carbon;
 use Grepodata\Library\Controller\Alliance;
 use Grepodata\Library\Controller\CronStatus;
-use Grepodata\Library\Controller\Indexer\ReportId;
 use Grepodata\Library\Controller\Player;
-use Grepodata\Library\Indexer\ForumParser;
-use Grepodata\Library\Indexer\InboxParser;
+use Grepodata\Library\IndexV2\ForumParser;
+use Grepodata\Library\IndexV2\InboxParser;
 use Grepodata\Library\Logger\Logger;
-use Grepodata\Library\Model\Indexer\City;
 use Grepodata\Library\Model\Indexer\IndexInfo;
-use Grepodata\Library\Model\Indexer\Report;
+use Grepodata\Library\Model\IndexV2\Intel;
 use Grepodata\Library\Model\Operation_scriptlog;
 use Grepodata\Library\Model\World;
 use Illuminate\Database\Eloquent\Collection;
@@ -125,57 +123,68 @@ class Common
     return $aDiffs;
   }
 
-  public static function debugIndexer(Report $Report, IndexInfo $Info, $bForceReparse = false, $bRebuildIndex = false)
+  /**
+   * @param Intel $Report
+   * @return Intel|bool
+   * @throws \Exception
+   */
+  public static function debugIndexer(Intel $Report)
   {
     $aReportData = (array) json_decode($Report->report_json, true);
 
     $aParsed = null;
-    try {
-      if ($bForceReparse && $Report->city_id > 0) {
-        // Force reparse and delete existing parsed entry
-        City::where('id', '=', $Report->city_id)->delete();
-        $Report->city_id = null;
-        $Report->save();
-      }
 
-      $ReportHash = 'LOCAL_DEBUG';
-      $ReportPosterId = '';
-      $ReportPosterName = $Report->report_poster;
-      $ReportAllianceId = '';
-      try {
-        $oReportHash = ReportId::firstByIndexByHash($Info->key_code, $Report->fingerprint);
-        $ReportHash = $oReportHash->report_id;
-      } catch (\Exception $e) {}
+    $UserId = $Report->indexed_by_user_id;
+    $ReportHash = $Report->hash;
+    $ReportPosterId = $Report->poster_player_id;
+    $ReportPosterName = $Report->poster_player_name;
+    $ReportAllianceId = $Report->poster_alliance_id;
+    $World = $Report->world;
+    $ReportJson = $Report->report_json;
+    $ReportInfo = $Report->report_info;
+    $ScriptVersion = $Report->script_version;
+    $Locale = substr($Report->world, 0, 2);
 
-      if ($Report->type === 'default') {
-        $aParsed = ForumParser::ParseReport($Report->index_code, $aReportData, $ReportPosterName, $ReportHash, substr($Info->world, 0, 2));
-        if (is_array($aParsed) && isset($aParsed['id'])) {
-          $aParsed = $aParsed['id'];
-        }
-      } else {
-        if (isset($oReportHash)) {
-          $ReportPosterId = $oReportHash->player_id;
-          try {
-            $oPlayer = Player::firstOrFail($ReportPosterId, $Info->world);
-            $oAlliance = Alliance::firstOrFail($oPlayer->alliance_id, $Info->world);
-            $ReportAllianceId = $oAlliance->grep_id;
-          } catch (\Exception $e) {}
-        }
-        $aParsed = InboxParser::ParseReport($Report->index_code, $aReportData, $ReportPosterName, $ReportPosterId, $ReportAllianceId, $ReportHash, substr($Info->world, 0, 2));
-      }
-
-      if (is_numeric($aParsed) && $aParsed > 0 && $Report->city_id <= 0) {
-        $Report->city_id = $aParsed;
-        $Report->save();
-        if ($bRebuildIndex === true) {
-          \Grepodata\Library\Controller\IndexV2\IndexOverview::buildIndexOverview($Info);
-        }
-      }
-    } catch (\Exception $e) {
-      return '<table>'.$e->xdebug_message.'</table>';
+    if ($Report->source_type === 'forum') {
+      $aParsed = ForumParser::ParseReport(
+        $UserId,
+        $World,
+        $aReportData,
+        $ReportHash,
+        $ReportJson,
+        $ReportInfo,
+        $ReportPosterName,
+        $ReportPosterId,
+        $ReportAllianceId,
+        $ScriptVersion,
+        $Locale,
+        $Report
+      );
+      $t=2;
+    } else {
+      $aParsed = InboxParser::ParseReport(
+        $UserId,
+        $World,
+        $aReportData,
+        $ReportPosterName,
+        $ReportPosterId,
+        $ReportAllianceId,
+        $ReportHash,
+        $ReportJson,
+        $ReportInfo,
+        $ScriptVersion,
+        $Locale,
+        $Report
+      );
+      $t=2;
     }
 
-    return $aParsed;
+    if (is_numeric($aParsed) && $aParsed > 0) {
+      // get parsed record
+      return Intel::where('id', '=', $aParsed)->firstOrFail();
+    }
+
+    return false;
   }
 
   public static function formatConquestScoresArray($aConquestScores)

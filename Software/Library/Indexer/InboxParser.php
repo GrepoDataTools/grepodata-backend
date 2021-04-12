@@ -54,6 +54,7 @@ class InboxParser
   const kolo       = 'colonize_ship';
 
   /**
+   * @deprecated
    * @param $IndexKey
    * @param $aReportData
    * @param $ReportPoster

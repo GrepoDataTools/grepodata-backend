@@ -178,6 +178,7 @@ class ForumParser
   );
 
   /**
+   * @deprecated
    * @param $IndexKey
    * @param $aReportData
    * @param $ReportPoster

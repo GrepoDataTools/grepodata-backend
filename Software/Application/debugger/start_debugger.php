@@ -6,6 +6,7 @@ use Grepodata\Library\Controller\Indexer\IndexInfo;
 use Grepodata\Library\Cron\Common;
 use Grepodata\Library\Model\Indexer\City;
 use Grepodata\Library\Model\Indexer\Report;
+use Grepodata\Library\Model\IndexV2\Intel;
 
 require('./../../config.php');
 
@@ -14,26 +15,26 @@ error_reporting(0);
 try {
 
   $ReportId = $_POST['id'];
-  /** @var Report $Report */
-  $Report = Report::where('id', '=', $ReportId)->first();
-  /** @var \Grepodata\Library\Model\Indexer\IndexInfo $Index */
-  $Index = IndexInfo::firstOrFail($Report->index_code);
+  /** @var Intel $Report */
+  $Report = Intel::where('id', '=', $ReportId)->first();
 
   if ($Report->report_json === null || $Report->report_json === '') {
     die('Report JSON unavailable');
   }
 
-  if ($Report->city_id <= 0 || $_POST['reparse'] === 'true') {
-    $aParsed = Common::debugIndexer($Report, $Index, $_POST['reparse']==='true', $_POST['rebuild']==='true');
-  } else {
-    $aParsed = $Report->city_id;
+  try {
+    if ($_POST['reparse'] === 'true') {
+      $oCity = Common::debugIndexer($Report);
+    } else {
+      $oCity = $Report;
+    }
+  } catch (\Exception $e) {
+    die('<table>'.$e->xdebug_message.'</table>');
   }
 
-  if (is_numeric($aParsed) && $aParsed != -1) {
+  /** @var Intel $oCity */
+  if (!is_null($oCity) && $oCity != false) {
     try {
-      /** @var City $oCity */
-      $oCity = City::where('id', '=' , $aParsed)->firstOrFail();
-      $aParsed = json_encode($oCity);
       $Table = '<table class="city-table" style="width: 100%; color: #84b593; background: #2b2b2b;"><tr>';
       foreach ($oCity->getPublicFields() as $key => $value) {
         $Table .= "<th>$key</th>";
@@ -41,10 +42,10 @@ try {
       $Table .= '</tr><tr>';
       foreach ($oCity->getPublicFields() as $key => $value) {
         if ($key === 'player_id') {
-          $value = '<a class="link" href="https://grepodata.com/indexer/player/'.$Index->key_code.'/'.$Index->world.'/'.$value.'" target="_blank">'.$value.'</a>';
+          $value = '<a class="link" href="https://grepodata.com/intel/player/'.$oCity->world.'/'.$value.'" target="_blank">'.$value.'</a>';
         }
         else if ($key === 'town_id') {
-          $value = '<a class="link" href="https://grepodata.com/indexer/town/'.$Index->key_code.'/'.$Index->world.'/'.$value.'" target="_blank">'.$value.'</a>';
+          $value = '<a class="link" href="https://grepodata.com/intel/town/'.$oCity->world.'/'.$value.'" target="_blank">'.$value.'</a>';
         }
         else if (is_array($value)) {
           $value = str_replace(',', ' ', json_encode($value));

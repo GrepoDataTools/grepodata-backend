@@ -195,6 +195,7 @@ class ForumParser
    * @param $ReportPosterAllyId
    * @param $ScriptVersion
    * @param string $Locale
+   * @param Intel $DebugReparseIntel
    * @return Mixed
    * @throws ForumParserExceptionDebug
    * @throws ForumParserExceptionError
@@ -211,7 +212,9 @@ class ForumParser
     $ReportPosterId,
     $ReportPosterAllyId,
     $ScriptVersion,
-    $Locale)
+    $Locale,
+    $DebugReparseIntel=null
+  )
   {
     try {
       $aCityInfo = self::ExtractCityInfo($aReportData, $ReportHash, $Locale, $World);
@@ -257,7 +260,14 @@ class ForumParser
       $Fireships = '';
       if (isset($aCityInfo['fireship'])) $Fireships = $aCityInfo['fireship'];
 
-      $oIntel = new Intel();
+      if (is_null($DebugReparseIntel)) {
+        $oIntel = new Intel();
+        $oIntel->report_json = $ReportJson;
+        $oIntel->report_info = json_encode(substr($ReportInfo, 0, 100));
+      } else {
+        // Reparse existing record in debugger
+        $oIntel = $DebugReparseIntel;
+      }
       $oIntel->indexed_by_user_id = $UserId;
       $oIntel->hash        = $ReportHash;
       $oIntel->world       = $World;
@@ -288,8 +298,6 @@ class ForumParser
       $oIntel->fireships   = $Fireships;
       $oIntel->mythical_units = json_encode($aMythUnits);
 
-      $oIntel->report_json = $ReportJson;
-      $oIntel->report_info = json_encode(substr($ReportInfo, 0, 100));
       $oIntel->parsing_failed = false;
       $oIntel->debug_explain = null;
 

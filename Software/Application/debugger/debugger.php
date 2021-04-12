@@ -6,6 +6,8 @@ use Grepodata\Library\Controller\Indexer\IndexInfo;
 use Grepodata\Library\Cron\Common;
 use Grepodata\Library\Indexer\Helper;
 use Grepodata\Library\Model\Indexer\Report;
+use Grepodata\Library\Model\IndexV2\Intel;
+use Grepodata\Library\Model\IndexV2\IntelShared;
 
 $request = explode('/', trim($_SERVER['PATH_INFO'],'/'));
 $ReportId = array_shift($request);
@@ -13,10 +15,10 @@ $ReportId = array_shift($request);
 require('./../../config.php');
 
 
-/** @var Report $Report */
-$Report = Report::where('id', '=', $ReportId)->first();
-/** @var \Grepodata\Library\Model\Indexer\IndexInfo $Index */
-$Index = IndexInfo::firstOrFail($Report->index_code);
+/** @var Intel $Report */
+$Report = Intel::where('id', '=', $ReportId)->first();
+/** @var IntelShared[] $IntelShared */
+$IntelShared = IntelShared::where('intel_id', '=', $ReportId)->get();
 ?>
 
 <html>
@@ -86,15 +88,57 @@ $Index = IndexInfo::firstOrFail($Report->index_code);
     &nbsp;&nbsp;---&nbsp;&nbsp;
     <a class="link" href="/debugger.php/<?php echo ($ReportId+1); ?>">Next report</a>
 
-    <h3>Index info: <a class="link" href="https://grepodata.com/indexer/<?php echo ($Index->key_code); ?>"><?php echo ($Index->key_code); ?></a></h3>
+    <h3>Indexer_intel_shared data:</h3>
     <p id="report">
       <?php
       $Table = '<table class="city-table" style="width: 100%; color: #84b593; background: #2b2b2b;"><tr>';
-      foreach ($Index->attributesToArray() as $key => $value) {
+      foreach ($IntelShared[0]->attributesToArray() as $key => $value) {
+        if (!in_array($key, ['report_json', 'report_info'])) $Table .= "<th>$key</th>";
+      }
+      $Table .= '</tr>';
+      foreach ($IntelShared as $oIntelShared) {
+        $Table .= '<tr>';
+        foreach ($oIntelShared->attributesToArray() as $key => $value) {
+          if (!in_array($key, ['report_json', 'report_info'])) $Table .= "<td>$value</td>";
+        }
+        $Table .= '</tr>';
+      }
+      $Table .= '</table>';
+      echo $Table;
+      ?>
+    </p>
+
+    <h3>Indexer_intel data:</h3>
+    <p id="report">
+      <?php
+      $Table = '<table class="city-table" style="width: 100%; color: #84b593; background: #2b2b2b;"><tr>';
+      foreach (array_slice($Report->attributesToArray(), 0, 10) as $key => $value) {
         if (!in_array($key, ['report_json', 'report_info'])) $Table .= "<th>$key</th>";
       }
       $Table .= '</tr><tr>';
-      foreach ($Index->attributesToArray() as $key => $value) {
+      foreach (array_slice($Report->attributesToArray(), 0, 10) as $key => $value) {
+        if (!in_array($key, ['report_json', 'report_info'])) $Table .= "<td>$value</td>";
+      }
+      $Table .= '</tr></table>';
+      echo $Table;
+
+      $Table = '<table class="city-table" style="width: 100%; color: #84b593; background: #2b2b2b;"><tr>';
+      foreach (array_slice($Report->attributesToArray(), 10, 10) as $key => $value) {
+        if (!in_array($key, ['report_json', 'report_info'])) $Table .= "<th>$key</th>";
+      }
+      $Table .= '</tr><tr>';
+      foreach (array_slice($Report->attributesToArray(), 10, 10) as $key => $value) {
+        if (!in_array($key, ['report_json', 'report_info'])) $Table .= "<td>$value</td>";
+      }
+      $Table .= '</tr></table>';
+      echo $Table;
+
+      $Table = '<table class="city-table" style="width: 100%; color: #84b593; background: #2b2b2b;"><tr>';
+      foreach (array_slice($Report->attributesToArray(), 20) as $key => $value) {
+        if (!in_array($key, ['report_json', 'report_info'])) $Table .= "<th>$key</th>";
+      }
+      $Table .= '</tr><tr>';
+      foreach (array_slice($Report->attributesToArray(), 20) as $key => $value) {
         if (!in_array($key, ['report_json', 'report_info'])) $Table .= "<td>$value</td>";
       }
       $Table .= '</tr></table>';
@@ -102,23 +146,10 @@ $Index = IndexInfo::firstOrFail($Report->index_code);
       ?>
     </p>
 
-    <h3>Report info:</h3>
-    <p id="report">
-      <?php
-      $Table = '<table class="city-table" style="width: 100%; color: #84b593; background: #2b2b2b;"><tr>';
-      foreach ($Report->attributesToArray() as $key => $value) {
-        if (!in_array($key, ['report_json', 'report_info'])) $Table .= "<th>$key</th>";
-      }
-      $Table .= '</tr><tr>';
-      foreach ($Report->attributesToArray() as $key => $value) {
-        if (!in_array($key, ['report_json', 'report_info'])) $Table .= "<td>$value</td>";
-      }
-      $Table .= '</tr></table>';
-      echo $Table;
-      ?>
-    </p>
-
-    <h3>Debug output: <button onclick="parse(true)">Force reparse</button>&nbsp;&nbsp;<button onclick="parse(true, true)">Parse & rebuild</button></h3>
+    <h3>Parsed output:
+        <button onclick="parse(true)">Force reparse</button>&nbsp;&nbsp;
+<!--        <button onclick="parse(true, true)">Parse & rebuild</button>-->
+    </h3>
     <p id="output">loading...</p>
 </div>
 
