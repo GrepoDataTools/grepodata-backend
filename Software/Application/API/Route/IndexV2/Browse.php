@@ -5,6 +5,7 @@ namespace Grepodata\Application\API\Route\IndexV2;
 use Carbon\Carbon;
 use Exception;
 use Grepodata\Library\Controller\World;
+use Grepodata\Library\Model\Indexer\IndexInfo;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class Browse extends \Grepodata\Library\Router\BaseRoute
@@ -256,6 +257,7 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
       'bir'=>array(),
       'def'=>array(),
       'trir'=>array(),
+      'teams'=>array(),
     );
     $aFireshipCities = array();
     $aMythCities = array();
@@ -279,6 +281,16 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
       $aCity = $oCity->getPublicFields();
 
       $bPrimaryIntel = true;
+
+      // add teams to set
+      if ($oCity->shared_via_indexes!=null) {
+        $aTeams = explode(', ', $oCity->shared_via_indexes);
+        foreach ($aTeams as $Team) {
+          if (!in_array($Team, $aResponse['teams'])) {
+            $aResponse['teams'][] = $Team;
+          }
+        }
+      }
 
       // Fix date format for server format
       $oDate = null;
@@ -592,6 +604,20 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
       }
       $aResponse[$Type]['players'] = $aCities;
     }
+
+    // try to expand teams
+    $aTeams = $aResponse['teams'];
+    $aParsedTeams = array();
+    foreach ($aTeams as $Team) {
+      try {
+        $oIndex = IndexInfo::where('key_code', '=', $Team)->firstOrFail();
+        $aParsedTeams[] = array(
+          'index_key' => $oIndex->key_code,
+          'index_name' => $oIndex->index_name,
+        );
+      } catch (Exception $e) {}
+    }
+    $aResponse['teams'] = $aParsedTeams;
 
     return $aResponse;
   }

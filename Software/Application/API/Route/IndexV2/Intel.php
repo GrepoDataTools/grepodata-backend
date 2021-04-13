@@ -8,6 +8,7 @@ use Grepodata\Library\Controller\Alliance;
 use Grepodata\Library\Controller\Town;
 use Grepodata\Library\Controller\World;
 use Grepodata\Library\Logger\Logger;
+use Grepodata\Library\Model\Indexer\IndexInfo;
 use Grepodata\Library\Model\Player;
 use Grepodata\Library\Router\ResponseCode;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -109,10 +110,12 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
         'player_id' => $oTown->player_id,
         'alliance_id' => 0,
         'player_name' => '',
+        'alliance_name' => '',
         'has_stonehail' => false,
         'notes' => array(),
         'buildings' => array(),
         'intel' => array(),
+        'teams' => array(),
         'latest_version' => USERSCRIPT_VERSION,
         'update_message' => USERSCRIPT_UPDATE_INFO,
       );
@@ -127,6 +130,16 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
           }
         }
         $bHasIntel = true;
+
+        // add teams to set
+        if ($oCity->shared_via_indexes!=null) {
+          $aTeams = explode(', ', $oCity->shared_via_indexes);
+          foreach ($aTeams as $Team) {
+            if (!in_array($Team, $aResponse['teams'])) {
+              $aResponse['teams'][] = $Team;
+            }
+          }
+        }
 
         // Override newest info
         $aResponse['player_id'] = $oCity->player_id;
@@ -192,6 +205,26 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
       if (sizeof($aResponse['intel'])>0) {
         $aResponse['intel'][0]['cost'] *= 5;
       }
+
+      // try to expand teams
+      $aTeams = $aResponse['teams'];
+      $aParsedTeams = array();
+      foreach ($aTeams as $Team) {
+        try {
+          $oIndex = IndexInfo::where('key_code', '=', $Team)->firstOrFail();
+          $aParsedTeams[] = array(
+            'index_key' => $oIndex->key_code,
+            'index_name' => $oIndex->index_name,
+          );
+        } catch (Exception $e) {}
+      }
+      $aResponse['teams'] = $aParsedTeams;
+
+      // get alliance
+      try {
+        $oAlliance = Alliance::firstOrFail($aResponse['alliance_id'], $oWorld->grep_id);
+        $aResponse['alliance_name'] = $oAlliance->name;
+      } catch (Exception $e) {}
 
       return self::OutputJson($aResponse);
 

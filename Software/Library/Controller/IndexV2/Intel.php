@@ -552,7 +552,7 @@ class Intel
    */
   public static function allByUserForPlayer(User $oUser, $World, $PlayerId, $bCheckHiddenOwners=false)
   {
-    return self::selectByUser($oUser, $bCheckHiddenOwners, false)
+    return self::selectByUser($oUser, $bCheckHiddenOwners, true)
       ->where('Indexer_intel.player_id', '=', $PlayerId, 'and')
       ->where('Indexer_intel.world', '=', $World)
       ->groupBy('Indexer_intel.id')
@@ -567,9 +567,9 @@ class Intel
    * @param bool $bCheckHiddenOwners
    * @return \Grepodata\Library\Model\IndexV2\Intel[]|Builder[]|Collection
    */
-  public static function allByUserForAlliance(User $oUser, $World, $AllianceId, $bCheckHiddenOwners=false)
+  public static function allByUserForAlliance(User $oUser, $World, $AllianceId, $bCheckHiddenOwners=true)
   {
-    return self::selectByUser($oUser, $bCheckHiddenOwners, false)
+    return self::selectByUser($oUser, $bCheckHiddenOwners, true)
       ->where('Indexer_intel.alliance_id', '=', $AllianceId, 'and')
       ->where('Indexer_intel.world', '=', $World)
       ->orderBy('parsed_date', 'desc')
