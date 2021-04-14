@@ -107,7 +107,7 @@ if ($bMigrateIntel) {
 
       // V1 intel from 'Index_report_hash', 'Index_report' and 'Index_city' is merged into 'Indexer_intel'
       $SQL = "
-    INSERT IGNORE INTO Indexer_intel (indexed_by_user_id, hash, v1_index, world, source_type, report_type, script_version, town_id, town_name, player_id, player_name, alliance_id, poster_player_name, poster_player_id, poster_alliance_id, report_date, parsed_date, hero, god, silver, buildings, land_units, sea_units, fireships, mythical_units, created_at, updated_at, soft_deleted, report_json, report_info, parsing_failed, debug_explain)
+    INSERT IGNORE INTO Indexer_intel (indexed_by_user_id, hash, v1_index, world, source_type, report_type, script_version, town_id, town_name, player_id, player_name, alliance_id, poster_player_name, poster_player_id, poster_alliance_id, conquest_id, conquest_details, report_date, parsed_date, hero, god, silver, buildings, land_units, sea_units, fireships, mythical_units, created_at, updated_at, soft_deleted, report_json, report_info, parsing_failed, debug_explain)
     SELECT 
       0 as indexed_by_user_id,
       reporthash.report_id as hash,
@@ -124,6 +124,8 @@ if ($bMigrateIntel) {
       player.name as poster_player_name,
       intel.poster_player_id,
       intel.poster_alliance_id,
+      intel.conquest_id,
+      intel.conquest_details,
       intel.report_date,
       intel.parsed_date,
       intel.hero,
@@ -137,8 +139,8 @@ if ($bMigrateIntel) {
       intel.created_at,
       intel.updated_at,
       intel.soft_deleted,
-      null as report_json,
-      null as report_info,
+      report.report_json,
+      report.report_info,
       0 as parsing_failed,
       null as debug_explain
     FROM Index_city as intel
@@ -175,6 +177,55 @@ if ($bMigrateIntel) {
   }
 }
 
+/** Migrate conquests */
+//$bMigrateConquests = true;
+$bMigrateConquests = false;
+if ($bMigrateConquests) {
+  Logger::warning("Migrating notes.");
+  // 'Index_conquest' gets split into 'Indexer_conquest' and 'Indexer_conquest_overview'
+  $SQL = "
+    INSERT IGNORE INTO Indexer_conquest (id, uid, town_id, world, town_name, player_id, player_name, alliance_id, alliance_name, belligerent_player_id, belligerent_player_name, belligerent_alliance_id, belligerent_alliance_name, first_attack_date, created_at, updated_at, cs_killed, new_owner_player_id)
+    SELECT 
+           conquest.id,
+           conquest.uid,
+           conquest.town_id,
+           conquest.world,
+           conquest.town_name,
+           conquest.player_id,
+           conquest.player_name,
+           conquest.alliance_id,
+           conquest.alliance_name,
+           conquest.belligerent_player_id,
+           conquest.belligerent_player_name,
+           conquest.belligerent_alliance_id,
+           conquest.belligerent_alliance_name,
+           conquest.first_attack_date,
+           conquest.created_at,
+           conquest.updated_at,
+           conquest.cs_killed,
+           conquest.new_owner_player_id
+    FROM Index_conquest as conquest
+    ";
+  $Execute = DB::select(DB::raw($SQL));
+
+  $SQL = "
+    INSERT IGNORE INTO Indexer_conquest_overview (conquest_id, index_key, num_attacks_counted, belligerent_all, total_losses_att, total_losses_def, created_at, updated_at, updated_at)
+    SELECT 
+           conquest.id,
+           conquest.index_key,
+           conquest.num_attacks_counted,
+           conquest.belligerent_all,
+           conquest.total_losses_att,
+           conquest.total_losses_def,
+           conquest.created_at,
+           conquest.updated_at,
+           conquest.updated_at
+    FROM Index_conquest as conquest
+    ";
+  $Execute = DB::select(DB::raw($SQL));
+}
+
+
 /** Migrate notes */
 //$bMigrateNotes = true;
 $bMigrateNotes = false;
@@ -203,8 +254,8 @@ if ($bMigrateNotes) {
 
 /** Migrate owners */
 // Parse and extract owners from 'Index_overview' into 'Indexer_owners_actual' records.
-$bMigrateOwners = true;
-//$bMigrateOwners = false;
+//$bMigrateOwners = true;
+$bMigrateOwners = false;
 if ($bMigrateOwners) {
   $aIndexOverviews = \Grepodata\Library\Model\Indexer\IndexOverview::get();
 
@@ -243,4 +294,3 @@ if ($bMigrateOwners) {
 
 }
 
-$t=2;
