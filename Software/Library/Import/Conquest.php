@@ -49,7 +49,7 @@ class Conquest
 
     $aUnresolvedSieges = array();
     try {
-      $aUnresolvedSieges = \Grepodata\Library\Controller\Indexer\Conquest::allByWorldUnresolved($oWorld, 1000);
+      $aUnresolvedSieges = \Grepodata\Library\Controller\IndexV2\Conquest::allByWorldUnresolved($oWorld, 1000);
     } catch (\Exception $e) {
       Logger::warning("ConquestImport: error loading recent unresolved sieges: " . $e->getMessage());
     }
@@ -99,11 +99,13 @@ class Conquest
             $LocalConquestTime->setTimezone($oWorld->php_timezone);
             foreach ($aUnresolvedSieges as $oOngoingConquest) {
               if ($oConquest->town_id != $oOngoingConquest->town_id) {
+                // not about the same town, skip
                 continue;
               }
 
               $LastAttack = Carbon::parse($oOngoingConquest->first_attack_date, $oWorld->php_timezone);
               if ($LastAttack == null) {
+                // need a last attack time to check for overlaps
                 continue;
               }
 

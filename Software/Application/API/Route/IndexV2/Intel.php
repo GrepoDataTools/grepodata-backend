@@ -91,11 +91,15 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
       $oWorld = World::getWorldById($aParams['world']);
 
       // get town
-      $oTown = Town::firstOrFail($aParams['town_id'], $oWorld->grep_id);
+      $oTown = null;
+      $TownId = $aParams['town_id'];
+      try {
+        $oTown = Town::firstOrFail($TownId, $oWorld->grep_id);
+      } catch (Exception $e) {}
 
       // get intel
       $Start = round(microtime(true) * 1000);
-      $aIntel = \Grepodata\Library\Controller\IndexV2\Intel::allByUserForTown($oUser, $oWorld->grep_id, $oTown->grep_id, true);
+      $aIntel = \Grepodata\Library\Controller\IndexV2\Intel::allByUserForTown($oUser, $oWorld->grep_id, $TownId, true);
       $ElapsedMs = round(microtime(true) * 1000) - $Start;
 
       // Parse cities
@@ -103,11 +107,11 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
       $aResponse = array(
         'query_ms' => $ElapsedMs,
         'world' => $oWorld->grep_id,
-        'town_id' => $oTown->grep_id,
-        'name' => $oTown->name,
-        'ix' => $oTown->island_x,
-        'iy' => $oTown->island_y,
-        'player_id' => $oTown->player_id,
+        'town_id' => $TownId,
+        'name' => $oTown ? $oTown->name : '',
+        'ix' => $oTown ? $oTown->island_x : 0,
+        'iy' => $oTown ? $oTown->island_y : 0,
+        'player_id' => $oTown ? $oTown->player_id : 0,
         'alliance_id' => 0,
         'player_name' => '',
         'alliance_name' => '',
@@ -141,7 +145,7 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
           }
         }
 
-        // Override newest info
+        // Override response with newest info
         $aResponse['player_id'] = $oCity->player_id;
         $aResponse['player_name'] = $oCity->player_name;
         $aResponse['alliance_id'] = $oCity->alliance_id;
@@ -171,7 +175,7 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
       $aResponse['has_intel'] = $bHasIntel;
 
       if ($bHasIntel == false) {
-        if ($oTown->player_id > 0) {
+        if ($oTown && $oTown->player_id > 0) {
           $oPlayer = \Grepodata\Library\Controller\Player::firstById($oWorld->grep_id, $oTown->player_id);
           if ($oPlayer !== false) {
             $aResponse['player_name'] = $oPlayer->name;
@@ -181,7 +185,7 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
       }
 
       // Get notes
-      $aNotes = \Grepodata\Library\Controller\IndexV2\Notes::allByUserForTown($oUser, $oWorld->grep_id, $oTown->grep_id);
+      $aNotes = \Grepodata\Library\Controller\IndexV2\Notes::allByUserForTown($oUser, $oWorld->grep_id, $TownId);
       $aDuplicates = array();
       /** @var \Grepodata\Library\Model\IndexV2\Notes $Note */
       foreach ($aNotes as $Note) {

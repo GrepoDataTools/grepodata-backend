@@ -157,7 +157,7 @@ error_reporting(0);
 try {
 
   // Reports
-  $Reports = Intel::orderBy('Indexer_intel.created_at', 'desc');
+  $Reports = Intel::orderBy('Indexer_intel.id', 'desc');
   if (isset($_GET['level']) && $_GET['level'] != '' && $_GET['level'] != 'all') {
     $Reports->where('Indexer_intel.source_type', $_GET['level']);
   }

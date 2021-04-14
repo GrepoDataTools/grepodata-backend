@@ -11,6 +11,7 @@ use Grepodata\Library\IndexV2\InboxParser;
 use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\Indexer\IndexInfo;
 use Grepodata\Library\Model\IndexV2\Intel;
+use Grepodata\Library\Model\IndexV2\IntelShared;
 use Grepodata\Library\Model\Operation_scriptlog;
 use Grepodata\Library\Model\World;
 use Illuminate\Database\Eloquent\Collection;
@@ -145,6 +146,16 @@ class Common
     $ScriptVersion = $Report->script_version;
     $Locale = substr($Report->world, 0, 2);
 
+    // Index list
+    $aIndexSharedList = IntelShared::where('intel_id', '=', $Report->id)->get();
+    $aRawIndexKeyList = array();
+    /** @var IntelShared $oIndex */
+    foreach ($aIndexSharedList as $oIndex) {
+      if ($oIndex->index_key != null) {
+        $aRawIndexKeyList[] = $oIndex->index_key;
+      }
+    }
+
     if ($Report->source_type === 'forum') {
       $aParsed = ForumParser::ParseReport(
         $UserId,
@@ -158,7 +169,8 @@ class Common
         $ReportAllianceId,
         $ScriptVersion,
         $Locale,
-        $Report
+        $Report,
+        $aRawIndexKeyList
       );
       $t=2;
     } else {
@@ -174,7 +186,8 @@ class Common
         $ReportInfo,
         $ScriptVersion,
         $Locale,
-        $Report
+        $Report,
+        $aRawIndexKeyList
       );
       $t=2;
     }

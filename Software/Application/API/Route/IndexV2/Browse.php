@@ -4,6 +4,7 @@ namespace Grepodata\Application\API\Route\IndexV2;
 
 use Carbon\Carbon;
 use Exception;
+use Grepodata\Library\Controller\Alliance;
 use Grepodata\Library\Controller\World;
 use Grepodata\Library\Model\Indexer\IndexInfo;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -134,12 +135,9 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
       // get world
       $oWorld = World::getWorldById($aParams['world']);
 
-      // get player
-      $oPlayer = \Grepodata\Library\Controller\Player::firstOrFail($aParams['player_id'], $oWorld->grep_id);
-
       // Get intel
       $Start = round(microtime(true) * 1000);
-      $aIntel = \Grepodata\Library\Controller\IndexV2\Intel::allByUserForPlayer($oUser, $oWorld->grep_id, $oPlayer->grep_id, true);
+      $aIntel = \Grepodata\Library\Controller\IndexV2\Intel::allByUserForPlayer($oUser, $oWorld->grep_id, $aParams['player_id'], true);
       $ElapsedMs = round(microtime(true) * 1000) - $Start;
       if ($aIntel === null || sizeof($aIntel) <= 0) throw new ModelNotFoundException();
 
@@ -167,12 +165,9 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
       // get world
       $oWorld = World::getWorldById($aParams['world']);
 
-      // get player
-      $oAlliance = \Grepodata\Library\Controller\Alliance::firstOrFail($aParams['alliance_id'], $oWorld->grep_id);
-
       // Get intel
       $Start = round(microtime(true) * 1000);
-      $aIntel = \Grepodata\Library\Controller\IndexV2\Intel::allByUserForAlliance($oUser, $oWorld->grep_id, $oAlliance->grep_id, true);
+      $aIntel = \Grepodata\Library\Controller\IndexV2\Intel::allByUserForAlliance($oUser, $oWorld->grep_id, $aParams['alliance_id'], true);
       $ElapsedMs = round(microtime(true) * 1000) - $Start;
       if ($aIntel === null || sizeof($aIntel) <= 0) throw new ModelNotFoundException();
 
@@ -250,6 +245,7 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
   private static function FormatBrowseOutput($aCities, $oWorld)
   {
     $aResponse = array(
+      'info'=>array(),
       'cities'=>array('players'=>array()),
       'fire'=>array(),
       'myth'=>array(),
@@ -270,6 +266,7 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
     /** @var \Grepodata\Library\Model\IndexV2\Intel $oCity */
     $bHasIntel = false;
     $oNow = Carbon::now();
+    $aDuplicateCheck = array();
     foreach ($aCities as $oCity) {
       if ($oCity->soft_deleted != null) {
         $oSoftDeleted = Carbon::parse($oCity->soft_deleted);
@@ -280,7 +277,22 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
       $bHasIntel = true;
       $aCity = $oCity->getPublicFields();
 
+      // Avoid duplicates (same records can be joined from multiple V1 indexes)
+      $citystring = "_".$oCity->town_id.$oCity->parsed_date;
+      $cityhash = md5($citystring);
+      if (!in_array($cityhash, $aDuplicateCheck)) {
+        $aDuplicateCheck[] = $cityhash;
+      } else {
+        // Skip same record coming from other V1 index
+        continue;
+      }
+
       $bPrimaryIntel = true;
+
+      // Expand info
+      $aResponse['info']['player_name'] = $oCity->player_name;
+      $aResponse['info']['player_id'] = $oCity->player_id;
+      $aResponse['info']['alliance_id'] = $oCity->alliance_id;
 
       // add teams to set
       if ($oCity->shared_via_indexes!=null) {
@@ -618,6 +630,15 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
       } catch (Exception $e) {}
     }
     $aResponse['teams'] = $aParsedTeams;
+
+    // try to expand alliance
+    $aResponse['info']['alliance_name'] = '';
+    try {
+      if (isset($aResponse['info']['alliance_id'])) {
+        $oAlliance = Alliance::firstOrFail($aResponse['info']['alliance_id'], $oWorld->grep_id);
+        $aResponse['info']['alliance_name'] = $oAlliance->name;
+      }
+    } catch (Exception $e) {}
 
     return $aResponse;
   }

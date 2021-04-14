@@ -3,16 +3,10 @@
 namespace Grepodata\Cron;
 
 use Carbon\Carbon;
-use Grepodata\Library\Controller\Indexer\CityInfo;
-use Grepodata\Library\Controller\Indexer\Conquest;
 use Grepodata\Library\Controller\Player;
 use Grepodata\Library\Controller\Town;
-use Grepodata\Library\Controller\World;
 use Grepodata\Library\Cron\Common;
 use Grepodata\Library\Logger\Logger;
-use Grepodata\Library\Model\Indexer\City;
-use Grepodata\Library\Model\Indexer\IndexInfo;
-use Grepodata\Library\Model\IndexV2\Intel;
 
 if (PHP_SAPI !== 'cli') {
   die('not allowed');
@@ -102,47 +96,47 @@ foreach ($worlds as $oWorld) {
       } catch (\Exception $e) {}
     }
 
-      // TODO: check if we can resolve an ongoing siege
-//      try {
-//        $aSieges = Conquest::allByIndexUnresolved($oIndex, 50);
-//        $Now = $oWorld->getServerTime();
-//        foreach ($aSieges as $oConquest) {
-//          $LastAttack = Carbon::parse($oConquest->first_attack_date, $oWorld->php_timezone);
-//          if ($LastAttack == null) continue;
-//
-//          $aTownConquests = \Grepodata\Library\Controller\Conquest::getTownConquests($oConquest->town_id, $oIndex->world);
-//          $bFoundMatch = false;
-//          if (!empty($aTownConquests)) {
-//            foreach ($aTownConquests as $oTownConquest) {
-//              $oConquestTime = Carbon::parse($oTownConquest->time)->setTimezone($oWorld->php_timezone);
-//
-//              $DiffToSiege = $LastAttack->diffInMinutes($oConquestTime, false);
-//              if ($DiffToSiege > 0 && $DiffToSiege < 20*60) {
-//                // Conquest is within 20 hours AFTER the last registered attack on the siege
-//                // assume that the siege was successful and the town now has a new owner
-//                Logger::silly("Resolved ongoing conquest via IndexEnhancer; town has a new owner. conquest_id: " . $oConquest->id);
-//                $oConquest->new_owner_player_id = $oTownConquest->n_p_id;
-//                $oConquest->save();
-//                $bFoundMatch = true;
-//                break;
-//              }
-//
-//            }
-//          }
-//
-//          if ($bFoundMatch == false && $Now->diffInHours($LastAttack) > 24) {
-//            // Found no overlapping conquest and siege must be over by now
-//            // Siege likely failed so new owner = old owner
-//            // CS was likely killed but that report was not indexed
-//            Logger::silly("Resolved ongoing conquest via IndexEnhancer; town conquest timed out after 24hrs. conquest_id: " . $oConquest->id);
-//            $oConquest->new_owner_player_id = $oConquest->player_id;
-//            $oConquest->save();
-//          }
-//        }
-//
-//      } catch (\Exception $e) {
-//        Logger::warning("Error parsing ongoing sieges for index " . $oIndex->key_code . ": " . $e->getMessage());
-//      }
+    // Check if we can resolve an ongoing siege
+    try {
+      $aSieges = \Grepodata\Library\Controller\IndexV2\Conquest::allByWorldUnresolved($oWorld, 500);
+      $Now = $oWorld->getServerTime();
+      foreach ($aSieges as $oConquest) {
+        $LastAttack = Carbon::parse($oConquest->first_attack_date, $oWorld->php_timezone);
+        if ($LastAttack == null) continue;
+
+        $aTownConquests = \Grepodata\Library\Controller\Conquest::getTownConquests($oConquest->town_id, $oWorld->grep_id);
+        $bFoundMatch = false;
+        if (!empty($aTownConquests)) {
+          foreach ($aTownConquests as $oTownConquest) {
+            $oConquestTime = Carbon::parse($oTownConquest->time)->setTimezone($oWorld->php_timezone);
+
+            $DiffToSiege = $LastAttack->diffInMinutes($oConquestTime, false);
+            if ($DiffToSiege > 0 && $DiffToSiege < 20*60) {
+              // Conquest is within 20 hours AFTER the last registered attack on the siege
+              // assume that the siege was successful and the town now has a new owner
+              Logger::silly("Resolved ongoing conquest via IndexEnhancer; town has a new owner. conquest_id: " . $oConquest->id);
+              $oConquest->new_owner_player_id = $oTownConquest->n_p_id;
+              $oConquest->save();
+              $bFoundMatch = true;
+              break;
+            }
+
+          }
+        }
+
+        if ($bFoundMatch == false && $Now->diffInHours($LastAttack) > 24) {
+          // Found no overlapping conquest and siege must be over by now
+          // Siege likely failed so new owner = old owner
+          // CS was likely killed but that report was not indexed
+          Logger::silly("Resolved ongoing conquest via IndexEnhancer; town conquest timed out after 24hrs. conquest_id: " . $oConquest->id);
+          $oConquest->new_owner_player_id = $oConquest->player_id;
+          $oConquest->save();
+        }
+      }
+
+    } catch (\Exception $e) {
+      Logger::warning("Error parsing ongoing sieges for world " . $oWorld->grep_id . ": " . $e->getMessage());
+    }
 
     unset($aCachedTowns);
     unset($aCachedPlayers);

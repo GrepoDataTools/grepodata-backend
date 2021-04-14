@@ -99,6 +99,12 @@ class Report extends \Grepodata\Library\Router\BaseRoute
 
       // Get indexes for player
       $aIndexes = IndexInfo::allByUserAndWorld($oUser, $World);
+      $aRawIndexKeyList = array();
+      foreach ($aIndexes as $oIndex) {
+        if ($oIndex->key_code != null) {
+          $aRawIndexKeyList[] = $oIndex->key_code;
+        }
+      }
 
       // Get all shared intel for this hash and user
       $aSharedIntel = IntelShared::allByHashByUser($oUser, $World, $ReportHash);
@@ -172,7 +178,9 @@ class Report extends \Grepodata\Library\Router\BaseRoute
                 $ReportJson,
                 $ReportInfo,
                 $ScriptVersion,
-                $Locale
+                $Locale,
+                null,
+                $aRawIndexKeyList
               );
               break;
             case 'forum':
@@ -187,7 +195,10 @@ class Report extends \Grepodata\Library\Router\BaseRoute
                 $ReportPosterId,
                 $ReportPosterAllyId,
                 $ScriptVersion,
-                $Locale);
+                $Locale,
+                null,
+                $aRawIndexKeyList
+              );
               break;
             default:
               throw new \Exception("Unhandled report type: " . $ReportType);

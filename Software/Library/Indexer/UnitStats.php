@@ -20,6 +20,11 @@ class UnitStats
     "chariot"           => array('population' => 4,  'speed' => 18,  'uses_meteorology' => true, 'uses_cartography' => false, 'requires_transport' => true),
     "catapult"          => array('population' => 15, 'speed' => 2,   'uses_meteorology' => true, 'uses_cartography' => false, 'requires_transport' => true),
 
+    "siren"             => array('population' => 16, 'speed' => 16,  'uses_meteorology' => false, 'uses_cartography' => true, 'requires_transport' => false),
+    "satyr"             => array('population' => 16, 'speed' => 136,  'uses_meteorology' => true, 'uses_cartography' => false, 'requires_transport' => true),
+    "ladon"             => array('population' => 180, 'speed' => 100, 'uses_meteorology' => true, 'uses_cartography' => false, 'requires_transport' => true),
+    "spartoi"           => array('population' => 10, 'speed' => 16,  'uses_meteorology' => true, 'uses_cartography' => false, 'requires_transport' => true),
+
     "manticore"         => array('population' => 45, 'speed' => 22,  'uses_meteorology' => true, 'uses_cartography' => false, 'requires_transport' => false),
     "sea_monster"       => array('population' => 50, 'speed' => 8,   'uses_meteorology' => false, 'uses_cartography' => true, 'requires_transport' => false),
     "harpy"             => array('population' => 14, 'speed' => 28,  'uses_meteorology' => true, 'uses_cartography' => false, 'requires_transport' => false),

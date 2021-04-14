@@ -16,7 +16,8 @@
     "smarty/smarty": "^3.1",
     "rbdwllr/reallysimplejwt": "^2.1",
     "nikolaposa/rate-limit": "^1.0",
-    "ramsey/uuid": "^3.9"
+    "ramsey/uuid": "^3.9",
+    "ext-json": "*"
   },
   "autoload": {
     "psr-4": {

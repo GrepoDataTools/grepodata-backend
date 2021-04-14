@@ -248,6 +248,8 @@ class Hourly
           } catch (\Exception $e) {}
 
           // Update attack data
+          // TODO: Only update if diff is positive (Grepolis API sometimes gives an update and revokes it 10 min later, by putting older data there (?))
+          // However we should still allow for a reset in att points when a moderator removes a players att points, so a simple $Diff>0 won't cut it
           $oPlayer->att = $aData['points'];
           if ($oPlayer->att_old == null) {
             $oPlayer->att_old = $oPlayer->att;

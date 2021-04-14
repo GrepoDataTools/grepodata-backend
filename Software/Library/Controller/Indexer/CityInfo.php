@@ -5,6 +5,7 @@ namespace Grepodata\Library\Controller\Indexer;
 use Carbon\Carbon;
 use Exception;
 use Grepodata\Library\Model\Indexer\City;
+use Grepodata\Library\Model\IndexV2\Intel;
 use Grepodata\Library\Model\World;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -79,10 +80,10 @@ class CityInfo
 
   /**
    * Returns a merged array of all the units in the City record
-   * @param City $oCity
+   * @param Intel $oCity
    * @return array
    */
-  public static function getMergedUnits(City $oCity)
+  public static function getMergedUnits(Intel $oCity)
   {
     $aUnits = array();
     if (!empty($oCity->mythical_units) && $oCity->mythical_units != "[]") {

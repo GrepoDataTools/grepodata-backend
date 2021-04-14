@@ -195,7 +195,8 @@ class ForumParser
    * @param $ReportPosterAllyId
    * @param $ScriptVersion
    * @param string $Locale
-   * @param Intel $DebugReparseIntel
+   * @param null $DebugReparseIntel Only used for local debugging
+   * @param array $aIndexes List of index keys to create conquest overviews for
    * @return Mixed
    * @throws ForumParserExceptionDebug
    * @throws ForumParserExceptionError
@@ -213,7 +214,8 @@ class ForumParser
     $ReportPosterAllyId,
     $ScriptVersion,
     $Locale,
-    $DebugReparseIntel=null
+    $DebugReparseIntel = null,
+    $aIndexes = array()
   )
   {
     try {
@@ -318,19 +320,19 @@ class ForumParser
       }
 
       if ($bSaved) {
-        // TODO: check conquest
-//        try {
-//          if (isset($aCityInfo['conquest_details']) && !empty($aCityInfo['conquest_details'])) {
-//            $oCity->conquest_details = json_encode($aCityInfo['conquest_details']->jsonSerialize());
-//            $SiegeId = SiegeParser::saveSiegeAttack($aCityInfo['conquest_details'], $oCity, $oIndexInfo, $ReportHash);
-//            if (!empty($SiegeId) && !is_nan($SiegeId) && $SiegeId > 0) {
-//              $oCity->conquest_id = $SiegeId;
-//              $oCity->save();
-//            }
-//          }
-//        } catch (Exception $e) {
-//          Logger::warning("ForumParser $ReportHash: unable to update conquest details after creating city object");
-//        }
+        // Check conquest
+        try {
+          if (isset($aCityInfo['conquest_details']) && !empty($aCityInfo['conquest_details'])) {
+            $oIntel->conquest_details = json_encode($aCityInfo['conquest_details']->jsonSerialize());
+            $SiegeId = SiegeParser::saveSiegeAttack($aCityInfo['conquest_details'], $oIntel, $aIndexes, $ReportHash);
+            if (!empty($SiegeId) && !is_nan($SiegeId) && $SiegeId > 0) {
+              $oIntel->conquest_id = $SiegeId;
+              $oIntel->save();
+            }
+          }
+        } catch (Exception $e) {
+          Logger::warning("ForumParser $ReportHash: unable to update conquest details after creating city object");
+        }
 
         return $oIntel->id;
       } else {
@@ -973,39 +975,40 @@ class ForumParser
         $cityInfo['player_id'] = $AttackingPlayer['id'];
 
         // Conquest details
-        // TODO parse conquests
-//        $oConquestDetails = new ConquestDetails();
-//        try {
-//          if ($ReportChainString == 'town-player-town-player') {
-//            $BesiegedTown = $aHeaderChainData[2];
-//            $SiegeLeadBy = $aHeaderChainData[3];
-//          } else if ($ReportChainString == 'town-player-player-town') {
-//            $BesiegedTown = $aHeaderChainData[3];
-//            $SiegeLeadBy = $aHeaderChainData[2];
-//          } else {
-//            throw new Exception("Unhandled conquest chain: " . $ReportChainString);
-//          }
-//          $oConquestDetails->siegeTownId = $BesiegedTown['id'];
-//          $oConquestDetails->siegeTownName = $BesiegedTown['name'];
-//          $oConquestDetails->siegePlayerId = $SiegeLeadBy['id'];
-//          $oConquestDetails->siegePlayerName = $SiegeLeadBy['name'];
-//          $oConquestDetails->wall = 0;
-//          try {
-//            // find wall level
-//            $aReportStats = $aReportData['content'][5]['content'][1]['content'][3]['content'][1]['content'][1]['content'][2]['content'][1]['content'][1]['content'][1]['content'] ?? null;
-//            if (empty($aReportStats)) {
-//              throw new Exception("Unable to find forum report stats");
-//            }
-//            self::ParseForumReportStats($aParsedStats, $aReportStats, $ReportHash);
-//            if (isset($aParsedStats['wall'])) {
-//              $oConquestDetails->wall = $aParsedStats['wall'];
-//            }
-//          } catch (Exception $e) {
-//            Logger::warning("ForumParser $ReportHash: error parsing ongoing conquest wall; " . $e->getMessage());
-//          }
-//        } catch (Exception $e) {
-//          Logger::warning("ForumParser $ReportHash: error parsing ongoing conquest details; " . $e->getMessage());
-//        }
+        $oConquestDetails = new ConquestDetails();
+        try {
+          if ($ReportChainString == 'town-player-town-player') {
+            // Dutch version
+            $BesiegedTown = $aHeaderChainData[2];
+            $SiegeLeadBy = $aHeaderChainData[3];
+          } else if ($ReportChainString == 'town-player-player-town') {
+            // German version
+            $BesiegedTown = $aHeaderChainData[3];
+            $SiegeLeadBy = $aHeaderChainData[2];
+          } else {
+            throw new Exception("Unhandled conquest chain: " . $ReportChainString);
+          }
+          $oConquestDetails->siegeTownId = $BesiegedTown['id'];
+          $oConquestDetails->siegeTownName = $BesiegedTown['name'];
+          $oConquestDetails->siegePlayerId = $SiegeLeadBy['id'];
+          $oConquestDetails->siegePlayerName = $SiegeLeadBy['name'];
+          $oConquestDetails->wall = 0;
+          try {
+            // find wall level
+            $aReportStats = $aReportData['content'][5]['content'][1]['content'][3]['content'][1]['content'][1]['content'][2]['content'][1]['content'][1]['content'][1]['content'] ?? null;
+            if (empty($aReportStats)) {
+              throw new Exception("Unable to find forum report stats");
+            }
+            self::ParseForumReportStats($aParsedStats, $aReportStats, $ReportHash);
+            if (isset($aParsedStats['wall'])) {
+              $oConquestDetails->wall = $aParsedStats['wall'];
+            }
+          } catch (Exception $e) {
+            Logger::warning("ForumParser $ReportHash: error parsing ongoing conquest wall; " . $e->getMessage());
+          }
+        } catch (Exception $e) {
+          Logger::warning("ForumParser $ReportHash: error parsing ongoing conquest details; " . $e->getMessage());
+        }
 
         //loop units
         $aReportContents = $aReportData['content'][5]['content'][1]['content'] ?? null;
@@ -1029,23 +1032,22 @@ class ForumParser
         self::parseSingleSideConquestUnits($cityInfo, $aAttUnits);
 
         // parse siege units
-        // TODO: parse conquests
-//        try {
-//          self::parseSingleSideConquestUnits($aSiegeUnits, $aDefUnits, true);
-//          if (empty($aSiegeUnits)) throw new ForumParserExceptionWarning("Unable to parse siege units");
-//          $oConquestDetails->siegeUnits = $aSiegeUnits;
-//
-//          $cityInfo['conquest_details'] = $oConquestDetails;
-//        } catch (Exception $e) {
-//          // $aDefUnits[3]["attributes"]["class"] = "small"  => def units are not made visible
-//          Logger::warning("ForumParser $ReportHash: error parsing ongoing conquest units; " . $e->getMessage());
-//        }
-//
-//        if (isset($aSiegeUnits) && !empty($aSiegeUnits) && (key_exists('unknown_naval', $aSiegeUnits) || key_exists('unknown', $aSiegeUnits))) {
-//          // Friendly attack on conquest is ignored
-//          // TODO: consider it as a friendly attack on an enemy town and save wall level for besieged town
-//          throw new ForumParserExceptionDebug("Ignoring friendly attack on a conquest");
-//        }
+        try {
+          self::parseSingleSideConquestUnits($aSiegeUnits, $aDefUnits, true);
+          if (empty($aSiegeUnits)) throw new ForumParserExceptionWarning("Unable to parse siege units");
+          $oConquestDetails->siegeUnits = $aSiegeUnits;
+
+          $cityInfo['conquest_details'] = $oConquestDetails;
+        } catch (Exception $e) {
+          // $aDefUnits[3]["attributes"]["class"] = "small"  => def units are not made visible
+          Logger::warning("ForumParser $ReportHash: error parsing ongoing conquest units; " . $e->getMessage());
+        }
+
+        if (isset($aSiegeUnits) && !empty($aSiegeUnits) && (key_exists('unknown_naval', $aSiegeUnits) || key_exists('unknown', $aSiegeUnits))) {
+          // Friendly attack on conquest is ignored
+          // TODO: consider it as a friendly attack on an enemy town and save wall level for besieged town
+          throw new ForumParserExceptionDebug("Ignoring friendly attack on a conquest");
+        }
 
         break;
       default:

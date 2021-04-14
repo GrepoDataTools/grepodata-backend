@@ -597,6 +597,13 @@ class Intel
       $aSelectRange[] = DB::raw("group_concat(Indexer_intel_shared.user_id SEPARATOR ', ') as indexed_by_users");
     }
 
+//    if ($bCheckHiddenOwners) {
+//      // TODO: aggregate hidden status
+//      // this way frontend can show a message if the intel is hidden and make a distinction between hidden or no intel
+//      $aSelectRange[] = DB::raw("MIN(Indexer_owners_actual.hide_intel) as has_hidden_intel");
+//      $aSelectRange[] = DB::raw("MAX(Indexer_owners_actual.hide_intel) as has_hidden_intel");
+//    }
+
     // Select basic intel dimensions (joins on shared to get the index keys, left joins on roles to check user access)
     $oQuery = \Grepodata\Library\Model\IndexV2\Intel::select($aSelectRange)
       ->join('Indexer_intel_shared', 'Indexer_intel_shared.intel_id', '=', 'Indexer_intel.id')

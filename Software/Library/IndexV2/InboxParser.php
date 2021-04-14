@@ -4,6 +4,7 @@ namespace Grepodata\Library\IndexV2;
 
 
 use Carbon\Carbon;
+use Exception;
 use Grepodata\Library\Controller\Alliance;
 use Grepodata\Library\Controller\Player;
 use Grepodata\Library\Exception\DuplicateIntelWarning;
@@ -69,7 +70,8 @@ class InboxParser
    * @param $ReportInfo
    * @param $ScriptVersion
    * @param string $Locale
-   * @param Intel $DebugReparseIntel
+   * @param null $DebugReparseIntel
+   * @param array $aIndexes
    * @return int $Id inserted intel id
    * @throws InboxParserExceptionError
    * @throws InboxParserExceptionWarning
@@ -86,7 +88,8 @@ class InboxParser
     $ReportInfo,
     $ScriptVersion,
     $Locale='nl',
-    $DebugReparseIntel=null
+    $DebugReparseIntel = null,
+    $aIndexes = array()
   )
   {
     try {
@@ -416,50 +419,28 @@ class InboxParser
           }
         }
 
-//        if (!$bGroundVisible && !$bSeaVisible) {
-//          // Nothing is visible, don't save intel record but die gracefully
-//          throw new InboxParserExceptionDebug("Both ground and sea units not visible for friendly attack. Ignoring report");
-//        }
-
         if ((!$bPlayerIsSender && !$bPlayerIsReceiver) || ($bPlayerIsReceiver && $bPlayerIsSender) || (!$bPlayerIsSender && $bReceiverIsGhost)) {
           if (strpos(json_encode($aCityUnitsDef),self::kolo) !== false) {
             $ReportType = "attack_on_conquest";
             $bPlayerIsReceiver = true;
             $bIsOngoingConquest = true;
 
-            // TODO: parse conquests
-//            $oConquestDetails = new ConquestDetails();
-//            try {
-//              // try to parse conquest details
-//              $oConquestDetails->siegeTownId = $ReceiverTownId;
-//              $oConquestDetails->siegeTownName = $ReceiverTownName;
-//              $oConquestDetails->siegePlayerId = $PosterId;
-//              $oConquestDetails->siegePlayerName = $ReportPoster;
-//            } catch (\Exception $e) {
-//              Logger::warning("InboxParser $ReportHash: error parsing ongoing conquest details; " . $e->getMessage());
-//            }
+            // Parse conquests
+            $oConquestDetails = new ConquestDetails();
+            try {
+              // try to parse conquest details
+              $oConquestDetails->siegeTownId = $ReceiverTownId;
+              $oConquestDetails->siegeTownName = $ReceiverTownName;
+              $oConquestDetails->siegePlayerId = $PosterId;
+              $oConquestDetails->siegePlayerName = $ReportPoster;
+            } catch (\Exception $e) {
+              Logger::warning("InboxParser $ReportHash: error parsing ongoing conquest details; " . $e->getMessage());
+            }
           } else {
             // unable to identify owner!
             throw new InboxParserExceptionWarning("inbox report owner not found");
           }
         }
-
-//        // Try using friendly flag color
-//        if (!$bPlayerIsSender && !$bPlayerIsReceiver) {
-//          $ReportSenderImg = $ReportHeaderContent["content"][1]["content"][1];
-//          if (strpos(json_encode($ReportSenderImg), '#FFBB00') !== false) {
-//            $bPlayerIsSender = true;
-//          }
-//
-//          $ReportReceiverImg = $ReportHeaderContent["content"][5]["content"][1];
-//          if (strpos(json_encode($ReportReceiverImg), '#FFBB00') !== false) {
-//            $bPlayerIsReceiver = true;
-//          }
-//
-//          if ((!$bPlayerIsSender && !$bPlayerIsReceiver) || ($bPlayerIsSender && $bPlayerIsReceiver)) {
-//            throw new InboxParserExceptionWarning("Unable to identify report owner by flag color");
-//          }
-//        }
 
         if ($bPlayerIsSender) {
           $aCityUnits = $aCityUnitsDef;
@@ -494,11 +475,10 @@ class InboxParser
         }
 
         // Parse conquest side
-        // TODO: parse conquests
-//        if ($bIsOngoingConquest == true && !is_null($oConquestDetails)) {
-//          $aUnitsClean = self::parseSingleSideUnits($aCityUnitsDef);
-//          $oConquestDetails->siegeUnits = $aUnitsClean;
-//        }
+        if ($bIsOngoingConquest == true && !is_null($oConquestDetails)) {
+          $aUnitsClean = self::parseSingleSideUnits($aCityUnitsDef);
+          $oConquestDetails->siegeUnits = $aUnitsClean;
+        }
 
         // Parse buildings (stonehail + wall)
         // TODO: get translations from client: Object.values(GameData.buildings).map(function(e) {tmp[e.controller] = e.name});
@@ -836,21 +816,21 @@ class InboxParser
         throw new InboxParserExceptionWarning("Unable to save City record: " . $oIntel->toJson());
       }
 
-      // TODO: check conquest
-//      try {
-//        if ($bIsOngoingConquest == true && !is_null($oConquestDetails)) {
-//          $oCity->conquest_details = json_encode($oConquestDetails->jsonSerialize());
-//          $SiegeId = SiegeParser::saveSiegeAttack($oConquestDetails, $oCity, $oIndexInfo, $ReportHash,
-//            array('player_id' => $ReceiverPlayerId, 'player_name' => $ReceiverPlayerName,
-//              'alliance_id' => $ReceiverAllianceId, 'alliance_name' => $ReceiverAllianceName));
-//          if (!empty($SiegeId) && !is_nan($SiegeId) && $SiegeId > 0) {
-//            $oCity->conquest_id = $SiegeId;
-//            $oCity->save();
-//          }
-//        }
-//      } catch (Exception $e) {
-//        Logger::warning("InboxParser $ReportHash: unable to update conquest details after creating city object");
-//      }
+      // Check conquest
+      try {
+        if ($bIsOngoingConquest == true && !is_null($oConquestDetails)) {
+          $oIntel->conquest_details = json_encode($oConquestDetails->jsonSerialize());
+          $SiegeId = SiegeParser::saveSiegeAttack($oConquestDetails, $oIntel, $aIndexes, $ReportHash,
+            array('player_id' => $ReceiverPlayerId, 'player_name' => $ReceiverPlayerName,
+              'alliance_id' => $ReceiverAllianceId, 'alliance_name' => $ReceiverAllianceName));
+          if (!empty($SiegeId) && !is_nan($SiegeId) && $SiegeId > 0) {
+            $oIntel->conquest_id = $SiegeId;
+            $oIntel->save();
+          }
+        }
+      } catch (Exception $e) {
+        Logger::warning("InboxParser $ReportHash: unable to update conquest details after creating city object; " . $e->getMessage());
+      }
 
       return $oIntel->id;
     }

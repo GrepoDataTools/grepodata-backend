@@ -1,6 +1,6 @@
 <?php
 
-namespace Grepodata\Library\Indexer;
+namespace Grepodata\Library\IndexV2;
 
 
 class ConquestDetails
