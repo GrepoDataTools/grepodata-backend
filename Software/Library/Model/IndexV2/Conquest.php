@@ -9,7 +9,6 @@ use \Illuminate\Database\Eloquent\Model;
 
 /**
  * @property mixed id
- * @property mixed uid
  * @property mixed town_id
  * @property mixed world
  * @property mixed town_name
@@ -29,36 +28,63 @@ class Conquest extends Model
 {
   protected $table = 'Indexer_conquest';
 
-  public function getPublicFields(World $oWorld = null)
+  /**
+   * @param $oMixedConquest object A joined record consisting of both Conquest and ConquestOverview
+   * @param World|null $oWorld
+   * @return array
+   */
+  public static function getMixedConquestFields($oMixedConquest, World $oWorld = null)
   {
-    $aBelligerentsAll = json_decode($this->belligerent_all, true);
+    $aBelligerentsAll = json_decode($oMixedConquest->belligerent_all, true);
     $aResponse = array(
-      'conquest_id'   => $this->uid,
-      'town_id'       => $this->town_id,
-      'town_name'     => $this->town_name,
-      'player_id'     => $this->player_id,
-      'player_name'   => $this->player_name,
-      'alliance_id'   => $this->alliance_id,
-      'alliance_name' => $this->alliance_name,
-      'last_attack_date' => $this->first_attack_date,
-      'belligerent_player_id'     => $this->belligerent_player_id,
-      'belligerent_player_name'   => $this->belligerent_player_name,
-      'belligerent_alliance_id'   => $this->belligerent_alliance_id,
-      'belligerent_alliance_name' => $this->belligerent_alliance_name,
-      'new_owner_player_id' => $this->new_owner_player_id,
-      'cs_killed' => $this->cs_killed,
+      // Conquest fields
+      'conquest_id'   => $oMixedConquest->id,
+      'town_id'       => $oMixedConquest->town_id,
+      'town_name'     => $oMixedConquest->town_name,
+      'player_id'     => $oMixedConquest->player_id,
+      'player_name'   => $oMixedConquest->player_name,
+      'alliance_id'   => $oMixedConquest->alliance_id,
+      'alliance_name' => $oMixedConquest->alliance_name,
+      'last_attack_date' => $oMixedConquest->first_attack_date,
+      'belligerent_player_id'     => $oMixedConquest->belligerent_player_id,
+      'belligerent_player_name'   => $oMixedConquest->belligerent_player_name,
+      'belligerent_alliance_id'   => $oMixedConquest->belligerent_alliance_id,
+      'belligerent_alliance_name' => $oMixedConquest->belligerent_alliance_name,
+      'new_owner_player_id' => $oMixedConquest->new_owner_player_id,
+      'cs_killed' => $oMixedConquest->cs_killed,
+
+      // ConquestOverview fields
+      'conquest_uid'  => $oMixedConquest->uid,
+      'index_key'     => $oMixedConquest->index_key,
+      'num_attacks_counted' => $oMixedConquest->num_attacks_counted,
+      'total_losses_att' => json_decode($oMixedConquest->total_losses_att, true),
+      'total_losses_def' => json_decode($oMixedConquest->total_losses_def, true),
+      'belligerent_all'  => is_array($aBelligerentsAll) ? array_values($aBelligerentsAll) : array()
     );
 
     $aResponse['hide_details'] = false;
     if ($oWorld != null) {
       $Now = $oWorld->getServerTime();
-      if ($this->new_owner_player_id == null
-        && $this->cs_killed == false
-        && $Now->diffInHours(Carbon::parse($this->first_attack_date, $oWorld->php_timezone)) < 4) {
+      if ($oMixedConquest->new_owner_player_id == null
+        && $oMixedConquest->cs_killed == false
+        && $Now->diffInHours(Carbon::parse($oMixedConquest->first_attack_date, $oWorld->php_timezone)) < 4) {
         // add a 3 hour delay before friendly intel is visible in the detailed report
         $aResponse['hide_details'] = true;
       }
     }
+
+    try {
+      $BPAtt = 0;
+      foreach ($aResponse['total_losses_att'] as $Unit => $value) {
+        $BPAtt += UnitStats::units[$Unit]['population'] * $value;
+      }
+      $BPDef = 0;
+      foreach ($aResponse['total_losses_def'] as $Unit => $value) {
+        $BPDef += UnitStats::units[$Unit]['population'] * $value;
+      }
+      $aResponse['total_bp_att'] = $BPAtt;
+      $aResponse['total_bp_def'] = $BPDef;
+    } catch (\Exception $e) {}
 
     return $aResponse;
   }

@@ -31,6 +31,7 @@ Index_notes => Indexer_notes
 Index_city => Indexer_intel
 Index_report => Indexer_intel
 Index_report_hash => Indexer_intel_shared + Indexer_intel
+Index_conquest => Indexer_conquest + Indexer_conquest_overview
 
 Deleted tables: (all functionality related to these tables goes offline)
 Index_auth
@@ -184,10 +185,9 @@ if ($bMigrateConquests) {
   Logger::warning("Migrating notes.");
   // 'Index_conquest' gets split into 'Indexer_conquest' and 'Indexer_conquest_overview'
   $SQL = "
-    INSERT IGNORE INTO Indexer_conquest (id, uid, town_id, world, town_name, player_id, player_name, alliance_id, alliance_name, belligerent_player_id, belligerent_player_name, belligerent_alliance_id, belligerent_alliance_name, first_attack_date, created_at, updated_at, cs_killed, new_owner_player_id)
+    INSERT IGNORE INTO Indexer_conquest (id, town_id, world, town_name, player_id, player_name, alliance_id, alliance_name, belligerent_player_id, belligerent_player_name, belligerent_alliance_id, belligerent_alliance_name, first_attack_date, created_at, updated_at, cs_killed, new_owner_player_id)
     SELECT 
            conquest.id,
-           conquest.uid,
            conquest.town_id,
            conquest.world,
            conquest.town_name,
@@ -209,9 +209,10 @@ if ($bMigrateConquests) {
   $Execute = DB::select(DB::raw($SQL));
 
   $SQL = "
-    INSERT IGNORE INTO Indexer_conquest_overview (conquest_id, index_key, num_attacks_counted, belligerent_all, total_losses_att, total_losses_def, created_at, updated_at, updated_at)
+    INSERT IGNORE INTO Indexer_conquest_overview (conquest_id, uid, index_key, num_attacks_counted, belligerent_all, total_losses_att, total_losses_def, created_at, updated_at, updated_at)
     SELECT 
            conquest.id,
+           conquest.uid,
            conquest.index_key,
            conquest.num_attacks_counted,
            conquest.belligerent_all,

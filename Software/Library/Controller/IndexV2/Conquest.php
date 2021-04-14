@@ -34,7 +34,7 @@ class Conquest
   public static function firstByUid($Uid)
   {
     // TODO
-    return \Grepodata\Library\Model\IndexV2\Conquest::where('uid', '=', $Uid)
+    return \Grepodata\Library\Model\IndexV2\ConquestOverview::where('uid', '=', $Uid)
       ->firstOrFail();
   }
 
@@ -56,13 +56,14 @@ class Conquest
   /**
    * @param \Grepodata\Library\Model\Indexer\IndexInfo $oIndex
    * @param int $Limit
-   * @return \Grepodata\Library\Model\IndexV2\Conquest[]
+   * @return \Grepodata\Library\Model\IndexV2\ConquestOverview[]
    */
   public static function allByIndex(\Grepodata\Library\Model\Indexer\IndexInfo $oIndex, $From = 0, $Limit = 100)
   {
-    // TODO
-    return \Grepodata\Library\Model\IndexV2\Conquest::where('index_key', '=', $oIndex->key_code, 'and')
-      ->orderBy('first_attack_date', 'desc')
+    return \Grepodata\Library\Model\IndexV2\ConquestOverview::select(['*'])
+      ->leftJoin('Indexer_conquest', 'Indexer_conquest.id', '=', 'Indexer_conquest_overview.conquest_id')
+      ->where('Indexer_conquest_overview.index_key', '=', $oIndex->key_code, 'and')
+      ->orderBy('Indexer_conquest.first_attack_date', 'desc')
       ->offset($From)
       ->limit($Limit)
       ->get();

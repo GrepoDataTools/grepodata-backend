@@ -2,7 +2,9 @@
 
 namespace Grepodata\Application\API\Route\IndexV2;
 
+use Exception;
 use Grepodata\Library\Controller\Indexer\IndexInfo;
+use Grepodata\Library\Controller\IndexV2\Conquest;
 use Grepodata\Library\Controller\IndexV2\IndexOverview;
 use Grepodata\Library\Controller\IndexV2\Roles;
 use Grepodata\Library\Controller\World;
@@ -118,27 +120,27 @@ class Index extends BaseRoute
       if ($oIndexOverview == null) throw new ModelNotFoundException();
 
       $aRecentConquests = array();
-      // TODO: index conquests
-//      try {
-//        $oWorld = World::getWorldById($oIndex->world);
-//        $aConquests = Conquest::allByIndex($oIndex, 0, 30);
-//        $SearchLimit = 1;
-//        if (count($aConquests) > 3) $SearchLimit = 2;
-//        if (count($aConquests) > 6) $SearchLimit = 3;
-//        if (count($aConquests) >= 10) $SearchLimit = 4;
-//        if (count($aConquests) >= 20) $SearchLimit = 5;
-//        foreach ($aConquests as $oConquest) {
-//          if ($oConquest->num_attacks_counted>=$SearchLimit) {
-//            $aRecentConquests[] = $oConquest->getPublicFields($oWorld);
-//          }
-//          if (count($aRecentConquests) > 10) {
-//            // only return top 10
-//            break;
-//          }
-//        }
-//      } catch (Exception $e) {
-//        Logger::warning("Error loading recent conquests: " . $e->getMessage());
-//      }
+      try {
+        $oWorld = World::getWorldById($oIndex->world);
+        $aConquests = Conquest::allByIndex($oIndex, 0, 30);
+        $SearchLimit = 1;
+        if (count($aConquests) > 3) $SearchLimit = 2;
+        if (count($aConquests) > 6) $SearchLimit = 3;
+        if (count($aConquests) >= 10) $SearchLimit = 4;
+        if (count($aConquests) >= 20) $SearchLimit = 5;
+        foreach ($aConquests as $oConquestOverview) {
+          if ($oConquestOverview->num_attacks_counted>=$SearchLimit) {
+            $aConquestOverview = \Grepodata\Library\Model\IndexV2\Conquest::getMixedConquestFields($oConquestOverview);
+            $aRecentConquests[] = $aConquestOverview;
+          }
+          if (count($aRecentConquests) > 10) {
+            // only return top 10
+            break;
+          }
+        }
+      } catch (Exception $e) {
+        Logger::warning("Error loading recent conquests: " . $e->getMessage());
+      }
 
       $aResponse = array(
         'is_admin'          => $bUserIsAdmin,

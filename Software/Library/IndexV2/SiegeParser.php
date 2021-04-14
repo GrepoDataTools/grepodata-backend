@@ -79,7 +79,6 @@ class SiegeParser
       // Create a new conquest
       if ($oConquest == null) {
         $oConquest = new \Grepodata\Library\Model\IndexV2\Conquest();
-        $oConquest->uid = md5(IndexBuilderV2::generateIndexKey(32) . time());
         $oConquest->world = $oCity->world;
         $oConquest->cs_killed = false;
         $oConquest->first_attack_date = $oCity->parsed_date;
@@ -190,6 +189,9 @@ class SiegeParser
               'conquest_id' => $ConquestId,
               'index_key' => $IndexKey
             ));
+            if ($oConquestOverview->uid == null) {
+              $oConquestOverview->uid = md5(IndexBuilderV2::generateIndexKey(32) . time());
+            }
             $oConquestOverview->num_attacks_counted += 1;
 
             $aTotalLossesAtt = array();
