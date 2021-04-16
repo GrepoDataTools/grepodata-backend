@@ -314,6 +314,14 @@ $oRouter->Add('getallianceintelV2', new Route('/indexer/v2/alliance', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Browse',
   '_method'     => 'GetAlliance'
 )));
+$oRouter->Add('v2conquestreports', new Route('/indexer/v2/conquest', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Intel',
+  '_method'     => 'GetConquestReports'
+)));
+$oRouter->Add('v2conquestsiegelist', new Route('/indexer/v2/siegelist', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Intel',
+  '_method'     => 'GetSiegelist'
+)));
 $oRouter->Add('indexaddnotev2', new Route('/indexer/v2/addnote', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Notes',
   '_method'     => 'AddNote'

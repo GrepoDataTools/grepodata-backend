@@ -71,6 +71,20 @@ class Intel
   }
 
   /**
+   * @param $oUser
+   * @param $ConquestId
+   * @param bool $bCheckHiddenOwners
+   * @return \Grepodata\Library\Model\IndexV2\Intel[]|Builder[]|Collection
+   */
+  public static function allByUserForConquest($oUser, $ConquestId, $bCheckHiddenOwners = true)
+  {
+    return self::selectByUser($oUser, $bCheckHiddenOwners, false)
+      ->where('Indexer_intel.conquest_id', '=', $ConquestId, 'and')
+      ->groupBy('Indexer_intel.id')
+      ->get();
+  }
+
+  /**
    * @param IndexInfo $oIndex
    * @return string
    */
@@ -302,9 +316,7 @@ class Intel
       'silver'  => (string) $Silver,
       'wall'    => $Wall,
       'stonehail' => $aStonehail,
-// TODO: conquest ids
-//      'conquest_id' => $oIntel->conquest_id > 0 ? $oIntel->conquest_id : 0,
-      'conquest_id' => 0,
+      'conquest_id' => $oIntel->conquest_id > 0 ? $oIntel->conquest_id : 0,
       'hero'    => strtolower($aCityFields['hero']),
       'god'     => strtolower($aCityFields['god']),
       'cost'    => (int) $IntelCost

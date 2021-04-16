@@ -51,7 +51,7 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
       ResponseCode::errorCode(3031, array(), 422);
     }
 
-    // Encrypt pass
+    // Hash password
     $hash = password_hash($aParams['password'], PASSWORD_BCRYPT);
 
     // Save to db
@@ -453,7 +453,7 @@ admin@grepodata.com',
   }
 
   /**
-   * Change the user password
+   * Delete user account data
    */
   public static function DeleteAccountConfirmedPOST()
   {
@@ -469,9 +469,9 @@ admin@grepodata.com',
       BaseRoute::verifyCaptcha($aParams['captcha']);
     }
 
-    // Delete all personal data (linked data will be removed by cleanup script)
-    $oUser->username = "DELETED_" . IndexBuilderV2::generateIndexKey(8);
-    $oUser->email = "DELETED_" . IndexBuilderV2::generateIndexKey(8);
+    // Delete all personal data by overriding it with random values (linked data will be removed by cleanup script)
+    $oUser->username = "DELETED_" . IndexBuilderV2::generateIndexKey(8) . time();
+    $oUser->email = "DELETED_" . IndexBuilderV2::generateIndexKey(8) . time();
     $oUser->passphrase = password_hash(IndexBuilderV2::generateIndexKey(12), PASSWORD_BCRYPT);
     $oUser->token = bin2hex(random_bytes(16));
     $oUser->save();

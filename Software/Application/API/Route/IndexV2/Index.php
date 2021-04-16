@@ -130,7 +130,7 @@ class Index extends BaseRoute
         if (count($aConquests) >= 20) $SearchLimit = 5;
         foreach ($aConquests as $oConquestOverview) {
           if ($oConquestOverview->num_attacks_counted>=$SearchLimit) {
-            $aConquestOverview = \Grepodata\Library\Model\IndexV2\Conquest::getMixedConquestFields($oConquestOverview);
+            $aConquestOverview = \Grepodata\Library\Model\IndexV2\Conquest::getMixedConquestFields($oConquestOverview, $oWorld);
             $aRecentConquests[] = $aConquestOverview;
           }
           if (count($aRecentConquests) > 10) {

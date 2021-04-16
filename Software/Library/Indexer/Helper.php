@@ -96,7 +96,6 @@ class Helper
     <html>
       <head>
         <meta charset=\"UTF-8\" />
-        <link rel=\"stylesheet\" type=\"text/css\" href=\"game_local.css\">
         <script src=\"http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js\"></script>
         <style>
           .game_arrow_right {display: none !important;}
@@ -137,8 +136,31 @@ class Helper
     libxml_use_internal_errors(true);
     $dom = new DOMDocument();
     $dom->loadHTML($completeHtml);
-    $domx = new DOMXPath($dom);
 
+    // XSS
+    $tags_to_remove = array('script','iframe','link');
+    foreach($tags_to_remove as $tag){
+      $element = $dom->getElementsByTagName($tag);
+      $remove = [];
+      foreach($element as $item) {
+        $remove[] = $item;
+      }
+      foreach ($remove as $item) {
+        $item->parentNode->removeChild($item);
+      }
+    }
+
+    // insert stylesheet
+    // <link rel=\"stylesheet\" type=\"text/css\" href=\"game_local.css\">
+    $stylesheet = $dom->createElement('link');
+    $stylesheet->setAttribute('type', 'text/css');
+    $stylesheet->setAttribute('rel', 'stylesheet');
+    $stylesheet->setAttribute('href', 'game_local.css');
+    $head = $dom->getElementsByTagName('head')->item(0);
+    $head->appendChild($stylesheet);
+
+    // Remove items by xpath
+    $domx = new DOMXPath($dom);
     if ($oReport->source_type === 'default') {
       // remove forum index+ button
       foreach($domx->query('//div[contains(attribute::class, "gd_indexer_footer")]') as $e ) {
