@@ -24,11 +24,14 @@
     color: #ea6153 !important;
 }
 .gd-login-container {
-    margin: 15px 5px 0;
+    margin: 25px 10px 0;
     font-family: 'Raleway', sans-serif;
 }
 .gd-login-footer {
     margin: 5px 5px 0;
+}
+.gd-login-lbl {
+    font-size: 16px;
 }
 .gd-link-btn {
     -webkit-tap-highlight-color: rgba(0,0,0,0);
@@ -38,7 +41,7 @@
     overflow: visible;
     text-transform: none;
     display: inline-block;
-    font-size: 14px;
+    font-size: 17px;
     line-height: 1.42857143;
     text-align: center;
     white-space: nowrap;
@@ -51,10 +54,16 @@
     background: transparent none;
     box-shadow: none;
     border: 1px solid transparent;
-    color: #337ab7 !important;
+    color: #18bc9c !important;
 }
 .gd-link-btn:hover {
     text-decoration: underline;
+}
+.gd-token-container {
+    display: grid;
+}
+.gd_copy_command_playername {
+    padding: 10px;
 }
 .gd-login-input {
     -webkit-tap-highlight-color: rgba(0,0,0,0);
@@ -63,10 +72,9 @@
     font: inherit;
     font-family: inherit;
     display: block;
-    width: 100%;
-    height: 34px;
+    height: 44px;
     padding: 6px 12px;
-    font-size: 14px;
+    font-size: 18px;
     line-height: 1.42857143;
     color: #555;
     background-color: #fff;
@@ -77,6 +85,7 @@
     transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
 }
 .gd-login-btn{
+    /*width: 100%;*/
     -webkit-tap-highlight-color: rgba(0,0,0,0);
     box-sizing: border-box;
     margin: 10px 0;
@@ -87,7 +96,7 @@
     display: inline-block;
     padding: 6px 12px;
     margin-bottom: 0;
-    font-size: 14px;
+    font-size: 17px;
     line-height: 1.42857143;
     text-align: center;
     white-space: nowrap;
@@ -99,39 +108,15 @@
     border: 1px solid transparent;
     border-radius: 4px;
     color: white;
-    background-color: #2C3E50;
-    border-color: #2C3E50;
+    background-color: #18bc9c;
+    border-color: #18bc9c;
     font-weight: 700;
     margin-right: 0.25rem !important;
 }
 .gd-register-btn{
     float: right;
-    -webkit-tap-highlight-color: rgba(0,0,0,0);
-    box-sizing: border-box;
-    margin: 10px 0;
-    font: inherit;
-    overflow: visible;
-    text-transform: none;
-    font-family: inherit;
-    display: inline-block;
-    padding: 6px 12px;
-    margin-bottom: 0;
-    font-size: 14px;
-    line-height: 1.42857143;
-    text-align: center;
-    white-space: nowrap;
-    vertical-align: middle;
-    touch-action: manipulation;
-    cursor: pointer;
-    user-select: none;
-    background-image: none;
-    border: 1px solid transparent;
-    border-radius: 4px;
-    color: #365063;
-    background-color: #fbfbfb;
-    border-color: #365063;
-    font-weight: 700;
 }
 .gd-login-btn:hover{
     background: linear-gradient(#18bc9c 5%, #05e197 100%);
 }
+

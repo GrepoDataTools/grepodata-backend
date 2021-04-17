@@ -1,18 +1,16 @@
-// Userscript DEV
-
-var gd_version = "4.0.3";
-var index_key = "s3s4mstr";
-var index_hash = "a65538efe44edf5d3a397441a20a90a0";
+var gd_version = "5.0.0";
 var verbose = false;
 
 (function() { try {
 
     // Globals
-    var backend_url = 'https://apitest.grepodata.com'
+    var backend_url = 'https://api.grepodata.com'
+    var frontend_url = 'https://grepodata.com'
     var time_regex = /([0-5]\d)(:)([0-5]\d)(:)([0-5]\d)(?!.*([0-5]\d)(:)([0-5]\d)(:)([0-5]\d))/gm;
     var gd_icon = "url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAXCAYAAAAV1F8QAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAYdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjAuNvyMY98AAAG0SURBVEhLYwACASA2AGIHGmGQ2SA7GGzf7oj4//5g7v/3B7L+vz+U///NVv//r9ZY/3+7K/b/683e/9/tSSTIf7M9DGhGzv8PR4r/v9uX9v/D0TKw+MdTzf9BdoAsSnm13gnEoQn+dLYLRKcAMUPBm62BYMH/f/9QFYPMfL3JE0QXQCzaFkIziz6d60FYBApvdIt07AJQ+ORgkJlfrs2DW1T9ar0jxRZJ7JkDxshiIDPf744B0dUgiwrebA8l2iJsBuISB5l5q58dREOC7u3OKJpZdHmKEsKi1xvdybIIpAamDpdFbze5ISzClrypZdGLZboIiz6d7cRrES4DibHozdYghEWfL0ygmUVvtwcjLPpwuJBmFj1ZpImw6N3uBNpZNE8ByaK9KXgtIheDzHy12gJuUfG7falYLSIHI5sBMvPlCiMQXQy2CFQPoVtEDQwy88VScByBLSqgpUVQH0HjaH8GWJAWGFR7A2mwRSkfjlUAM1bg/9cbXMAVFbhaBib5N9uCwGxQdU2ID662T9aDMag5AKrOQVX9u73JIIvANSyoPl8CxOdphEFmg9sMdGgFMQgAAH4W0yWXhEbUAAAAAElFTkSuQmCC')";
     var gd_icon_intel = "url('data:image/png;base64,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')";
     var gd_icon_svg = '<svg aria-hidden="true" data-prefix="fas" data-icon="university" class="svg-inline--fa fa-university fa-w-16" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="color: #18bc9c; width: 18px;"><path fill="currentColor" d="M496 128v16a8 8 0 0 1-8 8h-24v12c0 6.627-5.373 12-12 12H60c-6.627 0-12-5.373-12-12v-12H24a8 8 0 0 1-8-8v-16a8 8 0 0 1 4.941-7.392l232-88a7.996 7.996 0 0 1 6.118 0l232 88A8 8 0 0 1 496 128zm-24 304H40c-13.255 0-24 10.745-24 24v16a8 8 0 0 0 8 8h464a8 8 0 0 0 8-8v-16c0-13.255-10.745-24-24-24zM96 192v192H60c-6.627 0-12 5.373-12 12v20h416v-20c0-6.627-5.373-12-12-12h-36V192h-64v192h-64V192h-64v192h-64V192H96z"></path></svg>';
+    var launch_icon = '<svg aria-hidden="true" data-prefix="fas" data-icon="external-link" style="height: 20px; margin-left: 7px;" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="svg-inline--fa fa-external-link fa-w-16 fa-lg"><path fill="currentColor" d="M432,320H400a16,16,0,0,0-16,16V448H64V128H208a16,16,0,0,0,16-16V80a16,16,0,0,0-16-16H48A48,48,0,0,0,0,112V464a48,48,0,0,0,48,48H400a48,48,0,0,0,48-48V336A16,16,0,0,0,432,320ZM474.67,0H316a28,28,0,0,0-28,28V46.71A28,28,0,0,0,316.79,73.9L384,72,135.06,319.09l-.06.06a24,24,0,0,0,0,33.94l23.94,23.85.06.06a24,24,0,0,0,33.91-.09L440,128l-1.88,67.22V196a28,28,0,0,0,28,28H484a28,28,0,0,0,28-28V37.33h0A37.33,37.33,0,0,0,474.67,0Z" class=""></path></svg>';
 
     // Ensure jquery
     if (window.jQuery) {
@@ -23,213 +21,7 @@ var verbose = false;
         document.getElementsByTagName('head')[0].appendChild(script);
     }
 
-    function parseJwt (token) {
-        var base64Url = token.split('.')[1];
-        var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        var jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
-
-        return JSON.parse(jsonPayload);
-    };
-
-    function getAccessToken() {
-        return new Promise(resolve => {
-            try {
-                // Get access token from local storage
-                access_token = localStorage.getItem('gd_indexer_access_token');
-                if (!access_token) {
-                    resolve(false);
-                }
-
-                // if timed out, get new access token using refresh token
-                let payload = parseJwt(access_token);
-                if (payload.hasOwnProperty('exp')) {
-                    let expiration = payload['exp'];
-
-                    let currentTime = new Date().getTime() / 1000;
-
-                    if (currentTime > expiration - 60) {
-                        // Token expired, try to refresh
-                        console.log("GrepoData: Access token expired.");
-                        refresh_token = localStorage.getItem('gd_indexer_refresh_token');
-                        if (!refresh_token) {
-                            // New login required
-                            localStorage.removeItem('gd_indexer_access_token');
-                            resolve(false);
-                        }
-
-                        // Get new access token
-                        $.ajax({
-                            url: backend_url + "/auth/refresh",
-                            data: {refresh_token: refresh_token},
-                            type: 'post',
-                            crossDomain: true,
-                            dataType: 'json',
-                            success: function (data) {
-                                if (data.success_code && data.success_code === 1101) {
-                                    console.log('GrepoData: Renewed access token.');
-                                    localStorage.setItem('gd_indexer_access_token', data.access_token);
-                                    localStorage.setItem('gd_indexer_refresh_token', data.refresh_token);
-                                    resolve(data.access_token);
-                                } else {
-                                    resolve(false);
-                                }
-                            },
-                            error: function (jqXHR, textStatus) {
-                                console.log("GrepoData: Error renewing access token");
-                                // New login required
-                                localStorage.removeItem('gd_indexer_access_token');
-                                resolve(false);
-                            },
-                            timeout: 30000
-                        });
-                    } else {
-                        resolve(access_token)
-                    }
-                } else {
-                    // otherwise show login screen
-                    resolve(false);
-                }
-            } catch (error) {
-                errorHandling(error, "getAccessToken");
-            }
-        });
-    }
-
-    function checkLogin() {
-        // Check if grepodata access token or refresh token is in local storage and use it to verify
-        // if not verified: loging required!
-        getAccessToken().then(access_token => {
-            if (access_token == false) {
-                showLoginPopup()
-            } else {
-                console.log("GrepoData: Succesful authentication.");
-            }
-        });
-    }
-
-    function checkPlayerNameVerificationStatus() {
-        // TODO: check player name verificaiton and show popup if unverified!!
-        console.log('TODO: checkPlayerNameVerificationStatus')
-        // Get verification status from API
-        // If unverfied, show change town name popup (auth token generated by API)
-    }
-
-    var login_window = null;
-    function showLoginPopup() {
-        if (login_window != null) {
-            login_window.close();
-            login_window = null;
-        }
-        login_window = Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG,
-            '<a target="_blank" href="https://grepodata.com/login" class="write_message" style="background: ' + gd_icon + '">' +
-            '</a>&nbsp;&nbsp;GrepoData login required',
-            {position: ["bottom", 400], minimizable: true});
-        login_window.setWidth(450);
-        login_window.setHeight(445);
-
-        // Window content
-        var content = '<div class="gdloginpopup" style="width: 450px; height: 335px;"><div style="text-align: center">' +
-            '<p style="font-size: 14px;"><strong>Enemy city indexer:</strong> Log in using your GrepoData account' +
-            '<br/>You need to be logged in to use the city indexer</p>' +
-            '</div></div>';
-        login_window.setContent(content);
-        var login_window_element = $('.gdloginpopup').parent();
-        $(login_window_element).css({ top: 43 });
-
-        // Build login form
-        formHtml = `
-            <form class="gd-login-form" id="gd_login_form" name="gdloginform">
-            
-              <h3 class="gd-title"><img src="https://grepodata.com/assets/images/grepodata_icon.ico"/>&nbsp;&nbsp;GrepoData Login:</h3>
-              <div id="grepodatalerror" style="display: none;" class="gd-error-msg"><b>Error loging in.</b></div>
-              <div class="gd-login-container">
-                <label for="grepodatauser"><b>Email or username</b></label>
-                <input id="grepodataluser" class="gd-login-input" type="text" placeholder="Enter your GrepoData email or username" name="grepodatauser" required autocomplete="grepodataname">
-            
-                <label for="grepodatapass" style="margin-top: 5px;"><b>Password</b></label>
-                <input id="grepodatalpass" class="gd-login-input" type="password" placeholder="Enter GrepoData password" name="grepodatapass" required autocomplete="grepodatapass">
-            
-                <label>
-                  <input style="margin-top: 12px;" id="grepodatalremember" type="checkbox" checked="false" name="remember"> Remember me
-                </label>
-                <br/>
-                <button class="gd-login-btn" id="gd_login_btn">Login</button>
-                <a class="gd-register-btn" href="https://grepodata.com/register" target="_blank">Register</a>
-              </div>
-            
-              <div class="gd-login-footer">
-                <a class="gd-link-btn" href="https://grepodata.com/forgot" target="_blank">Forgot your password?</a>
-              </div>
-            </form>
-          
-        `;
-        $('.gdloginpopup').append(formHtml);
-        $('#grepodatalremember').removeAttr('checked');
-
-        function loginError(message) {
-            let errormsg = message==''?"Unable to login. Please try again later":message;
-            $('#grepodatalerror').text(errormsg);
-            $('#grepodatalerror').show();
-            HumanMessage.error(errormsg);
-        }
-
-        // Handle submit
-        $('#gd_login_btn').click(function () {
-            console.log("login!");
-            let username = document.getElementById("grepodataluser").value
-            let pass = document.getElementById("grepodatalpass").value
-            let remember = document.getElementById("grepodatalremember").checked
-
-            if (!username || username == '') {
-                loginError('Enter your GrepoData username or email');
-                return;
-            }
-            if (!pass || pass == '') {
-                loginError('Enter your GrepoData password');
-                return;
-            }
-
-            $.ajax({
-                url: backend_url + "/auth/login",
-                data: {
-                    mail: username,
-                    password: pass,
-                },
-                type: 'post',
-                crossDomain: true,
-                dataType: 'json',
-                success: function (data) {
-                    if (data.success_code && data.success_code === 1110) {
-                        console.log('GrepoData: Login credentials verified.');
-                        localStorage.setItem('gd_indexer_access_token', data.access_token);
-                        localStorage.setItem('gd_indexer_refresh_token', data.refresh_token);
-                        HumanMessage.success('GrepoData login succesful!');
-                        login_window.close();
-                        login_window = null;
-                    } else {
-                        // Unable
-                        loginError('');
-                    }
-                },
-                error: function (jqXHR, textStatus) {
-                    console.log("GrepoData: Error loging in");
-                    if (error.error_code && (error.error_code === 3005 || error.error_code === 3004)) {
-                        // Invalid credentials
-                        loginError('Invalid password or username.');
-                    } else {
-                        // Unknown
-                        loginError('');
-                    }
-                },
-                timeout: 30000
-            });
-        });
-    }
-
-
-    function loadCityIndex(key, globals) {
+    function loadCityIndex(globals) {
         // Settings
         var world = Game.world_id;
         var gd_settings = {
@@ -247,7 +39,8 @@ var verbose = false;
         readSettingsCookie();
         setTimeout(function () {
             if (gd_settings.inbox === true || gd_settings.forum === true) {
-                loadIndexHashlist(false);
+                loadIndexHashlist(false); // Get list of recently indexed report ids
+                // loadIndexesList(false, true); // Get list of indexes for this user
             }
         }, 1000);
         setTimeout(function () {
@@ -256,7 +49,6 @@ var verbose = false;
             }
         }, 500);
         checkLogin();
-        checkPlayerNameVerificationStatus();
 
         // Set locale
         var translate = {
@@ -481,6 +273,355 @@ var verbose = false;
                 //$("#gd_context_intel").animate({left: '140px'}, 120);
                 $('#gd_context_intel').click(function() {
                     loadTownIntel(town_id, town_name, player_name);
+                });
+            }
+        }
+
+        function getAccessToken() {
+            return new Promise(resolve => {
+                try {
+                    // Get access token from local storage
+                    access_token = localStorage.getItem('gd_indexer_access_token');
+                    access_player = localStorage.getItem('gd_indexer_player_id');
+                    if (!access_token) {
+                        resolve(false);
+                    }
+
+                    // Check if player changed
+                    access_player = localStorage.getItem('gd_indexer_player_id');
+                    if (Game.player_id != access_player) {
+                        // The current player is not equal to the player that authenticated with grepodata, sign them out
+                        console.log("Player logout detected. Signing out of GrepoData account. New sign in required.")
+                        localStorage.removeItem('gd_indexer_access_token');
+                        localStorage.removeItem('gd_indexer_refresh_token');
+                        localStorage.removeItem('gd_indexer_player_id');
+                        access_token = null;
+                        resolve(false);
+                    }
+
+                    // if timed out, get new access token using refresh token
+                    let payload = parseJwt(access_token);
+                    if (payload && payload.hasOwnProperty('exp')) {
+                        let expiration = payload['exp'];
+
+                        let currentTime = new Date().getTime() / 1000;
+
+                        if (currentTime > expiration - 60) {
+                            // Token expired, try to refresh
+                            console.log("GrepoData: Access token expired.");
+                            refresh_token = localStorage.getItem('gd_indexer_refresh_token');
+                            if (!refresh_token) {
+                                // New login required
+                                localStorage.removeItem('gd_indexer_access_token');
+                                resolve(false);
+                            }
+
+                            // Get new access token
+                            $.ajax({
+                                url: backend_url + "/auth/refresh",
+                                data: {refresh_token: refresh_token},
+                                type: 'post',
+                                crossDomain: true,
+                                dataType: 'json',
+                                success: function (data) {
+                                    if (data.success_code && data.success_code === 1101) {
+                                        console.log('GrepoData: Renewed access token.');
+                                        localStorage.setItem('gd_indexer_player_id', Game.player_id);
+                                        localStorage.setItem('gd_indexer_access_token', data.access_token);
+                                        localStorage.setItem('gd_indexer_refresh_token', data.refresh_token);
+                                        resolve(data.access_token);
+                                    } else {
+                                        resolve(false);
+                                    }
+                                },
+                                error: function (jqXHR, textStatus) {
+                                    console.log("GrepoData: Error renewing access token");
+                                    // New login required
+                                    localStorage.removeItem('gd_indexer_access_token');
+                                    resolve(false);
+                                },
+                                timeout: 30000
+                            });
+                        } else {
+                            resolve(access_token)
+                        }
+                    } else {
+                        // otherwise show login screen
+                        resolve(false);
+                    }
+                } catch (error) {
+                    errorHandling(error, "getAccessToken");
+                }
+            });
+        }
+
+        function getScriptToken() {
+            return new Promise(resolve => {
+                try {
+                    // Get script token from local storage
+                    script_token = localStorage.getItem('gd_indexer_script_token');
+                    if (!script_token) {
+                        // Get a new script token
+                        $.ajax({
+                            url: backend_url + "/auth/newscriptlink",
+                            data: {},
+                            type: 'get',
+                            crossDomain: true,
+                            dataType: 'json',
+                            success: function (data) {
+                                if (data.success_code && data.success_code === 1150) {
+                                    console.log('GrepoData: Retrieved script token.');
+                                    localStorage.setItem('gd_indexer_script_token', data.script_token);
+                                    resolve(data.script_token);
+                                } else {
+                                    console.log("GrepoData: Error retrieving script token");
+                                    localStorage.removeItem('gd_indexer_script_token');
+                                    resolve(false);
+                                }
+                            },
+                            error: function (jqXHR, textStatus) {
+                                console.log("GrepoData: Error retrieving script token");
+                                localStorage.removeItem('gd_indexer_script_token');
+                                resolve(false);
+                            },
+                            timeout: 30000
+                        });
+                    } else {
+                        // Check if existing script token has already been linked
+                        setTimeout(checkScriptToken, 2000);
+                        resolve(script_token);
+                    }
+                } catch (error) {
+                    errorHandling(error, "getScriptToken");
+                }
+            });
+        }
+
+        var login_window = null;
+        var is_v1_migrated = null;
+        var script_token_interval = null;
+        var refreshing_scripttoken = false;
+        var interval_count = 0;
+        function showLoginPopup() {
+            // This function is called when there is no access_token available
+
+            // First ensure we have a script token
+            getScriptToken().then(script_token => {
+
+                if (login_window != null) {
+                    login_window.close();
+                    login_window = null;
+                }
+                login_window = Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG,
+                    '<a href="#" class="write_message" style="background: ' + gd_icon + '">' +
+                    '</a>&nbsp;&nbsp;GrepoData login required',
+                    {position: ['center','center'], width: 630, height: 405, minimizable: true});;
+
+                // Window content
+                var content = '<div class="gdloginpopup" style="width: 630px; height: 295px;"><div style="text-align: center">' +
+                    '</div></div>';
+                login_window.setContent(content);
+                var login_window_element = $('.gdloginpopup').parent();
+                $(login_window_element).css({ top: 43 });
+
+                // Check if user migrated from a v1 script
+                var migration_complete = 'gd_key_migration_complete';
+                var v1_toggle_key = 'gd_index_toggle_v1';
+                if (localStorage.getItem(v1_toggle_key) && !localStorage.getItem(migration_complete)) {
+                    is_v1_migrated = localStorage.getItem(v1_toggle_key);
+                }
+
+                // Form Content
+                login_form_content = ''
+                if (is_v1_migrated == null) {
+                    login_form_content = `<h4 class="gd-title" style="text-align: center; font-size: 18px; display: block;">
+                                            Click the link below to sign in with your GrepoData account</h4>
+                                            <p style="display: block; text-align: center;">Sign in is required to use the city indexer userscript</p>`
+                } else {
+                    login_form_content = `<h4 class="gd-title" style="text-align: center; font-size: 16px; display: block; margin-top: -15px;">
+                            As of April 2021, a GrepoData login is required to use the city indexer.</h4>
+                        <p style="display: block; text-align: center;">We made this change in order to get approval for our city indexer tool.
+                            A GrepoData account is required to guarantee the security of the intel you collect and the people you share it with. 
+                        <a href="https://grepodata.com/indexer">read more</a></p>`
+                }
+
+                // Build login form
+                formHtml = `
+            <form autocomplete="false" class="gd-login-form" id="gd_login_form" name="gdloginform">
+              <div style="text-align: center;font-weight: 800;font-size: 35px;">
+                <div style="display: inline-block;"><img src="https://grepodata.com/assets/images/grepodata_icon.ico" style="position: relative; top: 4px;"></div>
+                <span style="color: rgb(103, 103, 103)">GREPO</span>
+                <span style="color: rgb(24, 188, 156);margin-left: -12px;">DATA</span>
+              </div>
+              <div id="gd-login-container" class="gd-login-container">
+                  `+login_form_content+`
+                  <h3 class="gd-title" style="text-align: center; place-content: center; font-size: 17px;"><a id="gd_script_auth_link" href="https://grepodata.com/link/` + script_token + `" target="_blank" style="display: contents; color: #444; text-decoration: underline;">grepodata.com/link/` + script_token + `<div>` + launch_icon + `</div></a></h3>
+                  <div id="grepodatalerror" style="display: none; text-align: center; place-content: center; font-size: 16px;" class="gd-error-msg"><b>Unable to authenticate.</b></div>
+                  <p id="grepodataltip" style="display: none; text-align: center; margin-bottom: -50px;">Follow the instructions on this page to link your userscript to your GrepoData account.<br/>Click 'Continue' below once your userscript is linked.<br/>Feel free to contact us if you run into any issues.</p>
+                  <div class="gd-login-footer" style="margin-top: 35px; height: 50px;">
+                    <p id="gd-request-new-token-btn" class="gd-link-btn" style="margin-top: 18px;">
+                    Request new token
+                    </p>
+                    <p id="gd-request-token-check" class="gd-login-btn gd-register-btn">Continue</p>
+                  </div>
+              </div>
+              <div id="gd-script-linked" class="gd-login-container" style="display: none;">
+                  <h4 class="gd-title" style="text-align: center; place-content: center;">
+                    You are now logged in. Happy indexing!
+                  </h4>
+                  <br/>
+                  <p style="text-align: center; place-content: center;">Thank you for using GrepoData.</p>
+              </div>
+            </form>
+          
+        `;
+                $('.gdloginpopup').append(formHtml);
+
+                if (refreshing_scripttoken) {
+                    loginError('Token was refreshed! Click the link to sign in', false, 5000);
+                    refreshing_scripttoken=false;
+                }
+
+                // Handle actions
+                $('#gd-request-new-token-btn').click(function () {
+                    // try with new token
+                    localStorage.removeItem('gd_indexer_script_token');
+                    showLoginPopup();
+                    clearInterval(script_token_interval);
+                    refreshing_scripttoken = true;
+                });
+                $('#gd-request-token-check').click(function () {
+                    $('#grepodataltip').hide();
+                    checkScriptToken(true);
+                });
+                $('#gd_script_auth_link').click(function () {
+                    console.log("GrepoData: script link clicked");
+
+                    clearInterval(script_token_interval);
+                    interval_count = 0;
+                    script_token_interval = setInterval(checkScriptToken, 3000);
+
+                    $('#grepodatalerror').hide();
+                    $('#grepodataltip').show();
+                });
+
+            });
+        }
+
+        function parseJwt(token) {
+            if (!token) {
+                return null;
+            }
+            var base64Url = token.split('.')[1];
+            var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            var jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+
+            return JSON.parse(jsonPayload);
+        };
+
+        function loginError(message, verbose = false, timeout = 0) {
+            let errormsg = message==''?"Unable to authenticate. Please try again later":message;
+            $('#grepodatalerror').text(errormsg);
+            $('#grepodatalerror').show();
+            if (timeout>0) {
+                setTimeout(_ => {$('#grepodatalerror').hide();}, timeout);
+            }
+            verbose ? HumanMessage.error(errormsg) : null;
+        }
+
+        function checkScriptToken(verbose=false) {
+            interval_count += 1;
+            if (interval_count>100) {
+                clearInterval(script_token_interval);
+            }
+            var script_token = localStorage.getItem('gd_indexer_script_token');
+            $.ajax({
+                url: backend_url + "/auth/verifyscriptlink",
+                data: {
+                    script_token: script_token
+                },
+                type: 'post',
+                crossDomain: true,
+                dataType: 'json',
+                success: function (data) {
+                    console.log(data);
+                    if (data.success_code && data.success_code === 1111) {
+                        console.log('GrepoData: Script token verified for player '+Game.player_id);
+                        localStorage.setItem('gd_indexer_player_id', Game.player_id);
+                        localStorage.setItem('gd_indexer_access_token', data.access_token);
+                        localStorage.setItem('gd_indexer_refresh_token', data.refresh_token);
+                        localStorage.removeItem('gd_indexer_script_token');
+                        HumanMessage.success('GrepoData login succesful!');
+                        $('#gd-login-container').hide();
+                        $('#gd-script-linked').show();
+                        clearInterval(script_token_interval);
+                        checkV1KeyMigration(data.access_token);
+                    } else {
+                        // Unable
+                        loginError('Unknown error. Please try again later or let us know if this error persists.', verbose);
+                    }
+                },
+                error: function (error, textStatus) {
+                    if (error.responseJSON.error_code && (error.responseJSON.error_code === 3041 || error.responseJSON.error_code === 3042)) {
+                        // Unknown or expired script token. remove token and try again
+                        clearInterval(script_token_interval);
+                        localStorage.removeItem('gd_indexer_script_token');
+                        showLoginPopup();
+                        verbose ? setTimeout(loginError('Expired script token. Please try using the link again.'), 1000) : null;
+                    } else if (error.responseJSON.error_code && error.responseJSON.error_code === 3043) {
+                        // Invalid client
+                        verbose ? loginError('Your script token is not valid for this client. Please request a new token or contact us if this error persists.') : null;
+                    } else if (error.responseJSON.error_code && error.responseJSON.error_code === 3040) {
+                        // Token is not yet linked
+                        verbose ? loginError('Your script token is not yet verified. Click the link to try again.') : null;
+                    } else {
+                        // Unknown
+                        loginError('Unknown error. Please try again later or let us know if this error persists.', verbose);
+                    }
+                },
+                timeout: 30000
+            });
+        }
+
+        function checkLogin() {
+            // Check if grepodata access token or refresh token is in local storage and use it to verify
+            // if not verified: login required!
+            getAccessToken().then(access_token => {
+                if (access_token == false) {
+                    showLoginPopup()
+                } else {
+                    console.log("GrepoData: Succesful authentication for player "+Game.player_id);
+                    checkV1KeyMigration(access_token);
+                }
+            });
+        }
+
+        // V1 key migration
+        function checkV1KeyMigration(access_token) {
+            var storage_key = 'gd_key_list_v1';
+            var migration_complete = 'gd_key_migration_complete';
+            if (localStorage.getItem(storage_key) && !localStorage.getItem(migration_complete)) {
+                var keys = JSON.parse(localStorage.getItem(storage_key));
+                console.log('Loaded old V1 keys from local storage', keys);
+
+                // Migrate to V2
+                $.ajax({
+                    url: backend_url + "/migrate/importv1keys",
+                    data: {
+                        access_token: access_token,
+                        index_keys: keys
+                    },
+                    type: 'post',
+                    crossDomain: true,
+                    dataType: 'json',
+                    timeout: 30000
+                }).fail(function (err) {
+                    console.log("Error importing V1 keys: ", err);
+                }).done(function (response) {
+                    console.log("V1 keys imported: ", response);
+                    localStorage.setItem(migration_complete, 'true');
                 });
             }
         }
@@ -873,9 +1014,10 @@ var verbose = false;
                 gdsettings = false
             }, 5000)
         });
-        $('.gd_settings_icon').tooltip('GrepoData City Indexer ' + key);
+        $('.gd_settings_icon').tooltip('GrepoData City Indexer');
 
         // report info is converted to a 32 bit hash to be used as unique id
+        // https://werxltd.com/wp/2010/05/13/javascript-implementation-of-javas-string-hashcode-method/
         String.prototype.report_hash = function () {
             var hash = 0, i, chr;
             if (this.length === 0) return hash;
@@ -892,36 +1034,49 @@ var verbose = false;
             var reportJson = JSON.parse(mapDOM(reportElement, true));
             var reportText = reportElement.innerText;
 
-            var data = {
-                'key': globals.gdIndexScript,
-                'report_hash': reportHash,
-                'report_text': reportText,
-                'report_json': reportJson,
-                'script_version': gd_version,
-                'report_poster': reportPoster,
-                'report_poster_id': gd_w.Game.player_id || 0
-            };
+            getAccessToken().then(access_token => {
+                if (access_token == false) {
+                    HumanMessage.error('GrepoData: login required to index reports');
+                    showLoginPopup();
+                    $('.rh' + reportHash).each(function () {
+                        $(this).find('.middle').get(0).innerText = translate.ADD + ' +';
+                    });
+                } else {
+                    var data = {
+                        'report_type': 'forum',
+                        'access_token': access_token,
+                        'world': world,
+                        'report_hash': reportHash,
+                        'report_text': reportText,
+                        'report_json': reportJson,
+                        'script_version': gd_version,
+                        'report_poster': reportPoster || 'Undefined',
+                        'report_poster_id': Game.player_id || 0,
+                        'report_poster_ally_id': Game.alliance_id || 0
+                    };
 
-            $('.rh' + reportHash).each(function () {
-                $(this).css("color", '#36cd5b');
-                $(this).find('.middle').get(0).innerText = translate.ADDED + ' ✓';
-                $(this).off("click");
+                    $('.rh' + reportHash).each(function () {
+                        $(this).css("color", '#36cd5b');
+                        $(this).find('.middle').get(0).innerText = translate.ADDED + ' ✓';
+                        $(this).off("click");
+                    });
+                    $.ajax({
+                        url: backend_url + "/indexer/v2/indexreport",
+                        data: data,
+                        type: 'post',
+                        crossDomain: true,
+                        dataType: 'json',
+                        success: function (data) {
+                        },
+                        error: function (jqXHR, textStatus) {
+                            console.log("error saving forum report");
+                        },
+                        timeout: 120000
+                    });
+                    pushHash(reportHash);
+                    gd_indicator();
+                }
             });
-            $.ajax({
-                url: backend_url + "/indexer/v2/addreport",
-                data: data,
-                type: 'post',
-                crossDomain: true,
-                dataType: 'json',
-                success: function (data) {
-                },
-                error: function (jqXHR, textStatus) {
-                    console.log("error saving forum report");
-                },
-                timeout: 120000
-            });
-            pushForumHash(reportHash);
-            gd_indicator();
         }
 
         // Add the given inbox report to the index
@@ -936,15 +1091,16 @@ var verbose = false;
                     $('#gd_index_rep_txt').get(0).innerText = translate.ADD + ' +';
                 } else {
                     var data = {
+                        'report_type': 'inbox',
                         'access_token': access_token,
                         'world': world,
                         'report_hash': reportHash,
                         'report_text': reportText,
                         'report_json': reportJson,
                         'script_version': gd_version,
-                        'report_poster': gd_w.Game.player_name2 || 'undefined',
-                        'report_poster_id': gd_w.Game.player_id2 || 0,
-                        'report_poster_ally_id': gd_w.Game.alliance_id || 0,
+                        'report_poster': Game.player_name || 'undefined',
+                        'report_poster_id': Game.player_id || 0,
+                        'report_poster_ally_id': Game.alliance_id || 0
                     };
 
                     if (gd_settings.inbox === true) {
@@ -954,7 +1110,7 @@ var verbose = false;
                         btn.innerText = translate.ADDED + ' ✓';
                     }
                     $.ajax({
-                        url: backend_url + "/indexer/v2/inboxreport",
+                        url: backend_url + "/indexer/v2/indexreport",
                         data: data,
                         type: 'post',
                         crossDomain: true,
@@ -970,24 +1126,17 @@ var verbose = false;
                         },
                         timeout: 120000
                     });
-                    pushInboxHash(reportHash);
+                    pushHash(reportHash);
                     gd_indicator();
                 }
             });
         }
 
-        function pushInboxHash(hash) {
-            if (globals.reportsFoundInbox === undefined) {
-                globals.reportsFoundInbox = [];
+        function pushHash(hash) {
+            if (globals.reportsFound === undefined) {
+                globals.reportsFound = [];
             }
-            globals.reportsFoundInbox.push(hash);
-        }
-
-        function pushForumHash(hash) {
-            if (globals.reportsFoundForum === undefined) {
-                globals.reportsFoundForum = [];
-            }
-            globals.reportsFoundForum.push(hash);
+            globals.reportsFound.push(hash);
         }
 
         function mapDOM(element, json) {
@@ -1105,6 +1254,11 @@ var verbose = false;
                             hashText += reportContent;
                         }
 
+                        // add player id to hash to avoid inbox conflicts
+                        if (Game.player_id > 0) {
+                            hashText += Game.player_id;
+                        }
+
                         reportHash = hashText.report_hash();
                         if (verbose) console.log('Parsed inbox report with hash: ' + reportHash);
 
@@ -1131,9 +1285,9 @@ var verbose = false;
 
                         // Check if this report was already indexed
                         var reportFound = false;
-                        if (globals && globals.reportsFoundInbox) {
-                            for (var j = 0; j < globals.reportsFoundInbox.length; j++) {
-                                if (globals.reportsFoundInbox[j] === reportHash) {
+                        if (globals && globals.reportsFound) {
+                            for (var j = 0; j < globals.reportsFound.length; j++) {
+                                if (globals.reportsFound[j] === reportHash) {
                                     reportFound = true;
                                 }
                             }
@@ -1363,6 +1517,7 @@ var verbose = false;
                                     var reportUnits = reportElement.getElementsByClassName('unit_icon40x40');
                                     var reportBuildings = reportElement.getElementsByClassName('report_unit');
                                     var reportDetails = reportElement.getElementsByClassName('report_details');
+                                    var reportResources = reportElement.getElementsByClassName('resources');
                                     var reportContent = '';
                                     for (var u = 0; u < reportUnits.length; u++) {
                                         reportContent += reportUnits[u].outerHTML;
@@ -1372,6 +1527,9 @@ var verbose = false;
                                     }
                                     if (reportDetails.length === 1) {
                                         reportContent += reportDetails[0].innerText;
+                                    }
+                                    if (reportResources.length === 1) {
+                                        reportContent += reportResources[0].innerText;
                                     }
                                 } catch (error) {
                                     errorHandling(error, "parseForumReportReportUnits");
@@ -1390,82 +1548,35 @@ var verbose = false;
                             console.log('Parsed forum report with hash: ' + reportHash);
 
                             var exists = false;
-                            if (reportHash !== null && reportHash !== 0 && globals && globals.reportsFoundForum) {
-                                for (var j = 0; j < globals.reportsFoundForum.length; j++) {
-                                    if (globals.reportsFoundForum[j] == reportHash) {
+                            if (reportHash !== null && reportHash !== 0 && globals && globals.reportsFound) {
+                                for (var j = 0; j < globals.reportsFound.length; j++) {
+                                    if (globals.reportsFound[j] == reportHash) {
                                         exists = true;
                                     }
                                 }
                             }
 
-                            var shareBtn = document.createElement('a');
-                            var shareInput = document.createElement('input');
-                            var rightShareSpan = document.createElement('span');
-                            var leftShareSpan = document.createElement('span');
-                            var txtShareSpan = document.createElement('span');
-                            shareInput.setAttribute('type', 'text');
-                            shareInput.setAttribute('id', 'gd_share_rep_inp');
-                            shareInput.setAttribute('style', 'float: right;');
-                            txtShareSpan.setAttribute('id', 'gd_share_rep_txt');
-                            txtShareSpan.setAttribute('class', 'middle');
-                            txtShareSpan.setAttribute('style', 'min-width: 50px;');
-                            rightShareSpan.setAttribute('class', 'right');
-                            leftShareSpan.setAttribute('class', 'left');
-                            leftShareSpan.appendChild(rightShareSpan);
-                            rightShareSpan.appendChild(txtShareSpan);
-                            shareBtn.appendChild(leftShareSpan);
-                            shareBtn.setAttribute('href', '#');
-                            shareBtn.setAttribute('id', 'gd_share_rep_');
-                            shareBtn.setAttribute('class', 'button gd_btn_share');
-                            shareBtn.setAttribute('style', 'float: right;');
-
-                            txtShareSpan.innerText = translate.SHARE;
-
-
-                            shareBtn.addEventListener('click', () => {
-                                if ($('#gd_share_rep_txt').get(0)) {
-                                    var hashI = ('r' + reportHash).replace('-', 'm');
-                                    var content = '<b>Share this report on Discord:</b><br><ul>' +
-                                        '    <li>1. Install the GrepoData bot in your Discord server (<a href="https://grepodata.com/discord" target="_blank">link</a>).</li>' +
-                                        '    <li>2. Insert the following code in your Discord server.<br/>The bot will then create the screenshot for you!' +
-                                        '    </ul><br/><input type="text" class="gd_copy_input_' + reportHash + '" value="' + `!gd report ${hashI}` + '"> <a href="#" class="gd_copy_command_' + reportHash + '">Copy to clipboard</a><span class="gd_copy_done_' + reportHash + '" style="display: none; float: right;"> Copied!</span>' +
-                                        '    <br /><br /><small>Thank you for using <a href="https://grepodata.com" target="_blank">GrepoData</a>!</small>';
-
-                                    Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG).setContent(content);
-                                    addForumReportById($('#gd_index_f_' + reportId).attr('report_id'), $('#gd_index_f_' + reportId).attr('report_hash'));
-
-                                    $(".gd_copy_command_" + reportHash).click(function () {
-                                        $(".gd_copy_input_" + reportHash).select();
-                                        document.execCommand('copy');
-
-                                        $('.gd_copy_done_' + reportHash).get(0).style.display = 'block';
-                                        setTimeout(function () {
-                                            if ($('.gd_copy_done_' + reportHash).get(0)) {
-                                                $('.gd_copy_done_' + reportHash).get(0).style.display = 'none';
-                                            }
-                                        }, 3000);
-                                    });
-                                }
-                            })
-
                             if (reportHash == null) {
                                 reportHash = '';
                             }
+                            let index_btn_f_html = '<a href="#" id="gd_index_f_' + reportId + '" report_hash="' + reportHash + '" report_id="' + reportId + '" class="button rh' + reportHash + ' gd_btn_index" style="float: right;"><span class="left"><span class="right"><span id="gd_index_f_txt_' + reportId + '" class="middle" style="min-width: 50px;">' + translate.ADD + ' +</span></span></span></a>\n';
+                            let share_btn_f_html = '<a href="#" id="gd_share_f_' + reportId + '" report_hash="' + reportHash + '" report_id="' + reportId + '" class="button gd_btn_share" style="float: right;"><span class="left"><span class="right"><span id="gd_sharae_f_txt_' + reportId + '" class="middle" style="min-width: 50px;">' + translate.SHARE + '</span></span></span></a>\n';
                             if (bSpy === true) {
                                 $(reportElement).append('<div class="gd_indexer_footer" style="background: #fff; height: 28px; margin-top: -28px;">\n' +
-                                    '    <a href="#" id="gd_index_f_' + reportId + '" report_hash="' + reportHash + '" report_id="' + reportId + '" class="button rh' + reportHash + ' gd_btn_index" style="float: right;"><span class="left"><span class="right"><span id="gd_index_f_txt_' + reportId + '" class="middle" style="min-width: 50px;">' + translate.ADD + ' +</span></span></span></a>\n' +
+                                    index_btn_f_html +
+                                    share_btn_f_html +
                                     '    </div>');
                                 $(reportElement).find('.resources, .small').css("text-align", "left");
                             } else {
                                 $(reportElement).append('<div class="gd_indexer_footer" style="background: url(https://gpnl.innogamescdn.com/images/game/border/odd.png); height: 28px; margin-top: -52px;">\n' +
-                                    '    <a href="#" id="gd_index_f_' + reportId + '" report_hash="' + reportHash + '" report_id="' + reportId + '" class="button rh' + reportHash + ' gd_btn_index" style="float: right;"><span class="left"><span class="right"><span id="gd_index_f_txt_' + reportId + '" class="middle" style="min-width: 50px;">' + translate.ADD + ' +</span></span></span></a>\n' +
+                                    index_btn_f_html +
+                                    share_btn_f_html +
                                     '    </div>');
                                 $(reportElement).find('.button, .simulator, .all').parent().css("padding-top", "24px");
                                 $(reportElement).find('.button, .simulator, .all').siblings("span").css("margin-top", "-24px");
                             }
 
-                            $(reportElement).find('.gd_indexer_footer').append(shareBtn);
-
+                            // Index click
                             if (exists === true) {
                                 $('#gd_index_f_' + reportId).get(0).style.color = '#36cd5b';
                                 $('#gd_index_f_txt_' + reportId).get(0).innerText = translate.ADDED + ' ✓';
@@ -1474,6 +1585,36 @@ var verbose = false;
                                     addForumReportById($(this).attr('report_id'), $(this).attr('report_hash'));
                                 });
                             }
+
+                            // Share click
+                            $('#gd_share_f_' + reportId).click(function () {
+                                console.log('jquery hash: ',$(this).attr('report_hash'));
+                                console.log('jquery id: ',$(this).attr('report_id'));
+                                var reportHash = $(this).attr('report_hash');
+                                var reportId = $(this).attr('report_id');
+
+                                var hashI = ('r' + reportHash).replace('-', 'm');
+                                var content = '<b>Share this report on Discord:</b><br><ul>' +
+                                    '    <li>1. Install the GrepoData bot in your Discord server (<a href="https://grepodata.com/discord" target="_blank">link</a>).</li>' +
+                                    '    <li>2. Insert the following code in your Discord server.<br/>The bot will then create the screenshot for you!' +
+                                    '    </ul><br/><input type="text" class="gd_copy_input_' + reportHash + '" value="' + `!gd report ${hashI}` + '"> <a href="#" class="gd_copy_command_' + reportHash + '">Copy to clipboard</a><span class="gd_copy_done_' + reportHash + '" style="display: none; float: right;"> Copied!</span>' +
+                                    '    <br /><br /><small>Thank you for using <a href="https://grepodata.com" target="_blank">GrepoData</a>!</small>';
+
+                                Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG).setContent(content);
+                                addForumReportById(reportId, reportHash);
+
+                                $(".gd_copy_command_" + reportHash).click(function () {
+                                    $(".gd_copy_input_" + reportHash).select();
+                                    document.execCommand('copy');
+
+                                    $('.gd_copy_done_' + reportHash).get(0).style.display = 'block';
+                                    setTimeout(function () {
+                                        if ($('.gd_copy_done_' + reportHash).get(0)) {
+                                            $('.gd_copy_done_' + reportHash).get(0).style.display = 'none';
+                                        }
+                                    }, 3000);
+                                });
+                            });
                         }
                     }
                 }
@@ -1487,19 +1628,24 @@ var verbose = false;
             if (!$("#gd_indexer").get(0)) {
                 $(".settings-menu ul:last").append('<li id="gd_li"><svg aria-hidden="true" data-prefix="fas" data-icon="university" class="svg-inline--fa fa-university fa-w-16" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="color: #2E4154;width: 16px;width: 15px;vertical-align: middle;margin-top: -2px;"><path fill="currentColor" d="M496 128v16a8 8 0 0 1-8 8h-24v12c0 6.627-5.373 12-12 12H60c-6.627 0-12-5.373-12-12v-12H24a8 8 0 0 1-8-8v-16a8 8 0 0 1 4.941-7.392l232-88a7.996 7.996 0 0 1 6.118 0l232 88A8 8 0 0 1 496 128zm-24 304H40c-13.255 0-24 10.745-24 24v16a8 8 0 0 0 8 8h464a8 8 0 0 0 8-8v-16c0-13.255-10.745-24-24-24zM96 192v192H60c-6.627 0-12 5.373-12 12v20h416v-20c0-6.627-5.373-12-12-12h-36V192h-64v192h-64V192h-64v192h-64V192H96z"></path></svg><a id="gd_indexer" href="#" style="    margin-left: 4px;">GrepoData City Indexer</a></li>');
 
+                // contact/update
+
                 // Intro
                 // var layoutUrl = 'https' + window.getComputedStyle(document.getElementsByClassName('icon')[0], null).background.split('("https')[1].split('"')[0];
                 var settingsHtml = '<div id="gd_settings_container" style="display: none; position: absolute; top: 0; bottom: 0; right: 0; left: 232px; padding: 0px; overflow: auto;">\n' +
                     '    <div id="gd_settings" style="position: relative;">\n' +
                     '\t\t<div class="section">\n' +
-                    '\t\t\t<div class="game_header bold" style="margin: -5px -10px 15px -10px; padding-left: 10px;">GrepoData city indexer settings</div>\n' +
+                    '\t\t\t<div class="game_header bold" style="margin: -5px -10px 5px -10px; padding-left: 10px;">GrepoData city indexer settings</div>\n' +
+                    '<a href="https://grepodata.com/message" target="_blank">Contact</a>' +
+                    '<p style="font-style: italic; font-size: 10px; float: right; margin:0px;">GrepoData city indexer v' + gd_version + ' [<a href="https://api.grepodata.com/script/indexer.user.js" target="_blank">' + translate.CHECK_UPDATE + '</a>]</p>' +
                     '\t\t\t<p>' + translate.ABOUT + '.</p>' +
                     '\t\t\t<p id="gdsettingslogged_in">' + translate.INDEX_LOGGED_IN + ' ' + '<a id="gdsettingslogout" href="#">Logout</a>' +
                     '</p>' + (count > 0 ? '<p>' + translate.COUNT_1 + count + translate.COUNT_2 + '.</p>' : '') +
-                    '<p id="gd_s_saved" style="display: none; position: absolute; left: 50px; margin: 0;"><strong>' + translate.SAVED + ' ✓</strong></p> ' +
+                    '<p id="gd_s_saved" style="display: none; position: absolute; left: 10px; margin: 0; color: green;"><strong>' + translate.SAVED + ' ✓</strong></p> ' +
                     '<br/>\n';
 
-                settingsHtml = settingsHtml + '<div style="max-height: '+(count > 0 ? 340 : 360)+'px; overflow-y: scroll; background: #FFEECA; border: 2px solid #d0be97;">';
+                // settings container
+                settingsHtml = settingsHtml + '<div style="max-height: '+(count > 0 ? 320 : 340)+'px; overflow-y: scroll; background: #FFEECA; border: 2px solid #d0be97;">';
 
                 // Forum intel settings
                 settingsHtml += '\t\t\t<p style="margin-bottom: 10px; margin-left: 10px;"><strong>' + translate.COLLECT_INTEL + '</strong></p>\n' +
@@ -1552,12 +1698,10 @@ var verbose = false;
                     '\t\t\t<div style="margin-left: 30px;" class="checkbox_new bug_reports_gd_enabled' + (gd_settings.bug_reports === true ? ' checked' : '') + '">\n' +
                     '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.BUG_REPORTS + '</div>\n' +
                     '\t\t\t</div>\n' +
-                    '\t\t\t<br><br><hr>\n';
+                    '\t\t\t<br><br>\n';
 
                 // Footer
                 settingsHtml += '</div>' +
-                    '<a href="https://grepodata.com/message" target="_blank">Contact</a>' +
-                    '<p style="font-style: italic; font-size: 10px; float: right; margin:0px;">GrepoData city indexer v' + gd_version + ' [<a href="https://api.grepodata.com/userscript/cityindexer_' + index_hash + '.user.js" target="_blank">' + translate.CHECK_UPDATE + '</a>]</p>' +
                     '\t\t</div>\n' +
                     '    </div>\n' +
                     '</div>';
@@ -1575,7 +1719,9 @@ var verbose = false;
                     $("#gdsettingslogged_in").hide();
                     localStorage.removeItem('gd_indexer_access_token');
                     localStorage.removeItem('gd_indexer_refresh_token');
-                    HumanMessage.success('GrepoData logged out succesfully.')
+                    localStorage.removeItem('gd_indexer_player_id');
+                    HumanMessage.success('GrepoData logged out succesfully.');
+                    showLoginPopup();
                 });
 
                 $("#gd_indexer").click(function () {
@@ -1695,40 +1841,51 @@ var verbose = false;
         var openIntelWindows = {};
         function loadTownIntel(id, town_name, player_name, cmd_id=0) {
             try {
-                // Create a new dialog
-                var content_id = player_name + id;
-                content_id = content_id.replace(/[^a-zA-Z]+/g, '');
-                if (openIntelWindows[content_id]) {
-                    try {
-                        openIntelWindows[content_id].close();
-                    } catch (e) {console.log("unable to close window", e);}
-                }
-                var intelUrl = 'https://grepodata.com/indexer/town/'+index_key+'/'+world+'/'+id;
-                var intel_window = Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG,
-                    '<a target="_blank" href="'+intelUrl+'" class="write_message" style="background: ' + gd_icon + '"></a>&nbsp;&nbsp;' + translate.TOWN_INTEL + ': ' + town_name + (player_name!=''?(' (' + player_name + ')'):''),
-                    {position: ["center", 110], minimizable: true});
-                intel_window.setWidth(600);
-                intel_window.setHeight(590);
-                openIntelWindows[content_id] = intel_window;
 
-                // Window content
-                var content = '<div class="gdintel_'+content_id+'" style="width: 600px; height: 500px;"><div style="text-align: center">' +
-                    '<p style="font-size: 20px; padding-top: 180px;">Loading intel..</p>' +
-                    '<a style="font-size: 11px;" href="' + intelUrl + '" target="_blank">' + intelUrl + '</a>' +
-                    '</div></div>';
-                intel_window.setContent(content);
-                var intelWindowElement = $('.gdintel_'+content_id).parent();
-                $(intelWindowElement).css({ top: 43 });
+                getAccessToken().then(access_token => {
+                    if (access_token == false) {
+                        HumanMessage.error('GrepoData: login is required to view intel');
+                        showLoginPopup();
+                        $('#gd_index_rep_txt').get(0).innerText = translate.ADD + ' +';
+                    } else {
 
-                // Get town intel from backend
-                $.ajax({
-                    method: "get",
-                    url: "https://api.grepodata.com/indexer/api/town?keys=" + getActiveIndexes() + "&id=" + id
-                }).error(function (err) {
-                    console.error(err);
-                    renderTownIntelError(content_id, intelUrl);
-                }).done(function (response) {
-                    renderTownIntelWindow(response, id, town_name, player_name, cmd_id, content_id);
+                        // Create a new dialog
+                        var content_id = player_name + id;
+                        content_id = content_id.replace(/[^a-zA-Z]+/g, '');
+                        if (openIntelWindows[content_id]) {
+                            try {
+                                openIntelWindows[content_id].close();
+                            } catch (e) {console.log("unable to close window", e);}
+                        }
+                        var intelUrl = frontend_url + '/intel/town/'+Game.world_id+'/'+id;
+                        var intel_window = Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG,
+                            '<a target="_blank" href="'+intelUrl+'" class="write_message" style="background: ' + gd_icon + '"></a>&nbsp;&nbsp;' + translate.TOWN_INTEL + ': ' + town_name + (player_name!=''?(' (' + player_name + ')'):''),
+                            {position: ['center','center'], width: 600, height: 590, minimizable: true});
+                        // intel_window.setWidth(600);
+                        // intel_window.setHeight(590);
+                        openIntelWindows[content_id] = intel_window;
+
+                        // Window content
+                        var content = '<div class="gdintel_'+content_id+'" style="width: 600px; height: 500px;"><div style="text-align: center">' +
+                            '<p style="font-size: 20px; padding-top: 180px;">Loading intel..</p>' +
+                            '<a style="font-size: 11px;" href="' + intelUrl + '" target="_blank">' + intelUrl + '</a>' +
+                            '</div></div>';
+                        intel_window.setContent(content);
+                        var intelWindowElement = $('.gdintel_'+content_id).parent();
+                        $(intelWindowElement).css({ top: 43 });
+
+                        // Get town intel from backend
+                        $.ajax({
+                            method: "get",
+                            headers: { 'access_token': access_token},
+                            url: backend_url + "/indexer/v2/town?world=" + world + "&town_id=" + id
+                        }).error(function (err) {
+                            console.error(err);
+                            renderTownIntelError(content_id, intelUrl);
+                        }).done(function (response) {
+                            renderTownIntelWindow(response, id, town_name, player_name, cmd_id, content_id);
+                        });
+                    }
                 });
             } catch (error) {
                 errorHandling(error, "loadTownIntel");
@@ -1745,9 +1902,10 @@ var verbose = false;
         }
 
         function renderTownIntelWindow(data, id, town_name, player_name, cmd_id, content_id) {
-            var intelUrl = 'https://grepodata.com/indexer/'+index_key;
+            var intelUrl = 'https://grepodata.com/indexer';
             try {
-                intelUrl = 'https://grepodata.com/indexer/town/'+index_key+'/'+world+'/'+id;
+                console.log(data);
+                intelUrl = 'https://grepodata.com/intel/town/'+Game.world_id+'/'+id;
                 var unitHeight = 255;
                 var notesHeight = 170;
 
@@ -1767,20 +1925,8 @@ var verbose = false;
                 var title = '<div style="margin-bottom: 10px;">' +
                     '<a href="#'+townHash+'" class="gp_town_link"><img alt="" src="/images/game/icons/town.png" style="padding-right: 2px; vertical-align: top;">'+ data.name +'</a> ' +
                     '(<a href="#'+playerHash+'" class="gp_player_link"> <img alt="" src="/images/game/icons/player.png" style="padding-right: 2px; vertical-align: top;">'+ data.player_name +'</a>)' +
-                    '<a href="https://grepodata.com/indexer/' + index_key + '" class="gd_ext_ref" target="_blank" style="float: right;">Index: ' + index_key + '</a></div>';
+                    '<a href="'+intelUrl+'" class="gd_ext_ref" target="_blank" style="float: right;">View on grepodata.com</a></div>';
                 $('.gdintel_'+content_id).append(title);
-
-                // Version check
-                if (data.hasOwnProperty('latest_version') && data.latest_version != null && data.latest_version.toString() !== gd_version) {
-                    var updateHtml =
-                        '<div class="gd_update_available" style=" background: #b93b3b; color: #fff; text-align: center; border-radius: 10px; padding-bottom: 2px;">' +
-                        'New userscript version available: ' +
-                        '<a href="https://api.grepodata.com/userscript/cityindexer_' + index_hash + '.user.js" class="gd_ext_ref" target="_blank" ' +
-                        'style="color: #ffffff; text-decoration: underline;">Update now!</a></div>';
-                    $('.gdintel_'+content_id).append(updateHtml);
-                    $('.gd_update_available').tooltip((data.hasOwnProperty('update_message') ? data.update_message : data.latest_version));
-                    unitHeight -= 18;
-                }
 
                 // Buildings
                 var build = '<div class="gd_build_' + id + '" style="padding-bottom: 4px;">';
@@ -1929,7 +2075,9 @@ var verbose = false;
 
                         tooltips.push({id: 'intel-unit-' + unit.name + '-' + id + '-' + j, text: unit.count + ' ' + (unit.name=='unknown'?'unknown land units':unit.name.replace('_',' '))});
                     }
-                    if (intel.hero != null) {
+
+                    // Append hero to unit list
+                    if (intel.hero != null && intel.hero != "") {
                         unitHtml = unitHtml +
                             '<div class="hero_icon_border golden_border intel-hero-' + id + '-' + j + '" style="display: inline-block;">\n' +
                             '    <div class="hero_icon_background">\n' +
@@ -1938,6 +2086,15 @@ var verbose = false;
                             '</div>';
                         tooltips.push({id: 'intel-hero-' + id + '-' + j, text: intel.hero.toLowerCase()});
                     }
+
+                    // Append god to unit list
+                    if (intel.god != null && intel.god != "") {
+                        unitHtml = unitHtml +
+                            '<div style="float: right; margin-top: -2px; margin-left: 30px;" ' +
+                            'class="god_micro ' + intel.god.toLowerCase() + '" title="' + intel.god + '"></div>';
+                        tooltips.push({id: 'intel-god-' + id + '-' + j, text: intel.god});
+                    }
+
                     row = row + '<div style="display: table-cell;"><div><div class="origin_town_units" style="padding-left: 30px; margin: 5px 0 5px 0; ' + (killed ? 'height: 37px;' : '') + '">' + unitHtml + '</div></div></div>';
 
                     // Wall
@@ -1977,7 +2134,7 @@ var verbose = false;
                     table = table + '<li class="even" style="display: inherit; width: 100%;"><div style="text-align: center;">' +
                         '<strong>No unit intelligence available</strong><br/>' +
                         'You have not yet indexed any reports about this town.<br/><br/>' +
-                        '<span style="font-style: italic;">note: intel about your allies (index contributors) is hidden by default</span></div></li>\n';
+                        '<span style="font-style: italic;">note: intel about index owners may be hidden by the index admin</span></div></li>\n';
                 }
 
                 table = table + '</ul></div></div>';
@@ -2048,8 +2205,8 @@ var verbose = false;
                 var world = Game.world_id;
                 var exthtml =
                     '<div style="display: list-item" class="gd_ext_ref">' +
-                    (data.player_id != null && data.player_id != 0 ? '   <a href="https://grepodata.com/indexer/player/' + index_key + '/' + world + '/' + data.player_id + '" target="_blank" style="float: left;"><img alt="" src="/images/game/icons/player.png" style="float: left; padding-right: 2px;">'+translate.INTEL_SHOW_PLAYER+' (' + data.player_name + ')</a>' : '') +
-                    (data.alliance_id != null && data.alliance_id != 0 ? '   <a href="https://grepodata.com/indexer/alliance/' + index_key + '/' + world + '/' + data.alliance_id + '" target="_blank" style="float: right;"><img alt="" src="/images/game/icons/ally.png" style="float: left; padding-right: 2px;">'+translate.INTEL_SHOW_ALLIANCE+'</a>' : '') +
+                    (data.player_id != null && data.player_id != 0 ? '   <a href="' + frontend_url + '/intel/player/' + world + '/' + data.player_id + '" target="_blank" style="float: left;"><img alt="" src="/images/game/icons/player.png" style="float: left; padding-right: 2px;">'+translate.INTEL_SHOW_PLAYER+' (' + data.player_name + ')</a>' : '') +
+                    (data.alliance_id != null && data.alliance_id != 0 ? '   <a href="' + frontend_url + '/intel/alliance/' + world + '/' + data.alliance_id + '" target="_blank" style="float: right;"><img alt="" src="/images/game/icons/ally.png" style="float: left; padding-right: 2px;">'+translate.INTEL_SHOW_ALLIANCE+'</a>' : '') +
                     '</div>';
                 $('.gdintel_'+content_id).append(exthtml);
                 $('.gd_ext_ref').tooltip('Opens in new tab');
@@ -2084,32 +2241,49 @@ var verbose = false;
 
         function saveNewNote(town_id, note, content_id) {
             try {
-                $.ajax({
-                    method: "get",
-                    url: "https://api.grepodata.com/indexer/addnote?keys=" + getActiveIndexes() + "&town_id=" + town_id + "&message=" + note + "&poster_name=" + Game.player_name + "&poster_id=" + Game.player_id
-                }).error(function (err) {
-                    console.log("Error saving note: ", err);
-                    $('#gd_new_note_'+content_id).after('<li class="even gd_note_error_msg" style="display: inherit; width: 100%;">'+
-                        '<div style="display: table-cell; padding: 0 7px;"><strong>Error saving note.</strong> please try again later or contact us if this error persists.</div>' +
-                        '</li>\n');
-                    $('#gd_add_note_'+content_id).show();
-                    $('#gd_adding_note_'+content_id).hide();
-                    $('#gd_note_input_'+content_id).prop('disabled',false);
-                }).done(function (response) {
-                    if (response.note) {
-                        $('#gd_new_note_'+content_id).after(getNoteRowHtml(response.note, content_id));
-                        $('#gd_note_input_'+content_id).val('');
-                        $('#gd_del_note_'+content_id+'_'+response.note.note_id).click(function () {
-                            var note_id = $(this).attr('gd-note-id');
-                            $(this).hide();
-                            $(this).after('<p style="margin: 0;">Note deleted</p>');
-                            $('#gd_note_'+content_id+'_'+note_id).css({ opacity: 0.4 });
-                            saveDelNote(note_id);
+                getAccessToken().then(access_token => {
+                    if (access_token !== false) {
+                        $.ajax({
+                            url: backend_url + "/indexer/v2/addnote",
+                            data: {
+                                access_token: access_token,
+                                town_id: town_id,
+                                message: note,
+                                world: Game.world_id,
+                                poster_name: Game.player_name,
+                                poster_id: Game.player_id,
+                            },
+                            type: 'post',
+                            crossDomain: true,
+                            dataType: 'json',
+                            timeout: 30000
+                        }).fail(function (err) {
+                            console.log("Error saving note: ", err);
+                            $('#gd_new_note_'+content_id).after('<li class="even gd_note_error_msg" style="display: inherit; width: 100%;">'+
+                                '<div style="display: table-cell; padding: 0 7px; color: #ce2508;"><strong>Error saving note.</strong> please try again later or contact us if this error persists.</div>' +
+                                '</li>\n');
+                            $('#gd_add_note_'+content_id).show();
+                            $('#gd_adding_note_'+content_id).hide();
+                            $('#gd_note_input_'+content_id).prop('disabled',false);
+                        }).done(function (response) {
+                            if (response.note) {
+                                $('#gd_new_note_'+content_id).after(getNoteRowHtml(response.note, content_id));
+                                $('#gd_note_input_'+content_id).val('');
+                                $('#gd_del_note_'+content_id+'_'+response.note.note_id).click(function () {
+                                    var note_id = $(this).attr('gd-note-id');
+                                    $(this).hide();
+                                    $(this).after('<p style="margin: 0;">Note deleted</p>');
+                                    $('#gd_note_'+content_id+'_'+note_id).css({ opacity: 0.4 });
+                                    saveDelNote(note_id);
+                                });
+                            }
+                            $('#gd_add_note_'+content_id).show();
+                            $('#gd_adding_note_'+content_id).hide();
+                            $('#gd_note_input_'+content_id).prop('disabled',false);
                         });
+                    } else {
+                        showLoginPopup();
                     }
-                    $('#gd_add_note_'+content_id).show();
-                    $('#gd_adding_note_'+content_id).hide();
-                    $('#gd_note_input_'+content_id).prop('disabled',false);
                 });
             } catch (error) {
                 errorHandling(error, "saveNewNote");
@@ -2118,19 +2292,27 @@ var verbose = false;
 
         function saveDelNote(note_id) {
             try {
-                indexes = [index_key];
-                if (globals.gdIndexScript.length > 1) {
-                    indexes = globals.gdIndexScript;
-                }
-                indexes = JSON.stringify(indexes);
-
-                $.ajax({
-                    method: "get",
-                    url: "https://api.grepodata.com/indexer/delnote?keys=" + indexes + "&note_id=" + note_id + "&poster_name=" + Game.player_name
-                }).error(function (err) {
-                    console.log("Error deleting note: ", err);
-                }).done(function (b) {
-                    console.log("Note deleted: ", b);
+                getAccessToken().then(access_token => {
+                    if (access_token !== false) {
+                        $.ajax({
+                            url: backend_url + "/indexer/v2/delnote",
+                            data: {
+                                access_token: access_token,
+                                note_id: note_id,
+                                world: Game.world_id,
+                            },
+                            type: 'post',
+                            crossDomain: true,
+                            dataType: 'json',
+                            timeout: 30000
+                        }).fail(function (err) {
+                            console.log("Error deleting note: ", err);
+                        }).done(function (response) {
+                            console.log("Note deleted: ", response);
+                        });
+                    } else {
+                        showLoginPopup();
+                    }
                 });
             } catch (error) {
                 errorHandling(error, "saveDeletedNote");
@@ -2223,57 +2405,65 @@ var verbose = false;
             }
         }
 
-        // Loads a list of report ids that have already been added. This is used to avoid duplicates
-        function loadIndexHashlist(extendMode) {
+        // Loads a list of report ids that have already been indexed by the current user or their allies.
+        function loadIndexHashlist(check_login) {
             try {
-                $.ajax({
-                    method: "get",
-                    url: "https://api.grepodata.com/indexer/getlatest?key=" + index_key + "&player_id=" + Game.player_id + "&filter=" + JSON.stringify(gd_settings)
-                }).done(function (b) {
-                    try {
-                        if (globals.reportsFoundForum === undefined) {
-                            globals.reportsFoundForum = [];
+                getAccessToken().then(access_token => {
+                    if (access_token == false) {
+                        if (check_login == true) {
+                            showLoginPopup()
                         }
-                        if (globals.reportsFoundInbox === undefined) {
-                            globals.reportsFoundInbox = [];
-                        }
-
-                        if (extendMode === false) {
-                            if (b['i'] !== undefined) {
-                                $.each(b['i'], function (b, d) {
-                                    globals.reportsFoundInbox.push(d)
-                                });
-                            }
-                            if (b['f'] !== undefined) {
-                                $.each(b['f'], function (b, d) {
-                                    globals.reportsFoundForum.push(d)
-                                });
-                            }
-                        } else {
-                            // Running in extend mode, merge with existing list
-                            if (b['f'] !== undefined) {
-                                globals.reportsFoundForum = globals.reportsFoundForum.filter(value => -1 !== b['f'].indexOf(value));
-                            }
-                            if (b['i'] !== undefined) {
-                                globals.reportsFoundInbox = globals.reportsFoundInbox.filter(value => -1 !== b['i'].indexOf(value));
-                            }
-                        }
-                    } catch (u) {}
+                    } else {
+                        $.ajax({
+                            method: "get",
+                            headers: {"access_token": access_token},
+                            url: backend_url + "/indexer/v2/getlatest?world=" + Game.world_id
+                        }).done(function (b) {
+                            try {
+                                if (globals.reportsFound === undefined) {
+                                    globals.reportsFound = [];
+                                }
+                                if (b['hashlist'] !== undefined) {
+                                    $.each(b['hashlist'], function (b, d) {
+                                        globals.reportsFound.push(d)
+                                    });
+                                }
+                            } catch (u) {}
+                        });
+                    }
                 });
             } catch (error) {
                 errorHandling(error, "loadIndexHashlist");
             }
         }
 
-        function getActiveIndexes(toString = true) {
-            indexes = [index_key];
-            if (globals.gdIndexScript.length > 1) {
-                indexes = globals.gdIndexScript;
+        // Loads a list of indexes for the current users.
+        function loadIndexesList(check_login, show_no_index_popup) {
+            try {
+                getAccessToken().then(access_token => {
+                    if (access_token == false && check_login == true) {
+                        showLoginPopup()
+                    } else {
+                        $.ajax({
+                            method: "get",
+                            headers: {"access_token": access_token},
+                            url: backend_url + "/profile/indexes?expand_overview=true&world=" + Game.world_id
+                        }).done(function (b) {
+                            try {
+                                if (b['items'] !== undefined) {
+                                    globals.indexes = [];
+                                    $.each(b['items'], function (b, d) {
+                                        globals.indexes.push(d)
+                                    });
+                                    console.log(globals.indexes);
+                                }
+                            } catch (u) {}
+                        });
+                    }
+                });
+            } catch (error) {
+                errorHandling(error, "loadIndexesList");
             }
-            if (toString == true) {
-                indexes = JSON.stringify(indexes);
-            }
-            return indexes;
         }
 
         function getBrowser() {
@@ -2313,8 +2503,8 @@ var verbose = false;
                 try {
                     $.ajax({
                         type: "POST",
-                        url: "https://api.grepodata.com/indexer/scripterror",
-                        data: {error: e.stack.replace(/'/g, '"'), "function": fn, browser: getBrowser(), version: gd_version, world: world, index: index_key},
+                        url: "https://api.grepodata.com/indexer/v2/scripterror",
+                        data: {error: e.stack.replace(/'/g, '"'), "function": fn, browser: getBrowser(), version: gd_version, world: world},
                         success: function (r) {}
                     });
                 } catch (error) {
@@ -2325,47 +2515,15 @@ var verbose = false;
 
     }
 
-    function enableCityIndex(key, globals) {
-        // if (gd_w.)
-        if (globals.gdIndexScript === undefined) {
-            globals.gdIndexScript = [key];
+    function enableCityIndex(globals) {
+        if (globals.gdIndex === undefined) {
+            globals.gdIndex = 'enabled';
 
-            console.log('GrepoData city indexer ' + key + ' is running in primary mode.');
-            loadCityIndex(key, globals);
+            console.log('GrepoData city indexer V2 is running in primary mode.');
+            loadCityIndex(globals);
         } else {
-            globals.gdIndexScript.push(key);
-            console.log('duplicate indexer script. index ' + key + ' is running in extended mode.');
-
-            // Merge id lists
-            setTimeout(function () {
-                try {
-                    $.ajax({
-                        method: "get",
-                        url: "https://api.grepodata.com/indexer/getlatest?key=" + key + "&player_id=" + gd_w.Game.player_id
-                    }).done(function (b) {
-                        try {
-                            if (globals.reportsFoundForum === undefined) {
-                                globals.reportsFoundForum = [];
-                            }
-                            if (globals.reportsFoundInbox === undefined) {
-                                globals.reportsFoundInbox = [];
-                            }
-
-                            // Running in extend mode, merge with existing list
-                            if (b['f'] !== undefined) {
-                                globals.reportsFoundForum = globals.reportsFoundForum.filter(value => -1 !== b['f'].indexOf(value));
-                            }
-                            if (b['i'] !== undefined) {
-                                globals.reportsFoundInbox = globals.reportsFoundInbox.filter(value => -1 !== b['i'].indexOf(value));
-                            }
-                        } catch (u) {
-                            console.log(u);
-                        }
-                    });
-                } catch (w) {
-                    console.log(w);
-                }
-            }, 4000 * (globals.gdIndexScript.length - 1));
+            // Duplicate scripts installed.. stop execution
+            console.log('Duplicate indexer script. You only need to have the GrepoData userscript installed once for all worlds you play on.');
         }
     }
 
@@ -2375,18 +2533,25 @@ var verbose = false;
         console.log("initiated grepodata.com viewer");
         grepodataObserver('');
 
-        // Watch for angular app route change
+        // Watch for angular app route changes
         function grepodataObserver(path) {
             var initWatcher = setInterval(function () {
-                if (gd_w.location.pathname.indexOf("/indexer/") >= 0 &&
-                    gd_w.location.pathname.indexOf(index_key) >= 0 &&
-                    gd_w.location.pathname != path) {
+                // If route is one of the indexer routes AND path has changed
+                if ((
+                    gd_w.location.pathname.indexOf("/profile") >= 0 ||
+                    gd_w.location.pathname.indexOf("/intel") >= 0 ||
+                    gd_w.location.pathname.indexOf("/points") >= 0
+                ) && gd_w.location.pathname != path) {
+
+                    // stop looking for route changes and start looking for update message
                     clearInterval(initWatcher);
                     messageObserver();
-                } else if (path != "" && gd_w.location.pathname != path) {
+
+                } else if (path != '' && gd_w.location.pathname != path) {
+                    // there was a route change but not to an indexer route
                     path = '';
                 }
-            }, 300);
+            }, 500);
         }
 
         // Hide install message on grepodata.com/indexer
@@ -2395,27 +2560,33 @@ var verbose = false;
             var initWatcher = setInterval(function () {
                 timeout = timeout - 100;
                 if ($('#help_by_contributing').get(0)) {
-                    clearInterval(initWatcher);
+                    clearInterval(initWatcher); // stop watching for update messages
+
                     // Hide install banner if script is already running
                     $('#help_by_contributing').get(0).style.display = 'none';
-                    if ($('#new_index_install_tips').get(0) && $('#new_index_waiting').get(0)) {
-                        $('#new_index_waiting').get(0).style.display = 'block';
-                        $('#new_index_install_tips').get(0).style.display = 'none';
-                    }
+
+                    // Ingest version
                     if ($('#userscript_version').get(0)) {
                         $('#userscript_version').append('<div id="script_version">' + gd_version + '</div>');
                     }
+
+                    // Start looking for route changes
                     grepodataObserver(gd_w.location.pathname);
+
                 } else if (timeout <= 0) {
-                    clearInterval(initWatcher);
-                    grepodataObserver(gd_w.location.pathname);
+                    clearInterval(initWatcher); // stop watching for update messages
+                    grepodataObserver(gd_w.location.pathname); // start looking for route changes
                 }
             }, 100);
         }
     } else if((gd_w.location.pathname.indexOf("game") >= 0)){
         // Indexer (in-game)
-        if (gd_w.f0969b2b439fdb38b3adade00a45c40e === undefined) gd_w.f0969b2b439fdb38b3adade00a45c40e = {};
-        enableCityIndex(index_key, gd_w.f0969b2b439fdb38b3adade00a45c40e);
+        setTimeout(function () {
+            if (gd_w.f0969b2b439fdb38b3adade00a45c40e === undefined) {
+                gd_w.f0969b2b439fdb38b3adade00a45c40e = {};
+            }
+            enableCityIndex(gd_w.f0969b2b439fdb38b3adade00a45c40e);
+        }, Math.floor((Math.random() * 1000) + 1));
     }
 } catch(error) { console.error("GrepoData City Indexer crashed (please report a screenshot of this error to admin@grepodata.com): ", error); }
 })();

@@ -4,6 +4,7 @@
 // @namespace    grepodata
 // @version      {/literal}{$version}{literal}
 // @author       grepodata.com
+// @homepage     https://grepodata.com/indexer
 // @updateURL    https://api.grepodata.com/userscript/cityindexer_{/literal}{$encrypted}{literal}.user.js
 // @downloadURL	 https://api.grepodata.com/userscript/cityindexer_{/literal}{$encrypted}{literal}.user.js
 // @description  This script allows you to easily collect enemy intelligence in your own private index
@@ -17,14 +18,15 @@
 
 
 (function() {
+    var rand = Math.floor((Date.now()/1000)/(60*60)) + "";
     var GrepoDataJS = document.createElement('script');
     GrepoDataJS.type = 'text/javascript';
-    GrepoDataJS.src = 'https://api.grepodata.com/script/indexer.js';
+    GrepoDataJS.src = 'https://api.grepodata.com/script/indexer.js?v=' + rand;
     document.getElementsByTagName("head")[0].appendChild(GrepoDataJS);
     var GrepoDataCSS = document.createElement('link');
     GrepoDataCSS.rel = 'stylesheet';
     GrepoDataCSS.type = 'text/css';
-    GrepoDataCSS.href = 'https://api.grepodata.com/script/indexer.css';
+    GrepoDataCSS.href = 'https://api.grepodata.com/script/indexer.css?v=' + rand;
     document.getElementsByTagName("head")[0].appendChild(GrepoDataCSS);
     console.log("Added GrepoData City Indexer by Tamper/GreaseMonkey");
 
