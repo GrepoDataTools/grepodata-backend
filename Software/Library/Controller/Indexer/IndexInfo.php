@@ -34,7 +34,7 @@ class IndexInfo
   public static function allByMail($Mail)
   {
     return \Grepodata\Library\Model\Indexer\IndexInfo::where('mail', '=', $Mail)
-      ->orderBy('created_at', 'desc')
+      ->orderBy('created_at', 'asc')
       ->get();
   }
 

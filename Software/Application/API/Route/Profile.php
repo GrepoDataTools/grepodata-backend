@@ -69,22 +69,35 @@ class Profile extends BaseRoute
 
     // optional sort by number of reports descending
     if (isset($aParams['sort_by'])) {
-      if ($aParams['sort_by'] == 'reports' && !empty($aOverview)) {
+      if ($aParams['sort_by'] == 'reports') {
         usort($aIndexItems, function ($item1, $item2) {
-          return $item1['stats']['total_reports'] < $item2['stats']['total_reports'] ? 1 : -1;
+          $ValueA = $item1['stats']['total_reports'] ?? 0;
+          $ValueA = $ValueA=='?'?0:$ValueA;
+          $ValueB = $item2['stats']['total_reports'] ?? 0;
+          $ValueB = $ValueB=='?'?0:$ValueB;
+          if ($ValueA == $ValueB) {
+            return 0;
+          } else {
+            return ($ValueA < $ValueB) ? 1 : -1;
+          }
         });
       }
     }
 
-    // push inactive indexes to the back
-    usort($aIndexItems, function ($item1, $item2) {
-      return $item1['status'] === 'active' ? -1 : 1;
-    });
-
-    // push stopped worlds to the back
-    usort($aIndexItems, function ($item1, $item2) {
-      return $item1['world_stopped'] === false ? -1 : 1;
-    });
+    // Push stopped worlds to the back
+    $aStopped = array();
+    $aActive = array();
+    foreach ($aIndexItems as $oIndex) {
+      if ($oIndex['world_stopped'] === false) {
+        $aActive[] = $oIndex;
+      } else {
+        $aStopped[] = $oIndex;
+      }
+    }
+    foreach ($aStopped as $oIndex) {
+      $aActive[] = $oIndex;
+    }
+    $aIndexItems = $aActive;
 
     // Optional limit
     if (isset($aParams['limit'])) {
