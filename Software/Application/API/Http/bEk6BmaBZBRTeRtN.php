@@ -12,7 +12,6 @@ require('./../../../config.php');
 require('./../config.api.php');
 
 error_reporting(0);
-error_reporting(0);
 
 session_start();
 

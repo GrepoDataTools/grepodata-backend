@@ -10,7 +10,6 @@ use Grepodata\Library\Controller\Town;
 use Grepodata\Library\Controller\World;
 use Grepodata\Library\Indexer\Validator;
 use Grepodata\Library\Logger\Logger;
-use Grepodata\Library\Model\Indexer\City;
 use Grepodata\Library\Model\Indexer\IndexInfo;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -18,8 +17,8 @@ class IndexApiV1 extends \Grepodata\Library\Router\BaseRoute
 {
 
   /**
-   * This backwards compatible route ensures that V1 town intel remains available to the old userscript
-   * Once the majority of users have updated to the V2 script, this route will be removed
+   * This backwards compatible route ensures that V1 town intel remains available to the old userscript.
+   * Once the majority of users have updated to the V2 script, this route will be removed.
    * @return false|string
    * @throws Exception
    * @deprecated
@@ -122,7 +121,7 @@ class IndexApiV1 extends \Grepodata\Library\Router\BaseRoute
       );
       $bHasIntel = false;
       $aDuplicateCheck = array();
-      /** @var City $oCity */
+      /** @var \Grepodata\Library\Model\IndexV2\Intel $oCity */
       foreach ($aCities as $oCity) {
         if ($oCity->soft_deleted != null) {
           $oSoftDeleted = Carbon::parse($oCity->soft_deleted);

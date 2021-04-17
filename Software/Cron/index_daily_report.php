@@ -3,12 +3,9 @@
 namespace Grepodata\Cron;
 
 use Carbon\Carbon;
-use Exception;
-use Grepodata\Library\Controller\Indexer\CityInfo;
 use Grepodata\Library\Cron\Common;
 use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\Indexer\DailyReport;
-use Grepodata\Library\Model\Indexer\Stats;
 
 if (PHP_SAPI !== 'cli') {
   die('not allowed');

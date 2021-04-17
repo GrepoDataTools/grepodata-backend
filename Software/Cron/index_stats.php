@@ -4,7 +4,6 @@ namespace Grepodata\Cron;
 
 use Carbon\Carbon;
 use Exception;
-use Grepodata\Library\Controller\Indexer\CityInfo;
 use Grepodata\Library\Controller\IndexV2\Intel;
 use Grepodata\Library\Cron\Common;
 use Grepodata\Library\Logger\Logger;

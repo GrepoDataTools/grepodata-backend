@@ -3,7 +3,6 @@
 namespace Grepodata\Application\API\Route\IndexV2;
 
 use Grepodata\Library\Controller\Indexer\IndexInfo;
-use Grepodata\Library\Controller\Indexer\ReportId;
 use Grepodata\Library\Controller\IndexV2\Intel;
 use Grepodata\Library\Controller\IndexV2\IntelShared;
 use Grepodata\Library\Controller\IndexV2\Roles;
@@ -14,7 +13,6 @@ use Grepodata\Library\Exception\InboxParserExceptionDebug;
 use Grepodata\Library\Exception\InboxParserExceptionError;
 use Grepodata\Library\Exception\InboxParserExceptionWarning;
 use Grepodata\Library\Indexer\IndexBuilderV2;
-use Grepodata\Library\Indexer\Validator;
 use Grepodata\Library\Logger\Logger;
 
 use Illuminate\Database\Capsule\Manager as DB;

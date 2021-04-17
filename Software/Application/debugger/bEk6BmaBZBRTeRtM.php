@@ -2,7 +2,6 @@
 
 namespace Grepodata\Application\debugger;
 
-use Grepodata\Library\Model\Indexer\Report;
 use Grepodata\Library\Model\IndexV2\Intel;
 
 function isLocalhost($whitelist = ['127.0.0.1', '::1']) {

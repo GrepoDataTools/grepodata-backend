@@ -18,7 +18,7 @@ use Grepodata\Library\Controller\World;
 
 //$Id="1124539";
 $Id="1124570";
-$oReport = \Grepodata\Library\Model\Indexer\Report::where('id', '=', $Id)->first();
+$oReport = \Grepodata\Library\Model\IndexV2\Intel::where('id', '=', $Id)->first();
 
 try {
   $html = \Grepodata\Library\Indexer\Helper::JsonToHtml($oReport, true);

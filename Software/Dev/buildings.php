@@ -2,11 +2,8 @@
 
 namespace Grepodata\Cron;
 
-use Grepodata\Library\Controller\World;
-use Grepodata\Library\Cron\Common;
-use Grepodata\Library\Import\Hourly;
 use Grepodata\Library\Logger\Logger;
-use Grepodata\Library\Model\Indexer\City;
+use Grepodata\Library\Model\IndexV2\Intel;
 
 if (PHP_SAPI !== 'cli') {
   die('not allowed');
@@ -19,14 +16,14 @@ Logger::enableDebug();
 $town_id = "";
 $index_id = "";
 
-$aTowns = City::where("town_id","=", $town_id, "and")
+$aTowns = Intel::where("town_id","=", $town_id, "and")
   ->where("index_key", "=", $index_id, "and")
   ->where("report_type", "!=", "attack_on_conquest")
   ->orderBy('created_at', 'asc')
   ->get();
 
 $aBuildings = array();
-/** @var City $oTown */
+/** @var Intel $oTown */
 foreach ($aTowns as $oTown) {
   $Build = $oTown->buildings;
   if ($Build != null && $Build != "" && $Build != "[]") {

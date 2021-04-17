@@ -24,7 +24,7 @@ $Duplicates = DB::select( DB::raw(
 ));
 
 foreach ($Duplicates as $duplicate) {
-  \Grepodata\Library\Model\Indexer\City::where('id', '=', $duplicate->id)->delete();
+  \Grepodata\Library\Model\IndexV2\Intel::where('id', '=', $duplicate->id)->delete();
 }
 $t=2;
 

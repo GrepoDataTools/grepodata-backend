@@ -3,7 +3,6 @@
 namespace Grepodata\Application\API\Route;
 
 use Grepodata\Library\Indexer\Helper;
-use Grepodata\Library\Model\Indexer\ReportId;
 use Grepodata\Library\Model\IndexV2\Intel;
 use Grepodata\Library\Router\ResponseCode;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -162,7 +161,7 @@ class Discord extends \Grepodata\Library\Router\BaseRoute
           // Use new hash version without required index key
           $SearchHash = str_replace('r', '', $aParams['hash']);
           $SearchHash = str_replace('m', '-', $SearchHash);
-          /** @var ReportId $oReportHash */
+          /** @var Intel $oReportHash */
           $oIntel = Intel::where('hash', '=', $SearchHash)
             ->orderBy('id', 'desc')
             ->firstOrFail();

@@ -5,8 +5,6 @@ namespace Grepodata\Application\API\Route\IndexV2;
 use Carbon\Carbon;
 use Exception;
 use Grepodata\Library\Controller\Alliance;
-use Grepodata\Library\Controller\Indexer\CityInfo;
-use Grepodata\Library\Controller\IndexV2\IndexOverview;
 use Grepodata\Library\Controller\Town;
 use Grepodata\Library\Controller\World;
 use Grepodata\Library\Logger\Logger;
@@ -283,7 +281,7 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
             'alliance_id' => $oCity->alliance_id,
             'attack_type' => 'attack',
             'friendly' => false,
-            'units' => CityInfo::parseUnitLossCount(CityInfo::getMergedUnits($oCity)),
+            'units' => \Grepodata\Library\Controller\IndexV2\Intel::parseUnitLossCount(\Grepodata\Library\Controller\IndexV2\Intel::getMergedUnits($oCity)),
           ),
           'defender' => array(
             'units' => array(),
@@ -295,8 +293,8 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
         if (!empty($aAttOnConq['attacker']['units'])) {
           foreach ($aAttOnConq['attacker']['units'] as $aUnit) {
             if (isset($aUnit['name']) && (
-                in_array($aUnit['name'], CityInfo::sea_units) ||
-                $aUnit['name'] == CityInfo::sea_monster)) {
+                in_array($aUnit['name'], \Grepodata\Library\Controller\IndexV2\Intel::sea_units) ||
+                $aUnit['name'] == \Grepodata\Library\Controller\IndexV2\Intel::sea_monster)) {
               $aAttOnConq['attacker']['attack_type'] = 'sea_attack';
               break;
             }
@@ -304,7 +302,7 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
         }
 
         if ($bHideRemainingDefences == false) {
-          $aAttOnConq['defender']['units'] = CityInfo::splitLandSeaUnits($aConqDetails['siege_units']) ?? array();
+          $aAttOnConq['defender']['units'] = \Grepodata\Library\Controller\IndexV2\Intel::splitLandSeaUnits($aConqDetails['siege_units']) ?? array();
         }
 
         $aResponse['intel'][] = $aAttOnConq;

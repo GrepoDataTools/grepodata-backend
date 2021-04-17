@@ -2,10 +2,7 @@
 
 namespace Grepodata\Application\debugger;
 
-use Grepodata\Library\Controller\Indexer\IndexInfo;
 use Grepodata\Library\Cron\Common;
-use Grepodata\Library\Model\Indexer\City;
-use Grepodata\Library\Model\Indexer\Report;
 use Grepodata\Library\Model\IndexV2\Intel;
 
 require('./../../config.php');

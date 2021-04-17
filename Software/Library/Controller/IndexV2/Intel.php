@@ -4,7 +4,6 @@ namespace Grepodata\Library\Controller\IndexV2;
 
 use Carbon\Carbon;
 use Exception;
-use Grepodata\Library\Model\Indexer\City;
 use Grepodata\Library\Model\Indexer\IndexInfo;
 use Grepodata\Library\Model\User;
 use Grepodata\Library\Model\World;
@@ -382,10 +381,10 @@ class Intel
 
   /**
    * Returns a merged array of all the units in the City record
-   * @param City $oCity
+   * @param \Grepodata\Library\Model\IndexV2\Intel $oCity
    * @return array
    */
-  public static function getMergedUnits(City $oCity)
+  public static function getMergedUnits(\Grepodata\Library\Model\IndexV2\Intel $oCity)
   {
     $aUnits = array();
     if (!empty($oCity->mythical_units) && $oCity->mythical_units != "[]") {

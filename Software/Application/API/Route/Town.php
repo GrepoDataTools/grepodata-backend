@@ -2,12 +2,8 @@
 
 namespace Grepodata\Application\API\Route;
 
-use Grepodata\Library\Controller\Indexer\CityInfo;
-use Grepodata\Library\Controller\Indexer\IndexInfo;
 use Grepodata\Library\Elasticsearch\Search;
-use Grepodata\Library\Indexer\Validator;
 use Grepodata\Library\Logger\Logger;
-use Grepodata\Library\Router\ResponseCode;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class Town extends \Grepodata\Library\Router\BaseRoute

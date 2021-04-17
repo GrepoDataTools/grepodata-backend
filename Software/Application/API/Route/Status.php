@@ -2,9 +2,6 @@
 
 namespace Grepodata\Application\API\Route;
 
-use Grepodata\Library\Controller\Indexer\CityInfo;
-use Grepodata\Library\Controller\Indexer\IndexInfo;
-use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\Indexer\DailyReport;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 

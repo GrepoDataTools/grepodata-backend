@@ -5,7 +5,6 @@ namespace Grepodata\Cron;
 use Carbon\Carbon;
 use Grepodata\Library\Cron\Common;
 use Grepodata\Library\Logger\Logger;
-use Grepodata\Library\Model\Indexer\Report;
 use Grepodata\Library\Model\IndexV2\Intel;
 use Grepodata\Library\Model\Operation_log;
 use Grepodata\Library\Model\Player;

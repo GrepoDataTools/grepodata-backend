@@ -5,14 +5,12 @@ namespace Grepodata\Library\IndexV2;
 use Carbon\Carbon;
 use Exception;
 use Grepodata\Library\Controller\Alliance;
-use Grepodata\Library\Controller\Indexer\CityInfo;
 use Grepodata\Library\Controller\IndexV2\Conquest;
 use Grepodata\Library\Controller\Player;
 use Grepodata\Library\Controller\Town;
 use Grepodata\Library\Controller\World;
 use Grepodata\Library\Indexer\IndexBuilderV2;
 use Grepodata\Library\Logger\Logger;
-use Grepodata\Library\Model\Indexer\IndexInfo;
 use Grepodata\Library\Model\IndexV2\ConquestOverview;
 use Grepodata\Library\Model\IndexV2\Intel;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -202,7 +200,7 @@ class SiegeParser
             if (!empty($oConquestOverview->total_losses_def) && $oConquestOverview->total_losses_def != "[]") {
               $aTotalLossesDef = json_decode($oConquestOverview->total_losses_def, true);
             }
-            $aAttUnits = CityInfo::getMergedUnits($oCity);
+            $aAttUnits = \Grepodata\Library\Controller\IndexV2\Intel::getMergedUnits($oCity);
             foreach ($aAttUnits as $Key => $Value) {
               preg_match('/\(-[0-9]{1,6}\)/', $Value, $aMatch);
               if (!empty($aMatch)) {

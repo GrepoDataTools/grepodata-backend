@@ -2,12 +2,7 @@
 
 namespace Grepodata\Cron;
 
-use Grepodata\Library\Controller\AllianceHistory;
-use Grepodata\Library\Controller\World;
-use Grepodata\Library\Cron\Common;
-use Grepodata\Library\Import\Hourly;
 use Grepodata\Library\Logger\Logger;
-use Grepodata\Library\Model\Indexer\City;
 
 if (PHP_SAPI !== 'cli') {
   die('not allowed');

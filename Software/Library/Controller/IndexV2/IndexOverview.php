@@ -5,7 +5,6 @@ namespace Grepodata\Library\Controller\IndexV2;
 use Grepodata\Library\Controller\Alliance;
 use Grepodata\Library\Controller\World;
 use Grepodata\Library\Logger\Logger;
-use Grepodata\Library\Model\Indexer\City;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
