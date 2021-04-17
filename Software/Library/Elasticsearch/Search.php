@@ -524,7 +524,7 @@ class Search
         'max'   => $aElasticsearchResults['aggregations']['max_points']['value'],
       ),
     );
-    
+
     usort($aForm['worlds'], function ($a, $b){
       if ($a['key'] == $b['key']) {
         return 0;

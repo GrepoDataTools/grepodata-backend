@@ -2,11 +2,6 @@
 
 namespace Grepodata\stats;
 
-// import data endpoints
-define('WORLD_DATA_PREFIX',       'http://grepolis.maxtrix.net/world/');
-define('WORLD_DATA_STATS',        '/stats');
-
-// https://en.forum.grepolis.com/index.php?threads/changes-to-world-data.5589/
 define('INNO_DATA_PREFIX',        'grepolis.com/data/');
 define('INNO_DATA_PLAYER',        'players.txt.gz');
 define('INNO_DATA_ALLIANCE',      'alliances.txt.gz');

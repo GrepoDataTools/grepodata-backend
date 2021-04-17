@@ -3,6 +3,7 @@
 namespace Grepodata\Library\Import;
 
 use Carbon\Carbon;
+use Exception;
 use Grepodata\Library\Controller\AllianceScoreboard;
 use Grepodata\Library\Controller\PlayerScoreboard;
 use Grepodata\Library\Controller\World;
@@ -13,6 +14,8 @@ use Grepodata\Library\Cron\InnoData;
 use Grepodata\Library\Cron\LocalData;
 use Grepodata\Library\Elasticsearch\Diff;
 use Grepodata\Library\Logger\Logger;
+use Grepodata\Library\Model\DominationScoreboard;
+use Grepodata\Library\Model\WorldDomination;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class Hourly
@@ -58,7 +61,7 @@ class Hourly
           $bUpdated = true;
         }
       }
-      
+
       // DEF
       if ($aData = $aDefData[$oPlayer->grep_id] ?? null) {
         if ($oPlayer->def_rank_max == null || $oPlayer->def_rank == null || $aData['rank'] != $oPlayer->def_rank) {
@@ -71,7 +74,7 @@ class Hourly
           $bUpdated = true;
         }
       }
-      
+
       // KILLS
       if ($aData = $aAllData[$oPlayer->grep_id] ?? null) {
         if ($oPlayer->fight_rank_max == null || $oPlayer->fight_rank == null || $aData['rank'] != $oPlayer->fight_rank) {
@@ -394,6 +397,23 @@ class Hourly
     $oPlayerScoreboard->server_time = $ScoreboardTime;
     $oAllianceScoreboard = AllianceScoreboard::firstOrNew($ScoreboardDate, $oWorld->grep_id);
     $oAllianceScoreboard->server_time = $ScoreboardTime;
+
+    // Check domination scoreboard record
+    try {
+      $oDominationScoreboard = DominationScoreboard::firstOrNew(array('world'=>$oWorld->grep_id, 'date'=>$ScoreboardDate));
+      if (is_null($oDominationScoreboard->domination_json)) {
+        $oWorldDomination = WorldDomination::where('world', '=', $oWorld->grep_id)
+          ->where('updated_at', '>', Carbon::now()->subDays(7))
+          ->first();
+        if (!is_null($oWorldDomination) && !is_null($oWorldDomination->domination_json)) {
+          Logger::warning("Creating domination scoreboard for world " . $oWorld->grep_id . " on " . $ScoreboardDate);
+          $oDominationScoreboard->domination_json = $oWorldDomination->domination_json;
+          $oDominationScoreboard->save();
+        }
+      }
+    } catch (Exception $exception) {
+      Logger::warning("Error parsing domination scoreboard for world: " . $oWorld->grep_id);
+    }
 
     $bIsFirstOfDay = false;
     if (isset($oPlayerScoreboard->att) && isset($oAllianceScoreboard->att)) {

@@ -117,53 +117,34 @@ foreach ($aServers as $Server) {
     }
   }
 
-  // Check world names
-  try {
-    $aWorlds = \Grepodata\Library\Model\World::where('stopped', '=', 0, 'and')
-      ->where('grep_id', 'LIKE', '%'.$Server.'%')
-      ->whereRaw('grep_id = name')
-      ->orderBy('grep_id', 'desc')
-      ->get();
+}
 
-    if (sizeof($aWorlds) <= 0) {
-      continue;
+
+// Check world names
+try {
+  $aWorlds = \Grepodata\Library\Model\World::where('stopped', '=', 0, 'and')
+    ->whereRaw('grep_id = name')
+    ->orderBy('grep_id', 'desc')
+    ->get();
+
+  $aWorldsData = WorldData::loadWorldNames();
+
+  /** @var \Grepodata\Library\Model\World $oWorld */
+  foreach ($aWorlds as $oWorld) {
+    $Server = substr($oWorld->grep_id, 0, 2);
+
+    $Code = $oWorld->grep_id;
+    if (isset($aWorldsData[$Server][$oWorld->grep_id])) {
+      $Name = $aWorldsData[$Server][$oWorld->grep_id];
+      Logger::warning("Found matching name for new world: $Code = $Name");
+      $oWorld->name = $Name;
+      $oWorld->save();
+    } else {
+      Logger::warning("Unable to find world name for world: " . $oWorld->grep_id);
     }
-
-    $aWorldsData = WorldData::loadServerWorlds($Server);
-
-    /** @var \Grepodata\Library\Model\World $oWorld */
-    foreach ($aWorlds as $oWorld) {
-      $bFound = false;
-
-      /** @var \DOMElement[] $aColumns */
-      foreach ($aWorldsData as $aColumns) {
-        if ($aColumns->length !== 11) {
-          continue;
-        }
-
-        /** @var \DOMElement $World */
-        $World = $aColumns[1]->getElementsByTagName('a')[0];
-        $Name = $World->textContent;
-        if (is_null($World)) continue;
-        $WorldUrl = $World->getAttribute('href');
-        $Code = $Server . substr($WorldUrl, strrpos($WorldUrl, '/')+1);
-
-        if ($oWorld->grep_id === $Code && !is_null($Name) && $Name != '') {
-          Logger::warning("Found matching name for new world: $Code = $Name");
-          $oWorld->name = $Name;
-          $oWorld->save();
-          $bFound = true;
-          continue;
-        }
-      }
-
-      if ($bFound === false) {
-        Logger::warning("Unable to find world name for world: " . $oWorld->grep_id);
-      }
-    }
-  } catch (\Exception $e) {
-    Logger::error("Error finding world names: " . $e->getMessage());
   }
+} catch (\Exception $e) {
+  Logger::error("Error finding world names: " . $e->getMessage());
 }
 
 Logger::debugInfo("Finished successful execution of server detector.");

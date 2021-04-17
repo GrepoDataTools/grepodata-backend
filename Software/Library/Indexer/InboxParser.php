@@ -26,6 +26,7 @@ class InboxParser
     'ro' => array('date_format' => 'd.m.Y H:i:s'),
     'ru' => array('date_format' => 'd.m.Y H:i:s'),
     'sk' => array('date_format' => 'd.m.Y H:i:s'),
+    'tr' => array('date_format' => 'd.m.Y H:i:s'), // 09.02.2021 11:22:18
     'pl' => array('date_format' => 'd.m.Y H:i:s'),
     'cz' => array('date_format' => 'd.m.Y H:i:s'),
     'no' => array('date_format' => 'd.m.Y H:i:s'),
@@ -47,7 +48,10 @@ class InboxParser
     'zeus'      => array('minotaur','manticore'),
     'athena'    => array('centaur', 'pegasus'),
     'hades'     => array('cerberus', 'fury'),
-    'artemis'   => array('griffin', 'calydonian_boar'));
+    'artemis'   => array('griffin', 'calydonian_boar'),
+    'aphrodite' => array('satyr', 'siren'),
+    'ares'      => array('spartoi', 'ladon')
+  );
   const sea_units  = array('big_transporter', 'bireme', 'attack_ship', 'demolition_ship', 'small_transporter', 'trireme', 'colonize_ship');
   const heros      = array('cheiron', 'ferkyon', 'orpheus', 'terylea', 'andromeda', 'odysseus', 'democritus', 'apheledes', 'christopholus', 'aristotle', 'rekonos', 'ylestres', 'pariphaistes', 'daidalos', 'eurybia', 'leonidas', 'urephon', 'zuretha', 'hercules', 'helen', 'atalanta', 'iason', 'hector', 'agamemnon', 'deimos', 'pelops', 'themistokles', 'telemachos', 'medea', 'ajax', 'alexandrios');
   const fireships  = 'attack_ship';
@@ -168,7 +172,12 @@ class InboxParser
       $oDateMax = new Carbon();
       $oDateMax->addHours(26);
       if ($oDate > $oDateMax) {
-        throw new InboxParserExceptionError("Parsed date is in the future");
+        // subtract 1 day and try again
+        Logger::warning("InbooxParser ". $ReportHash . ": Parsed date is in the future, subtracting 1 day.");
+        $oDate->subDays(1);
+        if ($oDate > $oDateMax) {
+          throw new InboxParserExceptionError("Parsed date is in the future");
+        }
       }
       $oDateMin = new Carbon();
       $oDateMin->subDays(150);
@@ -488,7 +497,7 @@ class InboxParser
           );
         } else if ($Locale == 'fr') {
           $aBuildingNames = array(
-            'main' => 'Sénat', 'hide' => 'Grotte', 'place' => 'Agora', 'lumber' => 'Scierie', 'stoner' => 'Carrière', 'ironer' => "Mine d'argent", 'market' => 'Marché', 'docks' => 'Port', 'barracks' => 'Caserne', 'wall' => 'Remparts', 'storage' => 'Entrepôt ', 'farm' => 'Ferme', 'academy' => 'Académie', 'temple' => 'Temple', 'theater' => 'Théâtre', 'thermal' => 'Thermes', 'library' => 'Bibliothèque', 'lighthouse' => 'Phare', 'tower' => 'Tour', 'statue' => 'Statue divine', 'oracle' => 'Oracle', 'trade_office' => 'Comptoir commercial', 
+            'main' => 'Sénat', 'hide' => 'Grotte', 'place' => 'Agora', 'lumber' => 'Scierie', 'stoner' => 'Carrière', 'ironer' => "Mine d'argent", 'market' => 'Marché', 'docks' => 'Port', 'barracks' => 'Caserne', 'wall' => 'Remparts', 'storage' => 'Entrepôt ', 'farm' => 'Ferme', 'academy' => 'Académie', 'temple' => 'Temple', 'theater' => 'Théâtre', 'thermal' => 'Thermes', 'library' => 'Bibliothèque', 'lighthouse' => 'Phare', 'tower' => 'Tour', 'statue' => 'Statue divine', 'oracle' => 'Oracle', 'trade_office' => 'Comptoir commercial',
           );
         } else if ($Locale == 'en') {
           $aBuildingNames = array(
@@ -649,9 +658,10 @@ class InboxParser
           $Silver = Helper::getTextContent($aRightSideItems[0], 0, true) ?? '?';
           $Silver = preg_replace('/\s+/', '', $Silver);
         }
-        if (isset($aRightSideItems[2]) && is_array($aRightSideItems[2])) {
-          $God = Helper::getTextContent($aRightSideItems[2], 0, true) ?? null;
-          $God = strtolower(preg_replace('/\s+/', '', $God));
+
+        $GodMicro = Helper::allByClass($RightSide, 'god_micro');
+        if (isset($GodMicro[0]) && is_array($GodMicro[0])) {
+          $God = strtolower($GodMicro[0]['attributes']['title']) ?? null;
           if (!key_exists($God, self::myth_units)) {
             Logger::warning("InboxParser $ReportHash: found unknown god with name '$God'");
           }
@@ -842,6 +852,8 @@ class InboxParser
           foreach ($aUnitInfo[$Moment] as $Unit => $Value) {
             if (!key_exists($Unit, $aCityUnitsFinal[$Moment])) {
               $aCityUnitsFinal[$Moment][$Unit] = $Value;
+            } else if ($Moment=='lost') {
+              $aCityUnitsFinal[$Moment][$Unit] += $Value;
             }
           }
         }

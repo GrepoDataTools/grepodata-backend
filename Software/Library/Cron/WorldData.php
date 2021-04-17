@@ -7,41 +7,39 @@ use Grepodata\Library\Logger\Logger;
 
 class WorldData
 {
-  const endpoint_prefix     = WORLD_DATA_PREFIX;
-  const stats_endpoint      = WORLD_DATA_STATS;
+  const endpoint_prefix     = WORLD_DATA_URL;
 
   /**
-   * Load player data for given world
-   *
-   * @param $Server String Grepolis server abbreviation
-   * @return array List of worlds for this server
+   * Load all world names
+   * @return array List of worlds
    */
-  public static function loadServerWorlds($Server)
+  public static function loadWorldNames()
   {
-    $url = self::endpoint_prefix . $Server . self::stats_endpoint;
+    $url = self::endpoint_prefix;
     $htmlContent = file_get_contents($url);
     $DOM = new DOMDocument();
     libxml_use_internal_errors(true);
     $DOM->loadHTML($htmlContent);
     $xpath = new \DOMXPath($DOM);
 
-    $TableRows = $xpath->query("//table[@class='table']/tr");
-    $Count = 0;
-    $aRows = array();
-    foreach ($TableRows as $aRow) {
-      if ($Count < 2) {
-        $Count++;
-        continue;
+    $ServersList = $xpath->query('//*[@id="servers-list"]/div[@class="servers"]');
+    $aServers = array();
+    foreach ($ServersList as $ServerElement) {
+      $ServerId = $ServerElement->getAttribute('id');
+      $ServerName = substr($ServerId, strpos($ServerId, 'servers-')+8);
+      $Worlds = $xpath->query("descendant::a", $ServerElement);
+      $aWorlds = array();
+      foreach ($Worlds as $World) {
+        $WorldText = $World->textContent;
+        $SepIndex = strpos($WorldText, ': ');
+        $WorldId = substr($WorldText, 0, $SepIndex);
+        $WorldName = substr($WorldText, $SepIndex+2);
+        $aWorlds[$WorldId] = $WorldName;
       }
-      $aRows[] = $aRow;
+      $aServers[$ServerName] = $aWorlds;
     }
-    $aRows = array_reverse($aRows);
 
-    $aRowColumns = array();
-    foreach ($aRows as $aRow) {
-      $aRowColumns[] = $xpath->query("descendant::td", $aRow);
-    }
-    return $aRowColumns;
+    return $aServers;
   }
 
 }

@@ -140,8 +140,12 @@ class LocalData
             Logger::warning("Town data row has invalid number of columns!");
           }
           $aOutputData[$data[0]] = array(
+            'grep_id'   => $data[0],
             'player_id' => $data[1],
             'name'      => $data[2],
+            'island_x'  => $data[3],
+            'island_y'  => $data[4],
+            'island_i'  => $data[5],
             'points'    => isset($data[6]) ? $data[6] : 0,
           );
         };
