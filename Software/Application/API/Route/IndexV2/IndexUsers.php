@@ -10,6 +10,7 @@ use Grepodata\Library\IndexV2\IndexManagement;
 use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\User;
 use Grepodata\Library\Router\Authentication;
+use Grepodata\Library\Router\BaseRoute;
 use Grepodata\Library\Router\ResponseCode;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -237,6 +238,11 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
     try {
       $aParams = self::validateParams(array('access_token', 'index_keys'));
       $oUser = Authentication::verifyJWT($aParams['access_token']);
+
+      // Validate captcha
+      if (!bDevelopmentMode && isset($aParams['captcha'])) {
+        BaseRoute::verifyCaptcha($aParams['captcha']);
+      }
 
       Logger::v2Migration("ImportV1Keys ".json_encode($aParams));
 

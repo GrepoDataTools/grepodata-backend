@@ -577,7 +577,7 @@ You are receiving this message because an account was created on grepodata.com u
 <br/>
 Please click on the following link to confirm your account:<br/>
 <br/>
-<a href="https://api.grepodata.com/confirm?token='.$Token.'">https://api.grepodata.com/confirm?token='.$Token.'</a><br/>
+<a href="https://api.grepodata.com/confirm?token='.$Token.'">https://grepodata.com/confirm?token='.$Token.'</a><br/>
 <br/>
 If you did not request this email, someone else may have entered your email address into our account registration form.<br/>
 You can ignore this email if you no longer wish to create an account for our website.<br/>
