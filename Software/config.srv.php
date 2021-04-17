@@ -50,7 +50,8 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
 
   define('USERSCRIPT_INDEXER', $SourceDir."Software/Templates/compiled");
   define('USERSCRIPT_TEMP', $SourceDir."Software/Templates/compiled");
-  define('HASH2IMG_DIRECTORY', $SourceDir."Software/Application/debugger/temp");
+  define('REPORT2IMG_CONTAINER', $SourceDir."Software/Application/debugger");
+  define('HASH2IMG_DIRECTORY', REPORT2IMG_CONTAINER."/temp");
 
   define('FRONTEND_URL', 'http://localhost:4200');
 } else if ('ACCEPTANCE' === PRIVATE_DEV_MACHINE_NAME) {
@@ -99,7 +100,8 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
 
   define('USERSCRIPT_INDEXER', $UserscriptDir . '/v1');
   define('USERSCRIPT_TEMP', $UserscriptDir . '/v2');
-  define('HASH2IMG_DIRECTORY', $HomeDir."/Temp/report2img/temp");
+  define('REPORT2IMG_CONTAINER', $HomeDir."/Temp/report2img");
+  define('HASH2IMG_DIRECTORY', REPORT2IMG_CONTAINER."/temp");
 
   define('FRONTEND_URL', 'https://test.grepodata.com');
 } else if ('PRODUCTION' === PRIVATE_DEV_MACHINE_NAME) {
@@ -147,7 +149,8 @@ if ($env === PRIVATE_DEV_MACHINE_NAME) {
 
   define('USERSCRIPT_INDEXER', $UserscriptDir . '/v1');
   define('USERSCRIPT_TEMP', $UserscriptDir . '/v2');
-  define('HASH2IMG_DIRECTORY', $HomeDir."/Temp/report2img/temp");
+  define('REPORT2IMG_CONTAINER', $HomeDir."/Temp/report2img");
+  define('HASH2IMG_DIRECTORY', REPORT2IMG_CONTAINER."/temp");
 
   define('FRONTEND_URL', 'https://grepodata.com');
 } else {
