@@ -237,7 +237,7 @@ class ForumParser
 
       $aBuildingIds = array('senate', 'wood', 'farm', 'stone', 'silver', 'baracks', 'temple', 'storage', 'trade', 'port', 'academy', 'wall', 'cave', 'special_1', 'special_2');
       $aLandUnitIds = array('militia', 'sword', 'sling', 'bow', 'spear', 'caval', 'strijd', 'kata', 'gezant', 'unknown');
-      $aMythUnitIds = array('mino', 'manti', 'sea_monster', 'harp', 'medusa', 'centaur', 'pegasus', 'cerberus', 'erinyes', 'cyclope', 'griff', 'boar');
+      $aMythUnitIds = array('siren', 'satyr', 'spartoi', 'ladon', 'mino', 'manti', 'sea_monster', 'harp', 'medusa', 'centaur', 'pegasus', 'cerberus', 'erinyes', 'cyclope', 'griff', 'boar');
       $aSeaUnitIds  = array('slow_tp', 'bir', 'brander', 'fast_tp', 'trireme', 'kolo', 'unknown_naval');
 
       $aBuildings = array();
@@ -465,15 +465,20 @@ class ForumParser
           $oDateMax = new Carbon();
           $oDateMax->addHours(26);
           if ($ParsedDate > $oDateMax) {
-            throw new Exception("Parsed date is in the future");
-          } else {
-            $oDateMin = new Carbon();
-            $oDateMin->subDays(150);
-            if ($ParsedDate < $oDateMin) {
-              Logger::warning("InboxParser ". $ReportHash . ": Parsed date is too far in the past");
-            } else {
-              $cityInfo['parsed_date'] = $ParsedDate;
+            // subtract 1 day and try again
+            Logger::warning("ForumParser ". $ReportHash . ": Parsed date is in the future, subtracting 1 day.");
+            $ParsedDate->subDays(1);
+            if ($ParsedDate > $oDateMax) {
+              throw new Exception("Parsed date is in the future");
             }
+          }
+
+          $oDateMin = new Carbon();
+          $oDateMin->subDays(150);
+          if ($ParsedDate < $oDateMin) {
+            Logger::warning("ForumParser ". $ReportHash . ": Parsed date is too far in the past");
+          } else {
+            $cityInfo['parsed_date'] = $ParsedDate;
           }
         }
       } catch (Exception $e) {
@@ -499,38 +504,28 @@ class ForumParser
     foreach ($aHeaderItems as $aHeaderItem) {
       if (is_array($aHeaderItem) && key_exists('attributes', $aHeaderItem)) {
         $aAttributes = $aHeaderItem['attributes'];
-        if (key_exists('href', $aAttributes) && key_exists('class', $aAttributes)) {
-//          if (key_exists('onclick', $aAttributes) && strpos($aAttributes['onclick'], 'allianceProfile') !== false) {
-//            $aLinkData = array(
-//              'type' => 'alliance',
-//              'name' => Helper::getTextContent($aHeaderItem),
-//              'id' => 0
-//            );
-//            $OnClick = $aAttributes['onclick'];
-//            $AllianceId = substr($OnClick, strrpos($OnClick, ',')+1);
-//            $AllianceId = substr($AllianceId, 0, strpos($AllianceId, ')'));
-//            $aLinkData['id'] = $AllianceId;
-//            $aHeaderChainData[] = $aLinkData;
-//            $aHeaderChainType[] = 'alliance';
-//          } elseif (key_exists('class', $aAttributes)) {
+        if (key_exists('href', $aAttributes)) {
           $LinkDataEncoded = $aAttributes['href'];
-          $aLinkData = json_decode(base64_decode($LinkDataEncoded), true);
-          $Class = $aAttributes['class'];
-          if (str_contains($Class, 'gp_town_link')) {
-            $aHeaderChainData[] = $aLinkData;
-            $aHeaderChainType[] = 'town';
-
-            if (isset($aLinkData['tp']) && $aLinkData['tp'] == 'temple') {
-              throw new ForumParserExceptionDebug("Unable to parse attack on temple. Skipping report.");
+          if ($LinkDataEncoded == 'javascript:void(0)') {
+            // Alliance
+            if (key_exists('onclick', $aAttributes) && strpos($aAttributes['onclick'], 'allianceProfile')!==false) {
+              $aHeaderChainData[] = $aAttributes['onclick'];
+              $aHeaderChainType[] = 'alliance';
             }
-          }
-          elseif (str_contains($Class, 'gp_player_link')) {
-            $aHeaderChainData[] = $aLinkData;
-            $aHeaderChainType[] = 'player';
-          }
-//          }
-          else {
-            Logger::warning("Unhandled attribute class in forum report header: " . $Class);
+          } elseif (key_exists('class', $aAttributes)) {
+            $aLinkData = json_decode(base64_decode($LinkDataEncoded), true);
+            $Class = $aAttributes['class'];
+            if (str_contains($Class, 'gp_town_link')) {
+              $aHeaderChainData[] = $aLinkData;
+              $aHeaderChainType[] = 'town';
+            }
+            elseif (str_contains($Class, 'gp_player_link')) {
+              $aHeaderChainData[] = $aLinkData;
+              $aHeaderChainType[] = 'player';
+            }
+            else {
+              Logger::warning("Unhandled attribute class in forum report header: " . $Class);
+            }
           }
         }
       } else if (is_string($aHeaderItem)) {
@@ -549,6 +544,7 @@ class ForumParser
     }
 
     $ReportType = 'UNKNOWN';
+    $bIsAttackOnTemple = false;
     switch ($ReportChainString) {
       case 'town-town-player':
       case 'town-town-ghost':
@@ -568,10 +564,16 @@ class ForumParser
         break;
       case 'town-player-town-player':
       case 'town-player-player-town':
-      //case sizeof($aHeaderChainType) === 4:
+        //case sizeof($aHeaderChainType) === 4:
         $ReportType = self::report_types['conquest'];
         break;
-      case 'town-player-town':
+      case 'town-player-town': // enemy attack on a friendly city
+      case 'town-player-player': // enemy attack on friendly conquest of a ghost city
+        $ReportType = self::report_types['enemy'];
+        break;
+      case 'town-town-alliance':
+        // Attack on a temple
+        $bIsAttackOnTemple = true;
         $ReportType = self::report_types['enemy'];
         break;
       case 'town':
@@ -610,13 +612,8 @@ class ForumParser
         // Player
         if ($bReceiverIsGhost === false) {
           $AttackedPlayer = $aHeaderChainData[2];
-          if ($AttackedPlayer['type'] == 'alliance') {
-            $cityInfo['player_name'] = '';
-            $cityInfo['player_id'] = 0;
-          } else {
-            $cityInfo['player_name'] = $AttackedPlayer['name'];
-            $cityInfo['player_id'] = $AttackedPlayer['id'];
-          }
+          $cityInfo['player_name'] = $AttackedPlayer['name'];
+          $cityInfo['player_id'] = $AttackedPlayer['id'];
         } else {
           $cityInfo['player_name'] = 'Ghost';
           $cityInfo['player_id'] = 0;
@@ -781,13 +778,8 @@ class ForumParser
         // Player
         if ($bReceiverIsGhost === false) {
           $AttackedPlayer = $aHeaderChainData[2];
-          if ($AttackedPlayer['type'] == 'alliance') {
-            $cityInfo['player_name'] = '';
-            $cityInfo['player_id'] = 0;
-          } else {
-            $cityInfo['player_name'] = $AttackedPlayer['name'];
-            $cityInfo['player_id'] = $AttackedPlayer['id'];
-          }
+          $cityInfo['player_name'] = $AttackedPlayer['name'];
+          $cityInfo['player_id'] = $AttackedPlayer['id'];
         } else {
           $cityInfo['player_name'] = 'Ghost';
           $cityInfo['player_id'] = 0;
@@ -874,9 +866,26 @@ class ForumParser
         $cityInfo['city_id'] = $AttackingCity['id'];
 
         // Player
-        $AttackingPlayer = $aHeaderChainData[1];
-        $cityInfo['player_name'] = $AttackingPlayer['name'];
-        $cityInfo['player_id'] = $AttackingPlayer['id'];
+        if ($bIsAttackOnTemple===false) {
+          $AttackingPlayer = $aHeaderChainData[1];
+          $cityInfo['player_name'] = $AttackingPlayer['name'];
+          $cityInfo['player_id'] = $AttackingPlayer['id'];
+        } else {
+          $cityInfo['player_name'] = 'Unknown';
+          $cityInfo['player_id'] = 0;
+          // Lookup temple attack info
+          try {
+            // player id
+            $oTown = Town::firstById($oIndex->world, $AttackingCity['id']);
+            $cityInfo['player_id'] = $oTown->player_id ?? 0;
+
+            // town
+            $oPlayer = Player::firstById($oIndex->world, $oTown->player_id);
+            $cityInfo['player_name'] = $oPlayer->name ?? 'Unknown';
+          } catch (Exception $e) {
+            Logger::warning("ForumParser " . $ReportHash . ": Error looking up town for temple attack. " . $e->getMessage());
+          }
+        }
 
         //loop units
         $unitsRootArr = $aReportData['content'][5]['content'][1]['content'][1]['content'];
@@ -950,8 +959,8 @@ class ForumParser
 
         if ($bTitleTextPresent==true && $bSmallTextPresent==true && $bReportUnitsPresent==false) {
           if (
-          ($Locale == 'nl' && $SmallText!='Niet zichtbaar.') ||
-          ($Locale == 'de' && $SmallText!='Nicht sichtbar.')) {
+            ($Locale == 'nl' && $SmallText!='Niet zichtbaar.') ||
+            ($Locale == 'de' && $SmallText!='Nicht sichtbar.')) {
             throw new ForumParserExceptionError("Hidden troop check invalid for locale. string mismatch");
           }
           throw new ForumParserExceptionDebug("Report units are probably hidden.");

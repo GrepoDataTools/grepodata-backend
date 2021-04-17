@@ -190,7 +190,12 @@ class InboxParser
       $oDateMax = new Carbon();
       $oDateMax->addHours(26);
       if ($oDate > $oDateMax) {
-        throw new InboxParserExceptionError("Parsed date is in the future");
+        // subtract 1 day and try again
+        Logger::warning("InbooxParser ". $ReportHash . ": Parsed date is in the future, subtracting 1 day.");
+        $oDate->subDays(1);
+        if ($oDate > $oDateMax) {
+          throw new InboxParserExceptionError("Parsed date is in the future");
+        }
       }
       $oDateMin = new Carbon();
       $oDateMin->subDays(150);
@@ -869,6 +874,8 @@ class InboxParser
           foreach ($aUnitInfo[$Moment] as $Unit => $Value) {
             if (!key_exists($Unit, $aCityUnitsFinal[$Moment])) {
               $aCityUnitsFinal[$Moment][$Unit] = $Value;
+            } else if ($Moment=='lost') {
+              $aCityUnitsFinal[$Moment][$Unit] += $Value;
             }
           }
         }
