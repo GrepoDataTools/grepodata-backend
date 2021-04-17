@@ -240,7 +240,7 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
       $oUser = Authentication::verifyJWT($aParams['access_token']);
 
       // Validate captcha
-      if (!bDevelopmentMode && isset($aParams['captcha'])) {
+      if (isset($aParams['captcha']) && $aParams['captcha']!='') {
         BaseRoute::verifyCaptcha($aParams['captcha']);
       }
 
