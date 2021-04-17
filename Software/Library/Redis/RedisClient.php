@@ -7,14 +7,13 @@ use Redis;
 
 class RedisClient
 {
-  const INDEXER_PLAYER_PREFIX = 'gd_indexer_player_intel_'; // followed by: {uid}_{player_id}_{world}
-  const INDEXER_ALLIANCE_PREFIX = 'gd_indexer_alliance_intel_'; // followed by: {uid}_{alliance_id}_{world}
-  const INDEXER_TOWN_PREFIX = 'gd_indexer_town_intel_'; // followed by: {uid}_{town_id}_{world}
+  const INDEXER_PLAYER_PREFIX = 'gd_indexer_player_intel_'; // followed by: {uid}{player_id}{world}
+  const INDEXER_ALLIANCE_PREFIX = 'gd_indexer_alliance_intel_'; // followed by: {uid}{alliance_id{world}
 
   /**
    * @return Redis
    */
-  public static function GetInstance()
+  private static function GetInstance()
   {
     static $inst = null;
     if ($inst === null) {
@@ -34,6 +33,7 @@ class RedisClient
    */
   public static function SetKey($Key, $Data, $TimeoutSeconds=60): bool
   {
+    if (bDevelopmentMode) return false;
     try {
       $oRedis = self::GetInstance();
       return $oRedis->set($Key, $Data, ['nx', 'ex'=>$TimeoutSeconds]);
@@ -50,6 +50,7 @@ class RedisClient
    */
   public static function GetKey($Key)
   {
+    if (bDevelopmentMode) return false;
     try {
       $oRedis = self::GetInstance();
       return $oRedis->get($Key);

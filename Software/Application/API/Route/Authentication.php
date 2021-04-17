@@ -86,7 +86,7 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
       $Result = self::sendRegistrationMail($oUser);
     }
 
-    $Masked = self::maskEmail($oUser->email);
+    $Masked = \Grepodata\Library\Router\Authentication::maskEmail($oUser->email);
 
     // Response
     $aResponseData = array(
@@ -536,23 +536,6 @@ admin@grepodata.com',
     );
 
     return self::OutputJson($aResponse);
-  }
-
-  private static function maskEmail($email) {
-    $mail_parts = explode("@", $email);
-    $length = strlen($mail_parts[0]);
-
-    if($length <= 4 & $length > 1)
-    {
-      $show = 1;
-    }else{
-      $show = floor($length/2);
-    }
-
-    $hide = $length - $show;
-    $replace = str_repeat("*", $hide);
-
-    return substr_replace ( $mail_parts[0] , $replace , $show, $hide ) . "@" . substr_replace($mail_parts[1], "**", 0, 2);
   }
 
   private static function sendRegistrationMail(\Grepodata\Library\Model\User $oUser) {

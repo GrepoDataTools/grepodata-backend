@@ -28,7 +28,7 @@ class Authentication
     $aPayload = array(
       'iss' => 'https://grepodata.com',
       'uid' => $oUser->id,
-      'mail' => $oUser->email,
+      'mail' => self::maskEmail($oUser->email),
       'username' => $oUser->username,
       'mail_is_confirmed' => ($oUser->is_confirmed==true?true:false),
       'account_is_linked' => ($oUser->is_linked==true?true:false),
@@ -110,5 +110,23 @@ class Authentication
   private static function invalidJWT()
   {
     ResponseCode::errorCode(3003, array(), 401);
+  }
+
+  public static function maskEmail($email) {
+    $mail_parts = explode("@", $email);
+    $length = strlen($mail_parts[0]);
+
+    if($length <= 4 & $length > 1)
+    {
+      $show = 1;
+    }else{
+      $show = floor($length/2);
+    }
+
+    $hide = $length - $show;
+    $replace = str_repeat("*", $hide);
+
+    return substr_replace ( $mail_parts[0] , $replace , $show, $hide ) . "@" . substr_replace($mail_parts[1], "**", 0, 2);
+
   }
 }
