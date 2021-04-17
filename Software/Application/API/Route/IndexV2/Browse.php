@@ -7,7 +7,6 @@ use Exception;
 use Grepodata\Library\Controller\Alliance;
 use Grepodata\Library\Controller\World;
 use Grepodata\Library\Model\Indexer\IndexInfo;
-use Grepodata\Library\Redis\Client;
 use Grepodata\Library\Redis\RedisClient;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -139,7 +138,11 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
 
       if (is_numeric($aParams['player_id'])) {
         $CachedResponse = RedisClient::GetKey(RedisClient::INDEXER_PLAYER_PREFIX.$aParams['player_id'].$oWorld->grep_id.$oUser->id);
-        return self::OutputJson($CachedResponse);
+        if ($CachedResponse!=false) {
+          $aResponse = json_decode($CachedResponse, true);
+          $aResponse['cached_response'] = true;
+          return self::OutputJson($aResponse);
+        }
       }
 
       // Get intel
@@ -154,7 +157,7 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
       $aResponse['query_ms'] = $ElapsedMs;
 
       if (is_numeric($aParams['player_id'])) {
-        RedisClient::SetKey(RedisClient::INDEXER_PLAYER_PREFIX.$aParams['player_id'].$oWorld->grep_id.$oUser->id, $aResponse, 300);
+        RedisClient::SetKey(RedisClient::INDEXER_PLAYER_PREFIX.$aParams['player_id'].$oWorld->grep_id.$oUser->id, json_encode($aResponse), 300);
       }
 
       return self::OutputJson($aResponse);
@@ -176,6 +179,15 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
 
       // get world
       $oWorld = World::getWorldById($aParams['world']);
+
+      if (is_numeric($aParams['alliance_id'])) {
+        $CachedResponse = RedisClient::GetKey(RedisClient::INDEXER_ALLIANCE_PREFIX.$aParams['alliance_id'].$oWorld->grep_id.$oUser->id);
+        if ($CachedResponse!=false) {
+          $aResponse = json_decode($CachedResponse, true);
+          $aResponse['cached_response'] = true;
+          return self::OutputJson($aResponse);
+        }
+      }
 
       // Get intel
       $Start = round(microtime(true) * 1000);
@@ -201,6 +213,11 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
       $aResponse['script_version'] = USERSCRIPT_VERSION;
       $aResponse['update_message'] = USERSCRIPT_UPDATE_INFO;
       $aResponse['query_ms'] = $ElapsedMs;
+
+      if (is_numeric($aParams['alliance_id'])) {
+        RedisClient::SetKey(RedisClient::INDEXER_ALLIANCE_PREFIX.$aParams['alliance_id'].$oWorld->grep_id.$oUser->id, json_encode($aResponse), 300);
+      }
+
       return self::OutputJson($aResponse);
 
     } catch (ModelNotFoundException $e) {
@@ -506,11 +523,11 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
           $bPrimaryIntel = false;
         }
       }
-      
+
       // sea units
       if (isset($aCity['sea']) && $aCity['sea'] !== null && is_array($aCity['sea']) && sizeof($aCity['sea'])>0) {
         $aSeaUnits = (array) $aCity['sea'];
-        
+
         // Bir
         $BirKey = '';
         if (isset($aSeaUnits['bir']) && $aSeaUnits['bir'] !== null && $aSeaUnits['bir'] !== '') {
