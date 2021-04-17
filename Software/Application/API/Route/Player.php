@@ -24,20 +24,6 @@ class Player extends \Grepodata\Library\Router\BaseRoute
       $oPlayer = \Grepodata\Library\Controller\Player::firstOrFail($aParams['id'], $aParams['world']);
       $aResponse = $oPlayer->getPublicFields();
 
-      // Hours inactive
-      $aResponse['hours_inactive'] = null;
-      try {
-        if (!is_null($oPlayer->att_point_date) && !is_null($oPlayer->town_point_date)) {
-          $LastActivity = $oPlayer->att_point_date;
-          if ($oPlayer->town_point_date > $LastActivity) {
-            $LastActivity = $oPlayer->town_point_date;
-          }
-          $Now = Carbon::now();
-          $HoursInactive = $Now->diffInHours($LastActivity);
-          $aResponse['hours_inactive'] = $HoursInactive;
-        }
-      } catch (Exception $e) {}
-
       // Attach alliance name
       if (isset($aParams['a_name']) && ($aParams['a_name'] === true || $aParams['a_name'] === 'true')) {
         $aResponse['alliance_name'] = '';
@@ -246,20 +232,6 @@ class Player extends \Grepodata\Library\Router\BaseRoute
                 //}
               }
 
-              // Hours inactive
-              $aResponse['results'][$i]['hours_inactive'] = null;
-              try {
-                if (!is_null($oPlayer->att_point_date) && !is_null($oPlayer->town_point_date)) {
-                  $LastActivity = $oPlayer->att_point_date;
-                  if ($oPlayer->town_point_date > $LastActivity) {
-                    $LastActivity = $oPlayer->town_point_date;
-                  }
-                  $Now = Carbon::now();
-                  $HoursInactive = $Now->diffInHours($LastActivity);
-                  $aResponse['results'][$i]['hours_inactive'] = $HoursInactive;
-                }
-              } catch (Exception $e) {}
-
               if ($aBestMatch == null
                 && isset($aParams['query'])
                 && strtolower($oPlayer->name) === strtolower($aParams['query'])) {
@@ -304,20 +276,6 @@ class Player extends \Grepodata\Library\Router\BaseRoute
               if ($oAlliance !== null) $aData['alliance_name'] = $oAlliance->name;
             } catch (ModelNotFoundException $e) {}//Ignore optional alliance name fail
           }
-
-          // Hours inactive
-          $aData['hours_inactive'] = null;
-          try {
-            if (!is_null($oPlayer->att_point_date) && !is_null($oPlayer->town_point_date)) {
-              $LastActivity = $oPlayer->att_point_date;
-              if ($oPlayer->town_point_date > $LastActivity) {
-                $LastActivity = $oPlayer->town_point_date;
-              }
-              $Now = Carbon::now();
-              $HoursInactive = $Now->diffInHours($LastActivity);
-              $aData['hours_inactive'] = $HoursInactive;
-            }
-          } catch (Exception $e) {}
           
           $aResponse['results'][] = $aData;
         }

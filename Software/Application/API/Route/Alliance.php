@@ -246,7 +246,8 @@ class Alliance extends \Grepodata\Library\Router\BaseRoute
           'att_rank' => $oPlayer->att_rank,
           'def_rank' => $oPlayer->def_rank,
           'towns'   => $oPlayer->towns,
-          'heatmap' => json_decode($oPlayer->heatmap, true),
+          'heatmap' => array(), // deprecated
+          'hours_inactive' => $oPlayer->getHoursInactive(),
           'history' => array()
         );
 

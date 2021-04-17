@@ -3,6 +3,7 @@
 namespace Grepodata\Library\Model;
 
 use Carbon\Carbon;
+use Exception;
 use \Illuminate\Database\Eloquent\Model;
 
 /**
@@ -71,7 +72,26 @@ class Player extends Model
       'fight_rank_date' => $this->fight_rank_max < $this->fight_rank ? $this->fight_rank_date : $Now,
       'att_point_date' => $this->att_point_date ?? null,
       'town_point_date' => $this->town_point_date ?? null,
-      'heatmap' => (is_null($this->heatmap)? array() : json_decode($this->heatmap, true)),
+      'hours_inactive' => $this->getHoursInactive() ?? null,
+      'heatmap' => array(), // deprecated
     );
   }
+
+  public function getHoursInactive()
+  {
+    // Hours inactive
+    $HoursInactive = null;
+    try {
+      if (!is_null($this->att_point_date) && !is_null($this->town_point_date)) {
+        $LastActivity = $this->att_point_date;
+        if ($this->town_point_date > $LastActivity) {
+          $LastActivity = $this->town_point_date;
+        }
+        $Now = Carbon::now();
+        $HoursInactive = $Now->diffInHours($LastActivity);
+      }
+    } catch (Exception $e) {}
+    return $HoursInactive;
+  }
+
 }
