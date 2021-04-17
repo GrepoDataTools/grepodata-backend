@@ -7,6 +7,8 @@ use Exception;
 use Grepodata\Library\Controller\Alliance;
 use Grepodata\Library\Controller\World;
 use Grepodata\Library\Model\Indexer\IndexInfo;
+use Grepodata\Library\Redis\Client;
+use Grepodata\Library\Redis\RedisClient;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class Browse extends \Grepodata\Library\Router\BaseRoute
@@ -135,6 +137,11 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
       // get world
       $oWorld = World::getWorldById($aParams['world']);
 
+      if (is_numeric($aParams['player_id'])) {
+        $CachedResponse = RedisClient::GetKey(RedisClient::INDEXER_PLAYER_PREFIX.$aParams['player_id'].$oWorld->grep_id.$oUser->id);
+        return self::OutputJson($CachedResponse);
+      }
+
       // Get intel
       $Start = round(microtime(true) * 1000);
       $aIntel = \Grepodata\Library\Controller\IndexV2\Intel::allByUserForPlayer($oUser, $oWorld->grep_id, $aParams['player_id'], true);
@@ -145,6 +152,11 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
       $aResponse['script_version'] = USERSCRIPT_VERSION;
       $aResponse['update_message'] = USERSCRIPT_UPDATE_INFO;
       $aResponse['query_ms'] = $ElapsedMs;
+
+      if (is_numeric($aParams['player_id'])) {
+        RedisClient::SetKey(RedisClient::INDEXER_PLAYER_PREFIX.$aParams['player_id'].$oWorld->grep_id.$oUser->id, $aResponse, 300);
+      }
+
       return self::OutputJson($aResponse);
 
     } catch (ModelNotFoundException $e) {

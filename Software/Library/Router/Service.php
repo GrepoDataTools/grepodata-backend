@@ -60,8 +60,13 @@ class Service
         // Check rate limits (default limit applies if route does not specify)
         if (!bDevelopmentMode) {
           try {
-            $RateLimit = 200;
-            $RateWindow = 60;
+            // Default rate limit (null = no rate limit)
+            //$RateLimit = 200;
+            //$RateWindow = 60;
+            $RateLimit = null;
+            $RateWindow = null;
+
+            // Route specific rate limit
             if (isset($aMatchedParameters['_ratelimit']) && is_array($aMatchedParameters['_ratelimit'])) {
               $RateLimit = $aMatchedParameters['_ratelimit']['limit'];
               if (isset($aMatchedParameters['_ratelimit']['window'])) {
@@ -69,16 +74,19 @@ class Service
               }
             }
 
-            $ResourceId = $aMatchedParameters['_controller'] . $MethodName . $_SERVER['REMOTE_ADDR'];
-            $RateLimiter = \RateLimit\RateLimiterFactory::createRedisBackedRateLimiter([
-              'host' => REDIS_HOST,
-              'port' => REDIS_PORT,
-            ], $RateLimit, $RateWindow);
-            try {
-              $RateLimiter->hit($ResourceId);
-            } catch (RateLimitExceededException $e) {
-              Logger::error("Rate limit exceeded on resource " . $ResourceId . " => " . $e->getMessage());
-              die(BaseRoute::OutputJson(array('message' => 'Too many requests. You have exceeded the rate limit for this specific resource. Please try again in a minute.'), 429));
+            if ($RateLimit !== null) {
+              $ResourceId = $aMatchedParameters['_controller'] . $MethodName . $_SERVER['REMOTE_ADDR'];
+              $RateLimiter = \RateLimit\RateLimiterFactory::createRedisBackedRateLimiter([
+                'host' => REDIS_HOST,
+                'port' => REDIS_PORT,
+              ], $RateLimit, $RateWindow);
+              try {
+                $RateLimiter->hit($ResourceId);
+              } catch (RateLimitExceededException $e) {
+                header('Access-Control-Allow-Origin: *');
+                Logger::error("Rate limit exceeded on resource " . $ResourceId . " => " . $e->getMessage());
+                die(BaseRoute::OutputJson(array('message' => 'Too many requests. You have exceeded the rate limit for this specific resource. Please try again in a minute.'), 429));
+              }
             }
           } catch (\Exception $e) {
             Logger::error("CRITICAL: Exception caught while handling redis rate limit => " . $e->getMessage() . "[".$e->getTraceAsString()."]");
