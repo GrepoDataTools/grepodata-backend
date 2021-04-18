@@ -273,6 +273,7 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
         $aConqDetails = json_decode($oCity->conquest_details, true);
         $aAttOnConq = array(
           'date' => $oCity->parsed_date,
+          'sort_date' => Carbon::parse($oCity->parsed_date),
           'attacker' => array(
             'town_id' => $oCity->town_id,
             'town_name' => $oCity->town_name,
@@ -307,6 +308,14 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
 
         $aResponse['intel'][] = $aAttOnConq;
       }
+
+      // sort by sort_date desc
+      usort($aResponse['intel'], function ($a, $b) {
+        if ($a['sort_date'] == $b['sort_date']) {
+          return 0;
+        }
+        return ($a['sort_date'] < $b['sort_date']) ? 1 : -1;
+      });
 
       return self::OutputJson($aResponse);
     } catch (ModelNotFoundException $e) {

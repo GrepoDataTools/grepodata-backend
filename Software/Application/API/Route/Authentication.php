@@ -103,7 +103,7 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
       $aParams = self::validateParams(array('token'));
 
       try {
-        $oUser = \Grepodata\Library\Router\Authentication::verifyAccountToken($aParams['token']);
+        $oUser = \Grepodata\Library\Router\Authentication::verifyAccountToken($aParams['token'], false);
       } catch (ModelNotFoundException $e) {
         Logger::warning("User not found for email confirmation token: ".$aParams['token']);
         header("Location: ".FRONTEND_URL."/profile?token=invalid");
@@ -117,6 +117,7 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
         die();
       }
 
+      Logger::warning("confirmed user with token. ".$oUser->id." ".$aParams['token']);
       $oUser->is_confirmed = true;
       $oUser->token = null;
       $oUser->save();

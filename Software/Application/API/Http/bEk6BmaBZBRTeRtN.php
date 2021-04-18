@@ -407,6 +407,7 @@ if ($aJobs !== false) {
 	<option value="3" <?php echo isset($_GET['level']) && $_GET['level'] == 3 ? 'selected':''?>>3 - Info</option>
 	<option value="4" <?php echo isset($_GET['level']) && $_GET['level'] == 4 ? 'selected':''?>>4 - Silly</option>
 	<option value="10" <?php echo isset($_GET['level']) && $_GET['level'] == 10 ? 'selected':''?>>10 - Indexer</option>
+    <option value="100" <?php echo isset($_GET['level']) && $_GET['level'] == 100 ? 'selected':''?>>100 - V2 migration</option>
 </select>
 <button onclick="search()">Go</button>
 

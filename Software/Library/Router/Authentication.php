@@ -94,15 +94,23 @@ class Authentication
    * @param $Token
    * @return User
    */
-  public static function verifyAccountToken($Token)
+  public static function verifyAccountToken($Token, $bDieOnFailure = true)
   {
     if (empty($Token)) {
-      ResponseCode::errorCode(3006, array(), 401);
+      if ($bDieOnFailure===true) {
+        ResponseCode::errorCode(3006, array(), 401);
+      } else {
+        throw new ModelNotFoundException();
+      }
     }
     try {
       $oUser = \Grepodata\Library\Controller\User::GetUserByToken($Token);
     } catch (ModelNotFoundException $e) {
-      ResponseCode::errorCode(3006, array(), 401);
+      if ($bDieOnFailure===true) {
+        ResponseCode::errorCode(3006, array(), 401);
+      } else {
+        throw new ModelNotFoundException();
+      }
     }
     return $oUser;
   }
