@@ -114,81 +114,84 @@ class Profile extends BaseRoute
 
   public static function LinkedAccountsGET()
   {
-    // Validate params
-    $aParams = self::validateParams(array('access_token'));
-    $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
-
-    // Email needs to be confirmed to continue
-    if ($oUser->is_confirmed==false) {
-      ResponseCode::errorCode(3010, array(), 403);
-    }
-
-    $aResponse = array(
-      'rows' => 0,
-      'items' => array(),
-    );
-    $aLinkedAccounts = Linked::getAllByUser($oUser);
-    foreach ($aLinkedAccounts as $oLinked) {
-      $aResponse['items'][] = $oLinked->getPublicFields();
-    }
-    $aResponse['rows'] = sizeof($aResponse['items']);
-
-    ResponseCode::success($aResponse);
+    die(self::OutputJson(array('disabled' => true), 200));
+//    // Validate params
+//    $aParams = self::validateParams(array('access_token'));
+//    $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+//
+//    // Email needs to be confirmed to continue
+//    if ($oUser->is_confirmed==false) {
+//      ResponseCode::errorCode(3010, array(), 403);
+//    }
+//
+//    $aResponse = array(
+//      'rows' => 0,
+//      'items' => array(),
+//    );
+//    $aLinkedAccounts = Linked::getAllByUser($oUser);
+//    foreach ($aLinkedAccounts as $oLinked) {
+//      $aResponse['items'][] = $oLinked->getPublicFields();
+//    }
+//    $aResponse['rows'] = sizeof($aResponse['items']);
+//
+//    ResponseCode::success($aResponse);
   }
 
   public static function AddLinkedAccountPOST()
   {
-    // Validate params
-    $aParams = self::validateParams(array('access_token', 'player_id', 'player_name', 'server'), array('access_token'));
-    $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
-
-    // Email needs to be confirmed to continue
-    if ($oUser->is_confirmed==false) {
-      ResponseCode::errorCode(3010, array(), 403);
-    }
-
-    try {
-      // Check if link was already requested
-      $oLinked = Linked::getByPlayerIdAndServer($oUser, $aParams['player_id'], $aParams['server']);
-    } catch (ModelNotFoundException $e) {
-      // Create new link
-      $oLinked = Linked::newLinkedAccount($oUser, $aParams['player_id'], $aParams['player_name'], $aParams['server']);
-    }
-
-
-    $aResponse = array(
-      'linked_account' => $oLinked->getPublicFields()
-    );
-    ResponseCode::success($aResponse);
+    die(self::OutputJson(array('disabled' => true), 200));
+//    // Validate params
+//    $aParams = self::validateParams(array('access_token', 'player_id', 'player_name', 'server'), array('access_token'));
+//    $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+//
+//    // Email needs to be confirmed to continue
+//    if ($oUser->is_confirmed==false) {
+//      ResponseCode::errorCode(3010, array(), 403);
+//    }
+//
+//    try {
+//      // Check if link was already requested
+//      $oLinked = Linked::getByPlayerIdAndServer($oUser, $aParams['player_id'], $aParams['server']);
+//    } catch (ModelNotFoundException $e) {
+//      // Create new link
+//      $oLinked = Linked::newLinkedAccount($oUser, $aParams['player_id'], $aParams['player_name'], $aParams['server']);
+//    }
+//
+//
+//    $aResponse = array(
+//      'linked_account' => $oLinked->getPublicFields()
+//    );
+//    ResponseCode::success($aResponse);
   }
 
   public static function RemoveLinkedAccountPOST()
   {
-    // Validate params
-    $aParams = self::validateParams(array('access_token', 'player_id', 'server'));
-    $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
-
-    // Email needs to be confirmed to continue
-    if ($oUser->is_confirmed==false) {
-      ResponseCode::errorCode(3010, array(), 403);
-    }
-
-    try {
-      $oLinked = Linked::getByPlayerIdAndServer($oUser, $aParams['player_id'], $aParams['server']);
-    } catch (ModelNotFoundException $e) {
-      Logger::error("Unable to find account link for user ".$oUser->id);
-      ResponseCode::errorCode(4100, array(), 400);
-    }
-
-    try {
-      Linked::unlink($oLinked);
-    } catch (\Exception $e) {
-      Logger::error("Unable to delete account link ".$oLinked->id. "; ".$e->getMessage());
-      ResponseCode::errorCode(4200, array(), 400);
-    }
-
-    $aResponse = array();
-    ResponseCode::success($aResponse, 4200);
+    die(self::OutputJson(array('disabled' => true), 200));
+//    // Validate params
+//    $aParams = self::validateParams(array('access_token', 'player_id', 'server'));
+//    $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+//
+//    // Email needs to be confirmed to continue
+//    if ($oUser->is_confirmed==false) {
+//      ResponseCode::errorCode(3010, array(), 403);
+//    }
+//
+//    try {
+//      $oLinked = Linked::getByPlayerIdAndServer($oUser, $aParams['player_id'], $aParams['server']);
+//    } catch (ModelNotFoundException $e) {
+//      Logger::error("Unable to find account link for user ".$oUser->id);
+//      ResponseCode::errorCode(4100, array(), 400);
+//    }
+//
+//    try {
+//      Linked::unlink($oLinked);
+//    } catch (\Exception $e) {
+//      Logger::error("Unable to delete account link ".$oLinked->id. "; ".$e->getMessage());
+//      ResponseCode::errorCode(4200, array(), 400);
+//    }
+//
+//    $aResponse = array();
+//    ResponseCode::success($aResponse, 4200);
   }
 
 }

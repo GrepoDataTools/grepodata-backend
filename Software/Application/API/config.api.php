@@ -27,7 +27,7 @@ $limit100PerMin = array(
 $oRouter->Add('register', new Route('/auth/register', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
   '_method'     => 'Register',
-  '_ratelimit'  => $limit10PerMin
+  '_ratelimit'  => $limit50PerMin
 )));
 $oRouter->Add('confirmMail', new Route('/confirm', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
@@ -61,7 +61,7 @@ $oRouter->Add('login', new Route('/auth/login', array(
 $oRouter->Add('forgot', new Route('/auth/reset', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
   '_method'     => 'Forgot',
-  '_ratelimit'  => $limit3PerMin
+  '_ratelimit'  => $limit10PerMin
 )));
 // Reset password
 $oRouter->Add('changepassword', new Route('/auth/changepassword', array(
@@ -75,7 +75,7 @@ $oRouter->Add('changepassword', new Route('/auth/changepassword', array(
 $oRouter->Add('newscriptlink', new Route('/auth/newscriptlink', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
   '_method'     => 'NewScriptLink',
-  '_ratelimit'  => $limit50PerMin
+  '_ratelimit'  => $limit100PerMin
 )));
 $oRouter->Add('verifyscriptlink', new Route('/auth/verifyscriptlink', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
@@ -117,7 +117,7 @@ $oRouter->Add('profileLinkedAccounts', new Route('/profile/linked', array(
 $oRouter->Add('profileAddLinkedAccounts', new Route('/profile/addlinked', array(
   '_controller' => '\Grepodata\Application\API\Route\Profile',
   '_method'     => 'AddLinkedAccount',
-  '_ratelimit'  => $limit10PerMin
+  '_ratelimit'  => $limit50PerMin
 )));
 $oRouter->Add('profileRemoveLinkedAccounts', new Route('/profile/removelinked', array(
   '_controller' => '\Grepodata\Application\API\Route\Profile',
@@ -288,7 +288,7 @@ $oRouter->Add('newIndexV2', new Route('/indexer/v2/newindex', array(
 $oRouter->Add('newShareLink', new Route('/indexer/v2/newlink', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Index',
   '_method'     => 'NewShareLink',
-  '_ratelimit'  => $limit10PerMin
+  '_ratelimit'  => $limit50PerMin
 )));
 $oRouter->Add('getIndexV2', new Route('/indexer/v2/getindex', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Index',
@@ -379,7 +379,7 @@ $oRouter->Add('searchindexusers', new Route('/indexer/search/user', array(
 $oRouter->Add('importv1keys', new Route('/migrate/importv1keys', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\IndexUsers',
   '_method'     => 'ImportV1Keys',
-  '_ratelimit'  => $limit100PerMin
+  '_ratelimit'  => $limit50PerMin
 )));
 
 // Join via invite link
