@@ -399,21 +399,21 @@ class Hourly
     $oAllianceScoreboard->server_time = $ScoreboardTime;
 
     // Check domination scoreboard record
-    try {
-      $oDominationScoreboard = DominationScoreboard::firstOrNew(array('world'=>$oWorld->grep_id, 'date'=>$ScoreboardDate));
-      if (is_null($oDominationScoreboard->domination_json)) {
-        $oWorldDomination = WorldDomination::where('world', '=', $oWorld->grep_id)
-          ->where('updated_at', '>', Carbon::now()->subDays(7))
-          ->first();
-        if (!is_null($oWorldDomination) && !is_null($oWorldDomination->domination_json)) {
-          Logger::warning("Creating domination scoreboard for world " . $oWorld->grep_id . " on " . $ScoreboardDate);
-          $oDominationScoreboard->domination_json = $oWorldDomination->domination_json;
-          $oDominationScoreboard->save();
-        }
-      }
-    } catch (Exception $exception) {
-      Logger::warning("Error parsing domination scoreboard for world: " . $oWorld->grep_id);
-    }
+//    try {
+//      $oDominationScoreboard = DominationScoreboard::firstOrNew(array('world'=>$oWorld->grep_id, 'date'=>$ScoreboardDate));
+//      if (is_null($oDominationScoreboard->domination_json)) {
+//        $oWorldDomination = WorldDomination::where('world', '=', $oWorld->grep_id)
+//          ->where('updated_at', '>', Carbon::now()->subDays(7))
+//          ->first();
+//        if (!is_null($oWorldDomination) && !is_null($oWorldDomination->domination_json)) {
+//          Logger::warning("Creating domination scoreboard for world " . $oWorld->grep_id . " on " . $ScoreboardDate);
+//          $oDominationScoreboard->domination_json = $oWorldDomination->domination_json;
+//          $oDominationScoreboard->save();
+//        }
+//      }
+//    } catch (Exception $exception) {
+//      Logger::warning("Error parsing domination scoreboard for world: " . $oWorld->grep_id);
+//    }
 
     $bIsFirstOfDay = false;
     if (isset($oPlayerScoreboard->att) && isset($oAllianceScoreboard->att)) {

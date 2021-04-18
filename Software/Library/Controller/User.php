@@ -31,6 +31,9 @@ class User
    */
   public static function GetUserByToken($Token)
   {
+    if (empty($Token)) {
+      return false;
+    }
     return \Grepodata\Library\Model\User::where('token', '=', $Token)
       ->firstOrFail();
   }

@@ -103,14 +103,16 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
       $aParams = self::validateParams(array('token'));
 
       try {
-        $oUser = User::GetUserByToken($aParams['token']);
+        $oUser = \Grepodata\Library\Router\Authentication::verifyAccountToken($aParams['token']);
       } catch (ModelNotFoundException $e) {
+        Logger::warning("User not found for email confirmation token: ".$aParams['token']);
         header("Location: ".FRONTEND_URL."/profile?token=invalid");
         die();
       }
 
       if ($oUser->is_confirmed == true) {
         // Already confirmed
+        Logger::warning("User is already confirmed: ".$oUser->id);
         header("Location: ".FRONTEND_URL."/profile?token=confirmed");
         die();
       }
@@ -560,7 +562,7 @@ You are receiving this message because an account was created on grepodata.com u
 <br/>
 Please click on the following link to confirm your account:<br/>
 <br/>
-<a href="https://api.grepodata.com/confirm?token='.$Token.'">https://grepodata.com/confirm?token='.$Token.'</a><br/>
+<a href="https://api.grepodata.com/confirm?token='.$Token.'">https://api.grepodata.com/confirm?token='.$Token.'</a><br/>
 <br/>
 If you did not request this email, someone else may have entered your email address into our account registration form.<br/>
 You can ignore this email if you no longer wish to create an account for our website.<br/>

@@ -179,17 +179,17 @@ if ($bMigrateIntel) {
 }
 
 /** Migrate conquests */
-//$bMigrateConquests = true;
-$bMigrateConquests = false;
+$bMigrateConquests = true;
+//$bMigrateConquests = false;
 if ($bMigrateConquests) {
-  Logger::warning("Migrating notes.");
+  Logger::warning("Migrating conquests.");
   // 'Index_conquest' gets split into 'Indexer_conquest' and 'Indexer_conquest_overview'
   $SQL = "
     INSERT IGNORE INTO Indexer_conquest (id, town_id, world, town_name, player_id, player_name, alliance_id, alliance_name, belligerent_player_id, belligerent_player_name, belligerent_alliance_id, belligerent_alliance_name, first_attack_date, created_at, updated_at, cs_killed, new_owner_player_id)
     SELECT 
            conquest.id,
            conquest.town_id,
-           conquest.world,
+           indexinfo.world,
            conquest.town_name,
            conquest.player_id,
            conquest.player_name,
@@ -205,11 +205,12 @@ if ($bMigrateConquests) {
            conquest.cs_killed,
            conquest.new_owner_player_id
     FROM Index_conquest as conquest
+    LEFT JOIN Index_info as indexinfo ON indexinfo.key_code = conquest.index_key
     ";
   $Execute = DB::select(DB::raw($SQL));
 
   $SQL = "
-    INSERT IGNORE INTO Indexer_conquest_overview (conquest_id, uid, index_key, num_attacks_counted, belligerent_all, total_losses_att, total_losses_def, created_at, updated_at, updated_at)
+    INSERT IGNORE INTO Indexer_conquest_overview (conquest_id, uid, index_key, num_attacks_counted, belligerent_all, total_losses_att, total_losses_def, created_at, updated_at)
     SELECT 
            conquest.id,
            conquest.uid,
@@ -219,7 +220,6 @@ if ($bMigrateConquests) {
            conquest.total_losses_att,
            conquest.total_losses_def,
            conquest.created_at,
-           conquest.updated_at,
            conquest.updated_at
     FROM Index_conquest as conquest
     ";
