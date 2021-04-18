@@ -5,6 +5,10 @@ use Symfony\Component\Routing\Route;
 $oRouter = \Grepodata\Library\Router\Service::GetInstance();
 
 // Define rate limits
+$limit1PerMin = array(
+  'limit' => 1,
+  'window' => 60
+);
 $limit3PerMin = array(
   'limit' => 3,
   'window' => 60
@@ -37,7 +41,7 @@ $oRouter->Add('confirmMail', new Route('/confirm', array(
 $oRouter->Add('newConfirmMail', new Route('/auth/newconfirm', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
   '_method'     => 'RequestNewConfirmMail',
-  '_ratelimit'  => $limit3PerMin
+  '_ratelimit'  => $limit1PerMin
 )));
 // Verify
 $oRouter->Add('verifytoken', new Route('/auth/token', array(
@@ -92,7 +96,7 @@ $oRouter->Add('authenticatescriptlink', new Route('/auth/authenticatescriptlink'
 $oRouter->Add('accountdeletemail', new Route('/auth/deleteaccount', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
   '_method'     => 'DeleteAccount',
-  '_ratelimit'  => $limit3PerMin
+  '_ratelimit'  => $limit1PerMin
 )));
 $oRouter->Add('accountdeleteconfirm', new Route('/auth/deleteaccountconfirm', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
