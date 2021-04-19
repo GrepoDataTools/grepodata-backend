@@ -24,7 +24,7 @@ Logger::debugInfo("Started mailer");
 $Start = Carbon::now();
 $oCronStatus = Common::markAsRunning(__FILE__, 2*60, false);
 
-$MaxAttempts = 3;
+$MaxAttempts = 1;
 
 // process mail jobs
 $Count = 0;
