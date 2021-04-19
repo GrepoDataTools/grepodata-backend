@@ -13,11 +13,12 @@ class Client
   /**
    * Retry sending mail object
    * @param \Grepodata\Library\Model\MailJobs $oMail
+   * @param bool $bUseSendGrid
    * @return int
    */
-  public static function RetryMail($oMail)
+  public static function RetryMail($oMail, $bUseSendGrid = false)
   {
-    return self::SendMail('admin@grepodata.com', $oMail->to_mail, $oMail->subject, $oMail->message, $oMail, true);
+    return self::SendMail('admin@grepodata.com', $oMail->to_mail, $oMail->subject, $oMail->message, $oMail, true, $bUseSendGrid);
   }
 
   /**
@@ -31,7 +32,7 @@ class Client
    */
   public static function SendMail($From = 'admin@grepodata.com', $To = 'admin@grepodata.com',
                                   $Subject = '', $Message = '',
-                                  $oMail = null, $bCreateMailObject = false)
+                                  $oMail = null, $bCreateMailObject = false, $bUseSendGrid = false)
   {
     try {
       if ($Message == '' || $Subject == '') {
@@ -39,9 +40,15 @@ class Client
       }
 
       // Try to send mail
-      $result = self::SendRequest($From, $To, $Subject, $Message);
+      if (!$bUseSendGrid) {
+        $result = self::SendRequestSMTP($From, $To, $Subject, $Message);
+      } else {
+        $result = self::SendRequestSendGrid($From, $To, $Subject, $Message);
+      }
       if ($result <= 0) {
         throw new \Exception("mailer result was <= 0");
+      } else {
+        Logger::warning("Good mail result: ".$result);
       }
 
       return $result;
@@ -66,9 +73,18 @@ class Client
     }
   }
 
-  private static function SendRequest($From = 'admin@grepodata.com', $To = 'admin@grepodata.com', $Subject = '', $Message = '')
+  /**
+   * Send an email using the SendGrid API
+   * @param string $From
+   * @param string $To
+   * @param string $Subject
+   * @param string $Message
+   * @return int
+   * @throws \SendGrid\Mail\TypeException
+   */
+  private static function SendRequestSendGrid($From = 'admin@grepodata.com', $To = 'admin@grepodata.com', $Subject = '', $Message = '')
   {
-    $FromName = $From=='admin@grepodata.com'? 'GrepoData Admin':'';
+    $FromName = $From=='admin@grepodata.com'? 'GrepoData':'';
 
     // Create a new mail
     $email = new Mail();
@@ -84,9 +100,9 @@ class Client
     $Result = 0;
     try {
       $response = $sendgrid->send($email);
-      $mail_result = "MailResult: ".$response->statusCode()." {headers: ".$response->headers()."} [body: ".$response->body()."]";
-      Logger::debugInfo($mail_result);
-      if (in_array($response->statusCode(), array(200, 250))) {
+      $mail_result = "SendGrid MailResult: ".$response->statusCode()." {headers: ".json_encode($response->headers())."} [body: ".$response->body()."]";
+      Logger::warning($mail_result);
+      if (in_array($response->statusCode(), array(200, 202, 250))) {
         $Result = 1;
       }
     } catch (Exception $e) {
@@ -97,6 +113,14 @@ class Client
     return $Result;
   }
 
+  /**
+   * Send an email via the SMTP client
+   * @param string $From
+   * @param string $To
+   * @param string $Subject
+   * @param string $Message
+   * @return int
+   */
   private static function SendRequestSMTP($From = 'admin@grepodata.com', $To = 'admin@grepodata.com', $Subject = '', $Message = '')
   {
     // Create the Transport
@@ -108,8 +132,9 @@ class Client
     $mailer = new \Swift_Mailer($transport);
 
     // Create a message
+    $FromName = $From=='admin@grepodata.com'? 'GrepoData':'';
     $message = (new \Swift_Message($Subject))
-      ->setFrom($From)
+      ->setFrom($From, $FromName)
       ->setTo($To)
       ->setContentType("text/html")
       ->setBody($Message);

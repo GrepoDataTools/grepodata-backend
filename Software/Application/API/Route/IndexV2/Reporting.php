@@ -10,7 +10,7 @@ class Reporting extends \Grepodata\Library\Router\BaseRoute
   public static function BugReportPOST()
   {
     try {
-      $aParams = self::validateParams(array('error', 'function', 'browser', 'version', 'world', 'index'));
+      $aParams = self::validateParams();
 
       // Save bug report as logmessage
       Logger::indexDebug(json_encode($aParams));

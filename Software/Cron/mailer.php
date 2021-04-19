@@ -24,7 +24,7 @@ Logger::debugInfo("Started mailer");
 $Start = Carbon::now();
 $oCronStatus = Common::markAsRunning(__FILE__, 2*60, false);
 
-$MaxAttempts = 1;
+$MaxAttempts = 3;
 
 // process mail jobs
 $Count = 0;
@@ -32,15 +32,21 @@ $Fails = 0;
 try {
   /** @var \Grepodata\Library\Model\MailJobs $oMail */
   $oMail = MailJobs::NextUnprocessedByIdAsc(-1, $MaxAttempts);
-  while ($oMail !== false && $oMail !== null && $Count < 4) {
+  while ($oMail !== false && $oMail !== null && $Count < 5) {
     $oMail->processing = true;
     $oMail->attempts = $oMail->attempts + 1;
     $oMail->save();
 
+    $bUseSendGrid = false;
+    if ($oMail->attempts === $MaxAttempts) {
+      // Try final attempt using a different mail provider (@aol addresses seem to fail via the SMTP client)
+      $bUseSendGrid = true;
+    }
+
     // Try sending mail
     try {
       $Count++;
-      $Result = Client::RetryMail($oMail);
+      $Result = Client::RetryMail($oMail, $bUseSendGrid);
       if ($Result <= 0) {
         $Fails++;
       } else {

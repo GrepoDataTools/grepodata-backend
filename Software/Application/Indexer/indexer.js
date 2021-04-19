@@ -1,5 +1,6 @@
 var gd_version = "5.0.0";
 var verbose = false;
+var errorSubmissions = [];
 
 (function() { try {
 
@@ -258,7 +259,11 @@ var verbose = false;
                     }
                 }
             } catch (error) {
-                errorHandling(error, "handleContextMenuObserver");
+                var hash = '';
+                try {
+                    hash = e.currentTarget.activeElement.hash;
+                } catch (e) {}
+                errorHandling(error, "handleContextMenuObserver", {hash: hash});
             }
         });
         function expandContextMenu(town_id, town_name, player_name = '') {
@@ -281,15 +286,21 @@ var verbose = false;
             return new Promise(resolve => {
                 try {
                     // Get access token from local storage
-                    access_token = localStorage.getItem('gd_indexer_access_token');
-                    access_player = localStorage.getItem('gd_indexer_player_id');
+                    var access_token = localStorage.getItem('gd_indexer_access_token');
                     if (!access_token) {
                         resolve(false);
                     }
 
                     // Check if player changed
-                    access_player = localStorage.getItem('gd_indexer_player_id');
-                    if (Game.player_id != access_player) {
+                    var access_player = localStorage.getItem('gd_indexer_player_id');
+                    if (Game
+                        && 'player_id' in Game
+                        && Game.player_id
+                        && typeof Game.player_id != 'undefined'
+                        && access_player
+                        && typeof access_player != 'undefined'
+                        && Game.player_id != access_player
+                    ) {
                         // The current player is not equal to the player that authenticated with grepodata, sign them out
                         console.log("Player logout detected. Signing out of GrepoData account. New sign in required.")
                         localStorage.removeItem('gd_indexer_access_token');
@@ -309,7 +320,7 @@ var verbose = false;
                         if (currentTime > expiration - 60) {
                             // Token expired, try to refresh
                             console.log("GrepoData: Access token expired.");
-                            refresh_token = localStorage.getItem('gd_indexer_refresh_token');
+                            var refresh_token = localStorage.getItem('gd_indexer_refresh_token');
                             if (!refresh_token) {
                                 // New login required
                                 localStorage.removeItem('gd_indexer_access_token');
@@ -2044,7 +2055,9 @@ var verbose = false;
                     // units
                     var unitHtml = '';
                     var killed = false;
+                    var hasUnits = false;
                     for (var i = 0; i < Object.keys(intel.units).length; i++) {
+                        hasUnits = true;
                         var unit = intel.units[i];
                         var size = 10;
                         switch (Math.max(unit.count.toString().length, unit.killed.toString().length)) {
@@ -2075,13 +2088,11 @@ var verbose = false;
 
                         tooltips.push({id: 'intel-unit-' + unit.name + '-' + id + '-' + j, text: unit.count + ' ' + (unit.name=='unknown'?'unknown land units':unit.name.replace('_',' '))});
                     }
-                    if (Object.keys(intel.units).length == 0) {
-                        // no units => town is empty
-                        unitHtml = unitHtml + '<div>No units in town</div>';
-                    }
 
                     // Append hero to unit list
+                    var hasHero = false;
                     if (intel.hero != null && intel.hero != "") {
+                        hasHero = true;
                         unitHtml = unitHtml +
                             '<div class="hero_icon_border golden_border intel-hero-' + id + '-' + j + '" style="display: inline-block;">\n' +
                             '    <div class="hero_icon_background">\n' +
@@ -2097,6 +2108,11 @@ var verbose = false;
                             '<div style="float: right; margin-top: -2px; margin-left: 30px;" ' +
                             'class="god_micro ' + intel.god.toLowerCase() + '" title="' + intel.god + '"></div>';
                         tooltips.push({id: 'intel-god-' + id + '-' + j, text: intel.god});
+                    }
+
+                    if (!hasUnits && !hasHero) {
+                        // no units => town is empty
+                        unitHtml = unitHtml + '<div style="width:200px;">No units in town</div>';
                     }
 
                     row = row + '<div style="display: table-cell;"><div><div class="origin_town_units" style="padding-left: 30px; margin: 5px 0 5px 0; ' + (killed ? 'height: 37px;' : 'height: 27px;') + '">' + unitHtml + '</div></div></div>';
@@ -2497,18 +2513,30 @@ var verbose = false;
         }
 
         // Error Handling / Remote diagnosis / Bug reports
-        var errorSubmissions = [];
-        function errorHandling(e, fn) {
+        function errorHandling(e, fn, params = null) {
             console.log("GD-ERROR stack ", e.stack);
             if (verbose) {
                 HumanMessage.error("GD-ERROR: " + e.message);
             } else if (!(fn in errorSubmissions) && gd_settings.bug_reports) {
                 errorSubmissions[fn] = true;
+
+                var data = {
+                    error: fn,
+                    params: params,
+                    "function": fn,
+                    browser: getBrowser(),
+                    version: gd_version,
+                    world: world
+                }
+                if (e && e.stack) {
+                    data.error = e.stack.replace(/'/g, '"')
+                }
+
                 try {
                     $.ajax({
                         type: "POST",
                         url: "https://api.grepodata.com/indexer/v2/scripterror",
-                        data: {error: e.stack.replace(/'/g, '"'), "function": fn, browser: getBrowser(), version: gd_version, world: world},
+                        data: data,
                         success: function (r) {}
                     });
                 } catch (error) {

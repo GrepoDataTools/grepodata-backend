@@ -54,8 +54,13 @@ class Message extends \Grepodata\Library\Router\BaseRoute
       Logger::error("Error uploading bug report image: " . $e->getMessage());
     }
 
+    $Message = $aParams['message'];
+    try {
+      $Message .= ' - ' . $_SERVER['HTTP_USER_AGENT'];
+    } catch (\Exception $e) {}
+
     // Save to db
-    \Grepodata\Library\Controller\Message::AddMessage($aParams['name']=='bug_report'?'bug_report':'_', $aParams['mail'], $aParams['message'], json_encode($aUploadedFiles));
+    \Grepodata\Library\Controller\Message::AddMessage($aParams['name']=='bug_report'?'bug_report':'_', $aParams['mail'], $Message, json_encode($aUploadedFiles));
 
     try {
       // Notify

@@ -389,7 +389,8 @@ You can ignore this email if you no longer wish to reset your password.<br/>
 Sincerely,<br/>
 admin@grepodata.com',
       null,
-      true);
+      true,
+      false);
 
     // Response
     $aResponse = array(
@@ -530,7 +531,8 @@ You can ignore this email if you no longer wish to remove your account.<br/>
 Sincerely,<br/>
 admin@grepodata.com',
       null,
-      true);
+      true,
+      false);
 
     // Response
     $aResponse = array(
@@ -571,7 +573,8 @@ You can ignore this email if you no longer wish to create an account for our web
 Sincerely,<br/>
 admin@grepodata.com',
         null,
-        true);
+        true,
+        false);
     } catch (\Exception $e) {
       Logger::error("Error sending confirmation link for new user (uid".$oUser->id.")");
     }

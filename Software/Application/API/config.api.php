@@ -6,24 +6,24 @@ $oRouter = \Grepodata\Library\Router\Service::GetInstance();
 
 // Define rate limits
 $limit1PerMin = array(
-  'limit' => 1,
-  'window' => 60
+  'limit' => 3,
+  'window' => 3*60
 );
 $limit3PerMin = array(
-  'limit' => 3,
-  'window' => 60
+  'limit' => 9,
+  'window' => 3*60
 );
 $limit10PerMin = array(
-  'limit' => 10,
-  'window' => 60
+  'limit' => 30,
+  'window' => 3*60
 );
 $limit50PerMin = array(
-  'limit' => 50,
-  'window' => 60
+  'limit' => 150,
+  'window' => 3*60
 );
 $limit100PerMin = array(
-  'limit' => 100,
-  'window' => 60
+  'limit' => 300,
+  'window' => 3*60
 );
 
 // === AUTH
@@ -41,7 +41,7 @@ $oRouter->Add('confirmMail', new Route('/confirm', array(
 $oRouter->Add('newConfirmMail', new Route('/auth/newconfirm', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
   '_method'     => 'RequestNewConfirmMail',
-  '_ratelimit'  => $limit1PerMin
+  '_ratelimit'  => $limit3PerMin
 )));
 // Verify
 $oRouter->Add('verifytoken', new Route('/auth/token', array(
@@ -79,12 +79,11 @@ $oRouter->Add('changepassword', new Route('/auth/changepassword', array(
 $oRouter->Add('newscriptlink', new Route('/auth/newscriptlink', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
   '_method'     => 'NewScriptLink',
-  '_ratelimit'  => $limit100PerMin
+  '_ratelimit'  => $limit50PerMin
 )));
 $oRouter->Add('verifyscriptlink', new Route('/auth/verifyscriptlink', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
-  '_method'     => 'VerifyScriptLink',
-  '_ratelimit'  => $limit100PerMin
+  '_method'     => 'VerifyScriptLink'
 )));
 $oRouter->Add('authenticatescriptlink', new Route('/auth/authenticatescriptlink', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
@@ -96,7 +95,7 @@ $oRouter->Add('authenticatescriptlink', new Route('/auth/authenticatescriptlink'
 $oRouter->Add('accountdeletemail', new Route('/auth/deleteaccount', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',
   '_method'     => 'DeleteAccount',
-  '_ratelimit'  => $limit1PerMin
+  '_ratelimit'  => $limit3PerMin
 )));
 $oRouter->Add('accountdeleteconfirm', new Route('/auth/deleteaccountconfirm', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',

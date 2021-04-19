@@ -3,6 +3,7 @@
 namespace Grepodata\Library\Router;
 
 use Grepodata\Library\Logger\Logger;
+use Grepodata\Library\Redis\RedisClient;
 use RateLimit\Exception\RateLimitExceededException;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 use Symfony\Component\Routing\RouteCollection;
@@ -83,8 +84,18 @@ class Service
               try {
                 $RateLimiter->hit($ResourceId);
               } catch (RateLimitExceededException $e) {
+                try {
+                  Logger::error("Rate limit exceeded on resource " . $ResourceId);
+                  $TTL = RedisClient::GetTTL($ResourceId);
+                  if ($TTL <= 0) {
+                    $Deleted = RedisClient::Delete($ResourceId);
+                    Logger::error("Deleted expired redis resource " . $ResourceId . " (ttl: ".$TTL.", deleted: ".$Deleted.")");
+                  }
+                } catch (\Exception $exc) {
+                  Logger::error("Uncaught exception checking rate limit expiry on resource " . $ResourceId . " => " . $exc->getMessage());
+
+                }
                 header('Access-Control-Allow-Origin: *');
-                Logger::error("Rate limit exceeded on resource " . $ResourceId . " => " . $e->getMessage());
                 die(BaseRoute::OutputJson(array('message' => 'Too many requests. You have exceeded the rate limit for this specific resource. Please try again in a minute.'), 429));
               }
             }

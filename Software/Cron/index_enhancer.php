@@ -7,6 +7,8 @@ use Grepodata\Library\Controller\Player;
 use Grepodata\Library\Controller\Town;
 use Grepodata\Library\Cron\Common;
 use Grepodata\Library\Logger\Logger;
+use Grepodata\Library\Model\IndexV2\Roles;
+use Illuminate\Database\Capsule\Manager as DB;
 
 if (PHP_SAPI !== 'cli') {
   die('not allowed');
@@ -27,11 +29,23 @@ if ($worlds === false) {
   Common::endExecution(__FILE__);
 }
 
+$Deleted = 0;
+$Updated = 0;
+$TownNameUpdated = 0;
+$AllianceUpdated = 0;
+$NamesUpdated = 0;
+
 /** @var \Grepodata\Library\Model\World $oWorld */
 foreach ($worlds as $oWorld) {
   try {
     // Check commands 'php SCRIPTNAME[=0] INDEX[=1]'
     if (isset($argv[1]) && $argv[1]!=null && $argv[1]!='' && $argv[1]!=$oWorld->grep_id) continue;
+
+    $Deleted = 0;
+    $Updated = 0;
+    $TownNameUpdated = 0;
+    $AllianceUpdated = 0;
+    $NamesUpdated = 0;
 
     // Get all intel for this world
     $aIntelRecords = \Grepodata\Library\Controller\IndexV2\Intel::allByWorld($oWorld);
@@ -56,6 +70,7 @@ foreach ($worlds as $oWorld) {
         } else if ($oTown !== null && $oCity->player_id != $oTown->player_id) {
           // Town changed owner. Delete intel
           // TODO: keep intel that changed owner and somehow indicate this in the client (e.g. flag 'changed_owner=>true')
+          $Deleted++;
           $oCity->delete();
         } else {
           $bSave = false;
@@ -63,6 +78,7 @@ foreach ($worlds as $oWorld) {
           // Update town name
           if ($oTown !== null && $oCity->town_name != $oTown->name) {
             $oCity->town_name = $oTown->name;
+            $TownNameUpdated++;
             $bSave = true;
           }
 
@@ -78,17 +94,20 @@ foreach ($worlds as $oWorld) {
           // Update alliance id
           if ($oPlayer != null && $oCity->alliance_id != $oPlayer->alliance_id) {
             $oCity->alliance_id = $oPlayer->alliance_id;
+            $AllianceUpdated++;
             $bSave = true;
           }
 
           // Update player name
           if ($oPlayer !== null && $oCity->player_name != $oPlayer->name) {
             $oCity->player_name = $oPlayer->name;
-            $oCity->save();
+            $NamesUpdated++;
+            $bSave = true;
           }
 
           // Save changes
           if ($bSave === true) {
+            $Updated++;
             $oCity->save();
           }
         }
@@ -124,7 +143,12 @@ foreach ($worlds as $oWorld) {
           }
         }
 
-        if ($bFoundMatch == false && $Now->diffInHours($LastAttack) > 24) {
+        if ($bFoundMatch == false && $Now->diffInHours($LastAttack) > (24*7)) {
+          // Last attack was 7 days ago, probable a temple conquest. end it
+          Logger::silly("Resolved ongoing conquest via IndexEnhancer; town conquest timed out after 7 days (temple?). conquest_id: " . $oConquest->id);
+          $oConquest->new_owner_player_id = 1;
+          $oConquest->save();
+        } else if ($bFoundMatch == false && $Now->diffInHours($LastAttack) > 24) {
           // Found no overlapping conquest and siege must be over by now
           // Siege likely failed so new owner = old owner
           // CS was likely killed but that report was not indexed
@@ -141,11 +165,71 @@ foreach ($worlds as $oWorld) {
     unset($aCachedTowns);
     unset($aCachedPlayers);
 
+    Logger::debugInfo("Processed ".count($aIntelRecords)." intel records for world ".$oWorld->grep_id
+      ." - Num updated: $Updated (town: $TownNameUpdated, alliance: $AllianceUpdated, player: $NamesUpdated), Num deleted: $Deleted");
+
   } catch (\Exception $e) {
     Logger::error("Error enhancing intel for world " . $oWorld->grep_id . " (".$e->getMessage().")");
     continue;
   }
 
+}
+
+// Remove duplicate roles (caused by rare race condition on V1 import)
+try {
+  $aDuplicates = (array) DB::select( DB::raw("
+        SELECT Indexer_roles.user_id, Indexer_roles.index_key, COUNT(*)
+        FROM Indexer_roles
+        GROUP BY Indexer_roles.user_id, Indexer_roles.index_key
+        HAVING COUNT(*) > 1;
+        "));
+  if ($aDuplicates && count($aDuplicates)>0) {
+    Logger::warning("Cleaning " . count($aDuplicates) . " duplicate index roles ");
+    foreach ($aDuplicates as $aDuplicate) {
+      $aDuplicate = (array) $aDuplicate;
+      $uid = $aDuplicate['user_id'];
+      $index = $aDuplicate['index_key'];
+
+      /** @var Roles[] $aDuplicateRoles */
+      $aDuplicateRoles = Roles::where('user_id', '=', $uid)->where('index_key', '=', $index)->get();
+
+      $oKeepRole = null;
+      foreach ($aDuplicateRoles as $oRole) {
+        // First eval
+        if ($oKeepRole == null) {
+          $oKeepRole = $oRole;
+          continue;
+        }
+
+        // Check access level;
+        $role_id_keep = array_search($oKeepRole->role, \Grepodata\Library\Controller\IndexV2\Roles::numbered_roles);
+        $role_id = array_search($oRole->role, \Grepodata\Library\Controller\IndexV2\Roles::numbered_roles);
+        if ($role_id > $role_id_keep) {
+          // Keep higher role (e.g. owner is higher than member)
+          $oKeepRole = $oRole;
+        } else if ($role_id == $role_id_keep) {
+          // Same access level; check last created
+          if ($oRole->id > $oKeepRole->id) {
+            $oKeepRole = $oRole;
+          }
+        }
+        // else: lower access level, ignore
+
+      }
+
+      if ($oKeepRole != null) {
+        foreach ($aDuplicateRoles as $oRole) {
+          if ($oRole->id != $oKeepRole->id) {
+            Logger::debugInfo("Deleting duplicate role for user ".$uid. " on index ".$index." deleted role: ".json_encode($oRole));
+            $oRole->delete();
+          }
+        }
+      }
+
+    }
+  }
+} catch (\Exception $e) {
+  Logger::error("Error cleaning duplicate roles (".$e->getMessage().")");
 }
 
 Logger::debugInfo("Finished successful execution of index enhancer.");

@@ -59,4 +59,38 @@ class RedisClient
     }
     return false;
   }
+
+  /**
+   * Return the TTL or false of a given key
+   * @param $Key
+   * @return false|mixed|string
+   */
+  public static function GetTTL($Key)
+  {
+    if (bDevelopmentMode) return false;
+    try {
+      $oRedis = self::GetInstance();
+      return $oRedis->ttl($Key);
+    } catch (\Exception $e) {
+      Logger::warning("Redis GetTTL Exception: ".$e->getMessage()." [".$e->getTraceAsString()."]");
+    }
+    return false;
+  }
+
+  /**
+   * Delete the key
+   * @param $Key
+   * @return false|mixed|string
+   */
+  public static function Delete($Key)
+  {
+    if (bDevelopmentMode) return false;
+    try {
+      $oRedis = self::GetInstance();
+      return $oRedis->del($Key) > 0;
+    } catch (\Exception $e) {
+      Logger::warning("Redis Delete Exception: ".$e->getMessage()." [".$e->getTraceAsString()."]");
+    }
+    return false;
+  }
 }
