@@ -5,6 +5,7 @@ namespace Grepodata\Library\Mail;
 use Elasticsearch\ClientBuilder;
 use Exception;
 use Grepodata\Library\Controller\MailJobs;
+use Grepodata\Library\Exception\InvalidEmailAddressError;
 use Grepodata\Library\Logger\Logger;
 use SendGrid\Mail\Mail;
 
@@ -29,6 +30,7 @@ class Client
    * @param \Grepodata\Library\Model\MailJobs $oMail
    * @param bool $bCreateMailObject
    * @return bool|int
+   * @throws InvalidEmailAddressError
    */
   public static function SendMail($From = 'admin@grepodata.com', $To = 'admin@grepodata.com',
                                   $Subject = '', $Message = '',
@@ -52,8 +54,10 @@ class Client
       }
 
       return $result;
+    } catch (InvalidEmailAddressError $e) {
+      // Don't create en email object for invalid receivers
+      throw new InvalidEmailAddressError($e->getMessage());
     } catch (\Exception $e) {
-      Logger::warning("Error sending mail with subject: ".$Subject.". Error: ".$e->getMessage());
       try {
         if ($oMail !== null || $bCreateMailObject == true) {
           // Save new mail object
@@ -120,26 +124,42 @@ class Client
    * @param string $Subject
    * @param string $Message
    * @return int
+   * @throws InvalidEmailAddressError
+   * @throws Exception
    */
   private static function SendRequestSMTP($From = 'admin@grepodata.com', $To = 'admin@grepodata.com', $Subject = '', $Message = '')
   {
-    // Create the Transport
-    $transport = (new \Swift_SmtpTransport(MAIL_TRANSPORT_HOST, 465, 'ssl'))
-      ->setUsername(MAIL_TRANSPORT_NAME)
-      ->setPassword(MAIL_TRANSPORT_KEY);
+    try {
+      // Create the Transport
+      $transport = (new \Swift_SmtpTransport(MAIL_TRANSPORT_HOST, 465, 'ssl'))
+        ->setUsername(MAIL_TRANSPORT_NAME)
+        ->setPassword(MAIL_TRANSPORT_KEY);
 
-    // Create the Mailer using your created Transport
-    $mailer = new \Swift_Mailer($transport);
+      // Create the Mailer using your created Transport
+      $mailer = new \Swift_Mailer($transport);
 
-    // Create a message
-    $FromName = $From=='admin@grepodata.com'? 'GrepoData':'';
-    $message = (new \Swift_Message($Subject))
-      ->setFrom($From, $FromName)
-      ->setTo($To)
-      ->setContentType("text/html")
-      ->setBody($Message);
+      // Create a message
+      $FromName = $From=='admin@grepodata.com'? 'GrepoData':'';
+      $message = (new \Swift_Message($Subject))
+        ->setFrom($From, $FromName)
+        ->setTo($To)
+        ->setContentType("text/html")
+        ->setBody($Message);
 
-    // Send the message
-    return $mailer->send($message);
+      // Send the message
+      return $mailer->send($message);
+    } catch (Exception $e) {
+      $EmailError = $e->getMessage();
+      Logger::warning("Error sending mail with subject: ".$Subject.". Error: ".$EmailError);
+      if (strpos($EmailError, 'does not comply with RFC') !== false
+        || strpos($EmailError, 'must be a valid email address') !== false
+      ) {
+        // Invalid email, unable to create account with this email
+        throw new InvalidEmailAddressError($e->getMessage());
+      } else {
+        // Throw other exceptions
+        throw new Exception($e->getMessage());
+      }
+    }
   }
 }

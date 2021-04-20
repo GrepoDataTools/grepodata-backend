@@ -7,6 +7,7 @@ use Grepodata\Library\Controller\Indexer\IndexInfo;
 use Grepodata\Library\Controller\IndexV2\Roles;
 use Grepodata\Library\Controller\IndexV2\ScriptToken;
 use Grepodata\Library\Controller\User;
+use Grepodata\Library\Exception\InvalidEmailAddressError;
 use Grepodata\Library\Indexer\IndexBuilder;
 use Grepodata\Library\Indexer\IndexBuilderV2;
 use Grepodata\Library\Logger\Logger;
@@ -19,61 +20,74 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
 {
   public static function RegisterPOST()
   {
-    // Validate params
-    $aParams = self::validateParams(array('mail', 'password', 'username'));
-
-    // Validate captcha
-    if (!bDevelopmentMode && isset($aParams['captcha'])) {
-      BaseRoute::verifyCaptcha($aParams['captcha']);
-    }
-
-    // Validate email
     try {
-      if (User::GetUserByMail($aParams['mail'])) {
-        ResponseCode::errorCode(3030, array(), 409);
+      // Validate params
+      $aParams = self::validateParams(array('mail', 'password', 'username'));
+
+      // Validate captcha
+      if (!bDevelopmentMode && isset($aParams['captcha'])) {
+        BaseRoute::verifyCaptcha($aParams['captcha']);
       }
-    } catch (ModelNotFoundException $e) {}
 
-    // Validate username
-    if (strlen($aParams['username']) < 4) {
-      ResponseCode::errorCode(3033, array(), 422);
-    } else if (strlen($aParams['username']) > 32) {
-      ResponseCode::errorCode(3034, array(), 422);
-    }
-    try {
-      if (User::GetUserByUsername($aParams['username'])) {
-        ResponseCode::errorCode(3032, array(), 409);
+      // Validate email
+      try {
+        if (User::GetUserByMail($aParams['mail'])) {
+          ResponseCode::errorCode(3030, array(), 409);
+        }
+      } catch (ModelNotFoundException $e) {}
+
+      // Validate username
+      if (strlen($aParams['username']) < 4) {
+        ResponseCode::errorCode(3033, array(), 422);
+      } else if (strlen($aParams['username']) > 32) {
+        ResponseCode::errorCode(3034, array(), 422);
       }
-    } catch (ModelNotFoundException $e) {}
+      try {
+        if (User::GetUserByUsername($aParams['username'])) {
+          ResponseCode::errorCode(3032, array(), 409);
+        }
+      } catch (ModelNotFoundException $e) {}
 
-    // Validate password
-    if (strlen($aParams['password']) < 8) {
-      ResponseCode::errorCode(3031, array(), 422);
+      // Validate password
+      if (strlen($aParams['password']) < 8) {
+        ResponseCode::errorCode(3031, array(), 422);
+      }
+
+      // Hash password
+      $hash = password_hash($aParams['password'], PASSWORD_BCRYPT);
+
+      // Save to db
+      $oUser = \Grepodata\Library\Controller\User::AddUser($aParams['username'], $aParams['mail'], $hash);
+
+      // Send confirmation email
+      if (!bDevelopmentMode) {
+        try {
+          $Result = self::sendRegistrationMail($oUser);
+        } catch (InvalidEmailAddressError $e) {
+          // Invalid email used to register, we can not send messages to this address. Cancel registration
+          $oUser->delete();
+          ResponseCode::errorCode(3035, array(
+            'invalid_address' => $aParams['mail']
+          ), 422);
+        }
+      }
+
+      // Login token
+      $jwt = \Grepodata\Library\Router\Authentication::generateJWT($oUser);
+      $refresh_token = \Grepodata\Library\Router\Authentication::generateJWT($oUser, true);
+
+      // Response
+      $aResponseData = array(
+        'access_token'  => $jwt,
+        'refresh_token' => $refresh_token,
+        'expires_in'    => \Grepodata\Library\Router\Authentication::expiresIn($jwt),
+        'email_sent'    => isset($Result) && $Result>=1
+      );
+      ResponseCode::success($aResponseData, 1120);
+
+    } catch (\Exception $e) {
+      ResponseCode::errorCode(1000, array(), 500);
     }
-
-    // Hash password
-    $hash = password_hash($aParams['password'], PASSWORD_BCRYPT);
-
-    // Save to db
-    $oUser = \Grepodata\Library\Controller\User::AddUser($aParams['username'], $aParams['mail'], $hash);
-
-    // Login token
-    $jwt = \Grepodata\Library\Router\Authentication::generateJWT($oUser);
-    $refresh_token = \Grepodata\Library\Router\Authentication::generateJWT($oUser, true);
-
-    // Send confirmation email
-    if (!bDevelopmentMode) {
-      $Result = self::sendRegistrationMail($oUser);
-    }
-
-    // Response
-    $aResponseData = array(
-      'access_token'  => $jwt,
-      'refresh_token' => $refresh_token,
-      'expires_in'    => \Grepodata\Library\Router\Authentication::expiresIn($jwt),
-      'email_sent'    => isset($Result) && $Result>=1
-    );
-    ResponseCode::success($aResponseData, 1120);
   }
 
   public static function RequestNewConfirmMailGET()
@@ -83,7 +97,13 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
     $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
 
     if (!bDevelopmentMode) {
-      $Result = self::sendRegistrationMail($oUser);
+      try {
+        $Result = self::sendRegistrationMail($oUser);
+      } catch (InvalidEmailAddressError $e) {
+        ResponseCode::errorCode(3035, array(
+          'invalid_address' => $oUser->email
+        ), 422);
+      }
     }
 
     $Masked = \Grepodata\Library\Router\Authentication::maskEmail($oUser->email);
@@ -119,7 +139,6 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
 
       Logger::warning("confirmed user with token. ".$oUser->id." ".$aParams['token']);
       $oUser->is_confirmed = true;
-      $oUser->token = null;
       $oUser->save();
 
       // Detect V1 indexes and assign user to index as owner
@@ -350,32 +369,33 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
    */
   public static function ForgotPOST()
   {
-    // Validate params
-    $aParams = self::validateParams(array('mail'));
-
-    // Validate captcha
-    if (!bDevelopmentMode && isset($aParams['captcha'])) {
-      BaseRoute::verifyCaptcha($aParams['captcha']);
-    }
-
-    // Get user
     try {
-      $oUser = User::GetUserByMail($aParams['mail']);
-    } catch (ModelNotFoundException $e) {
-      ResponseCode::errorCode(3004, array(), 401);
-    }
+      // Validate params
+      $aParams = self::validateParams(array('mail'));
 
-    // Create new user token
-    $Token = bin2hex(random_bytes(16));
-    $oUser->token = $Token;
-    $oUser->save();
+      // Validate captcha
+      if (!bDevelopmentMode && isset($aParams['captcha'])) {
+        BaseRoute::verifyCaptcha($aParams['captcha']);
+      }
 
-    // Send confirmation email
-    $Result = Client::SendMail(
-      'admin@grepodata.com',
-      $oUser->email,
-      'Grepodata password recovery',
-      'Hi,<br/>
+      // Get user
+      try {
+        $oUser = User::GetUserByMail($aParams['mail']);
+      } catch (ModelNotFoundException $e) {
+        ResponseCode::errorCode(3004, array(), 401);
+      }
+
+      // Create new user token
+      $Token = bin2hex(random_bytes(16));
+      $oUser->token = $Token;
+      $oUser->save();
+
+      // Send confirmation email
+      $Result = Client::SendMail(
+        'admin@grepodata.com',
+        $oUser->email,
+        'Grepodata password recovery',
+        'Hi,<br/>
 <br/>
 You are receiving this message because a request was made to recover your account on grepodata.com.<br/>
 <br/>
@@ -388,17 +408,22 @@ You can ignore this email if you no longer wish to reset your password.<br/>
 <br/>
 Sincerely,<br/>
 admin@grepodata.com',
-      null,
-      true,
-      false);
+        null,
+        true,
+        false);
 
-    // Response
-    $aResponse = array(
-      'status' => 'Email sent',
-      'result' => $Result >= 1
-    );
+      // Response
+      $aResponse = array(
+        'status' => 'Email sent',
+        'result' => $Result >= 1
+      );
 
-    return self::OutputJson($aResponse);
+      return self::OutputJson($aResponse);
+    } catch (InvalidEmailAddressError $e) {
+      ResponseCode::errorCode(3035, array(), 422);
+    } catch (\Exception $e) {
+      ResponseCode::errorCode(1000, array(), 500);
+    }
   }
 
   /**
@@ -480,6 +505,13 @@ admin@grepodata.com',
     $oUser->token = bin2hex(random_bytes(16));
     $oUser->save();
 
+    try {
+      // Delete roles
+      $aRoles = Roles::DeleteAllUserRoles($oUser);
+    } catch (\Exception $e){
+      Logger::error("Unable to remove user roles: " . $e->getMessage() . " [".$e->getTraceAsString()."]");
+    }
+
     Logger::error("Account removal completed: " . $oUser->id);
 
     // Response
@@ -495,29 +527,30 @@ admin@grepodata.com',
    */
   public static function DeleteAccountPOST()
   {
-    // Validate params
-    $aParams = self::validateParams(array('access_token', 'password'));
-    $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+    try {
+      // Validate params
+      $aParams = self::validateParams(array('access_token', 'password'));
+      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
 
-    Logger::error("Account removal requested: " . $oUser->id);
+      Logger::error("Account removal requested: " . $oUser->id);
 
-    // verify password
-    $bValid = password_verify($aParams['password'], $oUser->passphrase);
-    if ($bValid === false) {
-      ResponseCode::errorCode(3005, array(), 401);
-    }
+      // verify password
+      $bValid = password_verify($aParams['password'], $oUser->passphrase);
+      if ($bValid === false) {
+        ResponseCode::errorCode(3005, array(), 401);
+      }
 
-    // Create new user token
-    $Token = bin2hex(random_bytes(16));
-    $oUser->token = $Token;
-    $oUser->save();
+      // Create new user token
+      $Token = bin2hex(random_bytes(16));
+      $oUser->token = $Token;
+      $oUser->save();
 
-    // Send confirmation email
-    $Result = Client::SendMail(
-      'admin@grepodata.com',
-      $oUser->email,
-      'Grepodata account removal',
-      'Hi,<br/>
+      // Send confirmation email
+      $Result = Client::SendMail(
+        'admin@grepodata.com',
+        $oUser->email,
+        'Grepodata account removal',
+        'Hi,<br/>
 <br/>
 You are receiving this message because a request was made to delete your account on grepodata.com.<br/>
 <br/>
@@ -530,19 +563,29 @@ You can ignore this email if you no longer wish to remove your account.<br/>
 <br/>
 Sincerely,<br/>
 admin@grepodata.com',
-      null,
-      true,
-      false);
+        null,
+        true,
+        false);
 
-    // Response
-    $aResponse = array(
-      'status' => 'Email sent',
-      'result' => ($Result >= 1 ? true : false)
-    );
+      // Response
+      $aResponse = array(
+        'status' => 'Email sent',
+        'result' => ($Result >= 1 ? true : false)
+      );
 
-    return self::OutputJson($aResponse);
+      return self::OutputJson($aResponse);
+    } catch (InvalidEmailAddressError $e) {
+      ResponseCode::errorCode(3035, array(), 422);
+    } catch (\Exception $e) {
+      ResponseCode::errorCode(1000, array(), 500);
+    }
   }
 
+  /**
+   * @param \Grepodata\Library\Model\User $oUser
+   * @return bool|int
+   * @throws InvalidEmailAddressError
+   */
   private static function sendRegistrationMail(\Grepodata\Library\Model\User $oUser) {
     // Create confirmation link
     if ($oUser->token != null) {
@@ -554,12 +597,11 @@ admin@grepodata.com',
     }
 
     $Result = false;
-    try {
-      $Result = Client::SendMail(
-        'admin@grepodata.com',
-        $oUser->email,
-        'GrepoData Account Confirmation',
-        'Hi,<br/>
+    $Result = Client::SendMail(
+      'admin@grepodata.com',
+      $oUser->email,
+      'GrepoData Account Confirmation',
+      'Hi,<br/>
 <br/>
 You are receiving this message because an account was created on grepodata.com using this email address.<br/>
 <br/>
@@ -572,12 +614,9 @@ You can ignore this email if you no longer wish to create an account for our web
 <br/>
 Sincerely,<br/>
 admin@grepodata.com',
-        null,
-        true,
-        false);
-    } catch (\Exception $e) {
-      Logger::error("Error sending confirmation link for new user (uid".$oUser->id.")");
-    }
+      null,
+      true,
+      false);
 
     return $Result;
   }

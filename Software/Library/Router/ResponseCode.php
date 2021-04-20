@@ -33,6 +33,7 @@ define('GD_ERROR_3031', 'Password is not strong enough. Your password should be 
 define('GD_ERROR_3032', 'This username is already in use');
 define('GD_ERROR_3033', 'Username is too short');
 define('GD_ERROR_3034', 'Username is too long');
+define('GD_ERROR_3035', 'Invalid email address. This address does not comply with naming standards and can not be processed.');
 define('GD_ERROR_3040', 'Unlinked script token');
 define('GD_ERROR_3041', 'Invalid script token');
 define('GD_ERROR_3042', 'Expired script token');
