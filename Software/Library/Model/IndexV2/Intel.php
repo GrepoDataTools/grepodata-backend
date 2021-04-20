@@ -33,6 +33,7 @@ use \Illuminate\Database\Eloquent\Model;
  * @property mixed sea_units
  * @property mixed fireships
  * @property mixed mythical_units
+ * @property mixed is_previous_owner_intel
  * @property mixed created_at
  * @property mixed updated_at
  * @property mixed soft_deleted
@@ -69,8 +70,9 @@ class Intel extends Model
       'land'        => json_decode($this->land_units, true),
       'sea'         => json_decode($this->sea_units, true),
       'air'         => json_decode($this->mythical_units, true),
-      'deleted'     => ($this->soft_deleted!=null?true:false),
-      'parsed'      => ($this->parsing_failed==0?true:false)
+      'deleted'     => $this->soft_deleted!=null,
+      'parsed'      => $this->parsing_failed==0,
+      'is_previous_owner_intel' => $this->is_previous_owner_intel==1
     );
   }
 
@@ -89,7 +91,8 @@ class Intel extends Model
       'land'        => json_decode($this->land_units, true),
       'sea'         => json_decode($this->sea_units, true),
       'air'         => json_decode($this->mythical_units, true),
-      'deleted'     => ($this->soft_deleted!=null?true:false)
+      'deleted'     => $this->soft_deleted!=null,
+      'is_previous_owner_intel' => $this->is_previous_owner_intel==1
     );
   }
 

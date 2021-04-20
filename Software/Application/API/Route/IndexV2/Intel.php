@@ -168,6 +168,9 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
           if (isset($oCity['indexed_by_users'])) {
             $aRecord['indexed_by_users'] = $oCity['indexed_by_users'];
           }
+          if (isset($oCity['is_previous_owner_intel'])) {
+            $aRecord['is_previous_owner_intel'] = $oCity['is_previous_owner_intel']==1;
+          }
 
           $aResponse['intel'][] = $aRecord;
         }
@@ -177,7 +180,7 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
       if ($bHasIntel == false) {
         if ($oTown && $oTown->player_id > 0) {
           $oPlayer = \Grepodata\Library\Controller\Player::firstById($oWorld->grep_id, $oTown->player_id);
-          if ($oPlayer !== false) {
+          if ($oPlayer) {
             $aResponse['player_name'] = $oPlayer->name;
             $aResponse['alliance_id'] = $oPlayer->alliance_id;
           }

@@ -300,9 +300,16 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
       if ($oCity->soft_deleted != null) {
         $oSoftDeleted = Carbon::parse($oCity->soft_deleted);
         if ($oNow->diffInHours($oSoftDeleted) > 24) {
+          // Ignore deleted records
           continue;
         }
       }
+
+      if ($oCity->is_previous_owner_intel === 1) {
+        // Ignore intel of previous owners
+        continue;
+      }
+
       $bHasIntel = true;
       $aCity = $oCity->getPublicFields();
 

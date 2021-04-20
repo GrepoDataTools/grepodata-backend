@@ -1977,6 +1977,7 @@ var errorSubmissions = [];
                 var bHasIntel = false;
                 var maxCost = 0;
                 var maxCostUnits = [];
+                var expiredIntelHeader = false;
                 for (var j = 0; j < Object.keys(data.intel).length; j++) {
                     var intel = data.intel[j];
                     var row = '';
@@ -2143,6 +2144,15 @@ var errorSubmissions = [];
                         tooltips.push({id: 'intel-stonehail-' + id + '-' + j, text: 'stonehail: ' + intel.stonehail.building + ' ' + intel.stonehail.value});
                     } else if (data.has_stonehail === true) {
                         row = row + '<div style="display: table-cell;"></div>';
+                    }
+
+                    // Check expired intel header;
+                    if ('is_previous_owner_intel' in intel && intel.is_previous_owner_intel == true && expiredIntelHeader === false) {
+                        expiredIntelHeader = true;
+                        var expired_header = '<li style="padding: 15px 10px 0;">' +
+                            '<p><strong>Expired intel:</strong> The intel below was collected when this town had a different owner.</p>' +
+                            '</li>';
+                        table = table + expired_header;
                     }
 
                     var rowHeader = '<li class="' + (j % 2 === 0 ? 'odd' : 'even') + '" style="display: inherit; width: 100%; padding: 0 0 ' + (killed ? '0' : '4px') + ' 0;">';

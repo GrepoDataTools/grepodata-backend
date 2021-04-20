@@ -29,19 +29,13 @@ if ($worlds === false) {
   Common::endExecution(__FILE__);
 }
 
-$Deleted = 0;
-$Updated = 0;
-$TownNameUpdated = 0;
-$AllianceUpdated = 0;
-$NamesUpdated = 0;
-
 /** @var \Grepodata\Library\Model\World $oWorld */
 foreach ($worlds as $oWorld) {
   try {
     // Check commands 'php SCRIPTNAME[=0] INDEX[=1]'
     if (isset($argv[1]) && $argv[1]!=null && $argv[1]!='' && $argv[1]!=$oWorld->grep_id) continue;
 
-    $Deleted = 0;
+    $ChangedOwner = 0;
     $Updated = 0;
     $TownNameUpdated = 0;
     $AllianceUpdated = 0;
@@ -67,13 +61,17 @@ foreach ($worlds as $oWorld) {
         if ($oTown !== null && $oTown->player_id == 0) {
           // Town is now a ghost town, keep intel active
           continue;
-        } else if ($oTown !== null && $oCity->player_id != $oTown->player_id) {
-          // Town changed owner. Delete intel
-          // TODO: keep intel that changed owner and somehow indicate this in the client (e.g. flag 'changed_owner=>true')
-          $Deleted++;
-          $oCity->delete();
         } else {
           $bSave = false;
+
+          // Check town owner
+          if ($oTown !== null && $oCity->player_id != $oTown->player_id) {
+            // Town changed owner. Keep intel that changed owner and somehow indicate this in the client (e.g. flag 'changed_owner=>true')
+            $oCity->player_id = $oTown->player_id;
+            $oCity->is_previous_owner_intel = true;
+            $bSave = true;
+            $ChangedOwner++;
+          }
 
           // Update town name
           if ($oTown !== null && $oCity->town_name != $oTown->name) {
@@ -166,7 +164,7 @@ foreach ($worlds as $oWorld) {
     unset($aCachedPlayers);
 
     Logger::debugInfo("Processed ".count($aIntelRecords)." intel records for world ".$oWorld->grep_id
-      ." - Num updated: $Updated (town: $TownNameUpdated, alliance: $AllianceUpdated, player: $NamesUpdated), Num deleted: $Deleted");
+      ." - Num updated: $Updated (town: $TownNameUpdated, alliance: $AllianceUpdated, player: $NamesUpdated), new owner: $ChangedOwner");
 
   } catch (\Exception $e) {
     Logger::error("Error enhancing intel for world " . $oWorld->grep_id . " (".$e->getMessage().")");
