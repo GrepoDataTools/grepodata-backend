@@ -2,6 +2,7 @@
 
 namespace Grepodata\Application\API\Route;
 
+use Grepodata\Library\Controller\User;
 use Grepodata\Library\Elasticsearch\Search;
 use Grepodata\Library\Logger\Logger;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -117,17 +118,26 @@ class Town extends \Grepodata\Library\Router\BaseRoute
     $aParams = array();
     try {
       // Validate params
-      $aParams = self::validateParams();
-
-//      if (isset($aParams['index'])) {
-//        $oIndex = IndexInfo::firstOrFail($aParams['index']);
-//        $aParams['world'] = $oIndex->world;
-//      }
+      $aParams = self::validateParams(array(), array('access_token'));
 
       if (isset($aParams['query']) && strlen($aParams['query']) > 30) {
-//        throw new \Exception("Search input exceeds limit: " . substr($aParams['query'], 0, 200));
         Logger::debugInfo("Search input exceeds limit: " . substr($aParams['query'], 0, 200));
         $aParams['query'] = substr($aParams['query'], 0, 30);
+      }
+
+      // Option filter by user worlds
+      if (isset($aParams['access_token'])) {
+        try {
+          $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+
+          // Get worlds user is active in
+          $aWorlds = User::GetActiveWorldsByUser($oUser);
+
+          $aParams['user_worlds'] = array();
+          foreach (((array) $aWorlds) as $aWorld) {
+            $aParams['user_worlds'][] = ((array) $aWorld)['world'];
+          }
+        } catch (\Exception $e) {}
       }
 
       try {

@@ -2,6 +2,8 @@
 
 namespace Grepodata\Library\Controller;
 
+use Illuminate\Database\Capsule\Manager as DB;
+
 class User
 {
 
@@ -79,6 +81,28 @@ class User
       ->offset($From)
       ->limit($Size)
       ->get();
+  }
+
+  /**
+   * Return a list of worlds where the user is active in
+   * @param \Grepodata\Library\Model\User $oUser
+   */
+  public static function GetActiveWorldsByUser(\Grepodata\Library\Model\User $oUser)
+  {
+    return DB::select( DB::raw("
+        Select DISTINCT World.grep_id as world FROM (
+            (SELECT Indexer_info.world
+                FROM Indexer_roles
+                LEFT JOIN Indexer_info ON Indexer_info.key_code = Indexer_roles.index_key
+                WHERE Indexer_roles.user_id = ".$oUser->id.")
+            UNION
+            (SELECT world
+              FROM Indexer_intel_shared
+              WHERE user_id = ".$oUser->id.")
+        ) as worlds
+        LEFT JOIN World on World.grep_id = worlds.world
+        WHERE World.stopped = 0
+      "));
   }
 
 }

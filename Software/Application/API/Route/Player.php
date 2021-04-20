@@ -5,6 +5,7 @@ namespace Grepodata\Application\API\Route;
 use Carbon\Carbon;
 use Exception;
 use Grepodata\Library\Controller\Indexer\IndexInfo;
+use Grepodata\Library\Controller\User;
 use Grepodata\Library\Elasticsearch\Search;
 use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\AllianceChanges;
@@ -170,7 +171,7 @@ class Player extends \Grepodata\Library\Router\BaseRoute
     $aParams = array();
     try {
       // Validate params
-      $aParams = self::validateParams();
+      $aParams = self::validateParams(array(), array('access_token'));
 
       if (isset($aParams['index'])) {
         Logger::v2Migration("Received player search request with index param: ". json_encode($aParams));
@@ -190,6 +191,24 @@ class Player extends \Grepodata\Library\Router\BaseRoute
           $bGuildHasServer = true;
           $aParams['server'] = substr($oDiscord->server, 0, 2);
         }
+      }
+
+      // Option filter by user worlds
+      if (isset($aParams['access_token'])) {
+        try {
+          $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+
+          // Get worlds user is active in
+          $aWorlds = User::GetActiveWorldsByUser($oUser);
+
+          $aFilters = array();
+          foreach (((array) $aWorlds) as $aWorld) {
+            $aFilters[] = ((array) $aWorld)['world'];
+          }
+          if (!empty($aFilters)) {
+            $aParams['user_worlds'] = $aFilters;
+          }
+        } catch (\Exception $e) {}
       }
 
       $bBuildForm = true;

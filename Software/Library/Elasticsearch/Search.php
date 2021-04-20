@@ -196,22 +196,13 @@ class Search
       'size'  => 30,
       'from'  => 0,
       'query' => array(
-        'function_score' => array(
-          'query' => array(
-            'bool' => array(
-              'must' => array(
-                'match_all' => (object)[]
-              ),
-              'filter' => array(),
-              'should' => array()
-            ),
+        'bool' => array(
+          'must' => array(
+            'match_all' => (object)[]
           ),
-          'script_score' => array(
-            'script' => array(
-              'inline' => "_score"
-            )
-          )
-        )
+          'filter' => array(),
+          'should' => array()
+        ),
       ),
       'aggregations'  => array(
         'world'       => array('terms' => array('field' => 'WorldId', 'size' => 100)),
@@ -223,29 +214,12 @@ class Search
     if (isset($aOptions['from'])) $aSearchParams['from'] = $aOptions['from'];
     if (isset($aOptions['size']) && $aOptions['size'] <= 200) $aSearchParams['size'] = $aOptions['size'];
 
-    // Optional query
+    // Optional query (use exact match)
     if (isset($aOptions['query'])) {
-//      $aSearchParams['query']['function_score']['query']['bool']['must'] = array(
-//        'fuzzy' => array(
-//          'Name' => array(
-//            'value' => $aOptions['query'],
-//            'boost' => 1.0,
-//            'fuzziness' => 1,
-//            'prefix_length' => 1,
-//            'max_expansions' => 50,
-//            'analyzer' => 'simple'
-//          )
-//        )
-//      );
-
       // Boost exact match
-      $boost = 10000;
-      $aSearchParams['query']['function_score']['query']['bool']['should'][] = array(
-        'match' => array(
-          'Name' => array(
-            'query' => $aOptions['query'],
-            'boost' => $boost,
-          )
+      $aSearchParams['query']['bool']['must'] = array(
+        'term' => array(
+          'Name' => $aOptions['query']
         )
       );
     }
@@ -264,30 +238,25 @@ class Search
 
     // Optional player id filter
     if (isset($aOptions['player_id'])) {
-      $aSearchParams['query']['function_score']['query']['bool']['filter'][] = array( 'term' => array( 'PlayerId' => $aOptions['player_id']) );
+      $aSearchParams['query']['bool']['filter'][] = array( 'term' => array( 'PlayerId' => $aOptions['player_id']) );
     }
 
     // Optional server filter
     if (isset($aOptions['server'])) {
-      $aSearchParams['query']['function_score']['query']['bool']['filter'][] = array( 'term' => array( 'Server' => $aOptions['server']) );
+      $aSearchParams['query']['bool']['filter'][] = array( 'term' => array( 'Server' => $aOptions['server']) );
     }
 
     // Optional world filter
     if (isset($aOptions['world'])) {
-      $aSearchParams['query']['function_score']['query']['bool']['filter'][] = array( 'term' => array( 'WorldId' => $aOptions['world']) );
-    } else {
-      // Check active worlds only
-      $aWorlds = Common::getAllActiveWorlds(false);
-      if ($aWorlds !== false) {
-        $aWorldFilters = array('bool'=>array('should'=>array()));
-        /** @var World $oWorld */
-        foreach ($aWorlds as $oWorld) {
-          $aWorldFilters['bool']['should'][] = array(
-            'term' => array( 'WorldId' => $oWorld->grep_id)
-          );
-        }
-        $aSearchParams['query']['function_score']['query']['bool']['filter'][] = $aWorldFilters;
+      $aSearchParams['query']['bool']['filter'][] = array( 'term' => array( 'WorldId' => $aOptions['world']) );
+    } elseif (isset($aOptions['user_worlds'])) {
+      $aWorldFilters = array('bool'=>array('should'=>array()));
+      foreach ($aOptions['user_worlds'] as $World) {
+        $aWorldFilters['bool']['should'][] = array(
+          'term' => array( 'WorldId' => $World)
+        );
       }
+      $aSearchParams['query']['bool']['filter'][] = $aWorldFilters;
     }
 
     // Optional points filter
@@ -295,11 +264,11 @@ class Search
       $aFilter = array('range' => array('Points' => array()));
       if (isset($aOptions['min_points'])) $aFilter['range']['Points']['gte'] = $aOptions['min_points'];
       if (isset($aOptions['max_points'])) $aFilter['range']['Points']['le'] = $aOptions['max_points'];
-      $aSearchParams['query']['function_score']['query']['bool']['filter'][] = $aFilter;
+      $aSearchParams['query']['bool']['filter'][] = $aFilter;
     }
 
     // Make sure empty filter has the right type
-    if (sizeof($aSearchParams['query']['function_score']['query']['bool']['filter']) == 0) $aSearchParams['query']['function_score']['query']['bool']['filter'] = (object)[];
+    if (sizeof($aSearchParams['query']['bool']['filter']) == 0) $aSearchParams['query']['bool']['filter'] = (object)[];
 
     // Execute
     $aElasticsearchResult = $oElasticsearchClient->search(array(
@@ -455,6 +424,14 @@ class Search
     // Optional world filter
     if (isset($aOptions['world'])) {
       $aSearchParams['query']['function_score']['query']['bool']['filter'][] = array( 'term' => array( 'WorldId' => $aOptions['world']) );
+    } elseif (isset($aOptions['user_worlds'])) {
+      $aWorldFilters = array('bool'=>array('should'=>array()));
+      foreach ($aOptions['user_worlds'] as $World) {
+        $aWorldFilters['bool']['should'][] = array(
+          'term' => array( 'WorldId' => $World)
+        );
+      }
+      $aSearchParams['query']['function_score']['query']['bool']['filter'][] = $aWorldFilters;
     } else {
       // Check active worlds only
       $aWorlds = Common::getAllActiveWorlds(false);

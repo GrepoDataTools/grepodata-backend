@@ -55,6 +55,17 @@ class Roles
   }
 
   /**
+   * Delete the user from the given index
+   * @param User $oUser
+   * @return bool
+   */
+  public static function DeleteAllUserRoles(User $oUser)
+  {
+    return \Grepodata\Library\Model\IndexV2\Roles::where('user_id', '=', $oUser->id)
+      ->delete();
+  }
+
+  /**
    * @param $IndexKey
    * @return \Grepodata\Library\Model\IndexV2\Roles[]
    */
