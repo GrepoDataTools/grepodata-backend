@@ -506,7 +506,7 @@ class Search
       if ($a['key'] == $b['key']) {
         return 0;
       }
-      return ($a['key'] < $b['key']) ? 1 : -1;
+      return ($a['key'] < $b['key']) ? -1 : 1;
     });
 
     if (isset($aElasticsearchResults['aggregations']['min_members']['value']) && isset($aElasticsearchResults['aggregations']['max_members']['value'])) {

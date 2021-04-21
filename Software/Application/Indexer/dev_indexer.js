@@ -349,6 +349,7 @@ var errorSubmissions = [];
                                     console.log("GrepoData: Error renewing access token");
                                     // New login required
                                     localStorage.removeItem('gd_indexer_access_token');
+                                    errorHandling(null, "refreshAccessToken", JSON.stringify({xhr: jqXHR, text: textStatus}));
                                     resolve(false);
                                 },
                                 timeout: 30000
@@ -600,7 +601,7 @@ var errorSubmissions = [];
             // Check if grepodata access token or refresh token is in local storage and use it to verify
             // if not verified: login required!
             getAccessToken().then(access_token => {
-                if (access_token == false) {
+                if (access_token === false) {
                     showLoginPopup()
                 } else {
                     console.log("GrepoData: Succesful authentication for player "+Game.player_id);
@@ -2524,34 +2525,33 @@ var errorSubmissions = [];
 
         // Error Handling / Remote diagnosis / Bug reports
         function errorHandling(e, fn, params = null) {
-            console.log("GD-ERROR stack ", e.stack);
-            if (verbose) {
-                HumanMessage.error("GD-ERROR: " + e.message);
-            } else if (!(fn in errorSubmissions) && gd_settings.bug_reports) {
-                errorSubmissions[fn] = true;
+            try {
+                if (verbose && e) {
+                    HumanMessage.error("GD-ERROR: " + e.message);
+                } else if (!(fn in errorSubmissions) && gd_settings.bug_reports) {
+                    errorSubmissions[fn] = true;
+                    var data = {
+                        error: fn,
+                        params: params,
+                        "function": fn,
+                        browser: getBrowser(),
+                        version: gd_version,
+                        world: world
+                    }
+                    if (e && e.stack) {
+                        console.log("GD-ERROR stack ", e.stack);
+                        data.error = e.stack.replace(/'/g, '"')
+                    }
 
-                var data = {
-                    error: fn,
-                    params: params,
-                    "function": fn,
-                    browser: getBrowser(),
-                    version: gd_version,
-                    world: world
-                }
-                if (e && e.stack) {
-                    data.error = e.stack.replace(/'/g, '"')
-                }
-
-                try {
                     $.ajax({
                         type: "POST",
                         url: "https://api.grepodata.com/indexer/v2/scripterror",
                         data: data,
                         success: function (r) {}
                     });
-                } catch (error) {
-                    console.log("Error handling bug report", error);
                 }
+            } catch (error) {
+                console.log("Error handling bug report", error);
             }
         }
 

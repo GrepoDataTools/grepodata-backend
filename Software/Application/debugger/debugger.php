@@ -88,20 +88,22 @@ $IntelShared = IntelShared::where('intel_id', '=', $ReportId)->get();
     <h3>Indexer_intel_shared data:</h3>
     <p id="report">
       <?php
-      $Table = '<table class="city-table" style="width: 100%; color: #84b593; background: #2b2b2b;"><tr>';
-      foreach ($IntelShared[0]->attributesToArray() as $key => $value) {
-        if (!in_array($key, ['report_json', 'report_info'])) $Table .= "<th>$key</th>";
-      }
-      $Table .= '</tr>';
-      foreach ($IntelShared as $oIntelShared) {
-        $Table .= '<tr>';
-        foreach ($oIntelShared->attributesToArray() as $key => $value) {
-          if (!in_array($key, ['report_json', 'report_info'])) $Table .= "<td>$value</td>";
+      if ($IntelShared && count($IntelShared)>0) {
+        $Table = '<table class="city-table" style="width: 100%; color: #84b593; background: #2b2b2b;"><tr>';
+        foreach ($IntelShared[0]->attributesToArray() as $key => $value) {
+          if (!in_array($key, ['report_json', 'report_info'])) $Table .= "<th>$key</th>";
         }
         $Table .= '</tr>';
+        foreach ($IntelShared as $oIntelShared) {
+          $Table .= '<tr>';
+          foreach ($oIntelShared->attributesToArray() as $key => $value) {
+            if (!in_array($key, ['report_json', 'report_info'])) $Table .= "<td>$value</td>";
+          }
+          $Table .= '</tr>';
+        }
+        $Table .= '</table>';
+        echo $Table;
       }
-      $Table .= '</table>';
-      echo $Table;
       ?>
     </p>
 

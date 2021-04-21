@@ -221,6 +221,9 @@ class Report extends \Grepodata\Library\Router\BaseRoute
           $oIntel = new \Grepodata\Library\Model\IndexV2\Intel();
           $oIntel->indexed_by_user_id = $oUser->id;
           $oIntel->script_version = $ScriptVersion;
+          $oIntel->poster_player_name = $ReportPoster;
+          $oIntel->poster_player_id = $ReportPosterId;
+          $oIntel->poster_alliance_id = $ReportPosterAllyId;
           $oIntel->source_type = $ReportType;
           $oIntel->report_type = IndexBuilderV2::generateIndexKey(32); // Random string to ignore unique index violation
           $oIntel->hash = $ReportHash;

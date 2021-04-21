@@ -59,8 +59,20 @@ class Message extends \Grepodata\Library\Router\BaseRoute
       $Message .= ' - ' . $_SERVER['HTTP_USER_AGENT'];
     } catch (\Exception $e) {}
 
+    $bBugReport = $aParams['name']=='bug_report';
+    if ($bBugReport) {
+      $Token = $aParams['mail'];
+      $aParams['mail'] = '_';
+      try {
+        $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($Token, false);
+        if ($oUser != false) {
+          $Message .= ' - uid: ' . $oUser->id;
+        }
+      } catch (\Exception $e) {}
+    }
+
     // Save to db
-    \Grepodata\Library\Controller\Message::AddMessage($aParams['name']=='bug_report'?'bug_report':'_', $aParams['mail'], $Message, json_encode($aUploadedFiles));
+    \Grepodata\Library\Controller\Message::AddMessage($bBugReport?'bug_report':'_', $aParams['mail'], $Message, json_encode($aUploadedFiles));
 
     try {
       // Notify
