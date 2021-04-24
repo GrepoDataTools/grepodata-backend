@@ -110,38 +110,40 @@ $IntelShared = IntelShared::where('intel_id', '=', $ReportId)->get();
     <h3>Indexer_intel data:</h3>
     <p id="report">
       <?php
-      $Table = '<table class="city-table" style="width: 100%; color: #84b593; background: #2b2b2b;"><tr>';
-      foreach (array_slice($Report->attributesToArray(), 0, 10) as $key => $value) {
-        if (!in_array($key, ['report_json', 'report_info'])) $Table .= "<th>$key</th>";
-      }
-      $Table .= '</tr><tr>';
-      foreach (array_slice($Report->attributesToArray(), 0, 10) as $key => $value) {
-        if (!in_array($key, ['report_json', 'report_info'])) $Table .= "<td>$value</td>";
-      }
-      $Table .= '</tr></table>';
-      echo $Table;
+      if ($Report) {
+        $Table = '<table class="city-table" style="width: 100%; color: #84b593; background: #2b2b2b;"><tr>';
+        foreach (array_slice($Report->attributesToArray(), 0, 10) as $key => $value) {
+          if (!in_array($key, ['report_json', 'report_info'])) $Table .= "<th>$key</th>";
+        }
+        $Table .= '</tr><tr>';
+        foreach (array_slice($Report->attributesToArray(), 0, 10) as $key => $value) {
+          if (!in_array($key, ['report_json', 'report_info'])) $Table .= "<td>$value</td>";
+        }
+        $Table .= '</tr></table>';
+        echo $Table;
 
-      $Table = '<table class="city-table" style="width: 100%; color: #84b593; background: #2b2b2b;"><tr>';
-      foreach (array_slice($Report->attributesToArray(), 10, 10) as $key => $value) {
-        if (!in_array($key, ['report_json', 'report_info'])) $Table .= "<th>$key</th>";
-      }
-      $Table .= '</tr><tr>';
-      foreach (array_slice($Report->attributesToArray(), 10, 10) as $key => $value) {
-        if (!in_array($key, ['report_json', 'report_info'])) $Table .= "<td>$value</td>";
-      }
-      $Table .= '</tr></table>';
-      echo $Table;
+        $Table = '<table class="city-table" style="width: 100%; color: #84b593; background: #2b2b2b;"><tr>';
+        foreach (array_slice($Report->attributesToArray(), 10, 10) as $key => $value) {
+          if (!in_array($key, ['report_json', 'report_info'])) $Table .= "<th>$key</th>";
+        }
+        $Table .= '</tr><tr>';
+        foreach (array_slice($Report->attributesToArray(), 10, 10) as $key => $value) {
+          if (!in_array($key, ['report_json', 'report_info'])) $Table .= "<td>$value</td>";
+        }
+        $Table .= '</tr></table>';
+        echo $Table;
 
-      $Table = '<table class="city-table" style="width: 100%; color: #84b593; background: #2b2b2b;"><tr>';
-      foreach (array_slice($Report->attributesToArray(), 20) as $key => $value) {
-        if (!in_array($key, ['report_json', 'report_info'])) $Table .= "<th>$key</th>";
+        $Table = '<table class="city-table" style="width: 100%; color: #84b593; background: #2b2b2b;"><tr>';
+        foreach (array_slice($Report->attributesToArray(), 20) as $key => $value) {
+          if (!in_array($key, ['report_json', 'report_info'])) $Table .= "<th>$key</th>";
+        }
+        $Table .= '</tr><tr>';
+        foreach (array_slice($Report->attributesToArray(), 20) as $key => $value) {
+          if (!in_array($key, ['report_json', 'report_info'])) $Table .= "<td>$value</td>";
+        }
+        $Table .= '</tr></table>';
+        echo $Table;
       }
-      $Table .= '</tr><tr>';
-      foreach (array_slice($Report->attributesToArray(), 20) as $key => $value) {
-        if (!in_array($key, ['report_json', 'report_info'])) $Table .= "<td>$value</td>";
-      }
-      $Table .= '</tr></table>';
-      echo $Table;
       ?>
     </p>
 

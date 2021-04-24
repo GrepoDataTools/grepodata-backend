@@ -764,6 +764,41 @@ class InboxParser
         throw new InboxParserExceptionWarning("Town or player are null! player is: ".($bPlayerIsSender?'sender':'receiver'));
       }
 
+      // Parse luck
+      // Luck is used to enforce uniqueness between inbox and forum intel (same report from different source should be blocked)
+      $Luck = 0;
+      if (in_array($ReportType, array('attack_on_conquest', 'friendly_attack', 'enemy_attack'))) {
+        try {
+          $aLuckElement = Helper::allByClass($aReportData, 'fight_bonus luck');
+          if (count($aLuckElement)!==1) {
+            throw new Exception("found an invalid number of luck elements");
+          }
+          $LuckElement = $aLuckElement[0];
+
+          $LuckText = Helper::getTextContent($LuckElement);
+          $FoundMatches = preg_match_all('/-?\d{1,3} ?%/m', $LuckText, $aPercentages, PREG_SET_ORDER, 0);
+
+          if (1 !== $FoundMatches) {
+            throw new Exception("Expected 1 match, found $FoundMatches matches");
+          }
+
+          $LuckMatch = $aPercentages[0][0];
+          $LuckMatch = substr($LuckMatch, 0, strlen($LuckMatch)-2);
+
+          if (!is_numeric($LuckMatch)) {
+            throw new Exception("found non numeric luck value");
+          }
+          if ($LuckMatch<-30 || $LuckMatch>30) {
+            throw new Exception("found an out of bounds luck value");
+          }
+
+          $Luck = $LuckMatch;
+        } catch (Exception $e) {
+          Logger::warning("Inbox parser $ReportHash: Error parsing luck; ".$e->getMessage()." [".$e->getTraceAsString()."]");
+        }
+      }
+
+
       // Save Results
       if (is_null($DebugReparseIntel)) {
         $oIntel = new Intel();
@@ -775,6 +810,7 @@ class InboxParser
       }
       $oIntel->indexed_by_user_id = $UserId;
       $oIntel->hash        = $ReportHash;
+      $oIntel->luck        = $Luck;
       $oIntel->world       = $World;
       $oIntel->v1_index    = $World; // This field is only used to allow duplicate entries of V1 intel, new reports should not use this field but it can also not be null otherwise SQL wont enforce the unique index.
       $oIntel->source_type = 'inbox';

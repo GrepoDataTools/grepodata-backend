@@ -248,8 +248,7 @@ class SiegeParser
               } catch (Exception $e) {}
             }
 
-            $bDoSave = true;
-            //$bDoSave = false;
+            $bDoSave = false;
             if (!bDevelopmentMode || $bDoSave) {
               $oConquestOverview->save();
             }

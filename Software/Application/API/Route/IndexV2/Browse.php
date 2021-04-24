@@ -314,7 +314,7 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
       $aCity = $oCity->getPublicFields();
 
       // Avoid duplicates (same records can be joined from multiple V1 indexes)
-      $citystring = "_".$oCity->town_id.$oCity->parsed_date;
+      $citystring = "_".$oCity->town_id.$oCity->parsed_date.$oCity->luck;
       $cityhash = md5($citystring);
       if (!in_array($cityhash, $aDuplicateCheck)) {
         $aDuplicateCheck[] = $cityhash;

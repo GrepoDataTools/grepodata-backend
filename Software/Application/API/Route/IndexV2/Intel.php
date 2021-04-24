@@ -152,7 +152,7 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
         $aResponse['name'] = $oCity->town_name;
         $aResponse['latest_version'] = $oCity->script_version;
 
-        $citystring = "_".$oCity->town_id.$oCity->parsed_date;
+        $citystring = "_".$oCity->town_id.$oCity->parsed_date.$oCity->luck;
         $cityhash = md5($citystring);
         if (!in_array($cityhash, $aDuplicateCheck)) {
           $aDuplicateCheck[] = $cityhash;

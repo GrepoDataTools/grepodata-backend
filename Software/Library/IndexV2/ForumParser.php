@@ -272,6 +272,7 @@ class ForumParser
       }
       $oIntel->indexed_by_user_id = $UserId;
       $oIntel->hash        = $ReportHash;
+      $oIntel->luck        = $aCityInfo['luck']??0;
       $oIntel->world       = $World;
       $oIntel->v1_index    = $World; // This field is only used to allow duplicate entries of V1 intel, new reports should not use this field but it can also not be null otherwise SQL wont enforce the unique index.
       $oIntel->source_type = 'forum';
@@ -376,7 +377,10 @@ class ForumParser
    */
   private static function ExtractCityInfo($aReportData, $ReportHash, $Locale, $World)
   {
-    $cityInfo = array();
+    // Initialize with required properties
+    $cityInfo = array(
+      'luck' => 0
+    );
 
     // Check report
     $ReportClass = $aReportData['attributes']['class'];
@@ -546,6 +550,7 @@ class ForumParser
 
     $ReportType = 'UNKNOWN';
     $bIsAttackOnTemple = false;
+    $bParseLuck = false;
     switch ($ReportChainString) {
       case 'town-town-player':
       case 'town-town-ghost':
@@ -561,21 +566,25 @@ class ForumParser
           $ReportType = self::report_types['spy'];
         } else {
           $ReportType = self::report_types['friendly'];
+          $bParseLuck = true;
         }
         break;
       case 'town-player-town-player':
       case 'town-player-player-town':
         //case sizeof($aHeaderChainType) === 4:
         $ReportType = self::report_types['conquest'];
+        $bParseLuck = true;
         break;
       case 'town-player-town': // enemy attack on a friendly city
       case 'town-player-player': // enemy attack on friendly conquest of a ghost city
         $ReportType = self::report_types['enemy'];
+        $bParseLuck = true;
         break;
       case 'town-town-alliance':
         // Attack on a temple
         $bIsAttackOnTemple = true;
         $ReportType = self::report_types['enemy'];
+        $bParseLuck = true;
         break;
       case 'town':
       case '':
@@ -600,6 +609,50 @@ class ForumParser
         throw new ForumParserExceptionWarning("Unknown forum parser report chain: " . $ReportChainString);
     }
     $cityInfo['report_type'] = $ReportType;
+
+    if ($bParseLuck) {
+      // Parse luck
+      // Luck is used to enforce uniqueness between inbox and forum intel (same report from different source should be blocked)
+      try {
+        $aReportDetailsTable = Helper::allByClass($aReportData, 'report_details');
+        if (count($aReportDetailsTable)!==1) {
+          throw new Exception("found an invalid number of report_details elements");
+        }
+        $aReportDetailsTable = $aReportDetailsTable[0];
+
+        $bHasLuck = 1 === count(Helper::allByClass($aReportDetailsTable, 'report_icon luck'));
+        if ($bHasLuck) {
+          $DetailsText = Helper::getTextContent($aReportDetailsTable);
+          $FoundMatches = preg_match_all('/-?\d{1,3} ?%/m', $DetailsText, $aPercentages, PREG_SET_ORDER, 0);
+
+          $bHasMorale = 1 === count(Helper::allByClass($aReportDetailsTable, 'report_icon morale'));
+          $bHasNight  = 1 === count(Helper::allByClass($aReportDetailsTable, 'report_icon night'));
+
+          $ExpectedMatches = 1 + ($bHasMorale?1:0) + ($bHasNight?1:0); // luck ?+ morale ?+ night
+
+          if ($ExpectedMatches !== $FoundMatches) {
+            throw new Exception("Expected $ExpectedMatches matches, found $FoundMatches matches");
+          }
+
+          $LuckMatch = $bHasMorale?$aPercentages[1][0]:$aPercentages[0][0];
+          $LuckMatch = substr($LuckMatch, 0, strlen($LuckMatch)-2);
+
+          if (!is_numeric($LuckMatch)) {
+            throw new Exception("found non numeric luck value");
+          }
+          if ($LuckMatch<-30 || $LuckMatch>30) {
+            throw new Exception("found an out of bounds luck value");
+          }
+
+          $cityInfo['luck'] = $LuckMatch;
+        }
+        //else {
+        // no luck element found, probably spy or support report
+        //}
+      } catch (Exception $e) {
+        Logger::warning("Forum parser $ReportHash: Error parsing luck; ".$e->getMessage()." [".$e->getTraceAsString()."]");
+      }
+    }
 
     switch ($ReportType) {
       case self::report_types['spy']:
