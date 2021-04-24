@@ -776,6 +776,7 @@ class InboxParser
       $oIntel->indexed_by_user_id = $UserId;
       $oIntel->hash        = $ReportHash;
       $oIntel->world       = $World;
+      $oIntel->v1_index    = $World; // This field is only used to allow duplicate entries of V1 intel, new reports should not use this field but it can also not be null otherwise SQL wont enforce the unique index.
       $oIntel->source_type = 'inbox';
       $oIntel->report_type = $ReportType;
       $oIntel->script_version = $ScriptVersion;

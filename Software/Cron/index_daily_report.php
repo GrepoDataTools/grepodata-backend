@@ -95,11 +95,17 @@ $oReport->title = "Number of forum reports indexed per day";
 $oReport->data = json_encode($aIndexedPerDay);
 $oReport->save();
 
-// index stats agg
+// index stats agg (use a static increment for V1 count)
 $aStats = DB::select( DB::raw("
-SELECT reports, spy_count, att_count, def_count, index_count, created_at
+SELECT 
+	(CASE
+        WHEN created_at < '2021-04-19' THEN reports + 756277
+        ELSE reports
+	END) as reports, 
+	index_count, 
+    created_at
 FROM `Index_stats` 
-WHERE HOUR(created_at) = 0 
+WHERE HOUR(created_at) <= 1 
 AND created_at >= date_sub(curdate(), interval 1 year)
 ORDER BY `Index_stats`.`created_at` ASC"
 ));

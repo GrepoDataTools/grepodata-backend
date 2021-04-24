@@ -32,7 +32,16 @@ class Index extends BaseRoute
       ), 404));
     }
 
-    return self::OutputJson($oStats);
+    $oStats1DayAgo = Stats::orderBy('created_at', 'desc')
+      ->offset(12)
+      ->first();
+
+    $aResponse = array(
+      'now' => $oStats,
+      'yesterday' => $oStats1DayAgo,
+    );
+
+    return self::OutputJson($aResponse);
   }
 
   public static function GetWorldsGET()

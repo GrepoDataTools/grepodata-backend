@@ -3,7 +3,9 @@
 namespace Grepodata\Application\API\Route;
 
 use Grepodata\Library\Indexer\Helper;
+use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\IndexV2\Intel;
+use Grepodata\Library\Model\IndexV2\IntelShared;
 use Grepodata\Library\Router\ResponseCode;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -161,15 +163,22 @@ class Discord extends \Grepodata\Library\Router\BaseRoute
           // Use new hash version without required index key
           $SearchHash = str_replace('r', '', $aParams['hash']);
           $SearchHash = str_replace('m', '-', $SearchHash);
-          /** @var Intel $oReportHash */
-          $oIntel = Intel::where('hash', '=', $SearchHash)
+
+          // Get shared intel entry first because report hash may have been a duplicate
+          // this means the hash may not exist in Indexer_intel, but will exist in Indexer_intel_shared
+          /** @var IntelShared $oIntelShared */
+          $oIntelShared = IntelShared::where('hash', '=', $SearchHash)
             ->orderBy('id', 'desc')
+            ->firstOrFail();
+
+          $oIntel = Intel::where('id', '=', $oIntelShared->intel_id)
             ->firstOrFail();
         } else {
           ResponseCode::errorCode(5000);
         }
       } catch (ModelNotFoundException $e) {
         // If this step fails, report has not been indexed yet
+        Logger::warning("Discord unable to find report for hash ". $aParams['hash']);
         ResponseCode::errorCode(5000);
       }
 
