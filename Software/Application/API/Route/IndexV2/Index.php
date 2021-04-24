@@ -170,6 +170,7 @@ class Index extends BaseRoute
         'share_link'        => $bUserIsAdmin ? $oIndex->share_link : 'Unauthorized',
         'num_days'          => $bUserIsAdmin ? $oIndex->delete_old_intel_days : 0,
         'allow_join_v1_key' => $bUserIsAdmin ? $oIndex->allow_join_v1_key : 0,
+        'has_v2_owner'      => $oIndex->created_by_user > 0,
         'update_message'    => USERSCRIPT_UPDATE_INFO,
         'owners'            => json_decode(urldecode($oIndexOverview['owners'])),
         'contributors'      => json_decode(urldecode($oIndexOverview['contributors'])),

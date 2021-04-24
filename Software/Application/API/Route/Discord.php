@@ -167,7 +167,7 @@ class Discord extends \Grepodata\Library\Router\BaseRoute
           // Get shared intel entry first because report hash may have been a duplicate
           // this means the hash may not exist in Indexer_intel, but will exist in Indexer_intel_shared
           /** @var IntelShared $oIntelShared */
-          $oIntelShared = IntelShared::where('hash', '=', $SearchHash)
+          $oIntelShared = IntelShared::where('report_hash', '=', $SearchHash)
             ->orderBy('id', 'desc')
             ->firstOrFail();
 
