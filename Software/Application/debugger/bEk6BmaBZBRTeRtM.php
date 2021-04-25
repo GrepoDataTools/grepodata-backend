@@ -102,6 +102,7 @@ error_reporting(0);
     var query = document.getElementById('query').value;
     var level = document.getElementById('level').value;
     var cityid = document.getElementById('cityid').value;
+    var repjson = document.getElementById('repjson').value;
     var reporthash = document.getElementById('reporthash').value;
     var failed = document.getElementById('failed').checked;
     var url = window.location.href;
@@ -110,7 +111,7 @@ error_reporting(0);
     } else {
       url += "?";
     }
-    url += "query="+query+"&level="+level+"&reporthash="+reporthash+"&failed="+failed+"&cityid="+cityid;
+    url += "query="+query+"&level="+level+"&reporthash="+reporthash+"&failed="+failed+"&cityid="+cityid+"&repjson="+repjson;
     window.location.href = url;
   }
 </script>
@@ -119,6 +120,7 @@ error_reporting(0);
 <input placeholder="by index key" id="query" type="text" name="text" onsubmit="search()" value="<?php echo $_GET['query'];?>"/>
 <input placeholder="by report hash" id="reporthash" type="text" name="reporthash" autocomplete="off" onsubmit="search()" value="<?php echo $_GET['reporthash'];?>"/>
 <input placeholder="by intel id" id="cityid" type="text" name="cityid" autocomplete="off" onsubmit="search()" value="<?php echo $_GET['cityid'];?>"/>
+<input placeholder="by report json" id="repjson" type="text" name="repjson" autocomplete="off" onsubmit="search()" value="<?php echo $_GET['repjson'];?>"/>
 <select id="level" name="level">
     <option value="all" <?php echo isset($_GET['level']) && $_GET['level'] == 'all' ? 'selected':''?>>All</option>
     <option value="default" <?php echo isset($_GET['level']) && $_GET['level'] == 'forum' ? 'selected':''?>>Forum</option>
@@ -159,6 +161,10 @@ try {
   $Reports = Intel::orderBy('Indexer_intel.id', 'desc');
   if (isset($_GET['level']) && $_GET['level'] != '' && $_GET['level'] != 'all') {
     $Reports->where('Indexer_intel.source_type', $_GET['level']);
+  }
+
+  if (isset($_GET['repjson']) && $_GET['repjson'] != '') {
+    $Reports->where('Indexer_intel.report_json', 'LIKE', '%'.$_GET['repjson'].'%');
   }
 
   if (isset($_GET['reporthash']) && $_GET['reporthash'] != '') {

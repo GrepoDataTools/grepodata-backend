@@ -316,4 +316,40 @@ class Helper
     return $aElements;
   }
 
+  /**
+   * Returns all elements with the given id
+   * @param $aParentElement
+   * @param $Id
+   * @param $bExactMatch bool if true, match full id attribute
+   * @return array
+   * @throws ParserDefaultWarning
+   */
+  public static function allById($aParentElement, $Id, $bExactMatch=false)
+  {
+    $aElements = array();
+    if (!is_array($aParentElement)) {
+      return $aElements;
+    }
+
+    if (isset($aParentElement['attributes']['id'])) {
+      if (
+        ($bExactMatch && $aParentElement['attributes']['id'] === $Id) ||
+        (!$bExactMatch && strpos($aParentElement['attributes']['id'], $Id) !== false)
+      ) {
+        $aElements[] = $aParentElement;
+      }
+    }
+
+    if (key_exists('content', $aParentElement)) {
+      foreach ($aParentElement['content'] as $Child) {
+        if (is_array($Child)) {
+          $aChildElementsMatched = self::allById($Child, $Id, $bExactMatch);
+          $aElements = array_merge($aElements, $aChildElementsMatched);
+        }
+      }
+    }
+
+    return $aElements;
+  }
+
 }

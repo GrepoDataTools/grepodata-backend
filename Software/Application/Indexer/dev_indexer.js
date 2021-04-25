@@ -292,23 +292,16 @@ var errorSubmissions = [];
                     }
 
                     // Check if player changed
-                    var access_player = localStorage.getItem('gd_indexer_player_id');
-                    if (Game
-                        && 'player_id' in Game
-                        && Game.player_id
-                        && typeof Game.player_id != 'undefined'
-                        && access_player
-                        && typeof access_player != 'undefined'
-                        && Game.player_id != access_player
-                    ) {
-                        // The current player is not equal to the player that authenticated with grepodata, sign them out
-                        console.log("Player logout detected. Signing out of GrepoData account. New sign in required.")
-                        localStorage.removeItem('gd_indexer_access_token');
-                        localStorage.removeItem('gd_indexer_refresh_token');
-                        localStorage.removeItem('gd_indexer_player_id');
-                        access_token = null;
-                        resolve(false);
-                    }
+                    // var access_player = localStorage.getItem('gd_indexer_player_id');
+                    // if (!!Game?.player_id && !!access_player && Game.player_id != access_player) {
+                    //     // The current player is not equal to the player that authenticated with grepodata, sign them out
+                    //     console.log("Player logout detected. Signing out of GrepoData account. New sign in required.")
+                    //     localStorage.removeItem('gd_indexer_access_token');
+                    //     localStorage.removeItem('gd_indexer_refresh_token');
+                    //     localStorage.removeItem('gd_indexer_player_id');
+                    //     access_token = null;
+                    //     resolve(false);
+                    // }
 
                     // if timed out, get new access token using refresh token
                     let payload = parseJwt(access_token);
@@ -1047,7 +1040,7 @@ var errorSubmissions = [];
             var reportText = reportElement.innerText;
 
             getAccessToken().then(access_token => {
-                if (access_token == false) {
+                if (access_token === false) {
                     HumanMessage.error('GrepoData: login required to index reports');
                     showLoginPopup();
                     $('.rh' + reportHash).each(function () {
@@ -1097,7 +1090,7 @@ var errorSubmissions = [];
             var reportText = reportElement.innerText;
 
             getAccessToken().then(access_token => {
-                if (access_token == false) {
+                if (access_token === false) {
                     HumanMessage.error('GrepoData: login required to index reports');
                     showLoginPopup();
                     $('#gd_index_rep_txt').get(0).innerText = translate.ADD + ' +';
@@ -1855,7 +1848,7 @@ var errorSubmissions = [];
             try {
 
                 getAccessToken().then(access_token => {
-                    if (access_token == false) {
+                    if (access_token === false) {
                         HumanMessage.error('GrepoData: login is required to view intel');
                         showLoginPopup();
                         $('#gd_index_rep_txt').get(0).innerText = translate.ADD + ' +';
@@ -2082,13 +2075,27 @@ var errorSubmissions = [];
                         if (unit.killed > 0) {
                             killed = true;
                         }
-                        unitHtml = unitHtml +
-                            '<div class="unit_icon25x25 ' + unit.name + ' intel-unit-' + unit.name + '-' + id + '-' + j + '" style="overflow: unset; font-size: ' + size + 'px; text-shadow: 1px 1px 3px #000; color: #fff; font-weight: 700; border: 1px solid #626262; padding: 10px 0 0 0; line-height: 13px; height: 15px; text-align: right; margin-right: 2px;">' +
-                            unit.count +
-                            (unit.killed > 0 ? '   <div class="report_losts" style="position: absolute; margin: 4px 0 0 0; font-size: ' + (size - 1) + 'px; text-shadow: none;">-' + unit.killed + '</div>\n' : '') +
-                            '</div>';
+                        if (unit.name === 'unknown' || unit.name === 'unknown_naval') {
+                            unitHtml = unitHtml +
+                                '<div class="unit_icon25x25 ' + unit.name + ' intel-unit-' + unit.name + '-' + id + '-' + j + '" style="overflow: unset; font-size: ' + size + 'px; text-shadow: 1px 1px 3px #000; color: #fff; font-weight: 700; border: 1px solid #626262; padding: 10px 0 0 0; line-height: 14px; height: 14px; text-align: right; margin-right: 2'+(2+((11-size)*2))+'px; width: 24px;">?';
+                            if(unit.killed >= 0) {
+                                unitHtml = unitHtml + '<div style="background-position: 0 -162px; transform: scale(.8); background-repeat: no-repeat; width: 18px; height: 17px; background-image: url(https://gpnl.innogamescdn.com/images/game/autogenerated/resources/resources_small_2.95.png);"></div>';
+                                unitHtml = unitHtml + '   <div class="report_losts" style="position: absolute; margin: -13px 0 0 17px; font-size: 9px; text-shadow: none;">~' + unit.killed + '</div>\n';
+                            }
+                            unitHtml = unitHtml + '</div>';
 
-                        tooltips.push({id: 'intel-unit-' + unit.name + '-' + id + '-' + j, text: unit.count + ' ' + (unit.name=='unknown'?'unknown land units':unit.name.replace('_',' '))});
+                            if (unit.killed != '?') {
+                                tooltips.push({id: 'intel-unit-' + unit.name + '-' + id + '-' + j, text: 'This friendly attack killed roughly '+unit.killed+' ' + (unit.name==='unknown'?'land':'sea') + ' population (this is estimated based on the battle points gained)'});
+                            }
+                        } else {
+                            unitHtml = unitHtml +
+                                '<div class="unit_icon25x25 ' + unit.name + ' intel-unit-' + unit.name + '-' + id + '-' + j + '" style="overflow: unset; font-size: ' + size + 'px; text-shadow: 1px 1px 3px #000; color: #fff; font-weight: 700; border: 1px solid #626262; padding: 10px 0 0 0; line-height: 13px; height: 15px; text-align: right; margin-right: 2px;">' +
+                                unit.count +
+                                (unit.killed > 0 ? '   <div class="report_losts" style="position: absolute; margin: 4px 0 0 0; font-size: ' + (size - 1) + 'px; text-shadow: none;">-' + unit.killed + '</div>\n' : '') +
+                                '</div>';
+
+                            tooltips.push({id: 'intel-unit-' + unit.name + '-' + id + '-' + j, text: unit.count + ' ' + unit.name.replace('_',' ')});
+                        }
                     }
 
                     // Append hero to unit list
@@ -2440,8 +2447,8 @@ var errorSubmissions = [];
         function loadIndexHashlist(check_login) {
             try {
                 getAccessToken().then(access_token => {
-                    if (access_token == false) {
-                        if (check_login == true) {
+                    if (access_token === false) {
+                        if (check_login === true) {
                             showLoginPopup()
                         }
                     } else {
@@ -2472,7 +2479,7 @@ var errorSubmissions = [];
         function loadIndexesList(check_login, show_no_index_popup) {
             try {
                 getAccessToken().then(access_token => {
-                    if (access_token == false && check_login == true) {
+                    if (access_token === false && check_login === true) {
                         showLoginPopup()
                     } else {
                         $.ajax({

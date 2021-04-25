@@ -229,6 +229,7 @@ class Intel
     // build info list
     $aUnits = array();
     $UnitCost = 0;
+    $UnknownLand = null;
     foreach ($aCityFields['land'] as $Name => $Value) {
       $UnitName = "";
       foreach (self::land_units as $ForumName => $FixedName) {
@@ -244,7 +245,11 @@ class Intel
       if (isset($aUnit['count']) && $aUnit['count']!='?') {
         $UnitCost += $aUnit['count'];
       }
-      $aUnits[] = $aUnit;
+      if ($Name = 'unknown') {
+        $UnknownLand = $aUnit;
+      } else {
+        $aUnits[] = $aUnit;
+      }
     }
     foreach ($aCityFields['air'] as $Name => $Value) {
       $UnitName = "";
@@ -287,6 +292,9 @@ class Intel
       }
       $aUnits[] = $aUnit;
     }
+    if (!is_null($UnknownLand)) {
+      $aUnits[] = $UnknownLand;
+    }
 
     // Calc intel cost (higher is better)
     $IntelCost = $UnitCost * (1-(min(($DaysAgo+1)*5, 90)/100));
@@ -328,7 +336,7 @@ class Intel
       return array(
         'name' => $Name,
         'count' => "?",
-        'killed' => 0,
+        'killed' => "?",
       );
     }
     $Count = 0;
@@ -342,7 +350,7 @@ class Intel
     }
     return array(
       'name' => $Name,
-      'count' => (int) $Count,
+      'count' => $Name==='unknown'||$Name==='unknown_naval'?'?':((int) $Count),
       'killed' => (int) $Killed,
     );
   }
