@@ -284,24 +284,30 @@ class Helper
    * Returns all elements with the given class
    * @param $aParentElement
    * @param $ClassName
+   * @param $bExactMatch bool if true, match full class attribute
    * @return array
    * @throws ParserDefaultWarning
    */
-  public static function allByClass($aParentElement, $ClassName)
+  public static function allByClass($aParentElement, $ClassName, $bExactMatch=false)
   {
     $aElements = array();
     if (!is_array($aParentElement)) {
       return $aElements;
     }
 
-    if (isset($aParentElement['attributes']['class']) && strpos($aParentElement['attributes']['class'], $ClassName) !== false) {
-      $aElements[] = $aParentElement;
+    if (isset($aParentElement['attributes']['class'])) {
+      if (
+        ($bExactMatch && $aParentElement['attributes']['class'] === $ClassName) ||
+        (!$bExactMatch && strpos($aParentElement['attributes']['class'], $ClassName) !== false)
+      ) {
+        $aElements[] = $aParentElement;
+      }
     }
 
     if (key_exists('content', $aParentElement)) {
       foreach ($aParentElement['content'] as $Child) {
         if (is_array($Child)) {
-          $aChildElementsMatched = self::allByClass($Child, $ClassName);
+          $aChildElementsMatched = self::allByClass($Child, $ClassName, $bExactMatch);
           $aElements = array_merge($aElements, $aChildElementsMatched);
         }
       }

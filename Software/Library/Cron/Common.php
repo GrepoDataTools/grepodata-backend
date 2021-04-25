@@ -3,9 +3,7 @@
 namespace Grepodata\Library\Cron;
 
 use Carbon\Carbon;
-use Grepodata\Library\Controller\Alliance;
 use Grepodata\Library\Controller\CronStatus;
-use Grepodata\Library\Controller\Player;
 use Grepodata\Library\IndexV2\ForumParser;
 use Grepodata\Library\IndexV2\InboxParser;
 use Grepodata\Library\Logger\Logger;

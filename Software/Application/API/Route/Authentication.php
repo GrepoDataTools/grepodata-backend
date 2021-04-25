@@ -231,8 +231,6 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
     // Validate params
     $aParams = self::validateParams(array('script_token'));
 
-    Logger::indexDebug("VerifyScriptLink - ".$_SERVER['REMOTE_ADDR']." - ".$aParams['script_token'] . " - " . $_SERVER['HTTP_USER_AGENT']);
-
     // Check token
     try {
       $oToken = ScriptToken::GetScriptToken($aParams['script_token']);
@@ -315,6 +313,8 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
     // Add script_token to user
     $oToken->user_id = $oUser->id;
     $oToken->save();
+
+    Logger::indexDebug("VerifiedScriptLink - ".$_SERVER['REMOTE_ADDR']." - ".$aParams['script_token'] . " - " . $_SERVER['HTTP_USER_AGENT']);
 
     // Response
     ResponseCode::success(array(), 1151);

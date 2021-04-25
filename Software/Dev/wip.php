@@ -11,8 +11,22 @@ use Carbon\Carbon;
 $t = Carbon::now()->subDay();
 $t2 = Carbon::now();
 
+$aDebug = \Grepodata\Library\Model\Operation_log::where('message', 'LIKE', 'VerifiedScriptLink%')->get();
+$counts = array();
+foreach ($aDebug as $Debug) {
+  $msg = $Debug->created_at . ' - ' . $Debug->message;
+  preg_match_all('/\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b/', $msg, $aMatch);
+  if (isset($counts[$aMatch[0][0]])) {
+    $counts[$aMatch[0][0]][] = $msg;
+  } else {
+    $counts[$aMatch[0][0]] = array($msg);
+  }
+}
+
+$t=2;
+
 //$aWorlds2 = World::getAllActiveWorlds();
-$aWorlds = \Grepodata\Library\Cron\Common::getAllActiveWorlds();
+//$aWorlds = \Grepodata\Library\Cron\Common::getAllActiveWorlds();
 
 //$aConquests = \Grepodata\Library\Model\Indexer\Conquest::whereNull('uid')->get();
 //foreach ($aConquests as $oConquest) {
@@ -24,9 +38,9 @@ $aWorlds = \Grepodata\Library\Cron\Common::getAllActiveWorlds();
 //$LinkDataEncoded = '#eyJuYW1lIjoibWFpb3IiLCJpZCI6NDEyNDkwfQ==';
 //$LinkDataEncoded = '#eyJpZCI6MjEzMDAsIml4Ijo0NzAsIml5Ijo1MTYsInRwIjoidG93biIsIm5hbWUiOiI0NS5BLjEgTGFzZXIifQ==';
 //$LinkDataEncoded = '#eyJuYW1lIjoiTmVsbHkxOTgwIiwiaWQiOjEzODkzMzZ9';
-$LinkDataEncoded = '#eyJpZCI6MTU1ODksIml4Ijo0NzIsIml5Ijo1MzYsInRwIjoidG93biIsIm5hbWUiOiJPQyA0NSBQZW5zcG9ueSJ9';
-$aLinkData = json_decode(base64_decode($LinkDataEncoded), true);
-$t=2;
+//$LinkDataEncoded = '#eyJpZCI6MTU1ODksIml4Ijo0NzIsIml5Ijo1MzYsInRwIjoidG93biIsIm5hbWUiOiJPQyA0NSBQZW5zcG9ueSJ9';
+//$aLinkData = json_decode(base64_decode($LinkDataEncoded), true);
+//$t=2;
 
 //$ScoreboardTime = Carbon::now();
 //$ScoreboardTime->setTimezone('Europe/Istanbul');

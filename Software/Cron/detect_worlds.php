@@ -133,6 +133,10 @@ try {
   foreach ($aWorlds as $oWorld) {
     $Server = substr($oWorld->grep_id, 0, 2);
 
+    if ($Server == 'zz') {
+      continue; // skip beta worlds
+    }
+
     $Code = $oWorld->grep_id;
     if (isset($aWorldsData[$Server][$oWorld->grep_id])) {
       $Name = $aWorldsData[$Server][$oWorld->grep_id];

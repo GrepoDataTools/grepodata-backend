@@ -7,7 +7,6 @@ use Carbon\Carbon;
 use Exception;
 use Grepodata\Library\Controller\Alliance;
 use Grepodata\Library\Controller\Player;
-use Grepodata\Library\Exception\DuplicateIntelWarning;
 use Grepodata\Library\Exception\InboxParserExceptionDebug;
 use Grepodata\Library\Exception\InboxParserExceptionError;
 use Grepodata\Library\Exception\InboxParserExceptionWarning;
@@ -75,6 +74,7 @@ class InboxParser
    * @return int $Id inserted intel id
    * @throws InboxParserExceptionError
    * @throws InboxParserExceptionWarning
+   * @throws InboxParserExceptionDebug
    */
   public static function ParseReport(
     $UserId,
@@ -810,7 +810,7 @@ class InboxParser
       }
       $oIntel->indexed_by_user_id = $UserId;
       $oIntel->hash        = $ReportHash;
-      $oIntel->luck        = $Luck;
+      $oIntel->luck        = $Luck??0;
       $oIntel->world       = $World;
       $oIntel->v1_index    = $World; // This field is only used to allow duplicate entries of V1 intel, new reports should not use this field but it can also not be null otherwise SQL wont enforce the unique index.
       $oIntel->source_type = 'inbox';
@@ -887,6 +887,7 @@ class InboxParser
             ->where('world', '=', $World)
             ->where('parsed_date', '=', $ParsedDate)
             ->where('report_type', '=', $ReportType)
+            ->where('luck', '=', ($Luck??0))
             ->firstOrFail();
           return $oIntel->id;
         } catch (\Exception $e) {

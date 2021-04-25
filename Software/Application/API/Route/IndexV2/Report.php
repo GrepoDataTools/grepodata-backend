@@ -232,7 +232,12 @@ class Report extends \Grepodata\Library\Router\BaseRoute
           $oIntel->report_info = json_encode(substr($ReportInfo, 0, 100));
           $oIntel->parsing_failed = true;
           $oIntel->debug_explain = $Explain;
-          $IntelId = $oIntel->save();
+          $oIntel->save();
+          $IntelId = $oIntel->id;
+          if (empty($IntelId)) {
+            Logger::warning("Report parser failed to save debug report for hash $ReportHash");
+            die(self::OutputJson(array(), 200));
+          }
         }
 
         // Add the hash to all indexes for this user and add a hash record for self

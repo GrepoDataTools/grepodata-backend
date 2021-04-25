@@ -293,14 +293,7 @@ var errorSubmissions = [];
 
                     // Check if player changed
                     // var access_player = localStorage.getItem('gd_indexer_player_id');
-                    // if (Game
-                    //     && 'player_id' in Game
-                    //     && Game.player_id
-                    //     && typeof Game.player_id != 'undefined'
-                    //     && access_player
-                    //     && typeof access_player != 'undefined'
-                    //     && Game.player_id != access_player
-                    // ) {
+                    // if (!!Game?.player_id && !!access_player && Game.player_id != access_player) {
                     //     // The current player is not equal to the player that authenticated with grepodata, sign them out
                     //     console.log("Player logout detected. Signing out of GrepoData account. New sign in required.")
                     //     localStorage.removeItem('gd_indexer_access_token');

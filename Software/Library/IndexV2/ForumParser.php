@@ -5,6 +5,7 @@ namespace Grepodata\Library\IndexV2;
 use Carbon\Carbon;
 use Exception;
 use Grepodata\Library\Controller\Player;
+use Grepodata\Library\Controller\Town;
 use Grepodata\Library\Controller\World;
 use Grepodata\Library\Exception\ForumParserExceptionDebug;
 use Grepodata\Library\Exception\ForumParserExceptionError;
@@ -352,6 +353,7 @@ class ForumParser
             ->where('world', '=', $World)
             ->where('parsed_date', '=', $aCityInfo['parsed_date'])
             ->where('report_type', '=', $aCityInfo['report_type'])
+            ->where('luck', '=', ($aCityInfo['luck']??0))
             ->firstOrFail();
           return $oIntel->id;
         } catch (\Exception $e) {
@@ -361,7 +363,6 @@ class ForumParser
         throw new ForumParserExceptionError("uncaught exception in forum parser: " . $e->getMessage() . '. [' . $e->getTraceAsString() . ']');
       }
     }
-
   }
 
   /**
@@ -389,7 +390,17 @@ class ForumParser
     }
 
     // Reformat molehole changes
-    if (isset($aReportData['content'][0]['type']) && $aReportData['content'][0]['type'] === 'I') {
+    //1089611462 MH but has encapsulation
+    //1965508403 MH but no encapsulation
+    if (
+    (isset($aReportData['content'][0]['type']) && $aReportData['content'][0]['type'] === 'I')
+    || (
+        count(Helper::allByClass($aReportData, 'MHbbcADD'))>0 // Has molehole buttons
+        && count($aReportData['content']) < 6 // AND Is missing some children
+        && count($aReportData['content'][0]['content']) >= 6 // AND First child has the expected number of children
+      )
+    ) {
+      Logger::warning("ForumParser " . $ReportHash . ": TODO Check molehole parsing");
       $aReportData = $aReportData['content'][0];
     }
 
@@ -499,7 +510,19 @@ class ForumParser
     }
 
     // Find Report header (type=SPAN, class.="BOLD", content >= 3, must contain '(' and ')')
-    $aHeaderItems = $aReportData['content'][3]['content'][3]['content'];
+    $aHeaderItemsMatched = Helper::allByClass($aReportData, 'bold', true);
+    if (
+      count($aHeaderItemsMatched)<1 ||
+      !isset($aHeaderItemsMatched[0]['content']) ||
+      strpos(Helper::getTextContent($aHeaderItemsMatched[0]), '(') === false ||
+      strpos(Helper::getTextContent($aHeaderItemsMatched[0]), ')') === false
+    ) {
+      // fallback hardcoded
+      Logger::warning("Forum Parser $ReportHash: Unable to parse report header dynamically");
+      $aHeaderItems = $aReportData['content'][3]['content'][3]['content'];
+    } else {
+      $aHeaderItems = $aHeaderItemsMatched[0]['content'];
+    }
     //$HeaderTextContent = Helper::getTextContent($aHeaderItems);
 
     // Parse header dynamically
@@ -529,7 +552,7 @@ class ForumParser
               $aHeaderChainType[] = 'player';
             }
             else {
-              Logger::warning("Unhandled attribute class in forum report header: " . $Class);
+              Logger::warning("Forum Parser $ReportHash: Unhandled attribute class in forum report header: " . $Class);
             }
           }
         }
@@ -930,11 +953,11 @@ class ForumParser
           // Lookup temple attack info
           try {
             // player id
-            $oTown = Town::firstById($oIndex->world, $AttackingCity['id']);
+            $oTown = Town::firstById($World, $AttackingCity['id']);
             $cityInfo['player_id'] = $oTown->player_id ?? 0;
 
             // town
-            $oPlayer = Player::firstById($oIndex->world, $oTown->player_id);
+            $oPlayer = Player::firstById($World, $oTown->player_id);
             $cityInfo['player_name'] = $oPlayer->name ?? 'Unknown';
           } catch (Exception $e) {
             Logger::warning("ForumParser " . $ReportHash . ": Error looking up town for temple attack. " . $e->getMessage());
@@ -942,7 +965,11 @@ class ForumParser
         }
 
         //loop units
-        $unitsRootArr = $aReportData['content'][5]['content'][1]['content'][1]['content'];
+        if (count($aReportData['content'])>=6) {
+          $unitsRootArr = $aReportData['content'][5]['content'][1]['content'][1]['content'];
+        } else {
+          throw new ForumParserExceptionWarning("Unable to find unit parent element in enemy attack");
+        }
 
         $bFoundUnits = false;
         $bTitleTextPresent = false;
