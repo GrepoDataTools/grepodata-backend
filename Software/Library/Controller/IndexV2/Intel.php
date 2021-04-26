@@ -245,7 +245,7 @@ class Intel
       if (isset($aUnit['count']) && $aUnit['count']!='?') {
         $UnitCost += $aUnit['count'];
       }
-      if ($Name = 'unknown') {
+      if ($Name === 'unknown') {
         $UnknownLand = $aUnit;
       } else {
         $aUnits[] = $aUnit;
@@ -344,14 +344,14 @@ class Intel
     if (strpos($Value,'(-') !== FALSE) {
       $Count = substr($Value, 0, strpos($Value,'(-'));
       $Killed = substr($Value, strpos($Value,'(-')+2);
-      $Killed = substr($Killed, 0, strpos($Value,')')-1);
+      $Killed = substr($Killed, 0, strpos($Killed,')'));
     } else {
       $Count = $Value;
     }
     return array(
       'name' => $Name,
       'count' => $Name==='unknown'||$Name==='unknown_naval'?'?':((int) $Count),
-      'killed' => (int) $Killed,
+      'killed' => $Killed==='?'?'?':(int) $Killed,
     );
   }
 

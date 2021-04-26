@@ -119,7 +119,7 @@ class IndexOverview
           break;
       }
 
-      if (sizeof($aRecentIntel)<20 && !in_array($oCity->alliance_id, $aOldOwners)) {
+      if (sizeof($aRecentIntel)<20 && !in_array($oCity->alliance_id, $aOldOwners) && !$oCity->parsing_failed) {
         $aFormatted = Intel::formatAsTownIntel($oCity, $oWorld, $aBuildings);
         $aFormatted['town_id'] = $oCity->town_id;
         $aFormatted['town_name'] = $oCity->town_name;

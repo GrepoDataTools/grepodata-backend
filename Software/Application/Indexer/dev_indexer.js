@@ -22,6 +22,9 @@ var errorSubmissions = [];
         document.getElementsByTagName('head')[0].appendChild(script);
     }
 
+    // Cleanup old local intel var (storing viewed intel in local storage was possibly filling local storage)
+    localStorage.removeItem('globals_i');
+
     function loadCityIndex(globals) {
         // Settings
         var world = Game.world_id;
@@ -31,7 +34,6 @@ var errorSubmissions = [];
             stats: true,
             context: true,
             keys_enabled: true,
-            cmdoverview: false,
             departure_time: true,
             bug_reports: true,
             key_inbox_prev: '[',
@@ -44,11 +46,6 @@ var errorSubmissions = [];
                 // loadIndexesList(false, true); // Get list of indexes for this user
             }
         }, 1000);
-        setTimeout(function () {
-            if (gd_settings.cmdoverview === true) {
-                readIntelHistory();
-            }
-        }, 500);
         checkLogin();
 
         // Set locale
@@ -77,9 +74,6 @@ var errorSubmissions = [];
             SHORTCUT_FUNCTION: 'Function',
             SAVED: 'Settings saved',
             SHARE: 'Share',
-            CMD_OVERVIEW_TITLE: 'Enhanced command overview',
-            CMD_DEPARTURE_INFO: 'Add the return and cancel time to your own movements',
-            CMD_OVERVIEW_INFO: 'Enhance your command overview with unit intelligence from your enemy city index. Note: this is a new feature, currently still in development. Please contact us if you have feedback.',
             CONTEXT_TITLE: 'Expand context menu',
             CONTEXT_INFO: 'Add an intel shortcut to the town context menu. The shortcut opens the intel for this town.',
             BUG_REPORTS: 'Upload anonymous bug reports to help improve our script.',
@@ -121,9 +115,6 @@ var errorSubmissions = [];
                         SHORTCUT_FUNCTION: 'Functie',
                         SAVED: 'Instellingen opgeslagen',
                         SHARE: 'Delen',
-                        CMD_OVERVIEW_TITLE: 'Uitgebreid beveloverzicht',
-                        CMD_DEPARTURE_INFO: 'Voeg de annuleer en terugkeer tijd toe aan eigen bevelen.',
-                        CMD_OVERVIEW_INFO: 'Voeg troepen intel uit je city index toe aan het beveloverzicht. Let op: dit is een nieuwe feature, momenteel nog in ontwikkeling. Contacteer ons als je feedback hebt.',
                         CONTEXT_TITLE: 'Context menu uitbreiden',
                         CONTEXT_INFO: 'Voeg een intel snelkoppeling toe aan het context menu als je op een stad klikt. De snelkoppeling verwijst naar de verzamelde intel van de stad.',
                         BUG_REPORTS: 'Anonieme bug reports uploaden om het script te verbeteren.',
@@ -184,18 +175,6 @@ var errorSubmissions = [];
                     case "/alliance/profile":
                         linkToStats(action, opt);
                         break;
-                    case "/town_overviews/command_overview":
-                        if (gd_settings.cmdoverview === true || gd_settings.departure_time === true) {
-                            setTimeout(enhanceCommandOverview, 20);
-                        }
-                        break;
-                    case "/command_info/info":
-                        if (gd_settings.cmdoverview === true || gd_settings.departure_time === true) {
-                            setTimeout(() => {
-                                enhanceCommandInfoPanel(xhr, opt);
-                            }, 20);
-                        }
-                        break;
                 }
             } catch (error) {
                 errorHandling(error, "handleAjaxCompleteObserver");
@@ -203,16 +182,8 @@ var errorSubmissions = [];
         });
 
         function readSettingsCookie() {
-            var settingsJson = localStorage.getItem('globals_s');
-            if (settingsJson == null) {
-                // try old version
-                settingsJson = localStorage.getItem('gd_city_indexer_s');
-                localStorage.removeItem('gd_city_indexer_s');
-                localStorage.removeItem('gd_city_indexer_i');
-                saveSettings();
-            } else {
-                settingsJson = decodeHashToJson(settingsJson);
-            }
+            var settingsJson = getLocalToken('globals_s');
+            settingsJson = decodeHashToJson(settingsJson);
             if (settingsJson != null) {
                 result = JSON.parse(settingsJson);
                 if (result != null) {
@@ -223,9 +194,6 @@ var errorSubmissions = [];
                     }
                     if (!('context' in result)) {
                         result.context = true;
-                    }
-                    if (!('cmdoverview' in result)) {
-                        result.cmdoverview = false;
                     }
                     if (!('departure_time' in result)) {
                         result.departure_time = true;
@@ -282,26 +250,74 @@ var errorSubmissions = [];
             }
         }
 
+        function setCookie(name,value,days) {
+            console.log('setting cookie', name, value, days);
+            var expires = "";
+            if (days) {
+                var date = new Date();
+                date.setTime(date.getTime() + (days*24*60*60*1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+        }
+
+        function getCookie(name) {
+            var nameEQ = name + "=";
+            var ca = document.cookie.split(';');
+            for(var i=0;i < ca.length;i++) {
+                var c = ca[i];
+                while (c.charAt(0)==' ') c = c.substring(1,c.length);
+                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+            }
+            return null;
+        }
+
+        function eraseCookie(name) {
+            document.cookie = name +'=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        }
+
+        function getLocalToken(name) {
+            try {
+                var local_value = localStorage.getItem(name);
+                if (local_value) {
+                    return local_value;
+                }
+                var local_value = getCookie(name);
+                if (local_value) {
+                    return local_value;
+                }
+                return null;
+            } catch (error) {
+                errorHandling(error, "getLocalToken", {name: name});
+            }
+        }
+
+        function setLocalToken(name, value) {
+            try {
+                setCookie(name, value, 1000);
+                localStorage.setItem(name, value).catch(error => {
+                    errorHandling(error, "setLocalStorage", {name: name, value: value});
+                });
+            } catch (error) {
+                errorHandling(error, "setLocalToken", {name: name, value: value});
+            }
+        }
+
+        function deleteLocalToken(name) {
+            try {
+                localStorage.removeItem(name);
+                eraseCookie(name);
+            } catch (e) {}
+        }
+
         function getAccessToken() {
             return new Promise(resolve => {
                 try {
                     // Get access token from local storage
-                    var access_token = localStorage.getItem('gd_indexer_access_token');
+                    var access_token = getLocalToken('gd_indexer_access_token');
                     if (!access_token) {
                         resolve(false);
                     }
-
-                    // Check if player changed
-                    // var access_player = localStorage.getItem('gd_indexer_player_id');
-                    // if (!!Game?.player_id && !!access_player && Game.player_id != access_player) {
-                    //     // The current player is not equal to the player that authenticated with grepodata, sign them out
-                    //     console.log("Player logout detected. Signing out of GrepoData account. New sign in required.")
-                    //     localStorage.removeItem('gd_indexer_access_token');
-                    //     localStorage.removeItem('gd_indexer_refresh_token');
-                    //     localStorage.removeItem('gd_indexer_player_id');
-                    //     access_token = null;
-                    //     resolve(false);
-                    // }
 
                     // if timed out, get new access token using refresh token
                     let payload = parseJwt(access_token);
@@ -313,10 +329,10 @@ var errorSubmissions = [];
                         if (currentTime > expiration - 60) {
                             // Token expired, try to refresh
                             console.log("GrepoData: Access token expired.");
-                            var refresh_token = localStorage.getItem('gd_indexer_refresh_token');
+                            var refresh_token = getLocalToken('gd_indexer_refresh_token');
                             if (!refresh_token) {
                                 // New login required
-                                localStorage.removeItem('gd_indexer_access_token');
+                                deleteLocalToken('gd_indexer_access_token');
                                 resolve(false);
                             }
 
@@ -330,9 +346,8 @@ var errorSubmissions = [];
                                 success: function (data) {
                                     if (data.success_code && data.success_code === 1101) {
                                         console.log('GrepoData: Renewed access token.');
-                                        localStorage.setItem('gd_indexer_player_id', Game.player_id);
-                                        localStorage.setItem('gd_indexer_access_token', data.access_token);
-                                        localStorage.setItem('gd_indexer_refresh_token', data.refresh_token);
+                                        setLocalToken('gd_indexer_access_token', data.access_token);
+                                        setLocalToken('gd_indexer_refresh_token', data.refresh_token);
                                         resolve(data.access_token);
                                     } else {
                                         resolve(false);
@@ -341,7 +356,7 @@ var errorSubmissions = [];
                                 error: function (jqXHR, textStatus) {
                                     console.log("GrepoData: Error renewing access token");
                                     // New login required
-                                    localStorage.removeItem('gd_indexer_access_token');
+                                    deleteLocalToken('gd_indexer_access_token');
                                     errorHandling(null, "refreshAccessToken", JSON.stringify({xhr: jqXHR, text: textStatus}));
                                     resolve(false);
                                 },
@@ -364,7 +379,7 @@ var errorSubmissions = [];
             return new Promise(resolve => {
                 try {
                     // Get script token from local storage
-                    script_token = localStorage.getItem('gd_indexer_script_token');
+                    script_token = getLocalToken('gd_indexer_script_token');
                     if (!script_token) {
                         // Get a new script token
                         $.ajax({
@@ -376,17 +391,17 @@ var errorSubmissions = [];
                             success: function (data) {
                                 if (data.success_code && data.success_code === 1150) {
                                     console.log('GrepoData: Retrieved script token.');
-                                    localStorage.setItem('gd_indexer_script_token', data.script_token);
+                                    setLocalToken('gd_indexer_script_token', data.script_token);
                                     resolve(data.script_token);
                                 } else {
                                     console.log("GrepoData: Error retrieving script token");
-                                    localStorage.removeItem('gd_indexer_script_token');
+                                    deleteLocalToken('gd_indexer_script_token');
                                     resolve(false);
                                 }
                             },
                             error: function (jqXHR, textStatus) {
                                 console.log("GrepoData: Error retrieving script token");
-                                localStorage.removeItem('gd_indexer_script_token');
+                                deleteLocalToken('gd_indexer_script_token');
                                 resolve(false);
                             },
                             timeout: 30000
@@ -541,7 +556,7 @@ var errorSubmissions = [];
             if (interval_count>100) {
                 clearInterval(script_token_interval);
             }
-            var script_token = localStorage.getItem('gd_indexer_script_token');
+            var script_token = getLocalToken('gd_indexer_script_token');
             $.ajax({
                 url: backend_url + "/auth/verifyscriptlink",
                 data: {
@@ -553,11 +568,10 @@ var errorSubmissions = [];
                 success: function (data) {
                     console.log(data);
                     if (data.success_code && data.success_code === 1111) {
-                        console.log('GrepoData: Script token verified for player '+Game.player_id);
-                        localStorage.setItem('gd_indexer_player_id', Game.player_id);
-                        localStorage.setItem('gd_indexer_access_token', data.access_token);
-                        localStorage.setItem('gd_indexer_refresh_token', data.refresh_token);
-                        localStorage.removeItem('gd_indexer_script_token');
+                        console.log('GrepoData: Script token verified');
+                        setLocalToken('gd_indexer_access_token', data.access_token);
+                        setLocalToken('gd_indexer_refresh_token', data.refresh_token);
+                        deleteLocalToken('gd_indexer_script_token');
                         HumanMessage.success('GrepoData login succesful!');
                         $('#gd-login-container').hide();
                         $('#gd-script-linked').show();
@@ -572,7 +586,7 @@ var errorSubmissions = [];
                     if (error.responseJSON.error_code && (error.responseJSON.error_code === 3041 || error.responseJSON.error_code === 3042)) {
                         // Unknown or expired script token. remove token and try again
                         clearInterval(script_token_interval);
-                        localStorage.removeItem('gd_indexer_script_token');
+                        deleteLocalToken('gd_indexer_script_token');
                         showLoginPopup();
                         verbose ? setTimeout(loginError('Expired script token. Please try using the link again.'), 1000) : null;
                     } else if (error.responseJSON.error_code && error.responseJSON.error_code === 3043) {
@@ -626,329 +640,8 @@ var errorSubmissions = [];
                     console.log("Error importing V1 keys: ", err);
                 }).done(function (response) {
                     console.log("V1 keys imported: ", response);
-                    localStorage.setItem(migration_complete, 'true');
+                    localStorage.removeItem(gd_key_list_v1);
                 });
-            }
-        }
-
-        // Add command information to info panel
-        function enhanceCommandInfoPanel(xhr, opt) {
-            try {
-                var window_id = GPWindowMgr.getFocusedWindow().getID();
-                var gpwindow = $('#gpwnd_'+window_id);
-                if (!window_id) return;
-
-                var cmd_img = $(gpwindow).find('.command_icon_wrapper > img').get(0);
-                if (!cmd_img || (
-                    cmd_img.src.indexOf('/support.png')<0
-                    && cmd_img.src.indexOf('/attack.png')<0
-                    && cmd_img.src.indexOf('/attack_sea.png')<0
-                )) return;
-
-                var data = JSON.parse(xhr.responseText);
-                if (!data.json.command_id) return;
-                var command_id = data.json.command_id;
-
-                var movement = false;
-                let movements = Object.values(MM.getModels().MovementsUnits);
-                movements.map(m => {
-                    if (m.attributes.command_id == command_id) {
-                        movement = m;
-                    }
-                });
-                if (!movement) return;
-
-                if (verbose) console.log(movement);
-
-                var renderIntel = movement.isIncommingMovement();
-                var town_id = movement.attributes.home_town_id;
-
-                // parse source town
-                var departureElem = document.getElementById('gd_departure_'+command_id+'_wnd_'+window_id);
-                if (!departureElem && gd_settings.departure_time === true) {
-                    var departureHtml = '<fieldset class="command_info_units">'+
-                        '<legend>'+translate.DEPARTED_FROM+'</legend>';
-
-                    departureHtml = departureHtml + '<div style="display: inline-block; padding: 0 14px;">'+
-                        (movement.attributes.link_origin ? '<div style="display: inline-block; margin-top: 12px;"><img alt="" src="/images/game/icons/town.png" style="padding-right: 2px; vertical-align: top;"> ' + movement.attributes.link_origin + '</div>' : '');
-
-                    if (renderIntel) {
-                        departureHtml = departureHtml + '<div id="gd_cmd_view_intel_' + window_id + '" town_id="' + town_id + '" class="button_new gdtvcmd' + town_id + '" style="display: inline-block; margin-left: 25px;">' +
-                            '<div class="left"></div>' + '<div class="right"></div>' +
-                            '<div class="caption js-caption">' + translate.VIEW + '<div class="effect js-effect"></div></div></div>';
-                    }
-
-                    departureHtml = departureHtml + '</div></fieldset>';
-                    $(gpwindow).find('.command_info_time').after(departureHtml);
-
-                    if (renderIntel) {
-                        $('#gd_cmd_view_intel_' + window_id).click(function () {
-                            var town_name = movement.attributes.town_name_origin;
-                            loadTownIntel(town_id, town_name, '');
-                        });
-                    }
-                }
-
-            } catch (error) {
-                errorHandling(error, "enhanceCommandInfoPanel");
-            }
-        }
-
-        function getReturnTimeFromMovement(movement) {
-            var arrival_time = movement.attributes.arrival_at;
-            var departure_time = movement.attributes.started_at;
-            var returns_at = arrival_time + (arrival_time - departure_time);
-            return {
-                arrival_time: arrival_time,
-                returns_at: returns_at,
-                return_readable: getHumanReadableDateTime(returns_at, false),
-            };
-        }
-
-        function getHumanReadableTimestampDiff(end, start) {
-            var diff = start - end;
-            var hours = Math.floor(diff / 3600);
-            var residual = diff % 3600;
-            var minutes = Math.floor(residual / 60);
-            var seconds = residual % 60;
-
-            if (minutes < 10) {
-                minutes = '0' + minutes;
-            }
-            if (seconds < 10) {
-                seconds = '0' + seconds;
-            }
-            return hours + ':' + minutes + ':' + seconds;
-        }
-
-        function getHumanReadableDateTime(timestamp, includeDate = true) {
-            var time = dateFromTimestamp(timestamp);
-            var hours = time.getUTCHours(),
-                minutes = time.getUTCMinutes(),
-                seconds = time.getUTCSeconds(),
-                day = time.getUTCDate(),
-                month = time.getUTCMonth() + 1,
-                year = time.getUTCFullYear();
-
-            if (hours < 10) {
-                hours = '0' + hours;
-            }
-            if (minutes < 10) {
-                minutes = '0' + minutes;
-            }
-            if (seconds < 10) {
-                seconds = '0' + seconds;
-            }
-            if (day < 10) {
-                day = '0' + day;
-            }
-            if (month < 10) {
-                month = '0' + month;
-            }
-            return (includeDate?(day + '/' + month + '/' + year + ' '):'') + hours + ':' + minutes + ':' + seconds;
-        }
-
-        function dateFromTimestamp(timestamp) {
-            return new Date((timestamp + Game.server_gmt_offset) * 1000);
-        }
-
-        // Enhance command overview
-        var parsedCommands = {};
-        var bParsingEnabledTemp = true;
-        function enhanceCommandOverview() {
-            try {
-                // Add temp filter button to footer
-                var gd_filter = document.getElementById('gd_cmd_filter');
-                if ((!gd_filter) && (gd_settings.cmdoverview === true || gd_settings.departure_time === true)) {
-                    var commandFilters = $('#command_filter').get(0);
-                    var filterHtml = '<div id="gd_cmd_filter" class="support_filter" style="background-image: '+gd_icon+'; width: 26px; height: 26px; '+(bParsingEnabledTemp?'':'opacity: 0.3;')+'"></div>';
-                    $(commandFilters).find('> div').append(filterHtml);
-
-                    $('#gd_cmd_filter').click(function() {
-                        bParsingEnabledTemp = !bParsingEnabledTemp;
-                        if (!bParsingEnabledTemp) {
-                            $('.gd_cmd_units').remove();
-                            $('.gd_cmd_runtime').remove();
-                            $(this).css({ opacity: 0.3 });
-                        } else {
-                            $(this).css({ opacity: 1 });
-                            enhanceCommandOverview();
-                        }
-                    });
-                }
-
-                // Parse overview
-                if (bParsingEnabledTemp && MM.getModels().MovementsUnits) {
-                    var commandList = $('#command_overview');
-                    var commands = $(commandList).find('li');
-                    var parseLimit = 100; // Limit number of parsed commands
-                    let movements = Object.values(MM.getModels().MovementsUnits);
-                    commands.each(function (c) {
-                        if (c>=parseLimit) {return}
-                        try {
-                            var command_id = this.id;
-                            if (!command_id) {return}
-                            command_id = command_id.replace(/[^\d]+/g, '');
-                            if (!(command_id in parsedCommands)) {
-                                var cmd_units = $(this).find('.command_overview_units');
-                                if (cmd_units.length != 0) {
-                                    parsedCommands[command_id] = {
-                                        is_enemy: false,
-                                        movement_id: 0
-                                    };
-                                } else {
-                                    // Command is incoming enemy, parse ids
-                                    var cmd_span = $(this).find('.cmd_span').get(0);
-                                    var cmd_entities = $(cmd_span).find('a');
-                                    if (cmd_entities.length == 4) {
-                                        var command_info = {
-                                            source_town: decodeHashToJson(cmd_entities.get(0).hash),
-                                            source_player: decodeHashToJson(cmd_entities.get(1).hash),
-                                            target_town: decodeHashToJson(cmd_entities.get(2).hash),
-                                            target_player: decodeHashToJson(cmd_entities.get(3).hash),
-                                            is_enemy: true,
-                                            movement_id: 0
-                                        };
-                                        parsedCommands[command_id] = command_info;
-                                    } else {
-                                        parsedCommands[command_id] = {
-                                            is_enemy: false,
-                                            movement_id: 0
-                                        };
-                                    }
-                                }
-
-                                movements.map(movement => {
-                                    if (command_id == movement.attributes.command_id && parsedCommands[command_id].movement_id === 0) {
-                                        parsedCommands[command_id].movement_id = movement.id
-                                    }
-                                });
-                            }
-
-                            enhanceCommand(command_id);
-                        } catch (error) {
-                            errorHandling(error, "enhanceCommandOverviewParseCommand");
-                        }
-                    });
-
-                    $('.gd_cmd_units').tooltip('Town intel (GrepoData index)');
-
-                    if (verbose) {
-                        console.log("parsed commands: ", parsedCommands);
-                    }
-                }
-            } catch (error) {
-                errorHandling(error, "enhanceCommandOverview");
-            }
-        }
-
-        function enhanceCommand(id, force=false) {
-            try {
-                var cmd = parsedCommands[id];
-                var cmdInfoBox = $('#command_'+id).find('.cmd_info_box');
-
-                var returnsElem = document.getElementById('gd_runtime_'+id);
-                if (!returnsElem && gd_settings.departure_time === true && cmd.movement_id > 0) {
-                    var movement = MM.getModels().MovementsUnits[cmd.movement_id];
-
-                    if (!movement.isIncommingMovement()) {
-                        var runtimeHtml = '<span id="gd_runtime_'+id+'" class="troops_arrive_at gd_cmd_runtime gd_runtime_'+id+'" style="font-style: italic;">(';
-                        var returnText = '';
-                        var cancelText = '';
-                        var bHasReturnTime = false;
-                        var bHasCancelTime = false;
-                        if (movement.attributes.hasOwnProperty('started_at') && movement.getType() != 'support') {
-                            bHasReturnTime = true;
-                            var returns = getReturnTimeFromMovement(movement);
-                            returnText = translate.RUNTIME_RETURNS + ' '+returns.return_readable;
-                        }
-                        if (movement.attributes.hasOwnProperty('cancelable_until') && movement.attributes.cancelable_until != null) {
-                            var diff = movement.attributes.cancelable_until - Date.now() / 1000;
-                            if (diff>0) {
-                                bHasCancelTime = true;
-                                var cancelable_until = getHumanReadableDateTime(movement.attributes.cancelable_until, false);
-                                cancelText = translate.RUNTIME_CANCELABLE + ' ' + cancelable_until;
-                            }
-                        }
-                        if (bHasReturnTime || bHasCancelTime) {
-                            if (bHasCancelTime) {
-                                runtimeHtml = runtimeHtml + cancelText;
-                            } else {
-                                runtimeHtml = runtimeHtml + returnText;
-                            }
-                            runtimeHtml = runtimeHtml + ')</span>';
-                            cmdInfoBox.append(runtimeHtml);
-                        } else if (verbose) {
-                            console.log("no times found", movement);
-                        }
-                    }
-
-                }
-
-                // Insert intel
-                var cmd_units = document.getElementById('gd_cmd_units_'+id);
-                if ((!cmd_units || force) && gd_settings.cmdoverview === true && cmd.is_enemy === true) {
-                    if (cmd_units && force) {
-                        $('#gd_cmd_units_'+id).remove();
-                    }
-                    var intel = townIntelHistory[cmd.source_town.id];
-                    if (typeof intel !== "undefined") {
-                        // show town intel from memory
-                        if ('u' in intel && Object.keys(intel.u).length > 0) {
-                            var cmdInfoWidth = cmdInfoBox.width();
-                            var freeSpace = 770 - cmdInfoWidth - 60; // cmdWidth - cmdTextWidth - margin
-                            var numUnits = Object.keys(intel.u).length;
-                            var unitSpace = numUnits * 29;
-                            var bUnitsFit = freeSpace > unitSpace;
-                            if (!bUnitsFit) {
-                                $('#command_'+id).height(45);
-                            }
-                            var unitHtml = '<div id="gd_cmd_units_'+id+'" class="command_overview_units gd_cmd_units" style="'+(bUnitsFit?'bottom: 3px; ':'margin-top: 18px; ')+'cursor: pointer; position: absolute; right: 0;">';
-                            for (var i = 0; i < numUnits; i++) {
-                                var unit = intel.u[i];
-                                var size = 10;
-                                switch (Math.max(unit.count.toString().length, unit.killed.toString().length)) {
-                                    case 1:
-                                    case 2:
-                                        size = 11;
-                                        break;
-                                    case 3:
-                                        size = 10;
-                                        break;
-                                    case 4:
-                                        size = 8;
-                                        break;
-                                    case 5:
-                                        size = 6;
-                                        break;
-                                    default:
-                                        size = 10;
-                                }
-                                unitHtml = unitHtml +
-                                    '<div class="unit_icon25x25 ' + unit.name + '" style="overflow: unset; font-size: ' + size + 'px; text-shadow: 1px 1px 3px #000; color: #fff; font-weight: 700; border: 1px solid #626262; padding: 10px 0 0 0; line-height: 13px; height: 15px; text-align: right; margin-right: 2px;">' +
-                                    unit.count + '</div>';
-                            }
-                            unitHtml = unitHtml + '</div>';
-                            cmdInfoBox.after(unitHtml);
-                        } else {
-                            var units = '<div id="gd_cmd_units_'+id+'" class="command_overview_units gd_cmd_units" style="margin-top: 14px; cursor: pointer;"><span style="font-size: 10px;">No intel > </span></div>';
-                            cmdInfoBox.after(units);
-                        }
-
-                    } else {
-                        // show a shortcut to view town intel
-                        var units = '<div id="gd_cmd_units_'+id+'" class="command_overview_units gd_cmd_units" style="margin-top: 14px;"><a id="gd_cmd_intel_'+id+'" style="font-size: 10px;">Check intel > </a></div>';
-                        cmdInfoBox.after(units);
-                    }
-
-                    $('#gd_cmd_units_'+id).click(function () {
-                        loadTownIntel(cmd.source_town.id, cmd.source_town.name, cmd.source_player.name, id);
-                    });
-
-                }
-
-            } catch (error) {
-                errorHandling(error, "enhanceCommand");
             }
         }
 
@@ -1669,16 +1362,6 @@ var errorSubmissions = [];
                     '\t\t\t</div>\n' +
                     '\t\t\t<br><br><hr>\n';
 
-                // Command overview settings
-                settingsHtml += '\t\t\t<p style="margin-bottom: 10px; margin-left: 10px;"><strong>' + translate.CMD_OVERVIEW_TITLE + '</strong></p>\n' +
-                    '\t\t\t<div style="margin-left: 30px; margin-bottom: 10px;" class="checkbox_new departure_time_gd_enabled' + (gd_settings.departure_time === true ? ' checked' : '') + '">\n' +
-                    '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.CMD_DEPARTURE_INFO + '</div>\n' +
-                    '\t\t\t</div>\n' +
-                    '\t\t\t<div style="margin-left: 30px;" class="checkbox_new cmdoverview_gd_enabled' + (gd_settings.cmdoverview === true ? ' checked' : '') + '">\n' +
-                    '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption"><strong>BETA: </strong>' + translate.CMD_OVERVIEW_INFO + '</div>\n' +
-                    '\t\t\t</div>\n' +
-                    '\t\t\t<br><br><hr>\n';
-
                 // Context menu
                 settingsHtml += '\t\t\t<p style="margin-left: 10px; display: inline-flex; height: 14px;"><strong>' + translate.CONTEXT_TITLE + '</strong> <span style="background: '+gd_icon_intel+'; width: 50px; height: 50px; transform: scale(0.6); margin-top: -18px;"></span></p>\n' +
                     '\t\t\t<div style="margin-left: 30px;" class="checkbox_new context_gd_enabled' + (gd_settings.context === true ? ' checked' : '') + '">\n' +
@@ -1722,9 +1405,8 @@ var errorSubmissions = [];
                 });
                 $("#gdsettingslogout").click(function () {
                     $("#gdsettingslogged_in").hide();
-                    localStorage.removeItem('gd_indexer_access_token');
-                    localStorage.removeItem('gd_indexer_refresh_token');
-                    localStorage.removeItem('gd_indexer_player_id');
+                    deleteLocalToken('gd_indexer_access_token');
+                    deleteLocalToken('gd_indexer_refresh_token');
                     HumanMessage.success('GrepoData logged out succesfully.');
                     showLoginPopup();
                 });
@@ -1745,9 +1427,6 @@ var errorSubmissions = [];
                 });
                 $(".stats_gd_enabled").click(function () {
                     settingsCbx('stats', !gd_settings.stats);
-                });
-                $(".cmdoverview_gd_enabled").click(function () {
-                    settingsCbx('cmdoverview', !gd_settings.cmdoverview);
                 });
                 $(".departure_time_gd_enabled").click(function () {
                     settingsCbx('departure_time', !gd_settings.departure_time);
@@ -1789,62 +1468,11 @@ var errorSubmissions = [];
         }
 
         function saveSettings() {
-            localStorage.setItem('globals_s', encodeJsonToHash(JSON.stringify(gd_settings)));
-        }
-
-        var townIntelHistory = {}
-
-        // Save town intel to local storage
-        function saveIntelHistory() {
-            try {
-                var max_items_in_memory = 100;
-
-                // Convert to list
-                var items = Object.keys(townIntelHistory).map(function(key) {
-                    return [key, townIntelHistory[key]];
-                });
-
-                // Order by time added desc
-                items.sort(function(first, second) {
-                    return second[1].t - first[1].t;
-                });
-
-                // Slice & save
-                items = items.slice(0, max_items_in_memory);
-                localStorage.setItem('globals_i', JSON.stringify(items));
-
-            } catch (error) {
-                errorHandling(error, "saveIntelHistory");
-            }
-        }
-
-        // Load local town intel history
-        function readIntelHistory() {
-            try {
-                var intelJson = localStorage.getItem('globals_i');
-                if (intelJson != null) {
-                    result = JSON.parse(intelJson);
-                    var items = {}
-                    result.forEach(function(e) {items[e[0]] = e[1]})
-                    console.log("Loaded town intel from local storage: ", items);
-                    townIntelHistory = items;
-                }
-
-            } catch (error) {
-                errorHandling(error, "readIntelHistory");
-            }
-        }
-
-        function addToTownHistory(id, units) {
-            var stamp = new Date().getTime();
-            townIntelHistory[id] = {u: units, t: stamp};
-            if (gd_settings.cmdoverview === true) {
-                saveIntelHistory();
-            }
+            setLocalToken('globals_s', encodeJsonToHash(JSON.stringify(gd_settings)))
         }
 
         var openIntelWindows = {};
-        function loadTownIntel(id, town_name, player_name, cmd_id=0) {
+        function loadTownIntel(id, town_name, player_name) {
             try {
 
                 getAccessToken().then(access_token => {
@@ -1888,7 +1516,7 @@ var errorSubmissions = [];
                             console.error(err);
                             renderTownIntelError(content_id, intelUrl);
                         }).done(function (response) {
-                            renderTownIntelWindow(response, id, town_name, player_name, cmd_id, content_id);
+                            renderTownIntelWindow(response, id, town_name, player_name, content_id);
                         });
                     }
                 });
@@ -1906,7 +1534,7 @@ var errorSubmissions = [];
                 '<a href="' + intelUrl + '" target="_blank" style="">' + intelUrl + '</a></p></div>');
         }
 
-        function renderTownIntelWindow(data, id, town_name, player_name, cmd_id, content_id) {
+        function renderTownIntelWindow(data, id, town_name, player_name, content_id) {
             var intelUrl = 'https://grepodata.com/indexer';
             try {
                 console.log(data);
@@ -1917,7 +1545,6 @@ var errorSubmissions = [];
                 if (data.intel==null || data.intel.length <= 3) {
                     unitHeight = 150;
                     notesHeight = 275;
-                    addToTownHistory(id, []);
                 }
 
                 // Intel content
@@ -2166,7 +1793,6 @@ var errorSubmissions = [];
                     var rowHeader = '<li class="' + (j % 2 === 0 ? 'odd' : 'even') + '" style="display: inherit; width: 100%; padding: 0 0 ' + (killed ? '0' : '4px') + ' 0;">';
                     table = table + rowHeader + row + '</li>\n';
                 }
-                addToTownHistory(id, maxCostUnits);
 
                 if (bHasIntel == false) {
                     table = table + '<li class="even" style="display: inherit; width: 100%;"><div style="text-align: center;">' +
@@ -2249,9 +1875,6 @@ var errorSubmissions = [];
                 $('.gdintel_'+content_id).append(exthtml);
                 $('.gd_ext_ref').tooltip('Opens in new tab');
 
-                if (cmd_id != 0) {
-                    setTimeout(function(){enhanceCommand(cmd_id, true)}, 10);
-                }
             } catch (error) {
                 errorHandling(error, "renderTownIntelWindow");
                 renderTownIntelError(content_id, intelUrl);

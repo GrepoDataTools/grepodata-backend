@@ -778,12 +778,23 @@ class InboxParser
         }
 
         $GodMicro = Helper::allByClass($RightSide, 'god_micro');
+        $bFoundGod = false;
         if (isset($GodMicro[0]) && is_array($GodMicro[0])) {
           $God = strtolower($GodMicro[0]['attributes']['title']) ?? null;
           if (!key_exists($God, self::myth_units)) {
-            Logger::warning("InboxParser $ReportHash: found unknown god with name '$God'");
+            foreach (array_keys(self::myth_units) as $GodName) {
+              if (strpos($GodMicro[0]['attributes']['class'], $GodName)!==false) {
+                $God = $GodName;
+                $bFoundGod = true;
+              }
+            }
+          } else {
+            $bFoundGod = true;
           }
           if ($God == '') $God = null;
+          if (!$bFoundGod) {
+            Logger::warning("InboxParser $ReportHash: unable to parse god");
+          }
         }
 
         if (!isset($aSpyScript)||$aSpyScript==null) {
@@ -841,6 +852,9 @@ class InboxParser
                     $Level = $Building["content"][1]["content"][0];
                     if ($Name === 'wall') {
                       $bHasWall = true;
+                    }
+                    if (!is_string($Level)) {
+                      $Level = Helper::getTextContent($Level);
                     }
                     $aBuildings[$Name] = $Level;
                   }
