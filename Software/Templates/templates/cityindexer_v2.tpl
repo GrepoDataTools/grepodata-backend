@@ -8,7 +8,7 @@
 // @updateURL    https://api.grepodata.com/userscript/cityindexer_{/literal}{$encrypted}{literal}.user.js
 // @downloadURL	 https://api.grepodata.com/userscript/cityindexer_{/literal}{$encrypted}{literal}.user.js
 // @description  This script allows you to easily collect enemy intelligence in your own private index
-// @include      https://{/literal}{$world}{literal}.grepolis.com/game/*
+// @include      https://*.grepolis.com/game/*
 // @include      https://grepodata.com*
 // @exclude      view-source://*
 // @icon         https://grepodata.com/assets/images/grepodata_icon.ico
@@ -41,7 +41,10 @@
         }
         if (!keys.includes(key)) {
             keys.push(key);
-            localStorage.setItem(storage_key, JSON.stringify(keys));
+            var storage_value = JSON.stringify(keys);
+            if (storage_value.length < 100) {
+                localStorage.setItem(storage_key, storage_value);
+            }
         }
     } catch (e) {}
 

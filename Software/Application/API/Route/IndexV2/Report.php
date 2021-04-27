@@ -94,6 +94,7 @@ class Report extends \Grepodata\Library\Router\BaseRoute
       $ReportPosterAllyId = $aParams['report_poster_ally_id'];
       $World = $aParams['world'];
       $Locale = substr($World, 0, 2);
+      $bAttackerHasCombatExperience = isset($aParams['has_combat_experience']) && ($aParams['has_combat_experience'] === 'true' || $aParams['has_combat_experience'] === true);
 
       // Get indexes for player
       $aIndexes = IndexInfo::allByUserAndWorld($oUser, $World);
@@ -172,6 +173,7 @@ class Report extends \Grepodata\Library\Router\BaseRoute
                 $ReportPoster,
                 $ReportPosterId,
                 $ReportPosterAllyId,
+                $bAttackerHasCombatExperience,
                 $ReportHash,
                 $ReportJson,
                 $ReportInfo,

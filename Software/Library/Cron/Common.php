@@ -179,6 +179,7 @@ class Common
         $ReportPosterName,
         $ReportPosterId,
         $ReportAllianceId,
+        false,
         $ReportHash,
         $ReportJson,
         $ReportInfo,

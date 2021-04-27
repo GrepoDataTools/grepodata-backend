@@ -13,6 +13,8 @@ class Reporting extends \Grepodata\Library\Router\BaseRoute
       $aParams = self::validateParams();
 
       // Save bug report as logmessage
+      $aParams['server_client'] = $_SERVER['REMOTE_ADDR'];
+      $aParams['server_agent'] = $_SERVER['HTTP_USER_AGENT'];
       Logger::indexDebug(json_encode($aParams));
 
       die(self::OutputJson(array('success' => true), 200));

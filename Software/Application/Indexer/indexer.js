@@ -23,7 +23,9 @@ var errorSubmissions = [];
     }
 
     // Cleanup old local intel var (storing viewed intel in local storage was possibly filling local storage)
-    localStorage.removeItem('globals_i');
+    try {
+        localStorage.removeItem('globals_i');
+    } catch (e) {}
 
     function loadCityIndex(globals) {
         // Settings
@@ -182,27 +184,35 @@ var errorSubmissions = [];
         });
 
         function readSettingsCookie() {
-            var settingsJson = getLocalToken('globals_s');
-            settingsJson = decodeHashToJson(settingsJson);
-            if (settingsJson != null) {
-                result = JSON.parse(settingsJson);
-                if (result != null) {
-                    result.forum = result.forum === false ? false : true;
-                    result.inbox = result.inbox === false ? false : true;
-                    if (!('stats' in result)) {
-                        result.stats = true;
-                    }
-                    if (!('context' in result)) {
-                        result.context = true;
-                    }
-                    if (!('departure_time' in result)) {
-                        result.departure_time = true;
-                    }
-                    if (!('bug_reports' in result)) {
-                        result.bugreports = true;
-                    }
-                    gd_settings = result;
+            try {
+                var settingsJson = getLocalToken('globals_s');
+                if (!settingsJson) {
+                    console.log('no local settings', settingsJson);
+                    return false;
                 }
+                settingsJson = decodeHashToJson(settingsJson);
+                if (settingsJson != null) {
+                    result = JSON.parse(settingsJson);
+                    if (result != null) {
+                        result.forum = result.forum === false ? false : true;
+                        result.inbox = result.inbox === false ? false : true;
+                        if (!('stats' in result)) {
+                            result.stats = true;
+                        }
+                        if (!('context' in result)) {
+                            result.context = true;
+                        }
+                        if (!('departure_time' in result)) {
+                            result.departure_time = true;
+                        }
+                        if (!('bug_reports' in result)) {
+                            result.bugreports = true;
+                        }
+                        gd_settings = result;
+                    }
+                }
+            } catch (error) {
+                errorHandling(error, "readSettingsCookie");
             }
         }
 
@@ -221,7 +231,11 @@ var errorSubmissions = [];
         $.Observer(GameEvents.map.context_menu.click).subscribe(async (e) => {
             try {
                 if (gd_settings.context && e.currentTarget && e.currentTarget.activeElement && e.currentTarget.activeElement.hash) {
-                    var data = decodeHashToJson(e.currentTarget.activeElement.hash);
+                    var hash = e.currentTarget.activeElement.hash;
+                    if (hash==='#confirm' || hash==='#setMax') {
+                        return false;
+                    }
+                    var data = decodeHashToJson(hash);
                     if (data.id && data.name) {
                         expandContextMenu(data.id, data.name, '');
                     }
@@ -235,10 +249,8 @@ var errorSubmissions = [];
             }
         });
         function expandContextMenu(town_id, town_name, player_name = '') {
-            var intelHtml = '<div id="gd_context_intel" class="context_icon" style="z-index: 4; background: ' + gd_icon_intel + ';">'+
+            var intelHtml = '<div id="gd_context_intel" class="gd-context-icon" style="z-index: 4; background: ' + gd_icon_intel + ';">'+
                 '<div class="icon_caption"><div class="top"></div><div class="middle"></div><div class="bottom"></div><div class="caption">Intel</div></div></div>';
-            //var intelHtml = '<div id="gd_context_intel" class="context_icon" style="z-index: 4; background: ' + gd_icon + '; background-repeat: no-repeat; top: 19px; transform: scale(1.5);">'+
-            //'<div class="icon_caption" style="transform: scale(.6); left: 41px; top: 15px; width: 60px;"><div class="top"></div><div class="middle"></div><div class="bottom"></div><div class="caption">Intel</div></div></div>';
             var menuItems = $("#context_menu").find('.context_icon');
             if (!menuItems || menuItems.length >= 5) {
                 $("#context_menu").append(intelHtml);
@@ -251,7 +263,7 @@ var errorSubmissions = [];
         }
 
         function setCookie(name,value,days) {
-            console.log('setting cookie', name, value, days);
+            verbose ? console.log('setting cookie', name, value, days) : null;
             var expires = "";
             if (days) {
                 var date = new Date();
@@ -295,9 +307,7 @@ var errorSubmissions = [];
         function setLocalToken(name, value) {
             try {
                 setCookie(name, value, 1000);
-                localStorage.setItem(name, value).catch(error => {
-                    errorHandling(error, "setLocalStorage", {name: name, value: value});
-                });
+                localStorage.setItem(name, value);
             } catch (error) {
                 errorHandling(error, "setLocalToken", {name: name, value: value});
             }
@@ -447,8 +457,8 @@ var errorSubmissions = [];
                 // Check if user migrated from a v1 script
                 var migration_complete = 'gd_key_migration_complete';
                 var v1_toggle_key = 'gd_index_toggle_v1';
-                if (localStorage.getItem(v1_toggle_key) && !localStorage.getItem(migration_complete)) {
-                    is_v1_migrated = localStorage.getItem(v1_toggle_key);
+                if (getLocalToken(v1_toggle_key) && !getLocalToken(migration_complete)) {
+                    is_v1_migrated = getLocalToken(v1_toggle_key);
                 }
 
                 // Form Content
@@ -505,7 +515,7 @@ var errorSubmissions = [];
                 // Handle actions
                 $('#gd-request-new-token-btn').click(function () {
                     // try with new token
-                    localStorage.removeItem('gd_indexer_script_token');
+                    deleteLocalToken('gd_indexer_script_token');
                     showLoginPopup();
                     clearInterval(script_token_interval);
                     refreshing_scripttoken = true;
@@ -619,29 +629,33 @@ var errorSubmissions = [];
 
         // V1 key migration
         function checkV1KeyMigration(access_token) {
-            var storage_key = 'gd_key_list_v1';
-            var migration_complete = 'gd_key_migration_complete';
-            if (localStorage.getItem(storage_key) && !localStorage.getItem(migration_complete)) {
-                var keys = JSON.parse(localStorage.getItem(storage_key));
-                console.log('Loaded old V1 keys from local storage', keys);
+            try {
+                var storage_key = 'gd_key_list_v1';
+                var migration_complete = 'gd_key_migration_complete';
+                if (getLocalToken(storage_key) && !getLocalToken(migration_complete)) {
+                    var keys = JSON.parse(localStorage.getItem(storage_key));
+                    console.log('Loaded old V1 keys from local storage', keys);
 
-                // Migrate to V2
-                $.ajax({
-                    url: backend_url + "/migrate/importv1keys",
-                    data: {
-                        access_token: access_token,
-                        index_keys: keys
-                    },
-                    type: 'post',
-                    crossDomain: true,
-                    dataType: 'json',
-                    timeout: 30000
-                }).fail(function (err) {
-                    console.log("Error importing V1 keys: ", err);
-                }).done(function (response) {
-                    console.log("V1 keys imported: ", response);
-                    localStorage.removeItem(gd_key_list_v1);
-                });
+                    // Migrate to V2
+                    $.ajax({
+                        url: backend_url + "/migrate/importv1keys",
+                        data: {
+                            access_token: access_token,
+                            index_keys: keys
+                        },
+                        type: 'post',
+                        crossDomain: true,
+                        dataType: 'json',
+                        timeout: 30000
+                    }).fail(function (err) {
+                        console.log("Error importing V1 keys: ", err);
+                    }).done(function (response) {
+                        console.log("V1 keys imported: ", response);
+                        setLocalToken(migration_complete, 'true');
+                    });
+                }
+            } catch (error) {
+                errorHandling(error, "checkV1KeyMigration");
             }
         }
 
@@ -782,6 +796,23 @@ var errorSubmissions = [];
             var reportJson = JSON.parse(mapDOM(reportElement, true));
             var reportText = reportElement.innerText;
 
+            var has_combat_experience = false;
+            try {
+                // Check if 10% boost is enabled for friendly attack on enemy town in order to parse the killed units from the battle points gained if enemy units are invisible
+                var attacker_town = reportElement.getElementsByClassName('gp_town_link')[0];
+                if (attacker_town && attacker_town.getAttribute("href")) {
+                    attacker_town = decodeHashToJson(attacker_town.getAttribute("href"));
+                    if (attacker_town.id && MM.getModels().Town[attacker_town.id]) {
+                        var combat_experience = MM.getModels().Town[attacker_town.id].researches().attributes.combat_experience
+                        if (combat_experience === true || combat_experience === false) {
+                            has_combat_experience = combat_experience
+                        }
+                    }
+                }
+            } catch (e) {
+                errorHandling(e, 'getCombatExperience');
+            }
+
             getAccessToken().then(access_token => {
                 if (access_token === false) {
                     HumanMessage.error('GrepoData: login required to index reports');
@@ -798,7 +829,8 @@ var errorSubmissions = [];
                         'script_version': gd_version,
                         'report_poster': Game.player_name || 'undefined',
                         'report_poster_id': Game.player_id || 0,
-                        'report_poster_ally_id': Game.alliance_id || 0
+                        'report_poster_ally_id': Game.alliance_id || 0,
+                        'has_combat_experience': has_combat_experience || false,
                     };
 
                     if (gd_settings.inbox === true) {
@@ -2014,6 +2046,9 @@ var errorSubmissions = [];
 
         function viewTownIntel(xhr) {
             try {
+                if (!xhr.responseText) {
+                    return false;
+                }
                 var town_id = xhr.responseText.match(/\[town\].*?(?=\[)/g)[0];
                 town_id = town_id.substring(6);
 

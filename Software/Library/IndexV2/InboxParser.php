@@ -66,6 +66,7 @@ class InboxParser
    * @param $ReportPoster
    * @param $PosterId
    * @param $PosterAllyId
+   * @param $bAttackerHasCombatExperience
    * @param $ReportHash
    * @param $ReportJson
    * @param $ReportInfo
@@ -76,7 +77,6 @@ class InboxParser
    * @return int $Id inserted intel id
    * @throws InboxParserExceptionError
    * @throws InboxParserExceptionWarning
-   * @throws InboxParserExceptionDebug
    */
   public static function ParseReport(
     $UserId,
@@ -85,6 +85,7 @@ class InboxParser
     $ReportPoster,
     $PosterId,
     $PosterAllyId,
+    $bAttackerHasCombatExperience,
     $ReportHash,
     $ReportJson,
     $ReportInfo,
@@ -599,6 +600,11 @@ class InboxParser
             // Parse boosts (BP boosts should be subtracted from BP gain, research boost is ignored)
             $LandBoostFactor = 1;
             $SeaBoostFactor = 1;
+            if ($bAttackerHasCombatExperience) {
+              // 10% boost from combat experience research
+              $LandBoostFactor += .1;
+              $SeaBoostFactor += .1;
+            }
             if (count(Helper::allByClass($aReportData, 'divine_senses')) >= 1) {
               // 300% boost for land+sea (x4)
               $LandBoostFactor += 3;
