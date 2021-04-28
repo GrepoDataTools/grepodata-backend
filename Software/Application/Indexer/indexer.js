@@ -36,7 +36,7 @@ var errorSubmissions = [];
             stats: true,
             context: true,
             keys_enabled: true,
-            departure_time: true,
+            command_cancel_time: true,
             bug_reports: true,
             key_inbox_prev: '[',
             key_inbox_next: ']',
@@ -48,7 +48,7 @@ var errorSubmissions = [];
                 // loadIndexesList(false, true); // Get list of indexes for this user
             }
         }, 1000);
-        checkLogin();
+        //checkLogin();
 
         // Set locale
         var translate = {
@@ -63,7 +63,8 @@ var errorSubmissions = [];
             CHECK_UPDATE: 'Check for updates',
             ABOUT: 'This tool allows you to collect and browse enemy city intelligence from your very own private index that can be shared with your alliance',
             INDEX_LIST: 'You are currently contributing intel to the following indexes',
-            INDEX_LOGGED_IN: 'You are currently logged in.',
+            INDEX_LOGGED_IN: 'You are currently signed in as',
+            INDEX_LOGGED_OUT: 'You are currently not signed in.',
             COUNT_1: 'You have contributed ',
             COUNT_2: ' reports in this session',
             SHORTCUTS: 'Keyboard shortcuts',
@@ -76,6 +77,8 @@ var errorSubmissions = [];
             SHORTCUT_FUNCTION: 'Function',
             SAVED: 'Settings saved',
             SHARE: 'Share',
+            CMD_OVERVIEW_TITLE: 'Enhance command overview',
+            CMD_DEPARTURE_INFO: 'Add the return and cancel time to your own movements and add a link to town intel for incoming enemy movements.',
             CONTEXT_TITLE: 'Expand context menu',
             CONTEXT_INFO: 'Add an intel shortcut to the town context menu. The shortcut opens the intel for this town.',
             BUG_REPORTS: 'Upload anonymous bug reports to help improve our script.',
@@ -104,7 +107,8 @@ var errorSubmissions = [];
                         CHECK_UPDATE: 'Controleer op updates',
                         ABOUT: 'Deze tool verzamelt informatie over vijandige steden in een handig overzicht. Rapporten kunnen geindexeerd worden in een unieke index die gedeeld kan worden met alliantiegenoten',
                         INDEX_LIST: 'Je draagt momenteel bij aan de volgende indexen',
-                        INDEX_LOGGED_IN: 'Je bent momenteel ingelogd.',
+                        INDEX_LOGGED_IN: 'Je bent momenteel ingelogd als',
+                        INDEX_LOGGED_OUT: 'Je bent momenteel niet ingelogd.',
                         COUNT_1: 'Je hebt al ',
                         COUNT_2: ' rapporten verzameld in deze sessie',
                         SHORTCUTS: 'Toetsenbord sneltoetsen',
@@ -117,6 +121,8 @@ var errorSubmissions = [];
                         SHORTCUT_FUNCTION: 'Functie',
                         SAVED: 'Instellingen opgeslagen',
                         SHARE: 'Delen',
+                        CMD_OVERVIEW_TITLE: 'Uitgebreid beveloverzicht',
+                        CMD_DEPARTURE_INFO: 'Voeg de annuleer en terugkeer tijd toe aan eigen bevelen. Voeg een intel link toe aan vijandige bevelen.',
                         CONTEXT_TITLE: 'Context menu uitbreiden',
                         CONTEXT_INFO: 'Voeg een intel snelkoppeling toe aan het context menu als je op een stad klikt. De snelkoppeling verwijst naar de verzamelde intel van de stad.',
                         BUG_REPORTS: 'Anonieme bug reports uploaden om het script te verbeteren.',
@@ -177,11 +183,189 @@ var errorSubmissions = [];
                     case "/alliance/profile":
                         linkToStats(action, opt);
                         break;
+                    case "/town_overviews/command_overview":
+                        if (gd_settings.command_cancel_time === true) {
+                            setTimeout(enhanceCommandOverview, 20);
+                        }
+                        break;
                 }
             } catch (error) {
                 errorHandling(error, "handleAjaxCompleteObserver");
             }
         });
+
+        var parsedCommands = {};
+        function enhanceCommandOverview() {
+            try {
+                // Parse overview
+                if (MM.getModels().MovementsUnits) {
+                    var commandList = $('#command_overview');
+                    var commands = $(commandList).find('li');
+                    var parseLimit = 100; // Limit number of parsed commands
+                    let movements = Object.values(MM.getModels().MovementsUnits);
+                    commands.each(function (c) {
+                        if (c>=parseLimit) {
+                            return
+                        }
+                        try {
+                            var command_id = this.id;
+                            if (!command_id) {
+                                return
+                            }
+                            command_id = command_id.replace(/[^\d]+/g, '');
+                            if (!(command_id in parsedCommands)) {
+                                var cmd_units = $(this).find('.command_overview_units');
+                                if (cmd_units.length != 0) {
+                                    parsedCommands[command_id] = {
+                                        is_enemy: false,
+                                        movement_id: 0
+                                    };
+                                } else {
+                                    // Command is incoming enemy, parse ids
+                                    var cmd_span = $(this).find('.cmd_span').get(0);
+                                    var cmd_entities = $(cmd_span).find('a');
+                                    if (cmd_entities.length == 4) {
+                                        var command_info = {
+                                            source_town: decodeHashToJson(cmd_entities.get(0).hash),
+                                            source_player: decodeHashToJson(cmd_entities.get(1).hash),
+                                            target_town: decodeHashToJson(cmd_entities.get(2).hash),
+                                            target_player: decodeHashToJson(cmd_entities.get(3).hash),
+                                            is_enemy: true,
+                                            movement_id: 0
+                                        };
+                                        parsedCommands[command_id] = command_info;
+                                    } else {
+                                        parsedCommands[command_id] = {
+                                            is_enemy: false,
+                                            movement_id: 0
+                                        };
+                                    }
+                                }
+
+                                movements.map(movement => {
+                                    if (command_id == movement.attributes.command_id && parsedCommands[command_id].movement_id === 0) {
+                                        parsedCommands[command_id].movement_id = movement.id
+                                    }
+                                });
+                            }
+
+                            enhanceCommand(command_id);
+                        } catch (error) {
+                            errorHandling(error, "enhanceCommandOverviewParseCommand");
+                        }
+                    });
+                }
+            } catch (error) {
+                errorHandling(error, "enhanceCommandOverview");
+            }
+        }
+
+        function enhanceCommand(id, force=false) {
+            try {
+                var cmd = parsedCommands[id];
+                var cmdInfoBox = $('#command_'+id).find('.cmd_info_box');
+
+                var returnsElem = document.getElementById('gd_runtime_'+id);
+                if (!returnsElem && gd_settings.command_cancel_time === true && cmd.movement_id > 0) {
+                    var movement = MM.getModels().MovementsUnits[cmd.movement_id];
+
+                    if (!movement.isIncommingMovement()) {
+                        var runtimeHtml = '<span id="gd_runtime_'+id+'" class="troops_arrive_at gd_cmd_runtime gd_runtime_'+id+'" style="font-style: italic;">(';
+                        var returnText = '';
+                        var cancelText = '';
+                        var bHasReturnTime = false;
+                        var bHasCancelTime = false;
+                        if (movement.attributes.hasOwnProperty('started_at') && movement.getType() != 'support') {
+                            bHasReturnTime = true;
+                            var returns = getReturnTimeFromMovement(movement);
+                            returnText = translate.RUNTIME_RETURNS + ' '+returns.return_readable;
+                        }
+                        if (movement.attributes.hasOwnProperty('cancelable_until') && movement.attributes.cancelable_until != null) {
+                            var diff = movement.attributes.cancelable_until - Date.now() / 1000;
+                            if (diff>0) {
+                                bHasCancelTime = true;
+                                var cancelable_until = getHumanReadableDateTime(movement.attributes.cancelable_until, false);
+                                cancelText = translate.RUNTIME_CANCELABLE + ' ' + cancelable_until;
+                            }
+                        }
+                        if (bHasReturnTime || bHasCancelTime) {
+                            if (bHasCancelTime) {
+                                runtimeHtml = runtimeHtml + cancelText;
+                            } else {
+                                runtimeHtml = runtimeHtml + returnText;
+                            }
+                            runtimeHtml = runtimeHtml + ')</span>';
+                            cmdInfoBox.append(runtimeHtml);
+                        } else if (verbose) {
+                            console.log("no times found", movement);
+                        }
+                    }
+
+                }
+
+                // Insert intel link
+                var cmd_units = document.getElementById('gd_cmd_units_'+id);
+                if ((!cmd_units || force) && gd_settings.command_cancel_time === true && cmd.is_enemy === true) {
+                    if (cmd_units && force) {
+                        $('#gd_cmd_units_'+id).remove();
+                    }
+
+                    // show a shortcut to view town intel
+                    var units = '<div id="gd_cmd_units_'+id+'" class="command_overview_units gd_cmd_units" style="margin-top: 14px;"><a id="gd_cmd_intel_'+id+'" style="font-size: 10px;">Check intel > </a></div>';
+                    cmdInfoBox.after(units);
+
+                    $('#gd_cmd_units_'+id).click(function () {
+                        loadTownIntel(cmd.source_town.id, cmd.source_town.name, cmd.source_player.name, id);
+                    });
+
+                }
+
+            } catch (error) {
+                errorHandling(error, "enhanceCommand");
+            }
+        }
+
+        function getReturnTimeFromMovement(movement) {
+            var arrival_time = movement.attributes.arrival_at;
+            var departure_time = movement.attributes.started_at;
+            var returns_at = arrival_time + (arrival_time - departure_time);
+            return {
+                arrival_time: arrival_time,
+                returns_at: returns_at,
+                return_readable: getHumanReadableDateTime(returns_at, false),
+            };
+        }
+
+        function getHumanReadableDateTime(timestamp, includeDate = true) {
+            var time = dateFromTimestamp(timestamp);
+            var hours = time.getUTCHours(),
+                minutes = time.getUTCMinutes(),
+                seconds = time.getUTCSeconds(),
+                day = time.getUTCDate(),
+                month = time.getUTCMonth() + 1,
+                year = time.getUTCFullYear();
+
+            if (hours < 10) {
+                hours = '0' + hours;
+            }
+            if (minutes < 10) {
+                minutes = '0' + minutes;
+            }
+            if (seconds < 10) {
+                seconds = '0' + seconds;
+            }
+            if (day < 10) {
+                day = '0' + day;
+            }
+            if (month < 10) {
+                month = '0' + month;
+            }
+            return (includeDate?(day + '/' + month + '/' + year + ' '):'') + hours + ':' + minutes + ':' + seconds;
+        }
+
+        function dateFromTimestamp(timestamp) {
+            return new Date((timestamp + Game.server_gmt_offset) * 1000);
+        }
 
         function readSettingsCookie() {
             try {
@@ -202,8 +386,10 @@ var errorSubmissions = [];
                         if (!('context' in result)) {
                             result.context = true;
                         }
-                        if (!('departure_time' in result)) {
-                            result.departure_time = true;
+                        if ('departure_time' in result) {
+                            result.command_cancel_time = result.departure_time;
+                        } else if (!('command_cancel_time' in result)) {
+                            result.command_cancel_time = true;
                         }
                         if (!('bug_reports' in result)) {
                             result.bugreports = true;
@@ -298,10 +484,10 @@ var errorSubmissions = [];
                 if (local_value) {
                     return local_value;
                 }
-                return null;
             } catch (error) {
                 errorHandling(error, "getLocalToken", {name: name});
             }
+            return null;
         }
 
         function setLocalToken(name, value) {
@@ -1359,6 +1545,12 @@ var errorSubmissions = [];
                 $(".settings-menu ul:last").append('<li id="gd_li"><svg aria-hidden="true" data-prefix="fas" data-icon="university" class="svg-inline--fa fa-university fa-w-16" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="color: #2E4154;width: 16px;width: 15px;vertical-align: middle;margin-top: -2px;"><path fill="currentColor" d="M496 128v16a8 8 0 0 1-8 8h-24v12c0 6.627-5.373 12-12 12H60c-6.627 0-12-5.373-12-12v-12H24a8 8 0 0 1-8-8v-16a8 8 0 0 1 4.941-7.392l232-88a7.996 7.996 0 0 1 6.118 0l232 88A8 8 0 0 1 496 128zm-24 304H40c-13.255 0-24 10.745-24 24v16a8 8 0 0 0 8 8h464a8 8 0 0 0 8-8v-16c0-13.255-10.745-24-24-24zM96 192v192H60c-6.627 0-12 5.373-12 12v20h416v-20c0-6.627-5.373-12-12-12h-36V192h-64v192h-64V192h-64v192h-64V192H96z"></path></svg><a id="gd_indexer" href="#" style="    margin-left: 4px;">GrepoData City Indexer</a></li>');
 
                 // contact/update
+                try {
+                    var access_token = getLocalToken('gd_indexer_access_token');
+                    var logged_in = !!access_token;
+                    var jwtpayload = parseJwt(access_token);
+                    console.log(jwtpayload);
+                } catch (e) {}
 
                 // Intro
                 // var layoutUrl = 'https' + window.getComputedStyle(document.getElementsByClassName('icon')[0], null).background.split('("https')[1].split('"')[0];
@@ -1368,9 +1560,13 @@ var errorSubmissions = [];
                     '\t\t\t<div class="game_header bold" style="margin: -5px -10px 5px -10px; padding-left: 10px;">GrepoData city indexer settings</div>\n' +
                     '<a href="https://grepodata.com/message" target="_blank">Contact</a>' +
                     '<p style="font-style: italic; font-size: 10px; float: right; margin:0px;">GrepoData city indexer v' + gd_version + ' [<a href="https://api.grepodata.com/script/indexer.user.js" target="_blank">' + translate.CHECK_UPDATE + '</a>]</p>' +
-                    '\t\t\t<p>' + translate.ABOUT + '.</p>' +
-                    '\t\t\t<p id="gdsettingslogged_in">' + translate.INDEX_LOGGED_IN + ' ' + '<a id="gdsettingslogout" href="#">Logout</a>' +
-                    '</p>' + (count > 0 ? '<p>' + translate.COUNT_1 + count + translate.COUNT_2 + '.</p>' : '') +
+                    '\t\t\t<p>' + translate.ABOUT + '.</p>';
+                if (logged_in) {
+                    settingsHtml += '\t\t\t<p id="gdsettingslogged_in">' + translate.INDEX_LOGGED_IN + (!!jwtpayload?.username?' <strong>'+jwtpayload.username+'</strong>':'') + ' <a id="gdsettingslogout" href="#">Sign out</a></p>';
+                } else {
+                    settingsHtml += '\t\t\t<p id="gdsettingslogged_in">' + translate.INDEX_LOGGED_OUT + ' ' + '<a id="gdsettingslogin" href="#">Sign in</a></p>';
+                }
+                settingsHtml +=(count > 0 ? '<p>' + translate.COUNT_1 + count + translate.COUNT_2 + '.</p>' : '') +
                     '<p id="gd_s_saved" style="display: none; position: absolute; left: 10px; margin: 0; color: green;"><strong>' + translate.SAVED + ' ✓</strong></p> ' +
                     '<br/>\n';
 
@@ -1401,6 +1597,13 @@ var errorSubmissions = [];
                     '\t\t\t</div>\n' +
                     '\t\t\t<br><br><hr>\n';
 
+                // Command overview settings
+                settingsHtml += '\t\t\t<p style="margin-left: 10px;"><strong>' + translate.CMD_OVERVIEW_TITLE + '</strong></p>\n' +
+                    '\t\t\t<div style="margin-left: 30px;" class="checkbox_new command_cancel_time_gd_enabled' + (gd_settings.command_cancel_time === true ? ' checked' : '') + '">\n' +
+                    '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.CMD_DEPARTURE_INFO + '</div>\n' +
+                    '\t\t\t</div>\n' +
+                    '\t\t\t<br><br><hr>\n';
+
                 // Keyboard shortcut settings
                 settingsHtml += '\t\t\t<p style="margin-bottom: 10px; margin-left: 10px;"><strong>' + translate.SHORTCUTS + '</strong></p>\n' +
                     '\t\t\t<div style="margin-left: 30px;" class="checkbox_new keys_enabled_gd_enabled' + (gd_settings.keys_enabled === true ? ' checked' : '') + '">\n' +
@@ -1411,7 +1614,7 @@ var errorSubmissions = [];
                     '\t\t\t\t<tr><td>' + translate.SHORTCUTS_INBOX_PREV + '</td><td>' + gd_settings.key_inbox_prev + '</td></tr>\n' +
                     '\t\t\t\t<tr><td>' + translate.SHORTCUTS_INBOX_NEXT + '</td><td>' + gd_settings.key_inbox_next + '</td></tr>\n' +
                     '\t\t\t</table></div>\n' +
-                    '\t\t\t<br/>';
+                    '\t\t\t<br/><hr>';
 
                 // Other
                 settingsHtml += '\t\t\t<p style="margin-left: 10px; display: inline-flex; height: 14px;"><strong>'+translate.SETTINGS_OTHER+'</strong></p></br>\n' +
@@ -1442,6 +1645,10 @@ var errorSubmissions = [];
                     HumanMessage.success('GrepoData logged out succesfully.');
                     showLoginPopup();
                 });
+                $("#gdsettingslogin").click(function () {
+                    $("#gdsettingslogged_in").hide();
+                    showLoginPopup();
+                });
 
                 $("#gd_indexer").click(function () {
                     $('.settings-container').get(0).style.display = "none";
@@ -1460,8 +1667,8 @@ var errorSubmissions = [];
                 $(".stats_gd_enabled").click(function () {
                     settingsCbx('stats', !gd_settings.stats);
                 });
-                $(".departure_time_gd_enabled").click(function () {
-                    settingsCbx('departure_time', !gd_settings.departure_time);
+                $(".command_cancel_time_gd_enabled").click(function () {
+                    settingsCbx('command_cancel_time', !gd_settings.command_cancel_time);
                 });
                 $(".context_gd_enabled").click(function () {
                     settingsCbx('context', !gd_settings.context);

@@ -597,25 +597,30 @@ class InboxParser
               $GainedBattlePoints = 0;
             }
 
-            // Parse boosts (BP boosts should be subtracted from BP gain, research boost is ignored)
+            // Subtract combat experience from gained battle points
+            if ($bAttackerHasCombatExperience) {
+              $AttackerUnitKillCount = self::parseUnitKillCount($aCityUnitsAtt, false, false);
+              $GainedBattlePoints -= ceil(.1 * $AttackerUnitKillCount);
+            }
+
+            // Parse boosts (BP boosts should be subtracted from BP gain)
             $LandBoostFactor = 1;
             $SeaBoostFactor = 1;
-            if ($bAttackerHasCombatExperience) {
-              // 10% boost from combat experience research
-              $LandBoostFactor += .1;
-              $SeaBoostFactor += .1;
-            }
+            $TsCsBoostFactor = 1; // Sea boost can be ignored for transport and cs ships with new boosters
             if (count(Helper::allByClass($aReportData, 'divine_senses')) >= 1) {
-              // 300% boost for land+sea (x4)
+              // old 300% boost for land+sea (x4)
               $LandBoostFactor += 3;
               $SeaBoostFactor += 3;
+              $TsCsBoostFactor += 3;
             } else if (
-              count(Helper::allByClass($aReportData, 'acumen')) >= 1
-              && count(Helper::allByClass($aReportData, 'assassins_acumen')) === 0
+              (count(Helper::allByClass($aReportData, 'acumen')) === 1
+              && count(Helper::allByClass($aReportData, 'assassins_acumen')) === 0)
+              || (count(Helper::allByClass($aReportData, 'acumen')) === 2)
             ) {
-              // 100% boost for land+sea (x2)
+              // old 100% boost for land+sea (x2)
               $LandBoostFactor += 1;
               $SeaBoostFactor += 1;
+              $TsCsBoostFactor += 1;
             } else if (count(Helper::allByClass($aReportData, 'divine_battle_strategy_epic')) >= 1) {
               // 100% boost for land+sea (x2)
               $LandBoostFactor += 1;
@@ -643,45 +648,48 @@ class InboxParser
             }
 
             // Only event boosts stack with regular boosts
+            $CommunityBoosts = 0;
             if (count(Helper::allByClass($aReportData, 'assassins_acumen')) >= 1) {
               // 50% community boost
-              $LandBoostFactor += .5;
-              $SeaBoostFactor += .5;
+              $CommunityBoosts += .5;
             } else if (count(Helper::allByClass($aReportData, 'missions_power_4')) >= 1) {
               // 50% pandora event boost
-              $LandBoostFactor += .5;
-              $SeaBoostFactor += .5;
+              $CommunityBoosts += .5;
             } else {
               $OlympicSenses = Helper::allByClass($aReportData, 'olympic_senses');
               if (count($OlympicSenses) === 1) {
                 // 10-20-30-40% olympic boost
                 $OlympicSenses = $OlympicSenses[0];
                 if (strpos($OlympicSenses['attributes']['class'], 'lvl1')!==false) {
-                  $LandBoostFactor += .1;
-                  $SeaBoostFactor += .1;
+                  $CommunityBoosts += .1;
                 } else if (strpos($OlympicSenses['attributes']['class'], 'lvl2')!==false) {
-                  $LandBoostFactor += .2;
-                  $SeaBoostFactor += .2;
+                  $CommunityBoosts += .2;
                 } else if (strpos($OlympicSenses['attributes']['class'], 'lvl3')!==false) {
-                  $LandBoostFactor += .3;
-                  $SeaBoostFactor += .3;
+                  $CommunityBoosts += .3;
                 } else if (strpos($OlympicSenses['attributes']['class'], 'lvl4')!==false) {
-                  $LandBoostFactor += .4;
-                  $SeaBoostFactor += .4;
+                  $CommunityBoosts += .4;
                 }
               }
             }
+            $LandBoostFactor += $CommunityBoosts;
+            $SeaBoostFactor += $CommunityBoosts;
+            $TsCsBoostFactor += $CommunityBoosts;
 
             // Apply the calculated BP gains
             $LandAttackPercentage = self::parseLandUnitPercentage($aCityUnitsAtt);
             if ($bSeaVisible && !$bGroundVisible) {
               // Sea is visible, subtract any dead sea units from BG gain and then assume remainder is subtracted from land units
-              $SeaUnitKillCount = self::parseSeaUnitKillCount($aCityUnitsDef);
-              $LandBPGain = $GainedBattlePoints - $SeaUnitKillCount * $SeaBoostFactor;
+              $SeaUnitKillCountTotal = self::parseUnitKillCount($aCityUnitsDef, true, false);
+              $SeaUnitKillCountRegular = self::parseUnitKillCount($aCityUnitsDef, true, true);
+              $SeaUnitKillCountTsCs = $SeaUnitKillCountTotal - $SeaUnitKillCountRegular;
+              $LandBPGain = $GainedBattlePoints
+                - ($SeaUnitKillCountTsCs * $TsCsBoostFactor)
+                - ($SeaUnitKillCountRegular * $SeaBoostFactor);
               $LandBPGain = (int) floor($LandBPGain / $LandBoostFactor);
               if ($LandAttackPercentage>0 && $GainedBattlePoints>=0) {
                 $aLandUnits = array("unknown" => "?(-$LandBPGain)");
               }
+              Logger::warning("TODO: verify BP gain calculation for hash $ReportHash");
             } else if (!$bSeaVisible && !$bGroundVisible) {
               // Sea and land are not visible, apply BP loss using attacker unit distribution
               $LandBPGain = (int) floor(($GainedBattlePoints * $LandAttackPercentage) / $SeaBoostFactor);
@@ -689,11 +697,6 @@ class InboxParser
               $aLandUnits = array("unknown" => "?(-$LandBPGain)");
               $aSeaUnits = array("unknown_naval" => "?(-$SeaBPGain)");
             }
-
-            $t=2;
-            //else {
-              // No BP gained or unable to find BP element
-            //}
           } catch (Exception $e) {
             Logger::warning("InboxParser $ReportHash: Error parsing battle points for unknown unit loss; ".$e->getMessage());
           }
@@ -1077,18 +1080,34 @@ class InboxParser
   }
 
   /**
-   * Sums the population kill count for all sea units in the input
+   * Sums the population kill count for all units in the input
    * @param $aCityUnits
+   * @param bool $bIgnoreLandUnits
+   * @param bool $bIgnoreTransportAndCS
    * @return float|int
    */
-  private static function parseSeaUnitKillCount($aCityUnits)
+  private static function parseUnitKillCount($aCityUnits, $bIgnoreLandUnits = true, $bIgnoreTransportAndCS = true)
   {
     $KillCount = 0;
     foreach ($aCityUnits as $aUnitInfo) {
       if (key_exists('lost', $aUnitInfo) && sizeof($aUnitInfo['lost']) > 0) {
         foreach ($aUnitInfo['lost'] as $Unit => $Value) {
           if (UnitStats::units[$Unit]['uses_cartography']) {
-            $KillCount += $Value * UnitStats::units[$Unit]['population'];
+            // sea units
+            if (in_array($Unit, array('colonize_ship', 'small_transporter', 'big_transporter'))) {
+              // transport or cs
+              if (!$bIgnoreTransportAndCS) {
+                $KillCount += $Value * UnitStats::units[$Unit]['population'];
+              }
+            } else {
+              // regular
+              $KillCount += $Value * UnitStats::units[$Unit]['population'];
+            }
+          } else {
+            // land units
+            if (!$bIgnoreLandUnits) {
+              $KillCount += $Value * UnitStats::units[$Unit]['population'];
+            }
           }
         }
       }

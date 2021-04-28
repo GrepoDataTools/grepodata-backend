@@ -154,6 +154,9 @@ class Common
       }
     }
 
+//    $bCombatExperience = true;
+    $bCombatExperience = false;
+
     if ($Report->source_type === 'forum') {
       $aParsed = ForumParser::ParseReport(
         $UserId,
@@ -179,7 +182,7 @@ class Common
         $ReportPosterName,
         $ReportPosterId,
         $ReportAllianceId,
-        false,
+        $bCombatExperience,
         $ReportHash,
         $ReportJson,
         $ReportInfo,

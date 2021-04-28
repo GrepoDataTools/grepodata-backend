@@ -11,7 +11,7 @@ use Carbon\Carbon;
 $t = Carbon::now()->subDay();
 $t2 = Carbon::now();
 
-$aDebug = \Grepodata\Library\Model\Operation_log::where('message', 'LIKE', 'VerifiedScriptLink%')->get();
+$aDebug = \Grepodata\Library\Model\Operation_log::where('message', 'LIKE', 'VerifiedScriptLink%')->where('created_at', '>', $t)->get();
 $counts = array();
 foreach ($aDebug as $Debug) {
   $msg = $Debug->created_at . ' - ' . $Debug->message;
