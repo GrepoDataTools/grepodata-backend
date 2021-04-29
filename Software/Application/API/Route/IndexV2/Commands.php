@@ -33,8 +33,14 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
         ->orderBy('command_id', 'desc')
         ->get();
 
+      $aCommandsResponse = array();
+      foreach ($aCommandsList as $oCommand) {
+        $aCommandsResponse[$oCommand->command_id] = $oCommand->getPublicFields();
+      }
+
       $aResponse = array(
-        'count' => $aCommandsList
+        'count' => count($aCommandsResponse),
+        'items' => $aCommandsResponse
       );
       ResponseCode::success($aResponse);
 
@@ -60,7 +66,7 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
       //$oWorld = World::getWorldById($aParams['world']);
 
       // Parse commands and persist to database
-      $aCommandsList = $aParams['access_token'];
+      $aCommandsList = $aParams['commands'];
 
       // Save commands
       $SavedCount = 0;
@@ -77,7 +83,7 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
           $oCommand = new Command();
           $oCommand->world = $aParams['world'];
           $oCommand->command_id = $aCommand['id'];
-          $oCommand->is_returning = $aCommand['return']??false;
+          $oCommand->is_returning = $aCommand['return']?1:0;
           $oCommand->attacking_strategy = $aCommand['attacking_strategies'][0]??'default';
 
           // source
@@ -105,7 +111,7 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
           // parse units
           $aUnits = array();
           foreach ($aCommand as $Key => $Value) {
-            if (key_exists($Key, UnitStats::units)) {
+            if (key_exists($Key, UnitStats::units) && $Value > 0) {
               $aUnits[$Key] = $Value;
             }
           }
@@ -115,6 +121,7 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
           $SavedCount++;
         } catch (Exception $e) {
           // probably duplicate. ignore
+          Logger::warning('DEMO: upload commands ' .$e->getMessage());
         }
 
         // TODO; save command link to Indexer_command_shared for each team that user is a part of => disabled for demo

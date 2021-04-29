@@ -48,9 +48,9 @@ class Command extends Model
       'target_player_name' => $this->target_player_name,
       'target_alliance_id' => $this->target_alliance_id,
       'target_alliance_name' => $this->target_alliance_name,
-      'is_returning' => $this->is_returning,
+      'is_returning' => $this->is_returning===1,
       'attacking_strategy' => $this->attacking_strategy,
-      'units' => $this->units,
+      'units' => json_decode($this->units, true),
       'arrival_at' => $this->arrival_at,
       'started_at' => $this->started_at
     );
