@@ -75,6 +75,12 @@ $oRouter->Add('changepassword', new Route('/auth/changepassword', array(
 )));
 // ===
 
+// News
+$oRouter->Add('getnews', new Route('/news', array(
+  '_controller' => '\Grepodata\Application\API\Route\News',
+  '_method'     => 'News'
+)));
+
 // Indexer V2: userscript linking
 $oRouter->Add('newscriptlink', new Route('/auth/newscriptlink', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',

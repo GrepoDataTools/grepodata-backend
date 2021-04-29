@@ -8,6 +8,8 @@ require(__DIR__ . '/../config.php');
 
 use Carbon\Carbon;
 
+$t = \Grepodata\Library\Model\IndexV2\Intel::distinct()->count(['town_id', 'world']);
+
 $t = Carbon::now()->subDay();
 $t2 = Carbon::now();
 

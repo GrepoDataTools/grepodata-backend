@@ -10,6 +10,7 @@ use Grepodata\Library\Cron\Common;
 use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\Indexer\DailyReport;
 use Grepodata\Library\Model\Indexer\IndexInfo;
+use Grepodata\Library\Model\Indexer\IndexOverview;
 use Grepodata\Library\Model\Indexer\Stats;
 
 if (PHP_SAPI !== 'cli') {
@@ -36,7 +37,7 @@ $oStats->reports = \Grepodata\Library\Model\IndexV2\Intel::count()
   + ($oPersistedIntel && !empty($oPersistedIntel->data) ? (int) $oPersistedIntel->data:0);
 
 // Total unique towns
-$oStats->town_count = \Grepodata\Library\Model\IndexV2\Intel::distinct()->count('town_id')
+$oStats->town_count = \Grepodata\Library\Model\IndexV2\Intel::distinct()->count(['town_id', 'world'])
   + ($oPersistedTowns && !empty($oPersistedTowns->data) ? (int) $oPersistedTowns->data:0);
 
 // Total shared records
@@ -56,7 +57,7 @@ $oStats->users_today = \Grepodata\Library\Model\IndexV2\IntelShared::where('crea
   ->count('user_id');
 
 // Teams active in the last 24 hours
-$oStats->teams_today = IndexInfo::where('updated_at', '>', $Hours24)->count();
+$oStats->teams_today = IndexOverview::where('updated_at', '>', $Hours24)->count();
 
 // Reports indexed in the last 24 hours
 $oStats->reports_today = \Grepodata\Library\Model\IndexV2\Intel::where('created_at', '>', $Hours24)->count();

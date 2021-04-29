@@ -48,7 +48,7 @@ var errorSubmissions = [];
                 // loadIndexesList(false, true); // Get list of indexes for this user
             }
         }, 1000);
-        //checkLogin();
+        checkLogin(false);
 
         // Set locale
         var translate = {
@@ -269,7 +269,7 @@ var errorSubmissions = [];
                 if (!returnsElem && gd_settings.command_cancel_time === true && cmd.movement_id > 0) {
                     var movement = MM.getModels().MovementsUnits[cmd.movement_id];
 
-                    if (!movement.isIncommingMovement()) {
+                    if (movement && !movement.isIncommingMovement()) {
                         var runtimeHtml = '<span id="gd_runtime_'+id+'" class="troops_arrive_at gd_cmd_runtime gd_runtime_'+id+'" style="font-style: italic;">(';
                         var returnText = '';
                         var cancelText = '';
@@ -386,7 +386,7 @@ var errorSubmissions = [];
                         if (!('context' in result)) {
                             result.context = true;
                         }
-                        if ('departure_time' in result) {
+                        if ('departure_time' in result && !('command_cancel_time' in result)) {
                             result.command_cancel_time = result.departure_time;
                         } else if (!('command_cancel_time' in result)) {
                             result.command_cancel_time = true;
@@ -418,7 +418,7 @@ var errorSubmissions = [];
             try {
                 if (gd_settings.context && e.currentTarget && e.currentTarget.activeElement && e.currentTarget.activeElement.hash) {
                     var hash = e.currentTarget.activeElement.hash;
-                    if (hash==='#confirm' || hash==='#setMax') {
+                    if (hash==='#confirm' || hash==='#setMax' || hash==='#show_sidebar') {
                         return false;
                     }
                     var data = decodeHashToJson(hash);
@@ -613,6 +613,32 @@ var errorSubmissions = [];
             });
         }
 
+        function showLoginNotification() {
+            try {
+                console.log('notify')
+                if (7 < $("#notification_area>.notification").length) {
+                    setTimeout(function() {
+                        showLoginNotification();
+                    }, 10000);
+                } else {
+                    var notificationHanlder = new NotificationHandler;
+                    var notification = notificationHanlder.notify(
+                        $("#notification_area>.notification").length + 1,
+                        'gd_login_required_notification',
+                        '<strong>GrepoData city indexer: sign in required to start indexing</strong>',
+                        null
+                    );
+
+                    $('.gd_login_required_notification').click(function () {
+                        showLoginPopup();
+                        $('.gd_login_required_notification').hide();
+                    });
+                }
+            } catch (e) {
+                errorHandling(e, "showLoginNotification")
+            }
+        }
+
         var login_window = null;
         var is_v1_migrated = null;
         var script_token_interval = null;
@@ -800,12 +826,18 @@ var errorSubmissions = [];
             });
         }
 
-        function checkLogin() {
+        function checkLogin(show_login_popup = true) {
             // Check if grepodata access token or refresh token is in local storage and use it to verify
             // if not verified: login required!
             getAccessToken().then(access_token => {
                 if (access_token === false) {
-                    showLoginPopup()
+                    if (show_login_popup === true) {
+                        // show login popup
+                        showLoginPopup();
+                    } else {
+                        // show login notification
+                        setTimeout(showLoginNotification, 2000);
+                    }
                 } else {
                     console.log("GrepoData: Succesful authentication for player "+Game.player_id);
                     checkV1KeyMigration(access_token);
