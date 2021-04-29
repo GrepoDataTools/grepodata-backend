@@ -696,8 +696,8 @@ class InboxParser
               $LandBPGain = (int) floor($LandBPGain / $LandBoostFactor);
               if ($LandAttackPercentage>0 && $GainedBattlePoints>=0) {
                 $aLandUnits = array("unknown" => "?(-$LandBPGain)");
+                Logger::warning("TODO: verify BP gain calculation for hash $ReportHash");
               }
-              Logger::warning("TODO: verify BP gain calculation for hash $ReportHash");
             } else if (!$bSeaVisible && !$bGroundVisible) {
               // Sea and land are not visible, apply BP loss using attacker unit distribution
               $LandBPGain = (int) floor(($GainedBattlePoints * $LandAttackPercentage) / $SeaBoostFactor);

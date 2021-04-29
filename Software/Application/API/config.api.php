@@ -26,6 +26,16 @@ $limit100PerMin = array(
   'window' => 3*60
 );
 
+// DEMO
+$oRouter->Add('sharecommandsupload', new Route('/commands/upload', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndedV2\Commands',
+  '_method'     => 'UploadCommands'
+)));
+$oRouter->Add('sharecommandsget', new Route('/commands/get', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndedV2\Commands',
+  '_method'     => 'GetCommands'
+)));
+
 // === AUTH
 // Register
 $oRouter->Add('register', new Route('/auth/register', array(
