@@ -597,18 +597,14 @@ class InboxParser
               $GainedBattlePoints = 0;
             }
 
-            // Subtract combat experience from gained battle points
-            if ($bAttackerHasCombatExperience) {
-              $AttackerUnitKillCount = self::parseUnitKillCount($aCityUnitsAtt, false, false);
-              $GainedBattlePoints -= ceil(.1 * $AttackerUnitKillCount);
-            }
-
             // Parse boosts (BP boosts should be subtracted from BP gain)
+            $CombatExperienceBoost = .1;
             $LandBoostFactor = 1;
             $SeaBoostFactor = 1;
             $TsCsBoostFactor = 1; // Sea boost can be ignored for transport and cs ships with new boosters
             if (count(Helper::allByClass($aReportData, 'divine_senses')) >= 1) {
               // old 300% boost for land+sea (x4)
+              $CombatExperienceBoost += .3;
               $LandBoostFactor += 3;
               $SeaBoostFactor += 3;
               $TsCsBoostFactor += 3;
@@ -618,15 +614,18 @@ class InboxParser
               || (count(Helper::allByClass($aReportData, 'acumen')) === 2)
             ) {
               // old 100% boost for land+sea (x2)
+              $CombatExperienceBoost += .1;
               $LandBoostFactor += 1;
               $SeaBoostFactor += 1;
               $TsCsBoostFactor += 1;
             } else if (count(Helper::allByClass($aReportData, 'divine_battle_strategy_epic')) >= 1) {
               // 100% boost for land+sea (x2)
+              $CombatExperienceBoost += .1;
               $LandBoostFactor += 1;
               $SeaBoostFactor += 1;
             } else if (count(Helper::allByClass($aReportData, 'divine_battle_strategy_rare')) >= 1) {
               // 50% boost for land+sea
+              $CombatExperienceBoost += .05;
               $LandBoostFactor += .5;
               $SeaBoostFactor += .5;
             } else {
@@ -651,9 +650,11 @@ class InboxParser
             $CommunityBoosts = 0;
             if (count(Helper::allByClass($aReportData, 'assassins_acumen')) >= 1) {
               // 50% community boost
+              $CombatExperienceBoost += .05;
               $CommunityBoosts += .5;
             } else if (count(Helper::allByClass($aReportData, 'missions_power_4')) >= 1) {
               // 50% pandora event boost
+              $CombatExperienceBoost += .05;
               $CommunityBoosts += .5;
             } else {
               $OlympicSenses = Helper::allByClass($aReportData, 'olympic_senses');
@@ -674,6 +675,13 @@ class InboxParser
             $LandBoostFactor += $CommunityBoosts;
             $SeaBoostFactor += $CommunityBoosts;
             $TsCsBoostFactor += $CommunityBoosts;
+            $CombatExperienceBoost += ($CommunityBoosts/10);
+
+            // Subtract combat experience from gained battle points
+            if ($bAttackerHasCombatExperience) {
+              $AttackerUnitKillCount = self::parseUnitKillCount($aCityUnitsAtt, false, false);
+              $GainedBattlePoints -= ceil($CombatExperienceBoost * $AttackerUnitKillCount);
+            }
 
             // Apply the calculated BP gains
             $LandAttackPercentage = self::parseLandUnitPercentage($aCityUnitsAtt);

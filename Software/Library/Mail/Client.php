@@ -49,8 +49,6 @@ class Client
       }
       if ($result <= 0) {
         throw new \Exception("mailer result was <= 0");
-      } else {
-        Logger::warning("Good mail result: ".$result);
       }
 
       return $result;
