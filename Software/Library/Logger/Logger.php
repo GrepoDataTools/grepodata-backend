@@ -4,7 +4,6 @@ namespace Grepodata\Library\Logger;
 
 use \Datetime;
 use Grepodata\Library\Model\Operation_log;
-use Illuminate\Database\Capsule\Manager as Capsule;
 
 class Logger
 {

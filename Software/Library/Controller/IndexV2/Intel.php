@@ -157,10 +157,10 @@ class Intel
       'silver'      => $oIntel->silver,
       'fireships'   => $oIntel->fireships,
       'parsed_date' => $oIntel->parsed_date,
-      'buildings'   => json_decode($oIntel->buildings, true),
-      'land'        => json_decode($oIntel->land_units, true),
-      'sea'         => json_decode($oIntel->sea_units, true),
-      'air'         => json_decode($oIntel->mythical_units, true),
+      'buildings'   => json_decode($oIntel->buildings, true) ?? array(),
+      'land'        => json_decode($oIntel->land_units, true) ?? array(),
+      'sea'         => json_decode($oIntel->sea_units, true) ?? array(),
+      'air'         => json_decode($oIntel->mythical_units, true) ?? array(),
       'deleted'     => ($oIntel->soft_deleted!=null?true:false)
     );
     $aCityFields['sort_date'] = 0;

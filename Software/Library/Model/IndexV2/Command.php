@@ -22,6 +22,7 @@ use \Illuminate\Database\Eloquent\Model;
  * @property mixed target_alliance_name
  * @property mixed is_returning
  * @property mixed attacking_strategy
+ * @property mixed type
  * @property mixed units
  * @property mixed arrival_at
  * @property mixed started_at
@@ -33,9 +34,10 @@ class Command extends Model
   public function getPublicFields()
   {
     return array(
-      'id' => $this->id,
+      'id' => $this->command_id,
       'world' => $this->world,
       'command_id' => $this->command_id,
+      'type' => $this->type,
       'source_town_id' => $this->source_town_id,
       'source_town_name' => $this->source_town_name,
       'source_player_id' => $this->source_player_id,
@@ -57,24 +59,3 @@ class Command extends Model
   }
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -8,7 +8,7 @@
     }
   ],
   "require": {
-    "illuminate/database": "^5.2",
+    "illuminate/database": "^6.20",
     "symfony/routing": "^3.3",
     "symfony/http-foundation": "^3.3",
     "swiftmailer/swiftmailer": "^6.0",

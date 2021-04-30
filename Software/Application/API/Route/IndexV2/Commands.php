@@ -2,9 +2,7 @@
 
 namespace Grepodata\Application\API\Route\IndexV2;
 
-use Carbon\Carbon;
 use Exception;
-use Grepodata\Library\Controller\World;
 use Grepodata\Library\Indexer\UnitStats;
 use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\IndexV2\Command;
@@ -35,7 +33,7 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
 
       $aCommandsResponse = array();
       foreach ($aCommandsList as $oCommand) {
-        $aCommandsResponse[$oCommand->command_id] = $oCommand->getPublicFields();
+        $aCommandsResponse[] = $oCommand->getPublicFields();
       }
 
       $aResponse = array(
@@ -83,8 +81,9 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
           $oCommand = new Command();
           $oCommand->world = $aParams['world'];
           $oCommand->command_id = $aCommand['id'];
-          $oCommand->is_returning = $aCommand['return']?1:0;
-          $oCommand->attacking_strategy = $aCommand['attacking_strategies'][0]??'default';
+          $oCommand->type = $aCommand['type']??'default';
+          $oCommand->is_returning = $aCommand['return']===true?1:0;
+          $oCommand->attacking_strategy = $aCommand['attacking_strategies'][0]??'regular';
 
           // source
           $oCommand->source_town_id = $aCommand['origin_town_id']??0;
