@@ -18,6 +18,12 @@ class Roles
     2 => self::ROLE_ADMIN,
     3 => self::ROLE_OWNER,
   );
+  const named_roles = array(
+    'read' => 'read-only',
+    'write' => 'member',
+    'admin' => 'admin',
+    'owner' => 'owner',
+  );
 
   /**
    * Sets the given user role on the given index

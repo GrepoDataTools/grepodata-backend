@@ -5,6 +5,7 @@ namespace Grepodata\Application\API\Route\IndexV2;
 use Exception;
 use Grepodata\Library\Controller\Indexer\IndexInfo;
 use Grepodata\Library\Controller\IndexV2\Conquest;
+use Grepodata\Library\Controller\IndexV2\Event;
 use Grepodata\Library\Controller\IndexV2\IndexOverview;
 use Grepodata\Library\Controller\IndexV2\Roles;
 use Grepodata\Library\Controller\World;
@@ -238,6 +239,8 @@ class Index extends BaseRoute
       if ($oIndex !== false && $oIndex !== null) {
 
         Roles::SetUserIndexRole($oUser, $oIndex, Roles::ROLE_OWNER);
+
+        Event::addIndexJoinEvent($oIndex, $oUser, 'imported_team_as_owner');
 
         try {
           IndexOverview::buildIndexOverview($oIndex);

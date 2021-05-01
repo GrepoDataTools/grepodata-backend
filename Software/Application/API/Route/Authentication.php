@@ -4,6 +4,7 @@ namespace Grepodata\Application\API\Route;
 
 use Carbon\Carbon;
 use Grepodata\Library\Controller\Indexer\IndexInfo;
+use Grepodata\Library\Controller\IndexV2\Event;
 use Grepodata\Library\Controller\IndexV2\Roles;
 use Grepodata\Library\Controller\IndexV2\ScriptToken;
 use Grepodata\Library\Controller\User;
@@ -149,6 +150,7 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
             $oIndex->created_by_user = $oUser->id;
             $oIndex->save();
             Roles::SetUserIndexRole($oUser, $oIndex, Roles::ROLE_OWNER);
+            Event::addIndexJoinEvent($oIndex, $oUser, 'created_team');
           } catch (\Exception $e) {
             Logger::error("Error transferring old index (".$oIndex->key_code.") ownership to new user: ". $e->getMessage());
           }

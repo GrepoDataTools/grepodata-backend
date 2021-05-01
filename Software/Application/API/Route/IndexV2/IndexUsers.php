@@ -4,6 +4,7 @@ namespace Grepodata\Application\API\Route\IndexV2;
 
 use Grepodata\Library\Controller\Alliance;
 use Grepodata\Library\Controller\Indexer\IndexInfo;
+use Grepodata\Library\Controller\IndexV2\Event;
 use Grepodata\Library\Controller\IndexV2\Roles;
 use Grepodata\Library\Controller\World;
 use Grepodata\Library\IndexV2\IndexManagement;
@@ -116,6 +117,7 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
       }
 
       $oUserRole = Roles::SetUserIndexRole($oManagedUser, $oIndex, $NewRole);
+      Event::addRoleChangeEvent($oIndex, $oUser, $oManagedUser, $NewRole);
       $aUpdatedUser = $oUserRole->getPublicFields();
       $aUpdatedUser['username'] = $oManagedUser->username;
 
@@ -138,51 +140,52 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
    */
   public static function IndexUsersPOST()
   {
-    try {
-      $aParams = self::validateParams(array('access_token', 'index_key', 'user_id'));
-      $oUser = Authentication::verifyJWT($aParams['access_token']);
-
-      // User has to be at least admin to manage users
-      IndexManagement::verifyUserIsAdmin($oUser, $aParams['index_key']);
-
-      try {
-        $oIndex = IndexInfo::firstOrFail($aParams['index_key']);
-      } catch (ModelNotFoundException $e) {
-        ResponseCode::errorCode(2020);
-      }
-
-      // Get user
-      try {
-        $oManagedUser = \Grepodata\Library\Controller\User::GetUserById($aParams['user_id']);
-      } catch (ModelNotFoundException $e) {
-        ResponseCode::errorCode(2010);
-      }
-
-      // Get existing role user
-      try {
-        $oManagedUserRole = Roles::getUserIndexRole($oManagedUser, $aParams['index_key']);
-        if (!empty($oManagedUserRole)) {
-          // user already exists on this index
-          ResponseCode::errorCode(7570);
-        }
-      } catch (ModelNotFoundException $e) {}
-
-      // Create new role for user
-      $oUserRole = Roles::SetUserIndexRole($oManagedUser, $oIndex, Roles::ROLE_WRITE);
-      $aUpdatedUser = $oUserRole->getPublicFields();
-      $aUpdatedUser['username'] = $oManagedUser->username;
-
-      ResponseCode::success(array(
-        'size' => 1,
-        'data' => $aUpdatedUser
-      ));
-
-    } catch (ModelNotFoundException $e) {
-      die(self::OutputJson(array(
-        'message'     => 'User not found.',
-        'parameters'  => $aParams
-      ), 404));
-    }
+    ResponseCode::errorCode();
+//    try {
+//      $aParams = self::validateParams(array('access_token', 'index_key', 'user_id'));
+//      $oUser = Authentication::verifyJWT($aParams['access_token']);
+//
+//      // User has to be at least admin to manage users
+//      IndexManagement::verifyUserIsAdmin($oUser, $aParams['index_key']);
+//
+//      try {
+//        $oIndex = IndexInfo::firstOrFail($aParams['index_key']);
+//      } catch (ModelNotFoundException $e) {
+//        ResponseCode::errorCode(2020);
+//      }
+//
+//      // Get user
+//      try {
+//        $oManagedUser = \Grepodata\Library\Controller\User::GetUserById($aParams['user_id']);
+//      } catch (ModelNotFoundException $e) {
+//        ResponseCode::errorCode(2010);
+//      }
+//
+//      // Get existing role user
+//      try {
+//        $oManagedUserRole = Roles::getUserIndexRole($oManagedUser, $aParams['index_key']);
+//        if (!empty($oManagedUserRole)) {
+//          // user already exists on this index
+//          ResponseCode::errorCode(7570);
+//        }
+//      } catch (ModelNotFoundException $e) {}
+//
+//      // Create new role for user
+//      $oUserRole = Roles::SetUserIndexRole($oManagedUser, $oIndex, Roles::ROLE_WRITE);
+//      $aUpdatedUser = $oUserRole->getPublicFields();
+//      $aUpdatedUser['username'] = $oManagedUser->username;
+//
+//      ResponseCode::success(array(
+//        'size' => 1,
+//        'data' => $aUpdatedUser
+//      ));
+//
+//    } catch (ModelNotFoundException $e) {
+//      die(self::OutputJson(array(
+//        'message'     => 'User not found.',
+//        'parameters'  => $aParams
+//      ), 404));
+//    }
   }
 
   /**
@@ -293,6 +296,7 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
           if ($oExistingRole == null) {
             // Add write role on the index
             Roles::SetUserIndexRole($oUser, $oIndex, Roles::ROLE_WRITE);
+            Event::addIndexJoinEvent($oIndex, $oUser, 'v1_redirect');
             Logger::v2Migration("Successful import of a v1 key ".$oIndex->key_code." ".$oUser->id);
           }
 
@@ -353,6 +357,7 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
         if ($oIndex->share_link === $InviteCode) {
           // Verified invite link
           $oActiveRole = Roles::SetUserIndexRole($oUser, $oIndex, Roles::ROLE_WRITE);
+          Event::addIndexJoinEvent($oIndex, $oUser, 'invite_link');
         } else {
           // Expired (no longer valid)
           ResponseCode::errorCode(3009);
@@ -361,6 +366,7 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
         if ($oIndex->index_version === '1' && $oIndex->allow_join_v1_key === 1) {
           // Allow for v1 redirects
           $oActiveRole = Roles::SetUserIndexRole($oUser, $oIndex, Roles::ROLE_WRITE);
+          Event::addIndexJoinEvent($oIndex, $oUser, 'v1_redirect');
           Logger::v2Migration("Successful join via v1 redirect ".$oIndex->key_code." ".$oUser->id);
         } else {
           // Not a V1 index or v1 joining is disabled
