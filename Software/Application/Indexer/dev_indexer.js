@@ -50,6 +50,12 @@ var errorSubmissions = [];
         }, 1000);
         checkLogin(false);
 
+        // Check for other scripts
+        var molehole_active = false;
+        try {
+            molehole_active = document.body.innerHTML.includes("grmh.pl")
+        }  catch (e) {}
+
         // Set locale
         var translate = {
             ADD: 'Index',
@@ -2292,7 +2298,13 @@ var errorSubmissions = [];
                 town_id = town_id.substring(6);
 
                 // Add intel button and handle click event
-                var intelBtn = '<div id="gd_index_town_' + town_id + '" town_id="' + town_id + '" class="button_new gdtv' + town_id + '" style="float: right; bottom: 5px;">' +
+                var button_style = 'float: right; bottom: 5px;';
+                try {
+                    if (molehole_active) {
+                        button_style = '';
+                    }
+                } catch (e) {}
+                var intelBtn = '<div id="gd_index_town_' + town_id + '" town_id="' + town_id + '" class="button_new gdtv' + town_id + '" style="'+button_style+'">' +
                     '<div class="left"></div>' +
                     '<div class="right"></div>' +
                     '<div class="caption js-caption">' + translate.VIEW + '<div class="effect js-effect"></div></div></div>';
@@ -2532,7 +2544,7 @@ var errorSubmissions = [];
                 gd_w.f0969b2b439fdb38b3adade00a45c40e = {};
             }
             enableCityIndex(gd_w.f0969b2b439fdb38b3adade00a45c40e);
-        }, Math.floor((Math.random() * 1000) + 1));
+        }, 300);
     }
 } catch(error) { console.error("GrepoData City Indexer crashed (please report a screenshot of this error to admin@grepodata.com): ", error); }
 })();

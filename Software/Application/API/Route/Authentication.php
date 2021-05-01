@@ -314,7 +314,9 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
     $oToken->user_id = $oUser->id;
     $oToken->save();
 
-    Logger::indexDebug("VerifiedScriptLink - ".$_SERVER['REMOTE_ADDR']." - ".$aParams['script_token'] . " - " . $_SERVER['HTTP_USER_AGENT']);
+    try {
+      Logger::indexDebug("VerifiedScriptLink - ".$_SERVER['REMOTE_ADDR']." - ".$aParams['script_token'] . " - " . $_SERVER['HTTP_USER_AGENT'] . " - " . $_SERVER['HTTP_REFERER']);
+    } catch (\Exception $e) {}
 
     // Response
     ResponseCode::success(array(), 1151);

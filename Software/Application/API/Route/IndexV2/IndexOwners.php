@@ -146,13 +146,13 @@ class IndexOwners extends \Grepodata\Library\Router\BaseRoute
       // Update inclusion list
       try {
         $oIndexOwners = \Grepodata\Library\Controller\IndexV2\IndexOwners::firstOrNew($oIndex->key_code);
+        $oIndexOwners->key_code = $oIndex->key_code;
+        $oIndexOwners->world = $oIndex->world;
         $aIncludes = json_decode($oIndexOwners->getOwnersIncluded(), true);
         $aIncludes[] = array(
           'alliance_id' => $oAlliance->grep_id,
           'alliance_name' => $oAlliance->name
         );
-        $oIndexOwners->key_code = $oIndex->key_code;
-        $oIndexOwners->world = $oIndex->world;
         $oIndexOwners->setOwnersIncluded($aIncludes);
 
         // Remove alliance from excluded if present
@@ -170,7 +170,7 @@ class IndexOwners extends \Grepodata\Library\Router\BaseRoute
         // Save inclusion list
         $oIndexOwners->save();
       } catch (\Exception $e) {
-        Logger::error("Error updating owner inclusions list for index " . $oIndex->key_code . ": " . $e->getMessage());
+        Logger::error("Error updating (add) owner inclusions list for index " . $oIndex->key_code . ": " . $e->getMessage());
       }
 
       // Rebuild overview
@@ -213,6 +213,8 @@ class IndexOwners extends \Grepodata\Library\Router\BaseRoute
       // Update inclusion list
       try {
         $oIndexOwners = \Grepodata\Library\Controller\IndexV2\IndexOwners::firstOrNew($oIndex->key_code);
+        $oIndexOwners->key_code = $oIndex->key_code;
+        $oIndexOwners->world = $oIndex->world;
         $aExcludes = (array) json_decode($oIndexOwners->getOwnersExcluded(), true);
 
         try {
@@ -222,8 +224,6 @@ class IndexOwners extends \Grepodata\Library\Router\BaseRoute
             'alliance_id' => $oAlliance->grep_id,
             'alliance_name' => $oAlliance->name
           );
-          $oIndexOwners->key_code = $oIndex->key_code;
-          $oIndexOwners->world = $oIndex->world;
           $oIndexOwners->setOwnersExcluded($aExcludes);
         } catch (\Exception $e) {}
 
@@ -241,7 +241,7 @@ class IndexOwners extends \Grepodata\Library\Router\BaseRoute
 
         $oIndexOwners->save();
       } catch (\Exception $e) {
-        Logger::error("Error updating owner inclusions list for index " . $oIndex->key_code . ": " . $e->getMessage());
+        Logger::error("Error updating (remove) owner inclusions list for index " . $oIndex->key_code . ": " . $e->getMessage());
       }
 
       // Rebuild overview

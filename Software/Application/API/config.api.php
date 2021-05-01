@@ -27,14 +27,14 @@ $limit100PerMin = array(
 );
 
 // DEMO
-$oRouter->Add('sharecommandsupload', new Route('/commands/upload', array(
-  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Commands',
-  '_method'     => 'UploadCommands'
-)));
-$oRouter->Add('sharecommandsget', new Route('/commands/get', array(
-  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Commands',
-  '_method'     => 'GetCommands'
-)));
+//$oRouter->Add('sharecommandsupload', new Route('/commands/upload', array(
+//  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Commands',
+//  '_method'     => 'UploadCommands'
+//)));
+//$oRouter->Add('sharecommandsget', new Route('/commands/get', array(
+//  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Commands',
+//  '_method'     => 'GetCommands'
+//)));
 
 // === AUTH
 // Register
