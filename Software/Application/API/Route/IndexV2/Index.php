@@ -335,6 +335,8 @@ class Index extends BaseRoute
       // Leave index
       $oRole->delete();
 
+      Event::addIndexJoinEvent($oIndex, $oUser, 'left');
+
       ResponseCode::success(array(),1500);
 
     } catch (\Exception $e) {

@@ -103,6 +103,14 @@ class Event
             self::eventPart('text', ' using the old index url (the team admin can disable this option in the team settings)'),
           );
           break;
+        case 'left':
+          $aEvent = array(
+            self::eventPart('text', 'User '),
+            self::eventPart('user', $JoiningUser->username),
+            self::eventPart('text', ' left team '),
+            self::eventPart('team', $oIndex->index_name, array('key' => $oIndex->key_code)),
+          );
+          break;
         case 'removed':
           $aEvent = array(
             self::eventPart('text', 'User '),
