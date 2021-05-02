@@ -6,9 +6,9 @@ use Carbon\Carbon;
 use Exception;
 use Grepodata\Library\Controller\Indexer\IndexInfo;
 use Grepodata\Library\Elasticsearch\Search;
-use Grepodata\Library\Model\AllianceChanges;
 use Grepodata\Library\Router\ResponseCode;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\Capsule\Manager as DB;
 
 class Alliance extends \Grepodata\Library\Router\BaseRoute
 {
@@ -46,30 +46,64 @@ class Alliance extends \Grepodata\Library\Router\BaseRoute
       // Validate params
       $aParams = self::validateParams(array('id', 'world'));
 
-      // TODO: change dummy response to actual scores
+      $aTownsLost = \Grepodata\Library\Model\Conquest::select('n_a_id', DB::raw('count(*) as towns_lost'))
+        ->where('o_a_id', '=', $aParams['id'])
+        ->where('world', '=', $aParams['world'])
+        ->groupBy('n_a_id')
+        ->get();
+      $aTownsWon = \Grepodata\Library\Model\Conquest::select('o_a_id', DB::raw('count(*) as towns_won'))
+        ->where('n_a_id', '=', $aParams['id'])
+        ->where('world', '=', $aParams['world'])
+        ->groupBy('o_a_id')
+        ->get();
+
+      $aMergedWars = array();
+      foreach ($aTownsLost as $aScore) {
+        if ($aScore['n_a_id'] == 0 || $aScore['n_a_id'] == $aParams['id']) {
+          continue;
+        }
+        $aMergedWars[$aScore['n_a_id']] = array(
+          'alliance_id' => $aScore['n_a_id'],
+          'towns_gained_from' => 0,
+          'towns_lost_to' => $aScore['towns_lost']
+        );
+      }
+      foreach ($aTownsWon as $aScore) {
+        if ($aScore['o_a_id'] == 0 || $aScore['o_a_id'] == $aParams['id']) {
+          continue;
+        }
+        if (key_exists($aScore['o_a_id'], $aMergedWars)) {
+          $aMergedWars[$aScore['o_a_id']]['towns_gained_from'] = $aScore['towns_won'];
+        } else {
+          $aMergedWars[$aScore['o_a_id']] = array(
+            'alliance_id' => $aScore['o_a_id'],
+            'towns_gained_from' => $aScore['towns_won'],
+            'towns_lost_to' => 0
+          );
+        }
+      }
+
+      usort($aMergedWars, function ($a, $b) {
+        return $a['towns_gained_from']+$a['towns_lost_to'] > $b['towns_gained_from']+$b['towns_lost_to'] ? -1 : 1;
+      });
+
+      $aMergedWars = array_filter($aMergedWars, function ($a) {
+        return $a['towns_gained_from']+$a['towns_lost_to'] > 5;
+      });
+
+      // expand names
+      $aExpandedWars = array();
+      foreach ($aMergedWars as $aWar) {
+        try {
+          $oAlliance = \Grepodata\Library\Controller\Alliance::firstOrFail($aWar['alliance_id'], $aParams['world']);
+          $aWar['alliance_name'] = $oAlliance->name;
+          $aExpandedWars[] = $aWar;
+        } catch (Exception $e) {}
+      }
 
       $aResponse = array(
-        'size' => 3,
-        'data' => array(
-          array(
-            'alliance_name' => 'Elite Golden Greeks',
-            'alliance_id' => 3,
-            'towns_gained_from' => 45,
-            'towns_lost_to' => 23
-          ),
-          array(
-            'alliance_name' => 'Elite Golden Greeks',
-            'alliance_id' => 3,
-            'towns_gained_from' => 45,
-            'towns_lost_to' => 23
-          ),
-          array(
-            'alliance_name' => 'Elite Golden Greeks',
-            'alliance_id' => 3,
-            'towns_gained_from' => 45,
-            'towns_lost_to' => 23
-          ),
-        )
+        'size' => count($aExpandedWars),
+        'data' => $aExpandedWars
       );
 
       ResponseCode::success($aResponse);

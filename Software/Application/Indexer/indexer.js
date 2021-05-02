@@ -621,14 +621,13 @@ var errorSubmissions = [];
 
         function showLoginNotification() {
             try {
-                console.log('notify')
                 if (7 < $("#notification_area>.notification").length) {
                     setTimeout(function() {
                         showLoginNotification();
                     }, 10000);
                 } else {
-                    var notificationHanlder = new NotificationHandler;
-                    var notification = notificationHanlder.notify(
+                    var notificationHandler = ("undefined" == typeof Layout || "undefined" == typeof Layout.notify ? new NotificationHandler : Layout);
+                    var notification = notificationHandler.notify(
                         $("#notification_area>.notification").length + 1,
                         'gd_login_required_notification',
                         '<strong>GrepoData city indexer: sign in required to start indexing</strong>',
