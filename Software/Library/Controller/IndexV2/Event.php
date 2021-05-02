@@ -11,24 +11,24 @@ use Grepodata\Library\Model\User;
 class Event
 {
 
-  /**
-   * Get all events for a user
-   * @param User $oUser
-   * @return \Grepodata\Library\Model\IndexV2\Event[]
-   */
-  public static function getAllByUser(User $oUser)
-  {
-    return \Grepodata\Library\Model\IndexV2\Event::select(['*'])
-      ->leftJoin('Indexer_roles', 'Indexer_roles.index_key', '=', 'Indexer_event.index_key')
-      ->where('Indexer_roles.user_id', '=', $oUser->id)
-      ->where(function ($query) {
-        $query->where('Indexer_event.admin_only', '=', 0)
-          ->orWhere('Indexer_roles.role', '=', 'owner')
-          ->orWhere('Indexer_roles.role', '=', 'admin');
-      })
-      ->orderBy('id', 'desc')
-      ->get();
-  }
+//  /**
+//   * Get all events for a user
+//   * @param User $oUser
+//   * @return \Grepodata\Library\Model\IndexV2\Event[]
+//   */
+//  public static function getAllByUser(User $oUser)
+//  {
+//    return \Grepodata\Library\Model\IndexV2\Event::select(['*'])
+//      ->leftJoin('Indexer_roles', 'Indexer_roles.index_key', '=', 'Indexer_event.index_key')
+//      ->where('Indexer_roles.user_id', '=', $oUser->id)
+//      ->where(function ($query) {
+//        $query->where('Indexer_event.admin_only', '=', 0)
+//          ->orWhere('Indexer_roles.role', '=', 'owner')
+//          ->orWhere('Indexer_roles.role', '=', 'admin');
+//      })
+//      ->orderBy('id', 'desc')
+//      ->get();
+//  }
 
   /**
    * Get all team events
@@ -182,7 +182,7 @@ class Event
       $oEvent->json = json_encode($aEvent);
       $oEvent->save();
     } catch (\Exception $e) {
-      Logger::warning("Error saving role change event: ".$e->getMessage());
+      Logger::warning("Error saving owner alliance event: ".$e->getMessage());
     }
   }
 
@@ -214,6 +214,32 @@ class Event
       $oEvent->save();
     } catch (\Exception $e) {
       Logger::warning("Error saving role change event: ".$e->getMessage());
+    }
+  }
+
+  /**
+   * Add invite link reset event
+   * @param IndexInfo $oIndex
+   * @param User $EditingUser
+   */
+  public static function addNewInviteLinkEvent(IndexInfo $oIndex, User $EditingUser)
+  {
+    try {
+      $oWorld = World::getWorldById($oIndex->world);
+      $oEvent = new \Grepodata\Library\Model\IndexV2\Event();
+      $oEvent->world = $oIndex->world;
+      $oEvent->local_time = $oWorld->getServerTime();
+      $oEvent->admin_only = true;
+      $oEvent->index_key = $oIndex->key_code;
+      $aEvent = array(
+        self::eventPart('text', 'User '),
+        self::eventPart('user', $EditingUser->username),
+        self::eventPart('text', ' has reset the invite link of this team. The previous link will no longer work.'),
+      );
+      $oEvent->json = json_encode($aEvent);
+      $oEvent->save();
+    } catch (\Exception $e) {
+      Logger::warning("Error saving invite link event: ".$e->getMessage());
     }
   }
 

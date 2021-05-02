@@ -290,6 +290,8 @@ class Index extends BaseRoute
       $oIndex->share_link = IndexBuilderV2::generateIndexKey(10);
       $oIndex->save();
 
+      Event::addNewInviteLinkEvent($oIndex, $oUser);
+
       $aResponse = array(
         'share_link' => $oIndex->share_link
       );
