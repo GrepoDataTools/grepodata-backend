@@ -8,18 +8,18 @@ require(__DIR__ . '/../config.php');
 
 use Carbon\Carbon;
 
-$t = \Grepodata\Library\Model\IndexV2\Intel::distinct()->count(['town_id', 'world']);
-
-$t = Carbon::now()->subDay();
+$t = Carbon::now()->subDays(3);
 $t2 = Carbon::now();
 
 $aDebug = \Grepodata\Library\Model\Operation_log::where('message', 'LIKE', 'VerifiedScriptLink%')->where('created_at', '>', $t)->get();
 $counts = array();
+$countsMultiple = array();
 foreach ($aDebug as $Debug) {
   $msg = $Debug->created_at . ' - ' . $Debug->message;
   preg_match_all('/\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b/', $msg, $aMatch);
   if (isset($counts[$aMatch[0][0]])) {
     $counts[$aMatch[0][0]][] = $msg;
+    $countsMultiple[$aMatch[0][0]] = $counts[$aMatch[0][0]];
   } else {
     $counts[$aMatch[0][0]] = array($msg);
   }

@@ -4,6 +4,7 @@ namespace Grepodata\Application\API\Route\IndexV2;
 
 use Grepodata\Library\Controller\Alliance;
 use Grepodata\Library\Controller\Indexer\IndexInfo;
+use Grepodata\Library\Controller\IndexV2\Event;
 use Grepodata\Library\Controller\IndexV2\OwnersActual;
 use Grepodata\Library\IndexV2\IndexManagement;
 use Grepodata\Library\Logger\Logger;
@@ -138,6 +139,8 @@ class IndexOwners extends \Grepodata\Library\Router\BaseRoute
         $oOwnerActual->hide_intel = true; // Default = true
         $oOwnerActual->share = 0;
         $oOwnerActual->save();
+
+        Event::addOwnerAllianceEvent($oIndex, $oAlliance->name, 'manual_add', $oUser);
       } catch (\Exception $e) {
         // duplicate entry, continue
         $t=2;
@@ -204,9 +207,11 @@ class IndexOwners extends \Grepodata\Library\Router\BaseRoute
         ResponseCode::errorCode(2020);
       }
 
-      // Check if owner already exists
+      // Delete owner actual record
+      $AllianceName = '';
       try {
         $oOwner = OwnersActual::getByIndexByAllianceId($oIndex, $aParams['alliance_id']);
+        $AllianceName = $oOwner->alliance_name;
         $oOwner->delete();
       } catch (ModelNotFoundException $e) {}
 
@@ -246,6 +251,10 @@ class IndexOwners extends \Grepodata\Library\Router\BaseRoute
 
       // Rebuild overview
       \Grepodata\Library\Controller\IndexV2\IndexOverview::buildIndexOverview($oIndex);
+
+      if ($AllianceName != '') {
+        Event::addOwnerAllianceEvent($oIndex, $AllianceName, 'manual_remove', $oUser);
+      }
 
       ResponseCode::success(array(
         'size' => 1,

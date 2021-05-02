@@ -240,7 +240,7 @@ class Index extends BaseRoute
 
         Roles::SetUserIndexRole($oUser, $oIndex, Roles::ROLE_OWNER);
 
-        Event::addIndexJoinEvent($oIndex, $oUser, 'imported_team_as_owner');
+        Event::addIndexJoinEvent($oIndex, $oUser, 'created_team');
 
         try {
           IndexOverview::buildIndexOverview($oIndex);

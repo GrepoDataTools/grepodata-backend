@@ -220,6 +220,11 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
         ResponseCode::errorCode(7000);
       }
 
+      try {
+        $oIndex = IndexInfo::firstOrFail($aParams['index_key']);
+        Event::addIndexJoinEvent($oIndex, $oManagedUser, 'removed', $oUser);
+      } catch (\Exception $e) {}
+
       ResponseCode::success(array(
         'deleted' => true
       ), 1300);

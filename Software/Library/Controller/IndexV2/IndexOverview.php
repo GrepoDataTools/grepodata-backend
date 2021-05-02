@@ -271,6 +271,8 @@ class IndexOverview
         $oOwnerActual->hide_intel = true; // Default = true
         $oOwnerActual->share = (int) $RealOwner['contributions'] ?? 0;
         $oOwnerActual->save();
+
+        Event::addOwnerAllianceEvent($oIndex, $oOwnerActual->alliance_name, 'automated');
       } else {
         unset($RealOwner['exists_actual']);
         $aRealOwners[$AllianceId] = $RealOwner;

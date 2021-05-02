@@ -91,6 +91,16 @@ $oRouter->Add('getnews', new Route('/news', array(
   '_method'     => 'News'
 )));
 
+// Events
+$oRouter->Add('getusereventsindexer', new Route('/events/user', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Event',
+  '_method'     => 'GetAllByUser'
+)));
+$oRouter->Add('getteameventsindexer', new Route('/events/team', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Event',
+  '_method'     => 'GetAllByTeam'
+)));
+
 // Indexer V2: userscript linking
 $oRouter->Add('newscriptlink', new Route('/auth/newscriptlink', array(
   '_controller' => '\Grepodata\Application\API\Route\Authentication',

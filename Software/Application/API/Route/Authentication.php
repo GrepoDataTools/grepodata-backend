@@ -150,7 +150,7 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
             $oIndex->created_by_user = $oUser->id;
             $oIndex->save();
             Roles::SetUserIndexRole($oUser, $oIndex, Roles::ROLE_OWNER);
-            Event::addIndexJoinEvent($oIndex, $oUser, 'created_team');
+            Event::addIndexJoinEvent($oIndex, $oUser, 'imported_team_as_owner');
           } catch (\Exception $e) {
             Logger::error("Error transferring old index (".$oIndex->key_code.") ownership to new user: ". $e->getMessage());
           }

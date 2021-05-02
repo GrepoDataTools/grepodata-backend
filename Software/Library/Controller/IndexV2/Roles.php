@@ -12,6 +12,9 @@ class Roles
   const ROLE_ADMIN = 'admin';
   const ROLE_WRITE = 'write';
   const ROLE_READ = 'read';
+  const admin_roles = array(
+    self::ROLE_ADMIN, self::ROLE_OWNER
+  );
   const numbered_roles = array(
     0 => self::ROLE_READ,
     1 => self::ROLE_WRITE,
