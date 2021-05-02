@@ -10,6 +10,7 @@ use \Illuminate\Database\Eloquent\Model;
  * @property mixed report_hash
  * @property mixed index_key
  * @property mixed user_id
+ * @property mixed player_id
  * @property mixed world
  */
 class IntelShared extends Model

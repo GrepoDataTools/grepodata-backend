@@ -143,11 +143,11 @@ class Report extends \Grepodata\Library\Router\BaseRoute
         }
         if ($bUserHasHash == false) {
           // Add a shared record for this user (to indicate that this user ALSO indexed the report)
-          IntelShared::saveHashToUser($ReportHash, $IntelId, $oUser, $World);
+          IntelShared::saveHashToUser($ReportHash, $IntelId, $oUser, $World, $ReportPosterId ?? null);
         }
         foreach ($aIndexes as $oIndex) {
           if (!in_array($oIndex->key_code, $aIndexKeys)) {
-            IntelShared::saveHashToIndex($ReportHash, $IntelId, $oIndex);
+            IntelShared::saveHashToIndex($ReportHash, $IntelId, $oIndex, $ReportPosterId ?? null);
 
             // Toggle new report switch on index
             if ($oIndex->new_report != 1) {
@@ -247,7 +247,7 @@ class Report extends \Grepodata\Library\Router\BaseRoute
         foreach ($aIndexes as $oIndex) {
           if ($oIndex->role != Roles::ROLE_READ && $oIndex->contribute == true) {
             // only save if user has write access on the index and if the user has chosen to contribute to this index
-            IntelShared::saveHashToIndex($ReportHash, $IntelId, $oIndex);
+            IntelShared::saveHashToIndex($ReportHash, $IntelId, $oIndex, $ReportPosterId ?? null);
 
             // Toggle new report switch on index
             if ($oIndex->new_report != 1) {
@@ -256,7 +256,7 @@ class Report extends \Grepodata\Library\Router\BaseRoute
             }
           }
         }
-        IntelShared::saveHashToUser($ReportHash, $IntelId, $oUser, $World);
+        IntelShared::saveHashToUser($ReportHash, $IntelId, $oUser, $World, $ReportPosterId ?? null);
       }
 
       die(self::OutputJson(array(), 200));

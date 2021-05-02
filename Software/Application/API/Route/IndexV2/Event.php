@@ -42,7 +42,12 @@ class Event extends \Grepodata\Library\Router\BaseRoute
       $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
 
       try {
-        $oUserRole = Roles::getUserIndexRole($oUser, $aParams['index_key']);
+        if (!bDevelopmentMode) {
+          $oUserRole = Roles::getUserIndexRole($oUser, $aParams['index_key']);
+          $bUserIsAdmin = in_array($oUserRole->role, Roles::admin_roles);
+        } else {
+          $bUserIsAdmin = true;
+        }
       } catch (ModelNotFoundException $e) {
         // unauthorized
         ResponseCode::errorCode(7500, array(), 401);
@@ -57,7 +62,6 @@ class Event extends \Grepodata\Library\Router\BaseRoute
         $From = $aParams['from'];
       }
 
-      $bUserIsAdmin = in_array($oUserRole->role, Roles::admin_roles);
 
       // Get events
       $aEvents = \Grepodata\Library\Controller\IndexV2\Event::getAllByTeam($aParams['index_key'], $bUserIsAdmin, $From, $Size);

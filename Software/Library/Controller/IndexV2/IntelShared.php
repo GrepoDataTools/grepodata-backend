@@ -46,24 +46,26 @@ class IntelShared
 //    return $aResult;
   }
 
-  public static function saveHashToIndex($ReportHash, $IntelId, IndexInfo $oIndex)
+  public static function saveHashToIndex($ReportHash, $IntelId, IndexInfo $oIndex, $PlayerId = null)
   {
     $oIntelShared = new \Grepodata\Library\Model\IndexV2\IntelShared();
     $oIntelShared->intel_id = $IntelId;
     $oIntelShared->report_hash = $ReportHash;
     $oIntelShared->index_key = $oIndex->key_code;
     $oIntelShared->user_id = null;
+    $oIntelShared->player_id = $PlayerId;
     $oIntelShared->world = $oIndex->world;
     $oIntelShared->save();
   }
 
-  public static function saveHashToUser($ReportHash, $IntelId, User $oUser, $World)
+  public static function saveHashToUser($ReportHash, $IntelId, User $oUser, $World, $PlayerId = null)
   {
     $oIntelShared = new \Grepodata\Library\Model\IndexV2\IntelShared();
     $oIntelShared->intel_id = $IntelId;
     $oIntelShared->report_hash = $ReportHash;
     $oIntelShared->index_key = null;
     $oIntelShared->user_id = $oUser->id;
+    $oIntelShared->player_id = $PlayerId;
     $oIntelShared->world = $World;
     $oIntelShared->save();
   }
