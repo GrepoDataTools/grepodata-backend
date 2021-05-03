@@ -97,4 +97,57 @@ class Intel extends Model
     );
   }
 
+  /**
+   * Returns a list of column names to be selected in a SQL query
+   * @param bool $bPrefix
+   * @return string[]
+   */
+  public static function getMinimalSelect($bPrefix = true): array
+  {
+    $Prefix = '';
+    if ($bPrefix) {
+      $Prefix = 'Indexer_intel.';
+    }
+
+    return array(
+      $Prefix.'id',
+      $Prefix.'indexed_by_user_id',
+      $Prefix.'hash',
+      $Prefix.'luck',
+      $Prefix.'v1_index',
+      $Prefix.'world',
+      $Prefix.'source_type',
+      $Prefix.'report_type',
+      //$Prefix.'script_version',
+      $Prefix.'town_id',
+      $Prefix.'town_name',
+      $Prefix.'player_id',
+      $Prefix.'player_name',
+      $Prefix.'alliance_id',
+      $Prefix.'poster_player_name',
+      $Prefix.'poster_player_id',
+      $Prefix.'poster_alliance_id',
+      $Prefix.'conquest_id',
+      //$Prefix.'conquest_details',
+      $Prefix.'report_date',
+      $Prefix.'parsed_date',
+      $Prefix.'hero',
+      $Prefix.'god',
+      $Prefix.'silver',
+      $Prefix.'buildings',
+      $Prefix.'land_units',
+      $Prefix.'sea_units',
+      $Prefix.'fireships',
+      $Prefix.'mythical_units',
+      $Prefix.'is_previous_owner_intel',
+      $Prefix.'created_at',
+      $Prefix.'updated_at',
+      $Prefix.'soft_deleted',
+      //$Prefix.'report_json',
+      //$Prefix.'report_info',
+      $Prefix.'parsing_failed',
+      //$Prefix.'debug_explain',
+    );
+  }
+
 }

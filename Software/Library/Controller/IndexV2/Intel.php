@@ -102,43 +102,43 @@ class Intel
       ->firstOrFail();
   }
 
-  /**
-   * @param User $oUser
-   * @param $Query string search query
-   * @param $World
-   * @return Collection
-   */
-  public static function searchPlayer(User $oUser, $Query, $World = null)
-  {
-    $oQuery = self::selectByUser($oUser)
-      ->where('Indexer_intel.player_name', 'LIKE', '%'.$Query.'%');
+//  /**
+//   * @param User $oUser
+//   * @param $Query string search query
+//   * @param $World
+//   * @return Collection
+//   */
+//  public static function searchPlayer(User $oUser, $Query, $World = null)
+//  {
+//    $oQuery = self::selectByUser($oUser)
+//      ->where('Indexer_intel.player_name', 'LIKE', '%'.$Query.'%');
+//
+//    if (!empty($World)) {
+//      $oQuery->where('Indexer_intel.world', '=', $World);
+//    }
+//
+//    return $oQuery->groupBy('Indexer_intel.id')
+//      ->get();
+//  }
 
-    if (!empty($World)) {
-      $oQuery->where('Indexer_intel.world', '=', $World);
-    }
-
-    return $oQuery->groupBy('Indexer_intel.id')
-      ->get();
-  }
-
-  /**
-   * @param User $oUser
-   * @param $Query string search query
-   * @param $World
-   * @return Collection
-   */
-  public static function searchTown(User $oUser, $Query, $World = null)
-  {
-    $oQuery = self::selectByUser($oUser)
-      ->where('Indexer_intel.town_name', 'LIKE', '%'.$Query.'%');
-
-    if (!empty($World)) {
-      $oQuery->where('Indexer_intel.world', '=', $World);
-    }
-
-    return $oQuery->groupBy('Indexer_intel.id')
-      ->get();
-  }
+//  /**
+//   * @param User $oUser
+//   * @param $Query string search query
+//   * @param $World
+//   * @return Collection
+//   */
+//  public static function searchTown(User $oUser, $Query, $World = null)
+//  {
+//    $oQuery = self::selectByUser($oUser)
+//      ->where('Indexer_intel.town_name', 'LIKE', '%'.$Query.'%');
+//
+//    if (!empty($World)) {
+//      $oQuery->where('Indexer_intel.world', '=', $World);
+//    }
+//
+//    return $oQuery->groupBy('Indexer_intel.id')
+//      ->get();
+//  }
 
   /**
    * @param \Grepodata\Library\Model\IndexV2\Intel $oIntel
@@ -593,6 +593,7 @@ class Intel
       ->where('Indexer_intel.world', '=', $World)
       ->orderBy('parsed_date', 'desc')
       ->groupBy('Indexer_intel.id')
+      ->limit(10000)
       ->get();
   }
 
@@ -607,7 +608,7 @@ class Intel
   {
     $Id = $oUser->id;
 
-    $aSelectRange = array('Indexer_intel.*');
+    $aSelectRange = \Grepodata\Library\Model\IndexV2\Intel::getMinimalSelect();
     if ($bAggregateSharedInfo) {
       // Aggregate list of indexes
       $aSelectRange[] = DB::raw("group_concat(Indexer_intel_shared.index_key SEPARATOR ', ') as shared_via_indexes");
