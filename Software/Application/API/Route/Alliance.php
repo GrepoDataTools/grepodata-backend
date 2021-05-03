@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Exception;
 use Grepodata\Library\Controller\Indexer\IndexInfo;
 use Grepodata\Library\Elasticsearch\Search;
+use Grepodata\Library\Redis\RedisClient;
 use Grepodata\Library\Router\ResponseCode;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Capsule\Manager as DB;
@@ -45,6 +46,17 @@ class Alliance extends \Grepodata\Library\Router\BaseRoute
     try {
       // Validate params
       $aParams = self::validateParams(array('id', 'world'));
+      $RedisKey = RedisClient::ALLIANCE_WARS_PREFIX.$aParams['id'].[$aParams['world']];
+
+      // check if cached response is available
+      if (is_numeric($aParams['id'])) {
+        $CachedResponse = RedisClient::GetKey($RedisKey);
+        if ($CachedResponse!=false) {
+          $aResponse = json_decode($CachedResponse, true);
+          $aResponse['cached_response'] = true;
+          ResponseCode::success($aResponse);
+        }
+      }
 
       $aTownsLost = \Grepodata\Library\Model\Conquest::select('n_a_id', DB::raw('count(*) as towns_lost'))
         ->where('o_a_id', '=', $aParams['id'])
@@ -105,6 +117,11 @@ class Alliance extends \Grepodata\Library\Router\BaseRoute
         'size' => count($aExpandedWars),
         'data' => $aExpandedWars
       );
+
+      if (is_numeric($aParams['id'])) {
+        // Cache response for 1 hour
+        RedisClient::SetKey($RedisKey, json_encode($aResponse), 3600);
+      }
 
       ResponseCode::success($aResponse);
     } catch (ModelNotFoundException $e) {

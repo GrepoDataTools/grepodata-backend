@@ -7,6 +7,7 @@ use Redis;
 
 class RedisClient
 {
+  const ALLIANCE_WARS_PREFIX = 'gd_alliance_wars_'; // followed by: {alliance_id}{world}
   const INDEXER_PLAYER_PREFIX = 'gd_indexer_player_intel_'; // followed by: {uid}{player_id}{world}
   const INDEXER_ALLIANCE_PREFIX = 'gd_indexer_alliance_intel_'; // followed by: {uid}{alliance_id{world}
 
