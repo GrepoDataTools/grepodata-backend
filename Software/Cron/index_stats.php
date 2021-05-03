@@ -51,13 +51,25 @@ $oStats->user_count = \Grepodata\Library\Model\User::count();
 $oStats->index_count = IndexInfo::count();
 
 $Hours24 = Carbon::now()->subHours(24);
+$Days7 = Carbon::now()->subDays(7);
+$Month1 = Carbon::now()->subMonth();
 // Unique uploaders in the last 24 hours
 $oStats->users_today = \Grepodata\Library\Model\IndexV2\IntelShared::where('created_at', '>', $Hours24)
   ->distinct()
   ->count('user_id');
+// Unique uploaders in the last week
+$oStats->users_week = \Grepodata\Library\Model\IndexV2\IntelShared::where('created_at', '>', $Days7)
+  ->distinct()
+  ->count('user_id');
+// Unique uploaders in the last month
+$oStats->users_month = \Grepodata\Library\Model\IndexV2\IntelShared::where('created_at', '>', $Month1)
+  ->distinct()
+  ->count('user_id');
 
-// Teams active in the last 24 hours
+// Teams active in the last 24 hours, 1 week, 1 month
 $oStats->teams_today = IndexOverview::where('updated_at', '>', $Hours24)->count();
+$oStats->teams_week = IndexOverview::where('updated_at', '>', $Days7)->count();
+$oStats->teams_month = IndexOverview::where('updated_at', '>', $Month1)->count();
 
 // Reports indexed in the last 24 hours
 $oStats->reports_today = \Grepodata\Library\Model\IndexV2\Intel::where('created_at', '>', $Hours24)->count();

@@ -25,48 +25,6 @@ Common::markAsRunning(__FILE__, 3*60);
 
 use Illuminate\Database\Capsule\Manager as DB;
 
-// Count total indexed reports
-$aIndexedPerDay = DB::select( DB::raw("
-select count(distinct report_hash) as count, date(created_at) as date 
-from Indexer_intel_shared 
-where created_at >= date_sub(curdate(), interval 1 year) 
-and DATE(created_at) <> DATE(NOW())
-group by date"
-));
-/** @var DailyReport $oReport */
-$oReport = DailyReport::firstOrNew(array('type' => 'indexer_num_reports_per_day'));
-$oReport->title = "Total number of indexed reports per day";
-$oReport->data = json_encode($aIndexedPerDay);
-$oReport->save();
-
-// Count total indexes used per day
-$aIndexedPerDay = DB::select( DB::raw("
-select count(distinct index_key) as count, date(created_at) as date 
-from Indexer_intel_shared 
-where created_at >= date_sub(curdate(), interval 1 year) 
-and DATE(created_at) <> DATE(NOW())
-group by date"
-));
-/** @var DailyReport $oReport */
-$oReport = DailyReport::firstOrNew(array('type' => 'indexer_num_unique_indexes_per_day'));
-$oReport->title = "Number of unique indexes used per day";
-$oReport->data = json_encode($aIndexedPerDay);
-$oReport->save();
-
-// Count total indexing users per day
-$aIndexedPerDay = DB::select( DB::raw("
-select count(distinct poster_player_id) as count, date(created_at) as date 
-from Indexer_intel 
-where created_at >= date_sub(curdate(), interval 1 year) 
-and DATE(created_at) <> DATE(NOW())
-group by date"
-));
-/** @var DailyReport $oReport */
-$oReport = DailyReport::firstOrNew(array('type' => 'indexer_num_unique_uploaders_per_day'));
-$oReport->title = "Number of unique uploaders per day";
-$oReport->data = json_encode($aIndexedPerDay);
-$oReport->save();
-
 // Count total indexed reports from inbox
 $aIndexedPerDay = DB::select( DB::raw("
 select count(*) as count, date(created_at) as date
@@ -98,15 +56,21 @@ $oReport->save();
 // index stats agg (use a static increment for V1 count)
 $aStats = DB::select( DB::raw("
 SELECT 
-	(CASE
-        WHEN created_at < '2021-04-19' THEN reports + 756277
-        ELSE reports
-	END) as reports, 
-	index_count, 
+	reports, 
+	index_count,
+	user_count,
+   users_today,
+   users_week,
+   users_month,
+   teams_today,
+   teams_week,
+   teams_month,
+   reports_today,
     created_at
 FROM `Index_stats` 
 WHERE HOUR(created_at) <= 1 
 AND created_at >= date_sub(curdate(), interval 1 year)
+AND created_at >= '2021-04-23'
 ORDER BY `Index_stats`.`created_at` ASC"
 ));
 $oReport = DailyReport::firstOrNew(array('type' => 'indexer_stats_agg'));
@@ -118,7 +82,7 @@ $oReport->save();
 $aStats = DB::select( DB::raw("
 select count(*) as count, date(created_at) as date 
 from Indexer_intel
-where created_at >= date_sub(curdate(), interval 1 year) 
+where created_at >= date_sub(curdate(), interval 3 month) 
 and parsing_failed != 0 
 group by date"
 ));
@@ -131,7 +95,7 @@ $oReport->save();
 $aStats = DB::select( DB::raw("
 select count(*) as count, date(created_at) as date 
 from Operation_log
-where created_at >= date_sub(curdate(), interval 1 year) 
+where created_at >= date_sub(curdate(), interval 3 month) 
 and level <= 2 
 group by date"
 ));
@@ -143,8 +107,8 @@ $oReport->save();
 // Worlds
 $aStats = DB::select( DB::raw("
 select substr(world,1,2) as country, count(*) as count
-from Indexer_info
-where created_at >= date_sub(curdate(), interval 3 month) 
+from Index_overview
+where updated_at >= date_sub(curdate(), interval 3 month) 
 group by substr(world,1,2)
 order by count DESC"
 ));

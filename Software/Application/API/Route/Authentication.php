@@ -221,6 +221,11 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
     $aResponse = array(
       'script_token'  => $oToken->token->toString(),
     );
+
+    try {
+      Logger::indexDebug("NewScriptLink - ".$_SERVER['REMOTE_ADDR']." - ". $_SERVER['HTTP_USER_AGENT'] . " - " . $_SERVER['HTTP_REFERER']);
+    } catch (\Exception $e) {}
+
     ResponseCode::success($aResponse, 1150);
   }
 
