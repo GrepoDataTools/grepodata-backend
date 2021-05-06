@@ -31,10 +31,19 @@ class Report extends \Grepodata\Library\Router\BaseRoute
       // Get all active indexes for this user in this world
       $aIndexes = IndexInfo::allByUserAndWorld($oUser, $World);
       $aActiveIndexes = array();
+      $aAllIndexes = array();
+      $bIsContributingToTeam = false;
       foreach ($aIndexes as $oIndex) {
+        $bIsContributingToTeam = true;
         if ($oIndex->role != Roles::ROLE_READ && $oIndex->contribute == true) {
-          $aActiveIndexes[$oIndex->key_code] = $aActiveIndexes;
+          $aActiveIndexes[$oIndex->key_code] = $oIndex->key_code;
         }
+        $aAllIndexes[] = array(
+          'key'         => $oIndex->key_code,
+          'name'        => $oIndex->index_name,
+          'role'        => $oIndex->role,
+          'contribute'  => $oIndex->contribute,
+        );
       }
 
       // Number of recent hashes to return
@@ -55,15 +64,23 @@ class Report extends \Grepodata\Library\Router\BaseRoute
         "));
 
       $aHashlist = array();
+      $bHasHashes = false;
       foreach ($aHashes as $Hash) {
+        $bHasHashes = true;
         $Hash = (array) $Hash;
         if (isset($Hash['report_hash'])) {
           $aHashlist[] = $Hash['report_hash'];
         }
       }
 
+      if ($bHasHashes && !$bIsContributingToTeam) {
+        // monitor how many people are collecting intel without an active team
+        Logger::v2Migration("User ".$oUser->id." on world ".$World." has collected intel without an active team");
+      }
+
       $aResponse = array(
-        'hashlist' => $aHashlist
+        'hashlist' => $aHashlist,
+        'active_teams' => $aAllIndexes
       );
 
       die(self::OutputJson($aResponse, 200));

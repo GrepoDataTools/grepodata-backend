@@ -45,9 +45,8 @@ var errorSubmissions = [];
         setTimeout(function () {
             if (gd_settings.inbox === true || gd_settings.forum === true) {
                 loadIndexHashlist(false); // Get list of recently indexed report ids
-                // loadIndexesList(false, true); // Get list of indexes for this user
             }
-        }, 1000);
+        }, 300);
         checkLogin(false);
 
         // Check for other scripts
@@ -67,8 +66,7 @@ var errorSubmissions = [];
             STATS_LINK: 'Show buttons that link to player/alliance statistics on grepodata.com',
             STATS_LINK_TITLE: 'Link to statistics',
             CHECK_UPDATE: 'Check for updates',
-            ABOUT: 'This tool allows you to collect and browse enemy city intelligence from your very own private index that can be shared with your alliance',
-            INDEX_LIST: 'You are currently contributing intel to the following indexes',
+            ABOUT: 'This tool allows you to collect and browse enemy city intelligence. You can also join a private GrepoData team to share the collected intel with your allies',
             INDEX_LOGGED_IN: 'You are currently signed in as',
             INDEX_LOGGED_OUT: 'You are currently not signed in.',
             COUNT_1: 'You have contributed ',
@@ -77,6 +75,13 @@ var errorSubmissions = [];
             SHORTCUTS_ENABLED: 'Enable keyboard shortcuts',
             SHORTCUTS_INBOX_PREV: 'Previous report (inbox)',
             SHORTCUTS_INBOX_NEXT: 'Next report (inbox)',
+            MY_TEAMS: 'Your teams on world ',
+            MY_TEAMS_CONTRIBUTE: 'If you enable the contribute checkbox, newly indexed reports will be shared with the team.',
+            TEAM_NAME: 'Team name',
+            TEAM_ROLE: 'Your role',
+            TEAM_CONTRIBUTE: 'Contribute',
+            TEAM_ACTION: 'Action (opens in new tab)',
+            TEAM_ACTION_OVERVIEW: 'View team overview',
             COLLECT_INTEL: 'Collecting intel',
             COLLECT_INTEL_INBOX: 'Inbox (adds an "index+" button to inbox reports)',
             COLLECT_INTEL_FORUM: 'Alliance forum (adds an "index+" button to alliance forum reports)',
@@ -111,8 +116,7 @@ var errorSubmissions = [];
                         STATS_LINK: 'Knoppen toevoegen die linken naar speler/alliantie statistieken op grepodata.com',
                         STATS_LINK_TITLE: 'Link naar statistieken',
                         CHECK_UPDATE: 'Controleer op updates',
-                        ABOUT: 'Deze tool verzamelt informatie over vijandige steden in een handig overzicht. Rapporten kunnen geindexeerd worden in een unieke index die gedeeld kan worden met alliantiegenoten',
-                        INDEX_LIST: 'Je draagt momenteel bij aan de volgende indexen',
+                        ABOUT: 'Met deze tool kun je intel verzamelen over vijandige steden. Je kunt ook lid worden van een GrepoData team om de verzamelde intel te delen met je alliantiegenoten',
                         INDEX_LOGGED_IN: 'Je bent momenteel ingelogd als',
                         INDEX_LOGGED_OUT: 'Je bent momenteel niet ingelogd.',
                         COUNT_1: 'Je hebt al ',
@@ -121,6 +125,13 @@ var errorSubmissions = [];
                         SHORTCUTS_ENABLED: 'Sneltoetsen inschakelen',
                         SHORTCUTS_INBOX_PREV: 'Vorige rapport (inbox)',
                         SHORTCUTS_INBOX_NEXT: 'Volgende rapport (inbox)',
+                        MY_TEAMS: 'Jouw teams op wereld ',
+                        MY_TEAMS_CONTRIBUTE: 'Nieuwe rapporten worden gedeeld met het team als je de \'Intel delen\' checkbox aanvinkt.',
+                        TEAM_NAME: 'Team naam',
+                        TEAM_ROLE: 'Jouw rol',
+                        TEAM_CONTRIBUTE: 'Intel delen',
+                        TEAM_ACTION: 'Actie (nieuw tabblad)',
+                        TEAM_ACTION_OVERVIEW: 'Team overzicht',
                         COLLECT_INTEL: 'Intel verzamelen',
                         COLLECT_INTEL_INBOX: 'Inbox (voegt een "index+" knop toe aan inbox rapporten)',
                         COLLECT_INTEL_FORUM: 'Alliantie forum (voegt een "index+" knop toe aan alliantie forum rapporten)',
@@ -619,6 +630,34 @@ var errorSubmissions = [];
             });
         }
 
+        function showNoTeamNotification() {
+            try {
+                if (getLocalToken('gd_no_team_dont_show')) {
+                    return;
+                }
+                if (7 < $("#notification_area>.notification").length) {
+                    setTimeout(function() {
+                        showNoTeamNotification();
+                    }, 10000);
+                } else {
+                    var notificationHandler = ("undefined" == typeof Layout || "undefined" == typeof Layout.notify ? new NotificationHandler : Layout);
+                    var notification = notificationHandler.notify(
+                        $("#notification_area>.notification").length + 1,
+                        'gd_notification gd_no_team_notification',
+                        '<strong>GrepoData city indexer: create or join a team to share your intel!</strong>',
+                        null
+                    );
+
+                    $('.gd_no_team_notification').click(function () {
+                        showTeamsPopup();
+                        $('.gd_no_team_notification').hide();
+                    });
+                }
+            } catch (e) {
+                errorHandling(e, "showNoTeamNotification")
+            }
+        }
+
         function showLoginNotification() {
             try {
                 if (7 < $("#notification_area>.notification").length) {
@@ -629,7 +668,7 @@ var errorSubmissions = [];
                     var notificationHandler = ("undefined" == typeof Layout || "undefined" == typeof Layout.notify ? new NotificationHandler : Layout);
                     var notification = notificationHandler.notify(
                         $("#notification_area>.notification").length + 1,
-                        'gd_login_required_notification',
+                        'gd_notification gd_login_required_notification',
                         '<strong>GrepoData city indexer: sign in required to start indexing</strong>',
                         null
                     );
@@ -753,6 +792,63 @@ var errorSubmissions = [];
                 });
 
             });
+        }
+
+        var teams_window = null;
+        function showTeamsPopup() {
+            if (teams_window != null) {
+                teams_window.close();
+                teams_window = null;
+            }
+            teams_window = Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG,
+                '<a href="#" class="write_message" style="background: ' + gd_icon + '">' +
+                '</a>&nbsp;&nbsp;GrepoData indexer teams',
+                {position: ['center','center'], width: 630, height: 405, minimizable: true});;
+
+            // Window content
+            var content = '<div class="gdteamspopup" style="width: 630px; height: 295px;"><div style="text-align: center">' +
+                '</div></div>';
+            teams_window.setContent(content);
+            var teams_window_element = $('.gdteamspopup').parent();
+            $(teams_window_element).css({ top: 43 });
+
+            // Build form
+            formHtml = `
+        <form autocomplete="false" class="gd-login-form" id="gd_login_form" name="gdloginform">
+          <div style="text-align: center;font-weight: 800;font-size: 35px;">
+            <div style="display: inline-block;"><img src="https://grepodata.com/assets/images/grepodata_icon.ico" style="position: relative; top: 4px;"></div>
+            <span style="color: rgb(103, 103, 103)">GREPO</span>
+            <span style="color: rgb(24, 188, 156);margin-left: -12px;">DATA</span>
+          </div>
+          <div id="gd-login-container" class="gd-login-container">
+              <h4 class="gd-title" style="text-align: center; font-size: 18px; display: block;">
+                Create or join a GrepoData team to share the intel you collect!
+                </h4>
+                <h4 style="display: block; text-align: center;">You are not part of any team on world `+Game.world_id+`</h4>
+              <p id="grepodataltip" style="text-align: center;">
+                  The intel you have been collecting on this world has not been shared with a team. 
+                  You can create or join a <strong>GrepoData team</strong> together with your alliance members. 
+                  All members of the team will be able to contribute and view eachothers intelligence. 
+                  A team is only active on a specific game world; each world you play on requires a different team.
+              </p>
+              <div class="gd_no_team_footer">
+                  <p id="gd-no-team-dont-show" class="gd-link-btn" style="margin-top: 18px;">Don't show this message again</p>
+                  <a class="gd-login-btn" href="https://grepodata.com/profile?action=new_team&world=`+Game.world_id+`" target="_blank">Create a new team</a>
+              </div>
+          </div>
+        </form>
+      
+    `;
+            $('.gdteamspopup').append(formHtml);
+
+            // Handle actions
+            $('#gd-no-team-dont-show').click(function () {
+                // hide notification
+                setLocalToken('gd_no_team_dont_show', true);
+                teams_window.close();
+                teams_window = null;
+            });
+
         }
 
         function parseJwt(token) {
@@ -1330,11 +1426,11 @@ var errorSubmissions = [];
                             folderElement.style.marginLeft = '3px';
                             folderElement.style.zIndex = '6';
                         }
-
-                        // Handle inbox keyboard shortcuts
-                        document.removeEventListener('keyup', inboxNavShortcut);
-                        document.addEventListener('keyup', inboxNavShortcut);
                     }
+
+                    // Handle inbox keyboard shortcuts
+                    document.removeEventListener('keyup', inboxNavShortcut);
+                    document.addEventListener('keyup', inboxNavShortcut);
 
                 }
 
@@ -1577,150 +1673,217 @@ var errorSubmissions = [];
             }
         }
 
-        function settings() {
-            if (!$("#gd_indexer").get(0)) {
-                $(".settings-menu ul:last").append('<li id="gd_li"><svg aria-hidden="true" data-prefix="fas" data-icon="university" class="svg-inline--fa fa-university fa-w-16" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="color: #2E4154;width: 16px;width: 15px;vertical-align: middle;margin-top: -2px;"><path fill="currentColor" d="M496 128v16a8 8 0 0 1-8 8h-24v12c0 6.627-5.373 12-12 12H60c-6.627 0-12-5.373-12-12v-12H24a8 8 0 0 1-8-8v-16a8 8 0 0 1 4.941-7.392l232-88a7.996 7.996 0 0 1 6.118 0l232 88A8 8 0 0 1 496 128zm-24 304H40c-13.255 0-24 10.745-24 24v16a8 8 0 0 0 8 8h464a8 8 0 0 0 8-8v-16c0-13.255-10.745-24-24-24zM96 192v192H60c-6.627 0-12 5.373-12 12v20h416v-20c0-6.627-5.373-12-12-12h-36V192h-64v192h-64V192h-64v192h-64V192H96z"></path></svg><a id="gd_indexer" href="#" style="    margin-left: 4px;">GrepoData City Indexer</a></li>');
-
-                // contact/update
-                try {
-                    var access_token = getLocalToken('gd_indexer_access_token');
-                    var logged_in = !!access_token;
-                    var jwtpayload = parseJwt(access_token);
-                    console.log(jwtpayload);
-                } catch (e) {}
-
-                // Intro
-                // var layoutUrl = 'https' + window.getComputedStyle(document.getElementsByClassName('icon')[0], null).background.split('("https')[1].split('"')[0];
-                var settingsHtml = '<div id="gd_settings_container" style="display: none; position: absolute; top: 0; bottom: 0; right: 0; left: 232px; padding: 0px; overflow: auto;">\n' +
-                    '    <div id="gd_settings" style="position: relative;">\n' +
-                    '\t\t<div class="section">\n' +
-                    '\t\t\t<div class="game_header bold" style="margin: -5px -10px 5px -10px; padding-left: 10px;">GrepoData city indexer settings</div>\n' +
-                    '<a href="https://grepodata.com/message" target="_blank">Contact</a>' +
-                    '<p style="font-style: italic; font-size: 10px; float: right; margin:0px;">GrepoData city indexer v' + gd_version + ' [<a href="https://api.grepodata.com/script/indexer.user.js" target="_blank">' + translate.CHECK_UPDATE + '</a>]</p>' +
-                    '\t\t\t<p>' + translate.ABOUT + '.</p>';
-                if (logged_in) {
-                    settingsHtml += '\t\t\t<p id="gdsettingslogged_in">' + translate.INDEX_LOGGED_IN + (!!jwtpayload?.username?' <strong>'+jwtpayload.username+'</strong>':'') + ' <a id="gdsettingslogout" href="#">Sign out</a></p>';
-                } else {
-                    settingsHtml += '\t\t\t<p id="gdsettingslogged_in">' + translate.INDEX_LOGGED_OUT + ' ' + '<a id="gdsettingslogin" href="#">Sign in</a></p>';
-                }
-                settingsHtml +=(count > 0 ? '<p>' + translate.COUNT_1 + count + translate.COUNT_2 + '.</p>' : '') +
-                    '<p id="gd_s_saved" style="display: none; position: absolute; left: 10px; margin: 0; color: green;"><strong>' + translate.SAVED + ' ✓</strong></p> ' +
-                    '<br/>\n';
-
-                // settings container
-                settingsHtml = settingsHtml + '<div style="max-height: '+(count > 0 ? 320 : 340)+'px; overflow-y: scroll; background: #FFEECA; border: 2px solid #d0be97;">';
-
-                // Forum intel settings
-                settingsHtml += '\t\t\t<p style="margin-bottom: 10px; margin-left: 10px;"><strong>' + translate.COLLECT_INTEL + '</strong></p>\n' +
-                    '\t\t\t<div style="margin-left: 30px; margin-bottom: 10px;" class="checkbox_new inbox_gd_enabled' + (gd_settings.inbox === true ? ' checked' : '') + '">\n' +
-                    '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.COLLECT_INTEL_INBOX + '</div>\n' +
-                    '\t\t\t</div>\n' +
-                    '\t\t\t<div style="margin-left: 30px;" class="checkbox_new forum_gd_enabled' + (gd_settings.forum === true ? ' checked' : '') + '">\n' +
-                    '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.COLLECT_INTEL_FORUM + '</div>\n' +
-                    '\t\t\t</div>\n' +
-                    '\t\t\t<br><br><hr>\n';
-
-                // Stats link
-                settingsHtml += '\t\t\t<p style="margin-left: 10px; display: inline-flex; height: 14px;"><strong>' + translate.STATS_LINK_TITLE + '</strong> <span style="background: '+gd_icon+'; width: 26px; height: 24px; margin-top: -5px; margin-left: 10px;"></span></p>\n' +
-                    '\t\t\t<div style="margin-left: 30px;" class="checkbox_new stats_gd_enabled' + (gd_settings.stats === true ? ' checked' : '') + '">\n' +
-                    '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.STATS_LINK + '</div>\n' +
-                    '\t\t\t</div>\n' +
-                    '\t\t\t<br><br><hr>\n';
-
-                // Context menu
-                settingsHtml += '\t\t\t<p style="margin-left: 10px; display: inline-flex; height: 14px;"><strong>' + translate.CONTEXT_TITLE + '</strong> <span style="background: '+gd_icon_intel+'; width: 50px; height: 50px; transform: scale(0.6); margin-top: -18px;"></span></p>\n' +
-                    '\t\t\t<div style="margin-left: 30px;" class="checkbox_new context_gd_enabled' + (gd_settings.context === true ? ' checked' : '') + '">\n' +
-                    '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.CONTEXT_INFO + '</div>\n' +
-                    '\t\t\t</div>\n' +
-                    '\t\t\t<br><br><hr>\n';
-
-                // Command overview settings
-                settingsHtml += '\t\t\t<p style="margin-left: 10px;"><strong>' + translate.CMD_OVERVIEW_TITLE + '</strong></p>\n' +
-                    '\t\t\t<div style="margin-left: 30px;" class="checkbox_new command_cancel_time_gd_enabled' + (gd_settings.command_cancel_time === true ? ' checked' : '') + '">\n' +
-                    '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.CMD_DEPARTURE_INFO + '</div>\n' +
-                    '\t\t\t</div>\n' +
-                    '\t\t\t<br><br><hr>\n';
-
-                // Keyboard shortcut settings
-                settingsHtml += '\t\t\t<p style="margin-bottom: 10px; margin-left: 10px;"><strong>' + translate.SHORTCUTS + '</strong></p>\n' +
-                    '\t\t\t<div style="margin-left: 30px;" class="checkbox_new keys_enabled_gd_enabled' + (gd_settings.keys_enabled === true ? ' checked' : '') + '">\n' +
-                    '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.SHORTCUTS_ENABLED + '</div>\n' +
-                    '\t\t\t</div><br/><br/>\n' +
-                    '\t\t\t<div class="gd_shortcut_settings" style="margin-left: 45px; margin-right: 20px; border: 1px solid black;"><table style="width: 100%;">\n' +
-                    '\t\t\t\t<tr><th style="width: 50%;">' + translate.SHORTCUT_FUNCTION + '</th><th>Shortcut</th></tr>\n' +
-                    '\t\t\t\t<tr><td>' + translate.SHORTCUTS_INBOX_PREV + '</td><td>' + gd_settings.key_inbox_prev + '</td></tr>\n' +
-                    '\t\t\t\t<tr><td>' + translate.SHORTCUTS_INBOX_NEXT + '</td><td>' + gd_settings.key_inbox_next + '</td></tr>\n' +
-                    '\t\t\t</table></div>\n' +
-                    '\t\t\t<br/><hr>';
-
-                // Other
-                settingsHtml += '\t\t\t<p style="margin-left: 10px; display: inline-flex; height: 14px;"><strong>'+translate.SETTINGS_OTHER+'</strong></p></br>\n' +
-                    '\t\t\t<div style="margin-left: 30px;" class="checkbox_new bug_reports_gd_enabled' + (gd_settings.bug_reports === true ? ' checked' : '') + '">\n' +
-                    '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.BUG_REPORTS + '</div>\n' +
-                    '\t\t\t</div>\n' +
-                    '\t\t\t<br><br>\n';
-
-                // Footer
-                settingsHtml += '</div>' +
-                    '\t\t</div>\n' +
-                    '    </div>\n' +
-                    '</div>';
-
-                // Insert settings menu
-                $(".settings-menu").parent().append(settingsHtml);
-
-                // Handle settings events
-                $(".settings-link").click(function () {
-                    $('#gd_settings_container').get(0).style.display = "none";
-                    $('.settings-container').get(0).style.display = "block";
-                    gdsettings = false;
-                });
-                $("#gdsettingslogout").click(function () {
-                    $("#gdsettingslogged_in").hide();
-                    deleteLocalToken('gd_indexer_access_token');
-                    deleteLocalToken('gd_indexer_refresh_token');
-                    HumanMessage.success('GrepoData logged out succesfully.');
-                    showLoginPopup();
-                });
-                $("#gdsettingslogin").click(function () {
-                    $("#gdsettingslogged_in").hide();
-                    showLoginPopup();
-                });
-
-                $("#gd_indexer").click(function () {
-                    $('.settings-container').get(0).style.display = "none";
-                    $('#gd_settings_container').get(0).style.display = "block";
-                });
-
-                $(".inbox_gd_enabled").click(function () {
-                    settingsCbx('inbox', !gd_settings.inbox);
-                    if (!gd_settings.inbox) {
-                        settingsCbx('keys_enabled', false);
+        function settingsTeams() {
+            if ('active_teams' in globals) {
+                if (globals.active_teams.length > 0) {
+                    teamHtml = '<table class="gd-settings-team-table"><tr><th>'+translate.TEAM_NAME+'</th><th>'+translate.TEAM_ROLE+'</th><th>'+translate.TEAM_CONTRIBUTE+'</th><th>'+translate.TEAM_ACTION+'</th></tr>';
+                    for (var j = 0; j < Object.keys(globals.active_teams).length; j++) {
+                        var team = globals.active_teams[j];
+                        teamHtml += `<tr>
+                                                <td>${team.name}</td>
+                                                <td>${team.role.replace('read', 'read-only')}</td>
+                                                <td>`;
+                        if (team.role !== 'read') {
+                            teamHtml += `<div id="gd-team-cbx-contrib-${team.key}" class="checkbox_new `+(team.contribute==1?'checked':'')+`" title="Share new reports with this team">
+                                                    <div class="cbx_icon"></div>
+                                                    </div>`;
+                        }
+                        teamHtml += `</td>
+                                                <td>
+                                                    <a href="https://grepodata.com/profile/team/${team.key}" target="_blank">${translate.TEAM_ACTION_OVERVIEW} ></a>
+                                                </td>
+                                            </tr>`
                     }
-                });
-                $(".forum_gd_enabled").click(function () {
-                    settingsCbx('forum', !gd_settings.forum);
-                });
-                $(".stats_gd_enabled").click(function () {
-                    settingsCbx('stats', !gd_settings.stats);
-                });
-                $(".command_cancel_time_gd_enabled").click(function () {
-                    settingsCbx('command_cancel_time', !gd_settings.command_cancel_time);
-                });
-                $(".context_gd_enabled").click(function () {
-                    settingsCbx('context', !gd_settings.context);
-                });
-                $(".bug_reports_gd_enabled").click(function () {
-                    settingsCbx('bug_reports', !gd_settings.bug_reports);
-                });
-                $(".keys_enabled_gd_enabled").click(function () {
-                    settingsCbx('keys_enabled', !gd_settings.keys_enabled);
-                });
+                    teamHtml += '</table>';
+                    $('#gd-settings-teams-container').html(teamHtml);
 
-                if (gdsettings === true) {
-                    $('.settings-container').get(0).style.display = "none";
-                    $('#gd_settings_container').get(0).style.display = "block";
+                    // actions
+                    for (let j = 0; j < Object.keys(globals.active_teams).length; j++) {
+                        $("#gd-team-cbx-contrib-"+globals.active_teams[j].key).click(function () {
+                            var set_value = globals.active_teams[j].contribute == 1 ? 0 : 1
+                            var do_contribute = set_value == 1;
+                            let team = globals.active_teams[j];
+
+                            toggleTeamContributions(team.key, do_contribute).then(response => {
+                                if (response!==false) {
+                                    globals.active_teams[j].contribute = set_value;
+                                    savedSettingsIndicator();
+                                    if (do_contribute === true) {
+                                        $("#gd-team-cbx-contrib-"+team.key).get(0).classList.add("checked");
+                                    } else {
+                                        $("#gd-team-cbx-contrib-"+team.key).get(0).classList.remove("checked");
+                                    }
+                                }
+                            })
+                        });
+                    }
+
+                } else {
+                    // user has no teams
+                    $('#gd-settings-teams-container').html(`&nbsp;&nbsp;&nbsp;You have not yet joined any teams on world ${Game.world_id}. <a className="gd-login-btn"
+                       href="https://grepodata.com/profile?action=new_team&world=`+Game.world_id+`" target="_blank">Create a new team</a>`);
                 }
+            } else {
+                // Data is probably still loading, retry after a while
+                setTimeout(settingsTeams, 500);
+            }
+        }
+
+        function settings() {
+            try {
+                if (!$("#gd_indexer").get(0)) {
+                    $(".settings-menu ul:last").append('<li id="gd_li"><svg aria-hidden="true" data-prefix="fas" data-icon="university" class="svg-inline--fa fa-university fa-w-16" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="color: #2E4154;width: 16px;width: 15px;vertical-align: middle;margin-top: -2px;"><path fill="currentColor" d="M496 128v16a8 8 0 0 1-8 8h-24v12c0 6.627-5.373 12-12 12H60c-6.627 0-12-5.373-12-12v-12H24a8 8 0 0 1-8-8v-16a8 8 0 0 1 4.941-7.392l232-88a7.996 7.996 0 0 1 6.118 0l232 88A8 8 0 0 1 496 128zm-24 304H40c-13.255 0-24 10.745-24 24v16a8 8 0 0 0 8 8h464a8 8 0 0 0 8-8v-16c0-13.255-10.745-24-24-24zM96 192v192H60c-6.627 0-12 5.373-12 12v20h416v-20c0-6.627-5.373-12-12-12h-36V192h-64v192h-64V192h-64v192h-64V192H96z"></path></svg><a id="gd_indexer" href="#" style="    margin-left: 4px;">GrepoData City Indexer</a></li>');
+
+                    // contact/update
+                    try {
+                        var access_token = getLocalToken('gd_indexer_access_token');
+                        var logged_in = !!access_token;
+                        var jwtpayload = parseJwt(access_token);
+                    } catch (e) {}
+
+                    // Intro
+                    // var layoutUrl = 'https' + window.getComputedStyle(document.getElementsByClassName('icon')[0], null).background.split('("https')[1].split('"')[0];
+                    var settingsHtml = '<div id="gd_settings_container" style="display: none; position: absolute; top: 0; bottom: 0; right: 0; left: 232px; padding: 0px; overflow: auto;">\n' +
+                        '    <div id="gd_settings" style="position: relative;">\n' +
+                        '\t\t<div class="section">\n' +
+                        '\t\t\t<div class="game_header bold" style="margin: -5px -10px 5px -10px; padding-left: 10px;">GrepoData city indexer settings</div>\n' +
+                        '<a href="https://grepodata.com/message" target="_blank">Contact</a>' +
+                        '<p style="font-style: italic; font-size: 10px; float: right; margin:0px;">GrepoData city indexer v' + gd_version + ' [<a href="https://api.grepodata.com/script/indexer.user.js" target="_blank">' + translate.CHECK_UPDATE + '</a>]</p>' +
+                        '\t\t\t<p>' + translate.ABOUT + '.</p>';
+                    if (logged_in) {
+                        settingsHtml += '\t\t\t<p id="gdsettingslogged_in">' + translate.INDEX_LOGGED_IN + (!!jwtpayload?.username?' <strong>'+jwtpayload.username+'</strong>':'') + ' <a id="gdsettingslogout" href="#">Sign out</a></p>';
+                    } else {
+                        settingsHtml += '\t\t\t<p id="gdsettingslogged_in">' + translate.INDEX_LOGGED_OUT + ' ' + '<a id="gdsettingslogin" href="#">Sign in</a></p>';
+                    }
+                    settingsHtml +=(count > 0 ? '<p>' + translate.COUNT_1 + count + translate.COUNT_2 + '.</p>' : '') +
+                        '<p id="gd_s_saved" style="display: none; position: absolute; left: 10px; margin: 0; color: green;"><strong>' + translate.SAVED + ' ✓</strong></p> ' +
+                        '<br/>\n';
+
+                    // settings container
+                    settingsHtml = settingsHtml + '<div style="max-height: '+(count > 0 ? 320 : 340)+'px; overflow-y: scroll; background: #FFEECA; border: 2px solid #d0be97;">';
+
+                    // My teams (container)
+                    settingsHtml += '<p style="margin-bottom: 10px; margin-left: 10px;"><strong>' + translate.MY_TEAMS + Game.world_id + '</strong>' +
+                        '<br/>'+translate.MY_TEAMS_CONTRIBUTE+'</p>' +
+                        '<div id="gd-settings-teams-container">&nbsp;&nbsp;&nbsp;&nbsp;Loading teams.. (refresh the page if this takes too long)</div>' +
+                        '<hr>'
+
+                    // Forum intel settings
+                    settingsHtml += '\t\t\t<p style="margin-bottom: 10px; margin-left: 10px;"><strong>' + translate.COLLECT_INTEL + '</strong></p>\n' +
+                        '\t\t\t<div style="margin-left: 30px; margin-bottom: 10px;" class="checkbox_new inbox_gd_enabled' + (gd_settings.inbox === true ? ' checked' : '') + '">\n' +
+                        '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.COLLECT_INTEL_INBOX + '</div>\n' +
+                        '\t\t\t</div>\n' +
+                        '\t\t\t<div style="margin-left: 30px;" class="checkbox_new forum_gd_enabled' + (gd_settings.forum === true ? ' checked' : '') + '">\n' +
+                        '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.COLLECT_INTEL_FORUM + '</div>\n' +
+                        '\t\t\t</div>\n' +
+                        '\t\t\t<br><br><hr>\n';
+
+                    // Stats link
+                    settingsHtml += '\t\t\t<p style="margin-left: 10px; display: inline-flex; height: 14px;"><strong>' + translate.STATS_LINK_TITLE + '</strong> <span style="background: '+gd_icon+'; width: 26px; height: 24px; margin-top: -5px; margin-left: 10px;"></span></p>\n' +
+                        '\t\t\t<div style="margin-left: 30px;" class="checkbox_new stats_gd_enabled' + (gd_settings.stats === true ? ' checked' : '') + '">\n' +
+                        '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.STATS_LINK + '</div>\n' +
+                        '\t\t\t</div>\n' +
+                        '\t\t\t<br><br><hr>\n';
+
+                    // Context menu
+                    settingsHtml += '\t\t\t<p style="margin-left: 10px; display: inline-flex; height: 14px;"><strong>' + translate.CONTEXT_TITLE + '</strong> <span style="background: '+gd_icon_intel+'; width: 50px; height: 50px; transform: scale(0.6); margin-top: -18px;"></span></p>\n' +
+                        '\t\t\t<div style="margin-left: 30px;" class="checkbox_new context_gd_enabled' + (gd_settings.context === true ? ' checked' : '') + '">\n' +
+                        '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.CONTEXT_INFO + '</div>\n' +
+                        '\t\t\t</div>\n' +
+                        '\t\t\t<br><br><hr>\n';
+
+                    // Command overview settings
+                    settingsHtml += '\t\t\t<p style="margin-left: 10px;"><strong>' + translate.CMD_OVERVIEW_TITLE + '</strong></p>\n' +
+                        '\t\t\t<div style="margin-left: 30px;" class="checkbox_new command_cancel_time_gd_enabled' + (gd_settings.command_cancel_time === true ? ' checked' : '') + '">\n' +
+                        '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.CMD_DEPARTURE_INFO + '</div>\n' +
+                        '\t\t\t</div>\n' +
+                        '\t\t\t<br><br><hr>\n';
+
+                    // Keyboard shortcut settings
+                    settingsHtml += '\t\t\t<p style="margin-bottom: 10px; margin-left: 10px;"><strong>' + translate.SHORTCUTS + '</strong></p>\n' +
+                        '\t\t\t<div style="margin-left: 30px;" class="checkbox_new keys_enabled_gd_enabled' + (gd_settings.keys_enabled === true ? ' checked' : '') + '">\n' +
+                        '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.SHORTCUTS_ENABLED + '</div>\n' +
+                        '\t\t\t</div><br/><br/>\n' +
+                        '\t\t\t<div class="gd_shortcut_settings" style="margin-left: 45px; margin-right: 20px; border: 1px solid black;"><table style="width: 100%;">\n' +
+                        '\t\t\t\t<tr><th style="width: 50%;">' + translate.SHORTCUT_FUNCTION + '</th><th>Shortcut</th></tr>\n' +
+                        '\t\t\t\t<tr><td>' + translate.SHORTCUTS_INBOX_PREV + '</td><td>' + gd_settings.key_inbox_prev + '</td></tr>\n' +
+                        '\t\t\t\t<tr><td>' + translate.SHORTCUTS_INBOX_NEXT + '</td><td>' + gd_settings.key_inbox_next + '</td></tr>\n' +
+                        '\t\t\t</table></div>\n' +
+                        '\t\t\t<br/><hr>';
+
+                    // Other
+                    settingsHtml += '\t\t\t<p style="margin-left: 10px; display: inline-flex; height: 14px;"><strong>'+translate.SETTINGS_OTHER+'</strong></p></br>\n' +
+                        '\t\t\t<div style="margin-left: 30px;" class="checkbox_new bug_reports_gd_enabled' + (gd_settings.bug_reports === true ? ' checked' : '') + '">\n' +
+                        '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.BUG_REPORTS + '</div>\n' +
+                        '\t\t\t</div>\n' +
+                        '\t\t\t<br><br>\n';
+
+                    // Footer
+                    settingsHtml += '</div>' +
+                        '\t\t</div>\n' +
+                        '    </div>\n' +
+                        '</div>';
+
+                    // Insert settings menu
+                    $(".settings-menu").parent().append(settingsHtml);
+
+                    // Handle settings events
+                    $(".settings-link").click(function () {
+                        $('#gd_settings_container').get(0).style.display = "none";
+                        $('.settings-container').get(0).style.display = "block";
+                        gdsettings = false;
+                    });
+                    $("#gdsettingslogout").click(function () {
+                        $("#gdsettingslogged_in").hide();
+                        deleteLocalToken('gd_indexer_access_token');
+                        deleteLocalToken('gd_indexer_refresh_token');
+                        HumanMessage.success('GrepoData logged out succesfully.');
+                        showLoginPopup();
+                    });
+                    $("#gdsettingslogin").click(function () {
+                        $("#gdsettingslogged_in").hide();
+                        showLoginPopup();
+                    });
+
+                    $("#gd_indexer").click(function () {
+                        $('.settings-container').get(0).style.display = "none";
+                        $('#gd_settings_container').get(0).style.display = "block";
+                    });
+
+                    $(".inbox_gd_enabled").click(function () {
+                        settingsCbx('inbox', !gd_settings.inbox);
+                        if (!gd_settings.inbox) {
+                            settingsCbx('keys_enabled', false);
+                        }
+                    });
+                    $(".forum_gd_enabled").click(function () {
+                        settingsCbx('forum', !gd_settings.forum);
+                    });
+                    $(".stats_gd_enabled").click(function () {
+                        settingsCbx('stats', !gd_settings.stats);
+                    });
+                    $(".command_cancel_time_gd_enabled").click(function () {
+                        settingsCbx('command_cancel_time', !gd_settings.command_cancel_time);
+                    });
+                    $(".context_gd_enabled").click(function () {
+                        settingsCbx('context', !gd_settings.context);
+                    });
+                    $(".bug_reports_gd_enabled").click(function () {
+                        settingsCbx('bug_reports', !gd_settings.bug_reports);
+                    });
+                    $(".keys_enabled_gd_enabled").click(function () {
+                        settingsCbx('keys_enabled', !gd_settings.keys_enabled);
+                    });
+
+                    if (gdsettings === true) {
+                        $('.settings-container').get(0).style.display = "none";
+                        $('#gd_settings_container').get(0).style.display = "block";
+                    }
+
+                    settingsTeams();
+                }
+            } catch (error) {
+                errorHandling(error, "settings");
             }
         }
 
@@ -1735,6 +1898,10 @@ var errorSubmissions = [];
             // Set value
             gd_settings[type] = value;
             saveSettings();
+            savedSettingsIndicator();
+        }
+
+        function savedSettingsIndicator() {
             $('#gd_s_saved').get(0).style.display = 'block';
             setTimeout(function () {
                 if ($('#gd_s_saved').get(0)) {
@@ -1745,6 +1912,37 @@ var errorSubmissions = [];
 
         function saveSettings() {
             setLocalToken('globals_s', encodeJsonToHash(JSON.stringify(gd_settings)))
+        }
+
+        function toggleTeamContributions(index_key, do_contribute) {
+            return new Promise(resolve => {
+                try {
+                    getAccessToken().then(access_token => {
+                        if (access_token === false) {
+                            resolve(false);
+                        } else {
+                            // Toggle team contributions
+                            $.ajax({
+                                method: "put",
+                                headers: {'access_token': access_token},
+                                url: backend_url + "/indexer/settings/contribute",
+                                data: {
+                                    index_key: index_key,
+                                    contribute: do_contribute
+                                }
+                            }).error(function (err) {
+                                console.error(err);
+                                resolve(false);
+                            }).done(function (response) {
+                                resolve(response);
+                            });
+                        }
+                    });
+                } catch (error) {
+                    errorHandling(error, "toggleTeamContributions");
+                    resolve(false);
+                }
+            });
         }
 
         var openIntelWindows = {};
@@ -1769,13 +1967,13 @@ var errorSubmissions = [];
                         var intelUrl = frontend_url + '/intel/town/'+Game.world_id+'/'+id;
                         var intel_window = Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG,
                             '<a target="_blank" href="'+intelUrl+'" class="write_message" style="background: ' + gd_icon + '"></a>&nbsp;&nbsp;' + translate.TOWN_INTEL + ': ' + town_name + (player_name!=''?(' (' + player_name + ')'):''),
-                            {position: ['center','center'], width: 600, height: 590, minimizable: true});
+                            {position: ['center','center'], width: 660, height: 590, minimizable: true});
                         // intel_window.setWidth(600);
                         // intel_window.setHeight(590);
                         openIntelWindows[content_id] = intel_window;
 
                         // Window content
-                        var content = '<div class="gdintel_'+content_id+'" style="width: 600px; height: 500px;"><div style="text-align: center">' +
+                        var content = '<div class="gdintel_'+content_id+'" style="width: 660px; height: 500px;"><div style="text-align: center">' +
                             '<p style="font-size: 20px; padding-top: 180px;">Loading intel..</p>' +
                             '<a style="font-size: 11px;" href="' + intelUrl + '" target="_blank">' + intelUrl + '</a>' +
                             '</div></div>';
@@ -1948,7 +2146,7 @@ var errorSubmissions = [];
                     }
 
                     // Date
-                    row = row + '<div style="display: table-cell; width: 100px;" class="bold"><div style="margin-top: 3px; position: absolute;">' + intel.date.replace(' ', '<br/>') + '</div></div>';
+                    row = row + '<div style="display: table-cell; width: 65px;" class="bold"><div style="margin-top: 3px; position: absolute;">' + intel.date.replace(' ', '<br/>') + '</div></div>';
 
                     // units
                     var unitHtml = '';
@@ -2017,7 +2215,7 @@ var errorSubmissions = [];
                     // Append god to unit list
                     if (intel.god != null && intel.god != "") {
                         unitHtml = unitHtml +
-                            '<div style="float: right; margin-top: -2px; margin-left: 30px;" ' +
+                            '<div style="float: right; margin-top: -2px; margin-left: 10px;" ' +
                             'class="god_micro ' + intel.god.toLowerCase() + '" title="' + intel.god + '"></div>';
                         tooltips.push({id: 'intel-god-' + id + '-' + j, text: intel.god});
                     }
@@ -2074,7 +2272,7 @@ var errorSubmissions = [];
                     table = table + '<li class="even" style="display: inherit; width: 100%;"><div style="text-align: center;">' +
                         '<strong>No unit intelligence available</strong><br/>' +
                         'You have not yet indexed any reports about this town.<br/><br/>' +
-                        '<span style="font-style: italic;">note: intel about index owners may be hidden by the index admin</span></div></li>\n';
+                        '<span style="font-style: italic;">note: intel about team owners may be hidden by the team admin</span></div></li>\n';
                 }
 
                 table = table + '</ul></div></div>';
@@ -2366,13 +2564,29 @@ var errorSubmissions = [];
                             url: backend_url + "/indexer/v2/getlatest?world=" + Game.world_id
                         }).done(function (b) {
                             try {
+                                var has_hashes = false;
+                                var has_teams = false;
                                 if (globals.reportsFound === undefined) {
                                     globals.reportsFound = [];
                                 }
                                 if (b['hashlist'] !== undefined) {
                                     $.each(b['hashlist'], function (b, d) {
+                                        has_hashes = true;
                                         globals.reportsFound.push(d)
                                     });
+                                }
+                                if (globals.active_teams === undefined) {
+                                    globals.active_teams = [];
+                                }
+                                if (b['active_teams'] !== undefined) {
+                                    $.each(b['active_teams'], function (b, d) {
+                                        has_teams = true;
+                                        globals.active_teams.push(d)
+                                    });
+                                }
+                                if (has_hashes && !has_teams) {
+                                    // user has been using the indexer but is not part of a team on this world
+                                    showNoTeamNotification();
                                 }
                             } catch (u) {}
                         });
@@ -2380,35 +2594,6 @@ var errorSubmissions = [];
                 });
             } catch (error) {
                 errorHandling(error, "loadIndexHashlist");
-            }
-        }
-
-        // Loads a list of indexes for the current users.
-        function loadIndexesList(check_login, show_no_index_popup) {
-            try {
-                getAccessToken().then(access_token => {
-                    if (access_token === false && check_login === true) {
-                        showLoginPopup()
-                    } else {
-                        $.ajax({
-                            method: "get",
-                            headers: {"access_token": access_token},
-                            url: backend_url + "/profile/indexes?expand_overview=true&world=" + Game.world_id
-                        }).done(function (b) {
-                            try {
-                                if (b['items'] !== undefined) {
-                                    globals.indexes = [];
-                                    $.each(b['items'], function (b, d) {
-                                        globals.indexes.push(d)
-                                    });
-                                    console.log(globals.indexes);
-                                }
-                            } catch (u) {}
-                        });
-                    }
-                });
-            } catch (error) {
-                errorHandling(error, "loadIndexesList");
             }
         }
 
