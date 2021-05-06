@@ -517,7 +517,7 @@ class Intel
     // Query to expand initial result with list of indexes that the intel was shared with
     $query = \Grepodata\Library\Model\IndexV2\IntelShared::select([
         'Indexer_intel.*',
-        DB::raw("group_concat(Indexer_intel_shared.index_key SEPARATOR ', ') as shared_via_indexes")
+        DB::raw("group_concat(distinct Indexer_intel_shared.index_key SEPARATOR ', ') as shared_via_indexes")
       ])
       ->join(DB::raw('(
         SELECT Indexer_intel.*
@@ -544,6 +544,13 @@ class Intel
       ->get();
 
     return [$aIntel, $Total];
+
+//    select distinct `Indexer_intel`.*, group_concat(Indexer_intel_shared.index_key SEPARATOR ', ') as shared_via_indexes from `Indexer_intel_shared` inner join (
+//    SELECT Indexer_intel.*
+//        FROM Indexer_intel
+//        JOIN Indexer_intel_shared ON Indexer_intel_shared.intel_id = Indexer_intel.id
+//        WHERE Indexer_intel_shared.user_id = "1"
+//      ) as Indexer_intel on `Indexer_intel_shared`.`intel_id` = `Indexer_intel`.`id` group by `Indexer_intel`.`id` order by `Indexer_intel`.`id` desc limit 1 offset 0
   }
 
   /**
@@ -591,7 +598,7 @@ class Intel
     return self::selectByUser($oUser, $bCheckHiddenOwners, true)
       ->where('Indexer_intel.alliance_id', '=', $AllianceId, 'and')
       ->where('Indexer_intel.world', '=', $World)
-      ->orderBy('parsed_date', 'desc')
+      ->orderBy('parsed_date', 'asc')
       ->groupBy('Indexer_intel.id')
       ->limit(10000)
       ->get();

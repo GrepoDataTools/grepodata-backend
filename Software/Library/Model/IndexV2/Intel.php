@@ -128,7 +128,7 @@ class Intel extends Model
       $Prefix.'poster_player_id',
       $Prefix.'poster_alliance_id',
       $Prefix.'conquest_id',
-      //$Prefix.'conquest_details',
+      $Prefix.'conquest_details',
       $Prefix.'report_date',
       $Prefix.'parsed_date',
       $Prefix.'hero',

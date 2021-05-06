@@ -251,6 +251,19 @@ class IndexOverview
           $bUpdate = true;
         }
 
+        if ($oOwnerActual->share <= 0) {
+          // check database for alliance name if there are no contributions
+          try {
+            $oAlliance = Alliance::first($oOwnerActual->alliance_id, $oIndex->world);
+            if ($oAlliance !== null && $oOwnerActual->alliance_name !== $oAlliance->name) {
+              // owner alliance changed name
+              $oOwnerActual->alliance_name = $oAlliance->name;
+              $aRealOwners[$oOwnerActual->alliance_id]['alliance_name'] = $oAlliance->name;
+              $bUpdate = true;
+            }
+          } catch (\Exception $e) {}
+        }
+
         if ($bUpdate) {
           $oOwnerActual->save();
         }

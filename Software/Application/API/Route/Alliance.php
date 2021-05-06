@@ -46,7 +46,7 @@ class Alliance extends \Grepodata\Library\Router\BaseRoute
     try {
       // Validate params
       $aParams = self::validateParams(array('id', 'world'));
-      $RedisKey = RedisClient::ALLIANCE_WARS_PREFIX.$aParams['id'].[$aParams['world']];
+      $RedisKey = RedisClient::ALLIANCE_WARS_PREFIX.$aParams['id'].$aParams['world'];
 
       // check if cached response is available
       if (is_numeric($aParams['id'])) {

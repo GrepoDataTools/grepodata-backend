@@ -196,20 +196,26 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
       if ($aIntel === null || sizeof($aIntel) <= 0) throw new ModelNotFoundException();
 
       // If model is too big, only select latest intel for each town
-      if (sizeof($aIntel) > 1200) {
+      $Overflow = sizeof($aIntel) - 3000;
+      $bViewIsLimited = false;
+      if ($Overflow > 0) {
         $aCitiesSubset = array();
         $aIds = array();
         /** @var \Grepodata\Library\Model\IndexV2\Intel $oCity */
         foreach ($aIntel as $oCity) {
-          if (!in_array($oCity->town_id, $aIds)) {
+          if ($Overflow <= 0 || !in_array($oCity->town_id, $aIds)) {
             $aIds[] = $oCity->town_id;
             $aCitiesSubset[] = $oCity;
+          } else {
+            $bViewIsLimited = true;
+            $Overflow--;
           }
         }
         $aIntel = $aCitiesSubset;
       }
 
       $aResponse = self::FormatBrowseOutput($aIntel, $oWorld);
+      $aResponse['view_is_limited'] = $bViewIsLimited;
       $aResponse['script_version'] = USERSCRIPT_VERSION;
       $aResponse['update_message'] = USERSCRIPT_UPDATE_INFO;
       $aResponse['query_ms'] = $ElapsedMs;

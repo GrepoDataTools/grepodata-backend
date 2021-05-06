@@ -48,7 +48,7 @@ class Profile extends BaseRoute
           );
         }
       }
-      $bUserIsAdmin = in_array($oIndex->role, array(Roles::ROLE_ADMIN, Roles::ROLE_OWNER));
+      $bUserIsAdmin = in_array($oIndex->role, Roles::admin_roles);
       $aIndexItems[] = array(
         'key'         => $oIndex->key_code,
         'name'        => $oIndex->index_name,

@@ -680,7 +680,8 @@ class ForumParser
           }
 
           $LuckMatch = $bHasMorale?$aPercentages[1][0]:$aPercentages[0][0];
-          $LuckMatch = substr($LuckMatch, 0, strlen($LuckMatch)-2);
+          $LuckMatch = str_replace(' ', '', $LuckMatch);
+          $LuckMatch = str_replace('%', '', $LuckMatch);
 
           if (!is_numeric($LuckMatch)) {
             throw new Exception("found non numeric luck value");
