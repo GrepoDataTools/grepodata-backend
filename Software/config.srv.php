@@ -8,6 +8,7 @@ use PDO;
 // Config
 $env = php_uname('n');
 if ($env === PRIVATE_DEV_MACHINE_NAME) {
+
   // LOCAL:
   define('bDevelopmentMode', true);
   $g_aConfiguration = array(

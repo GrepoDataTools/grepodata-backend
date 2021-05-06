@@ -197,6 +197,41 @@ class Index extends BaseRoute
     }
   }
 
+  public static function UpdateNameGET()
+  {
+    $aParams = array();
+    try {
+      // Validate params
+      $aParams = self::validateParams(array('access_token', 'key', 'team_name'));
+      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+
+      // Validate index key
+      $oIndex = Validator::IsValidIndex($aParams['key']);
+      if ($oIndex === null || $oIndex === false) {
+        ResponseCode::errorCode(7101, array(), 401);
+      }
+
+      // Validate user is admin on team
+      $oIndexRole = IndexManagement::verifyUserIsAdmin($oUser, $aParams['key']);
+
+      // Update name
+      $OldName = $oIndex->index_name;
+      $oIndex->index_name = $aParams['team_name'];
+      $oIndex->save();
+
+      // Save event
+      Event::addIndexNameEvent($oIndex, $oUser, $OldName, $aParams['team_name']);
+
+      ResponseCode::success();
+
+    } catch (ModelNotFoundException $e) {
+      die(self::OutputJson(array(
+        'message'     => 'No index overview found for these parameters.',
+        'parameters'  => $aParams
+      ), 404));
+    }
+  }
+
   /**
    * Enable or disable contributing to an index
    */

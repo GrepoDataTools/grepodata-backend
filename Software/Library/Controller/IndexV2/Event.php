@@ -218,6 +218,37 @@ class Event
   }
 
   /**
+   * Add index name change
+   * @param $oIndex
+   * @param User $EditingUser
+   * @param $OldName
+   * @param $NewName
+   */
+  public static function addIndexNameEvent(IndexInfo $oIndex, User $EditingUser, $OldName, $NewName)
+  {
+    try {
+      $oWorld = World::getWorldById($oIndex->world);
+      $oEvent = new \Grepodata\Library\Model\IndexV2\Event();
+      $oEvent->world = $oIndex->world;
+      $oEvent->local_time = $oWorld->getServerTime();
+      $oEvent->admin_only = false;
+      $oEvent->index_key = $oIndex->key_code;
+      $aEvent = array(
+        self::eventPart('text', 'User '),
+        self::eventPart('user', $EditingUser->username),
+        self::eventPart('text', ' changed the team name from '),
+        self::eventPart('bold', $OldName),
+        self::eventPart('text', ' to '),
+        self::eventPart('bold', $NewName),
+      );
+      $oEvent->json = json_encode($aEvent);
+      $oEvent->save();
+    } catch (\Exception $e) {
+      Logger::warning("Error saving index name change event: ".$e->getMessage());
+    }
+  }
+
+  /**
    * Add invite link reset event
    * @param IndexInfo $oIndex
    * @param User $EditingUser

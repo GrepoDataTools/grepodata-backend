@@ -365,6 +365,10 @@ $oRouter->Add('indexsettingsgetusers', new Route('/indexer/settings/users', arra
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\IndexUsers',
   '_method'     => 'IndexUsers'
 )));
+$oRouter->Add('indexsettingsupdatename', new Route('/indexer/settings/name', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Index',
+  '_method'     => 'UpdateName'
+)));
 $oRouter->Add('indexsettingsgetowners', new Route('/indexer/settings/owners', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\IndexOwners',
   '_method'     => 'IndexOwners'
