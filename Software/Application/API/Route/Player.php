@@ -8,9 +8,9 @@ use Grepodata\Library\Controller\Indexer\IndexInfo;
 use Grepodata\Library\Controller\User;
 use Grepodata\Library\Elasticsearch\Search;
 use Grepodata\Library\Logger\Logger;
-use Grepodata\Library\Model\AllianceChanges;
 use Grepodata\Library\Model\PlayerHistory;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\Capsule\Manager as DB;
 
 class Player extends \Grepodata\Library\Router\BaseRoute
 {
@@ -35,6 +35,82 @@ class Player extends \Grepodata\Library\Router\BaseRoute
           } catch (ModelNotFoundException $e) {}//Ignore optional alliance name fail
         }
       }
+
+      return self::OutputJson($aResponse);
+
+    } catch (ModelNotFoundException $e) {
+      die(self::OutputJson(array(
+        'message'     => 'No player found for these parameters.',
+        'parameters'  => $aParams
+      ), 404));
+    }
+  }
+
+  public static function GhostTownsGET()
+  {
+    $aParams = array();
+    try {
+      // Validate params
+      $aParams = self::validateParams(array('world','id'));
+
+      // Get player data
+      $oWorld = \Grepodata\Library\Controller\World::getWorldById($aParams['world']);
+      $oPlayer = \Grepodata\Library\Controller\Player::firstOrFail($aParams['id'], $aParams['world']);
+
+      $World = DB::connection()->getPdo()->quote($aParams['world']);
+      $Id = DB::connection()->getPdo()->quote($aParams['id']);
+
+      $ConquestTimeLimit = Carbon::now();
+      $bHasGhostDetails = false;
+      $GhostServerTime = null;
+      if (!is_null($oPlayer->ghost_time)) {
+        $bHasGhostDetails = true;
+        $ConquestTimeLimit = Carbon::createFromFormat('Y-m-d H:i:s', $oPlayer->ghost_time); // ghost_time = UTC
+        $GhostServerTime = $ConquestTimeLimit->copy()->setTimezone($oWorld->php_timezone)->format('Y-m-d H:i:s');
+      }
+
+      // Pull ghost towns & conquests
+      $aSelect = DB::select( DB::raw("
+        select Town_ghost.grep_id as town_id, 
+               Town_ghost.name as town_name, 
+               Town_ghost.points as points, 
+               Town_ghost.island_x as island_x, 
+               Town_ghost.island_y as island_y, 
+               Conquest.n_p_id, 
+               Player.name as n_p_name, 
+               Conquest.n_a_id, 
+               Alliance.name as n_a_name,
+               Conquest.time as conquest_time
+        from Town_ghost
+        LEFT JOIN Conquest ON Conquest.town_id = Town_ghost.grep_id AND Conquest.world = ".$World." AND Conquest.time > '".$ConquestTimeLimit."'
+        LEFT JOIN Player ON Player.grep_id = Conquest.n_p_id AND Player.world = ".$World."
+        LEFT JOIN Alliance ON Alliance.grep_id = Conquest.n_a_id AND Alliance.world = ".$World."
+        WHERE Town_ghost.player_id = ".$Id." 
+        AND Town_ghost.world = ".$World."
+        AND (
+          Conquest.id IS NULL 
+          OR Conquest.id IN (
+            SELECT MIN(id) 
+            FROM Conquest 
+            WHERE Conquest.town_id = Town_ghost.grep_id 
+              AND Conquest.world = ".$World." 
+              AND Conquest.time > '".$ConquestTimeLimit."'
+            )
+          )
+        "
+      ));
+
+      $aResponse = array(
+        'has_ghost_details' => $bHasGhostDetails,
+        'ghost_time' => $GhostServerTime,
+        'ghost_alliance' => $oPlayer->ghost_alliance ?? 0,
+        'size' => 0,
+        'items' => array(),
+      );
+      foreach ($aSelect as $aGhostConquest) {
+        $aResponse['items'][] = (array) $aGhostConquest;
+      }
+      $aResponse['size'] = count($aResponse['items']);
 
       return self::OutputJson($aResponse);
 

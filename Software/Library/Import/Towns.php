@@ -170,6 +170,10 @@ class Towns
             $Alliance = Alliance::first($Player->alliance_id, $oWorld->grep_id);
           }
           $Player->is_ghost = true;
+          if (is_null($Player->ghost_alliance)) {
+            $Player->ghost_alliance = $Player->alliance_id ?? 0;
+            $Player->ghost_time = Carbon::now();
+          }
           $Player->save();
         } catch (\Exception $e) {
           Logger::warning("Error handling ghost player event ". $oWorld->grep_id." ".$PlayerId. " - ".$e->getMessage());

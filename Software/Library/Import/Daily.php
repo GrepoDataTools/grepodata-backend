@@ -98,6 +98,14 @@ class Daily
               }
             } catch (\Exception $e) {}
 
+            // Detect ghost event (new points is substantially lower than old points)
+            if ((int) $aData['points'] < 10000 &&
+              (int) $oPlayer->points > 5000 &&
+              $aData['points'] < (0.5 * ((int) $oPlayer->points))) {
+              $oPlayer->ghost_alliance = $oPlayer->alliance_id;
+              $oPlayer->ghost_time = Carbon::now();
+            }
+
             foreach ($aData as $Key => $Value) {
               if ($Value == null) {
                 $Value = '';

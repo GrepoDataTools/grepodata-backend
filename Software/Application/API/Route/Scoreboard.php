@@ -151,6 +151,7 @@ class Scoreboard extends \Grepodata\Library\Router\BaseRoute
         'def'         => json_decode(urldecode($aScoreboard['def'])),
         'con'         => $bMinimal?[]:json_decode(urldecode($aScoreboard['con'])),
         'los'         => $bMinimal?[]:json_decode(urldecode($aScoreboard['los'])),
+        'ghosts'      => $bMinimal||is_null($aScoreboard['ghosts'])?[]:json_decode(urldecode($aScoreboard['ghosts'])),
       );
       return self::OutputJson($aResponse);
     } catch (ModelNotFoundException $e) {

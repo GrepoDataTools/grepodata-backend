@@ -199,6 +199,10 @@ $oRouter->Add('playerHistory', new Route('/player/history', array(
   '_controller' => '\Grepodata\Application\API\Route\Player',
   '_method'     => 'PlayerHistory'
 )));
+$oRouter->Add('playerGhostTowns', new Route('/player/ghosttowns', array(
+  '_controller' => '\Grepodata\Application\API\Route\Player',
+  '_method'     => 'GhostTowns'
+)));
 $oRouter->Add('playerRangeHistory', new Route('/player/rangehistory', array(
   '_controller' => '\Grepodata\Application\API\Route\Player',
   '_method'     => 'PlayerHistoryRange'
