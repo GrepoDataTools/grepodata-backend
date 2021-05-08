@@ -1751,7 +1751,7 @@ var errorSubmissions = [];
                         '<p style="font-style: italic; font-size: 10px; float: right; margin:0px;">GrepoData city indexer v' + gd_version + ' [<a href="https://api.grepodata.com/script/indexer.user.js" target="_blank">' + translate.CHECK_UPDATE + '</a>]</p>' +
                         '\t\t\t<p>' + translate.ABOUT + '.</p>';
                     if (logged_in) {
-                        settingsHtml += '\t\t\t<p id="gdsettingslogged_in">' + translate.INDEX_LOGGED_IN + (!!jwtpayload?.username?' <strong>'+jwtpayload.username+'</strong>':'') + ' <a id="gdsettingslogout" href="#">Sign out</a></p>';
+                        settingsHtml += '\t\t\t<p id="gdsettingslogged_in">' + translate.INDEX_LOGGED_IN + ((!!jwtpayload && 'username' in jwtpayload)?' <strong>'+jwtpayload.username+'</strong>':'') + ' <a id="gdsettingslogout" href="#">Sign out</a></p>';
                     } else {
                         settingsHtml += '\t\t\t<p id="gdsettingslogged_in">' + translate.INDEX_LOGGED_OUT + ' ' + '<a id="gdsettingslogin" href="#">Sign in</a></p>';
                     }
@@ -2545,8 +2545,8 @@ var errorSubmissions = [];
                 }
             } catch (error) {
                 let town_bb = '';
-                if (!!xhr && !!xhr?.responseText) {
-                    town_bb = xhr?.responseText;
+                if (!!xhr && 'responseText' in xhr) {
+                    town_bb = xhr.responseText;
                 }
                 errorHandling(error, "enhanceTownInfoPanel", {town_bb: town_bb});
             }
