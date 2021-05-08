@@ -2488,24 +2488,38 @@ var errorSubmissions = [];
 
         function viewTownIntel(xhr) {
             try {
-                if (!xhr.responseText) {
-                    return false;
-                }
-                var town_id = xhr.responseText.match(/\[town\].*?(?=\[)/g)[0];
-                town_id = town_id.substring(6);
+                if (!!xhr.responseText) {
+                    var town_id = xhr.responseText.match(/\[town\].*?(?=\[)/g)[0];
+                    town_id = town_id.substring(6);
 
-                // Add intel button and handle click event
-                var button_style = 'float: right; bottom: 5px;';
-                try {
-                    if (molehole_active) {
-                        button_style = '';
-                    }
-                } catch (e) {}
-                var intelBtn = '<div id="gd_index_town_' + town_id + '" town_id="' + town_id + '" class="button_new gdtv' + town_id + '" style="'+button_style+'">' +
-                    '<div class="left"></div>' +
-                    '<div class="right"></div>' +
-                    '<div class="caption js-caption">' + translate.VIEW + '<div class="effect js-effect"></div></div></div>';
-                $('.info_tab_content_' + town_id + ' > .game_inner_box > .game_border > ul.game_list > li.odd').filter(':first').append(intelBtn);
+                    // Add intel button and handle click event
+                    var button_style = 'float: right; bottom: 5px;';
+                    try {
+                        if (molehole_active) {
+                            button_style = '';
+                        }
+                    } catch (e) {}
+                    var intelBtn = '<div id="gd_index_town_' + town_id + '" town_id="' + town_id + '" class="button_new gdtv' + town_id + '" style="'+button_style+'">' +
+                        '<div class="left"></div>' +
+                        '<div class="right"></div>' +
+                        '<div class="caption js-caption">' + translate.VIEW + '<div class="effect js-effect"></div></div></div>';
+                    $('.info_tab_content_' + town_id + ' > .game_inner_box > .game_border > ul.game_list > li.odd').filter(':first').append(intelBtn);
+
+                    // Handle click:  view intel
+                    $('#gd_index_town_' + town_id).click(function () {
+                        var town_name = town_id;
+                        var player_name = '';
+                        try {
+                            panel_root = $('.info_tab_content_' + town_id).parent().parent().parent().get(0);
+                            town_name = panel_root.getElementsByClassName('ui-dialog-title')[0].innerText;
+                            player_name = panel_root.getElementsByClassName('gp_player_link')[0].innerText;
+                        } catch (e) {
+                            console.log(e);
+                        }
+                        //panel_root.getElementsByClassName('active')[0].classList.remove('active');
+                        loadTownIntel(town_id, town_name, player_name);
+                    });
+                }
 
                 if (gd_settings.stats === true) {
                     try {
@@ -2521,7 +2535,7 @@ var errorSubmissions = [];
                         var ally_id = xhr.responseText.match(/alliance_id = parseInt\([0-9]*, 10\),/g);
                         if (ally_id != null && ally_id.length > 0) {
                             ally_id = ally_id[0].substring(23, ally_id[0].search(','));
-                            var statsBtn2 = '<a target="_blank" href="https://grepodata.com/alliance/' + gd_w.Game.world_id + '/' + ally_id + '" class="write_message" style="background: ' + gd_icon + '"></a>';
+                            var statsBtn2 = '<a target="_blank" href="https://grepodata.com/alliance?world=' + gd_w.Game.world_id + '&id=' + ally_id + '" class="write_message" style="background: ' + gd_icon + '"></a>';
                             $('.info_tab_content_' + town_id + ' > .game_inner_box > .game_border > ul.game_list > li.odd > div.list_item_right').filter(':first').append(statsBtn2);
                             $('.info_tab_content_' + town_id + ' > .game_inner_box > .game_border > ul.game_list > li.odd > div.list_item_right').filter(':first').css("min-width", "140px");
                         }
@@ -2529,23 +2543,12 @@ var errorSubmissions = [];
                         console.log(e);
                     }
                 }
-
-                // Handle click:  view intel
-                $('#gd_index_town_' + town_id).click(function () {
-                    var town_name = town_id;
-                    var player_name = '';
-                    try {
-                        panel_root = $('.info_tab_content_' + town_id).parent().parent().parent().get(0);
-                        town_name = panel_root.getElementsByClassName('ui-dialog-title')[0].innerText;
-                        player_name = panel_root.getElementsByClassName('gp_player_link')[0].innerText;
-                    } catch (e) {
-                        console.log(e);
-                    }
-                    //panel_root.getElementsByClassName('active')[0].classList.remove('active');
-                    loadTownIntel(town_id, town_name, player_name);
-                });
             } catch (error) {
-                errorHandling(error, "enhanceTownInfoPanel");
+                let town_bb = '';
+                if (!!xhr && !!xhr?.responseText) {
+                    town_bb = xhr?.responseText;
+                }
+                errorHandling(error, "enhanceTownInfoPanel", {town_bb: town_bb});
             }
         }
 
