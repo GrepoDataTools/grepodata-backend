@@ -117,7 +117,7 @@ class Towns
               $oGhostTown->island_y = $aPrevious['island_y'];
               $oGhostTown->name = $aPrevious['name'];
               $oGhostTown->points = $aPrevious['points'];
-              return $oGhostTown->save();
+              $oGhostTown->save();
 
             } catch (\Exception $e) {
               Logger::warning("Error handling ghost town event ". $oWorld->grep_id." ".$aData['grep_id']. " - ".$e->getMessage());
