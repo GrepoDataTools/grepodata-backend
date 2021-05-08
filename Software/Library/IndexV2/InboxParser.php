@@ -699,8 +699,9 @@ class InboxParser
               }
             } else if (!$bSeaVisible && !$bGroundVisible) {
               // Sea and land are not visible, apply BP loss using attacker unit distribution
-              $LandBPGain = (int) floor(($GainedBattlePoints * $LandAttackPercentage) / $SeaBoostFactor);
-              $SeaBPGain = (int) floor(($GainedBattlePoints - $LandBPGain) / $LandBoostFactor);
+              $LandBoostFactor *= 10; // Land boost is greatly diminished due to naval units not being cleared
+              $LandBPGain = (int) floor(($GainedBattlePoints * $LandAttackPercentage) / $LandBoostFactor);
+              $SeaBPGain = (int) floor(($GainedBattlePoints - $LandBPGain) / $SeaBoostFactor);
               $aLandUnits = array("unknown" => "?(-$LandBPGain)");
               $aSeaUnits = array("unknown_naval" => "?(-$SeaBPGain)");
             }
@@ -1125,6 +1126,7 @@ class InboxParser
 
   /**
    * returns a float between 0 and 1 that indicates relatively how much of the attackers units are land units
+   * transport and cs units are not counted towards sea population
    * @param $aCityUnits
    * @return float|int
    */
@@ -1132,14 +1134,15 @@ class InboxParser
   {
     $SeaAttackPopulation = 0;
     $LandAttackPopulation = 0;
-    foreach ($aCityUnits as $aUnitInfo) {
-      if (key_exists('had', $aUnitInfo) && sizeof($aUnitInfo['had']) > 0) {
-        foreach ($aUnitInfo['had'] as $Unit => $Value) {
-          if (UnitStats::units[$Unit]['uses_cartography']) {
+    $aUnitInfo = $aCityUnits[array_keys($aCityUnits)[0]]; // first round only
+    if (key_exists('had', $aUnitInfo) && sizeof($aUnitInfo['had']) > 0) {
+      foreach ($aUnitInfo['had'] as $Unit => $Value) {
+        if (UnitStats::units[$Unit]['uses_cartography']) {
+          if (!in_array($Unit, array('colonize_ship', 'small_transporter', 'big_transporter'))) {
             $SeaAttackPopulation += $Value * UnitStats::units[$Unit]['population'];
-          } else {
-            $LandAttackPopulation += $Value * UnitStats::units[$Unit]['population'];
           }
+        } else {
+          $LandAttackPopulation += $Value * UnitStats::units[$Unit]['population'];
         }
       }
     }

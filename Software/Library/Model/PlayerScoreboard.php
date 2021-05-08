@@ -13,10 +13,11 @@ use \Illuminate\Database\Eloquent\Model;
  * @property mixed def
  * @property mixed con
  * @property mixed los
+ * @property mixed ghosts
  */
 class PlayerScoreboard extends Model
 {
   protected $table = 'Player_scoreboard';
-  protected $fillable = array('world', 'date', 'server_time', 'overview', 'att', 'def', 'con', 'los');
+  protected $fillable = array('world', 'date', 'server_time', 'overview', 'att', 'def', 'con', 'los', 'ghosts');
 
 }

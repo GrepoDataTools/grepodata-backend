@@ -33,6 +33,7 @@ use \Illuminate\Database\Eloquent\Model;
  * @property mixed fight_rank_date
  * @property mixed att_point_date
  * @property mixed town_point_date
+ * @property mixed is_ghost
  * @property mixed heatmap
  * @property mixed active
  * @property mixed data_update
@@ -73,6 +74,7 @@ class Player extends Model
       'att_point_date' => $this->att_point_date ?? null,
       'town_point_date' => $this->town_point_date ?? null,
       'hours_inactive' => $this->getHoursInactive() ?? null,
+      'is_ghost' => ($this->is_ghost === 1) ?? false,
       'heatmap' => array(), // deprecated
     );
   }

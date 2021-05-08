@@ -3,8 +3,12 @@
 namespace Grepodata\Library\Import;
 
 use Carbon\Carbon;
+use Grepodata\Library\Controller\Alliance;
 use Grepodata\Library\Controller\Island;
+use Grepodata\Library\Controller\Player;
+use Grepodata\Library\Controller\PlayerScoreboard;
 use Grepodata\Library\Controller\Town;
+use Grepodata\Library\Controller\TownGhost;
 use Grepodata\Library\Cron\InnoData;
 use Grepodata\Library\Cron\LocalData;
 use Grepodata\Library\Logger\Logger;
@@ -74,6 +78,7 @@ class Towns
     $NumNew = 0;
     $NumSkipped = 0;
     $NumUpdated = 0;
+    $aGhostedPlayers = array();
     foreach ($aTownData as $aData) {
       try {
         $bUpdate = false;
@@ -93,6 +98,32 @@ class Towns
         ) {
           $bUpdate = true;
           $NumUpdated++;
+
+          if ($aData['player_id'] == 0 && $aPrevious['player_id'] > 0) {
+            // player ghosted. trigger ghost event
+            try {
+              $GhostedPlayer = $aPrevious['player_id'];
+              if (key_exists($GhostedPlayer, $aGhostedPlayers)) {
+                $aGhostedPlayers[$GhostedPlayer] += 1;
+              } else {
+                $aGhostedPlayers[$GhostedPlayer] = 1;
+              }
+
+              $oGhostTown = new \Grepodata\Library\Model\TownGhost();
+              $oGhostTown->world = $oWorld->grep_id;
+              $oGhostTown->grep_id = $aPrevious['grep_id'];
+              $oGhostTown->player_id = $aPrevious['player_id'];
+              $oGhostTown->island_x = $aPrevious['island_x'];
+              $oGhostTown->island_y = $aPrevious['island_y'];
+              $oGhostTown->name = $aPrevious['name'];
+              $oGhostTown->points = $aPrevious['points'];
+              return $oGhostTown->save();
+
+            } catch (\Exception $e) {
+              Logger::warning("Error handling ghost town event ". $oWorld->grep_id." ".$aData['grep_id']. " - ".$e->getMessage());
+            }
+
+          }
         } else {
           $bUpdate = false;
           $NumSkipped++;
@@ -126,6 +157,54 @@ class Towns
       }
     }
     unset($aPreviousData);
+
+    // Parse ghosted players
+    try {
+      $aGhostedScoreboardPlayers = array();
+      foreach ($aGhostedPlayers as $PlayerId => $NumTowns) {
+        $Player = null;
+        $Alliance = null;
+        try {
+          $Player = Player::first($PlayerId, $oWorld->grep_id);
+          if ($Player->alliance_id>0) {
+            $Alliance = Alliance::first($Player->alliance_id, $oWorld->grep_id);
+          }
+          $Player->is_ghost = true;
+          $Player->save();
+        } catch (\Exception $e) {
+          Logger::warning("Error handling ghost player event ". $oWorld->grep_id." ".$PlayerId. " - ".$e->getMessage());
+        }
+
+        $aGhostedScoreboardPlayers[] = array(
+          'time' => $oWorld->getServerTime(),
+          'player_id' => $PlayerId,
+          'num_towns' => $NumTowns,
+          'player_name' => (!is_null($Player)? $Player->name : ''),
+          'alliance_id' => (!is_null($Alliance)? $Alliance->grep_id : 0),
+          'alliance_name' => (!is_null($Alliance)? $Alliance->name : ''),
+        );
+      }
+
+      if (count($aGhostedScoreboardPlayers)>0) {
+        Logger::error("Players ghosted on world " . $oWorld->grep_id);
+
+        // Get scoreboard objects
+        $ScoreboardDate = \Grepodata\Library\Controller\World::getScoreboardDate($oWorld);
+        $oPlayerScoreboard = PlayerScoreboard::firstOrNew($ScoreboardDate, $oWorld->grep_id);
+
+        $aExistingGhosts = array();
+        if (!is_null($oPlayerScoreboard->ghosts)) {
+          $aExistingGhosts = json_decode($oPlayerScoreboard->ghosts, true);
+        }
+
+        $aMergedGhosts = array_merge($aExistingGhosts, $aGhostedScoreboardPlayers);
+        $oPlayerScoreboard->ghosts = json_encode($aMergedGhosts);
+        $oPlayerScoreboard->save();
+      }
+
+    } catch (\Exception $e) {
+      Logger::warning("Error handling ghost events ". $oWorld->grep_id." - ".$e->getMessage());
+    }
 
     if ($NumSkipped + $NumNew + $NumUpdated != $Total) {
       Logger::warning("Town import: Update count mismatch");
