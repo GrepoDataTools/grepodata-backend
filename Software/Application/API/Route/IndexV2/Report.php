@@ -74,11 +74,6 @@ class Report extends \Grepodata\Library\Router\BaseRoute
         }
       }
 
-      if ($bHasHashes && !$bIsContributingToTeam) {
-        // monitor how many people are collecting intel without an active team
-        Logger::v2Migration("User ".$oUser->id." on world ".$World." has collected intel without an active team");
-      }
-
       $aResponse = array(
         'hashlist' => $aHashlist,
         'active_teams' => $aAllIndexes

@@ -190,7 +190,7 @@ class Towns
       }
 
       if (count($aGhostedScoreboardPlayers)>0) {
-        Logger::error("Players ghosted on world " . $oWorld->grep_id);
+        //Logger::error("Players ghosted on world " . $oWorld->grep_id);
 
         // Get scoreboard objects
         $ScoreboardDate = \Grepodata\Library\Controller\World::getScoreboardDate($oWorld);

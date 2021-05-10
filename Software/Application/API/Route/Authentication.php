@@ -138,7 +138,7 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
         die();
       }
 
-      Logger::warning("confirmed user with token. ".$oUser->id." ".$aParams['token']);
+      //Logger::warning("confirmed user with token. ".$oUser->id." ".$aParams['token']);
       $oUser->is_confirmed = true;
       $oUser->save();
 

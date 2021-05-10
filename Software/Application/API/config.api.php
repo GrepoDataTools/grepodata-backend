@@ -179,6 +179,10 @@ $oRouter->Add('allianceScoreboard', new Route('/scoreboard/alliance', array(
   '_controller' => '\Grepodata\Application\API\Route\Scoreboard',
   '_method'     => 'AllianceScoreboard'
 )));
+$oRouter->Add('ghostsScoreboard', new Route('/scoreboard/ghosts', array(
+  '_controller' => '\Grepodata\Application\API\Route\Scoreboard',
+  '_method'     => 'GhostsToday'
+)));
 
 // Active worlds
 $oRouter->Add('activeWorlds', new Route('/world/active', array(

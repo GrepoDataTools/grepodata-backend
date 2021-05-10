@@ -5,6 +5,7 @@ namespace Grepodata\Application\API\Route;
 use Carbon\Carbon;
 use Grepodata\Library\Controller\AllianceScoreboard;
 use Grepodata\Library\Controller\PlayerScoreboard;
+use Grepodata\Library\Controller\TownGhost;
 use Grepodata\Library\Elasticsearch\Diff;
 use Grepodata\Library\Logger\Logger;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -329,12 +330,73 @@ class Scoreboard extends \Grepodata\Library\Router\BaseRoute
         'att'         => json_decode(urldecode($aScoreboard['att'])),
         'def'         => json_decode(urldecode($aScoreboard['def'])),
         'con'         => $bMinimal?[]:json_decode(urldecode($aScoreboard['con'])),
-        'los'         => $bMinimal?[]:json_decode(urldecode($aScoreboard['los'])),
+        'los'         => $bMinimal?[]:json_decode(urldecode($aScoreboard['los']))
       );
       return self::OutputJson($aResponse);
     } catch (ModelNotFoundException $e) {
       die(self::OutputJson(array(
         'message'     => 'No alliance scoreboard found for these parameters.',
+        'parameters'  => $aParams
+      ), 404));
+    }
+  }
+
+  public static function GhostsTodayGET()
+  {
+    $aParams = array();
+
+    try {
+      // Validate params
+      $aParams = self::validateParams(array());
+
+      // Optional world
+      if (!isset($aParams['world']) || $aParams['world'] == '') {
+        $aParams['world'] = DEFAULT_WORLD;
+        try {
+          // optional server
+          $Server = DEFAULT_SERVER;
+          if (isset($aParams['server']) && $aParams['server'] != '') {
+            $Server = $aParams['server'];
+          }
+
+          $oLatestWorld = \Grepodata\Library\Controller\World::getLatestByServer($Server);
+          $aParams['world'] = $oLatestWorld->grep_id;
+        } catch (\Exception $e) {
+          $aParams['world'] = DEFAULT_WORLD;
+        }
+      }
+
+      $oWorld = \Grepodata\Library\Controller\World::getWorldById($aParams['world']);
+
+      $MaxDate = Carbon::now($oWorld->php_timezone);
+      if (isset($aParams['date'])) {
+        $MaxDate = Carbon::parse($aParams['date'], $oWorld->php_timezone)->addHours(24);
+      }
+
+      // Get player resets
+      $aGhosts = array();
+      try {
+        $aGhosts = TownGhost::allRecentByWorld($aParams['world'], $MaxDate);
+        $aGhostsFiltered = array();
+        foreach ($aGhosts as $oGhost) {
+          if ($oGhost['num_towns'] > 3) {
+            $oGhost['ghost_time'] = Carbon::parse($oGhost['ghost_time'], $oWorld->php_timezone);
+            $aGhostsFiltered[] = $oGhost;
+          }
+        }
+      } catch (\Exception $e) {
+        Logger::warning("Error loading player resets: ".$e->getMessage());
+      }
+
+      // Format output
+      $aResponse = array(
+        'count' => count($aGhostsFiltered),
+        'items' => $aGhostsFiltered
+      );
+      return self::OutputJson($aResponse);
+    } catch (ModelNotFoundException $e) {
+      die(self::OutputJson(array(
+        'message'     => 'No player resets found for these parameters.',
         'parameters'  => $aParams
       ), 404));
     }
