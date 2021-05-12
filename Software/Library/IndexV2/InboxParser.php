@@ -464,15 +464,15 @@ class InboxParser
         // Normal att OR defender side
         $aUnitsClean = self::parseSingleSideUnits($aCityUnits);
         foreach ($aUnitsClean as $Unit => $Value) {
-          if ($Unit == self::fireships) {
+          if ($bSeaVisible && $Unit == self::fireships) {
             $Fireships = $Value;
-          } else if (in_array($Unit, self::land_units)) {
+          } else if ($bGroundVisible && in_array($Unit, self::land_units)) {
             $aLandUnits[$Unit] = $Value;
-          } elseif (in_array($Unit, self::sea_units)) {
+          } elseif ($bSeaVisible && in_array($Unit, self::sea_units)) {
             $aSeaUnits[$Unit] = $Value;
-          } elseif (in_array($Unit, self::heros)) {
+          } elseif ($bGroundVisible && in_array($Unit, self::heros)) {
             $Hero = $Unit;
-          } else {
+          } else if ($bGroundVisible) {
             foreach (self::myth_units as $UnitGod => $Units) {
               if (in_array($Unit, $Units)) {
                 $God = $UnitGod;
