@@ -568,10 +568,6 @@ $oRouter->Add('v1deprecatedindexdelnote', new Route('/indexer/delnote', array(
   '_controller' => '\Grepodata\Application\API\Route\Indexer\DeprecatedRoutesV1',
   '_method'     => 'DeleteNote'
 )));
-$oRouter->Add('v1deprecatedindexunitinfo', new Route('/indexer/movementspeed', array(
-  '_controller' => '\Grepodata\Application\API\Route\Indexer\DeprecatedRoutesV1',
-  '_method'     => 'CalculateRuntime'
-)));
 $oRouter->Add('v1deprecatedresetOwners', new Route('/indexer/resetowners', array(
   '_controller' => '\Grepodata\Application\API\Route\Indexer\DeprecatedRoutesV1',
   '_method'     => 'ResetIndexOwners'

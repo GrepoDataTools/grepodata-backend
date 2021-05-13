@@ -75,10 +75,6 @@ class DeprecatedRoutesV1 extends \Grepodata\Library\Router\BaseRoute
   {
     die(self::OutputJson(array('deprecated' => true), 200));
   }
-  public static function CalculateRuntimePOST()
-  {
-    die(self::OutputJson(array('deprecated' => true), 200));
-  }
   public static function AddNoteGET()
   {
     die(self::OutputJson(array('deprecated' => true), 200));
