@@ -1079,6 +1079,11 @@ class InboxParser
       $aUnitsClean[$Unit] = $Value;
     }
     foreach ($aCityUnits['lost'] as $Unit => $Value) {
+      if ($Unit == 'ghosts' && is_array($Value) && count($Value) === 1) {
+        // parse spartoi
+        $Unit = array_keys($Value)[0];
+        $Value = $Value[$Unit];
+      }
       if (is_array($Value)) {
         Logger::warning("InboxParser: TODO check: Unit array to string conversion: ".$ReportHash);
       }
