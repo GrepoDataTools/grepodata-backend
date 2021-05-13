@@ -164,10 +164,7 @@ class Towns
         $Player = null;
         $Alliance = null;
         try {
-          $Player = Player::first($PlayerId, $oWorld->grep_id);
-          if ($Player->alliance_id>0) {
-            $Alliance = Alliance::first($Player->alliance_id, $oWorld->grep_id);
-          }
+          $Player = Player::firstOrFail($PlayerId, $oWorld->grep_id);
           $Player->is_ghost = true;
           if (is_null($Player->ghost_alliance)) {
             $Player->ghost_alliance = $Player->alliance_id ?? 0;
