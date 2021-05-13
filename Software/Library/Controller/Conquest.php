@@ -102,7 +102,7 @@ class Conquest
     // Find town name
     if (!isset(static::$aTownNames[$oConquest->town_id])) {
       try {
-        $oTown = \Grepodata\Library\Controller\Town::first($oConquest->town_id, $oWorld->grep_id);
+        $oTown = \Grepodata\Library\Controller\Town::firstOrFail($oConquest->town_id, $oWorld->grep_id);
         static::$aTownNames[$oConquest->town_id] = $oTown->name;
         $aConquest['town_name'] = $oTown->name;
       } catch (ModelNotFoundException $e) {

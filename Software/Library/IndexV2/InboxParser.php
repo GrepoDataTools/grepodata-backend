@@ -462,7 +462,7 @@ class InboxParser
         }
 
         // Normal att OR defender side
-        $aUnitsClean = self::parseSingleSideUnits($aCityUnits);
+        $aUnitsClean = self::parseSingleSideUnits($aCityUnits, $ReportHash);
         foreach ($aUnitsClean as $Unit => $Value) {
           if ($bSeaVisible && $Unit == self::fireships) {
             $Fireships = $Value;
@@ -484,7 +484,7 @@ class InboxParser
 
         // Parse conquest side
         if ($bIsOngoingConquest == true && !is_null($oConquestDetails)) {
-          $aUnitsClean = self::parseSingleSideUnits($aCityUnitsDef);
+          $aUnitsClean = self::parseSingleSideUnits($aCityUnitsDef, $ReportHash);
           $oConquestDetails->siegeUnits = $aUnitsClean;
         }
 
@@ -1053,7 +1053,7 @@ class InboxParser
 
   }
 
-  private static function parseSingleSideUnits($aCityUnits)
+  private static function parseSingleSideUnits($aCityUnits, $ReportHash)
   {
     $aCityUnitsFinal = array(
       'had' => array(),
@@ -1079,6 +1079,9 @@ class InboxParser
       $aUnitsClean[$Unit] = $Value;
     }
     foreach ($aCityUnits['lost'] as $Unit => $Value) {
+      if (is_array($Value)) {
+        Logger::warning("InboxParser: TODO check: Unit array to string conversion: ".$ReportHash);
+      }
       if (isset($aUnitsClean[$Unit])) {
         $aUnitsClean[$Unit] = $aUnitsClean[$Unit] . '(-'.$Value.')';
       } else {
@@ -1101,6 +1104,9 @@ class InboxParser
     foreach ($aCityUnits as $aUnitInfo) {
       if (key_exists('lost', $aUnitInfo) && sizeof($aUnitInfo['lost']) > 0) {
         foreach ($aUnitInfo['lost'] as $Unit => $Value) {
+          if (!key_exists($Unit, UnitStats::units)) {
+            continue;
+          }
           if (UnitStats::units[$Unit]['uses_cartography']) {
             // sea units
             if (in_array($Unit, array('colonize_ship', 'small_transporter', 'big_transporter'))) {

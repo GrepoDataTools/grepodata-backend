@@ -160,7 +160,6 @@ class Towns
 
     // Parse ghosted players
     try {
-      $aGhostedScoreboardPlayers = array();
       foreach ($aGhostedPlayers as $PlayerId => $NumTowns) {
         $Player = null;
         $Alliance = null;
@@ -178,32 +177,6 @@ class Towns
         } catch (\Exception $e) {
           Logger::warning("Error handling ghost player event ". $oWorld->grep_id." ".$PlayerId. " - ".$e->getMessage());
         }
-
-        $aGhostedScoreboardPlayers[] = array(
-          'time' => $oWorld->getServerTime(),
-          'player_id' => $PlayerId,
-          'num_towns' => $NumTowns,
-          'player_name' => (!is_null($Player)? $Player->name : ''),
-          'alliance_id' => (!is_null($Alliance)? $Alliance->grep_id : 0),
-          'alliance_name' => (!is_null($Alliance)? $Alliance->name : ''),
-        );
-      }
-
-      if (count($aGhostedScoreboardPlayers)>0) {
-        //Logger::error("Players ghosted on world " . $oWorld->grep_id);
-
-        // Get scoreboard objects
-        $ScoreboardDate = \Grepodata\Library\Controller\World::getScoreboardDate($oWorld);
-        $oPlayerScoreboard = PlayerScoreboard::firstOrNew($ScoreboardDate, $oWorld->grep_id);
-
-        $aExistingGhosts = array();
-        if (!is_null($oPlayerScoreboard->ghosts)) {
-          $aExistingGhosts = json_decode($oPlayerScoreboard->ghosts, true);
-        }
-
-        $aMergedGhosts = array_merge($aExistingGhosts, $aGhostedScoreboardPlayers);
-        $oPlayerScoreboard->ghosts = json_encode($aMergedGhosts);
-        $oPlayerScoreboard->save();
       }
 
     } catch (\Exception $e) {

@@ -1030,7 +1030,7 @@ var errorSubmissions = [];
 
         // settings btn
         var gdsettings = false;
-        $('.gods_area').append('<div class="btn_settings circle_button gd_settings_icon" style="right: 0px; top: 95px; z-index: 10;">\n' +
+        $('.gods_area').append('<div class="btn_settings circle_button gd_settings_icon" style="right: 0px; top: 95px; z-index: 101;">\n' +
             '\t<div style="margin: 7px 0px 0px 4px; width: 24px; height: 24px;">\n' +
             '\t'+gd_icon_svg+'\n' +
             '\t</div>\n' +

@@ -369,8 +369,12 @@ class Scoreboard extends \Grepodata\Library\Router\BaseRoute
       $oWorld = \Grepodata\Library\Controller\World::getWorldById($aParams['world']);
 
       $MaxDate = Carbon::now($oWorld->php_timezone);
-      if (isset($aParams['date'])) {
-        $MaxDate = Carbon::parse($aParams['date'], $oWorld->php_timezone)->addHours(24);
+      try {
+        if (isset($aParams['date'])) {
+          $MaxDate = Carbon::parse($aParams['date'], $oWorld->php_timezone)->addHours(24);
+        }
+      } catch (\Exception $e) {
+        Logger::warning("Error parsing ghost date: ".$e->getMessage());
       }
 
       // Get player resets

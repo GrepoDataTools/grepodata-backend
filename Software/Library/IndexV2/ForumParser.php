@@ -726,12 +726,15 @@ class ForumParser
           if (count($aTextItems) >= 2) {
             $Silver = Helper::getTextContent($aTextItems[1], 0, true);
             $Silver = preg_replace('/\s+/', '', $Silver);
-          }
 
-          $cityInfo['silver_in_cave'] = $Silver;
-          preg_match_all('/[0-9]{1,}/', $Silver, $numbers);
-          if (is_array($numbers[0]) && count($numbers[0]) == 2) {
-            $cityInfo['silver_in_cave'] = $numbers[0][0] + $numbers[0][1];
+            $cityInfo['silver_in_cave'] = $Silver;
+            preg_match_all('/[0-9]{1,}/', $Silver, $numbers);
+            if (is_array($numbers[0]) && count($numbers[0]) == 2) {
+              $cityInfo['silver_in_cave'] = $numbers[0][0] + $numbers[0][1];
+            }
+          } else {
+            Logger::warning("invalid silver text items in Forum parser: " . $ReportHash);
+            $cityInfo['silver_in_cave'] = null;
           }
         } else {
           Logger::warning("can not find silver in Forum parser: " . $ReportHash);
