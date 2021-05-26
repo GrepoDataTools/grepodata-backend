@@ -286,18 +286,18 @@ var errorSubmissions = [];
                 if (!returnsElem && gd_settings.command_cancel_time === true && cmd.movement_id > 0) {
                     var movement = MM.getModels().MovementsUnits[cmd.movement_id];
 
-                    if (movement && !movement.isIncommingMovement()) {
+                    if (movement && movement.attributes) {
                         var runtimeHtml = '<span id="gd_runtime_'+id+'" class="troops_arrive_at gd_cmd_runtime gd_runtime_'+id+'" style="font-style: italic;">(';
                         var returnText = '';
                         var cancelText = '';
                         var bHasReturnTime = false;
                         var bHasCancelTime = false;
-                        if (movement.attributes.hasOwnProperty('started_at') && movement.getType() != 'support') {
+                        if (!movement.isIncommingMovement() && movement.attributes.hasOwnProperty('started_at') && movement.getType() != 'support') {
                             bHasReturnTime = true;
                             var returns = getReturnTimeFromMovement(movement);
                             returnText = translate.RUNTIME_RETURNS + ' '+returns.return_readable;
                         }
-                        if (movement.attributes.hasOwnProperty('cancelable_until') && movement.attributes.cancelable_until != null) {
+                        if (movement.attributes.hasOwnProperty('cancelable_until') && movement.attributes.cancelable_until != null && movement.attributes.cancelable_until > 0) {
                             var diff = movement.attributes.cancelable_until - Date.now() / 1000;
                             if (diff>0) {
                                 bHasCancelTime = true;
@@ -727,7 +727,7 @@ var errorSubmissions = [];
                     login_form_content = `<h4 class="gd-title" style="text-align: center; font-size: 16px; display: block; margin-top: -15px;">
                             As of April 2021, a GrepoData login is required to use the city indexer.</h4>
                         <p style="display: block; text-align: center;">We made this change in order to get approval for our city indexer tool.
-                            A GrepoData account is required to guarantee the security of the intel you collect and the people you share it with. 
+                            A GrepoData account is required to guarantee the security of the intel you collect and the people you share it with.
                         <a href="https://grepodata.com/indexer">read more</a></p>`
                 }
 
@@ -759,7 +759,7 @@ var errorSubmissions = [];
                   <p style="text-align: center; place-content: center;">Thank you for using GrepoData.</p>
               </div>
             </form>
-          
+
         `;
                 $('.gdloginpopup').append(formHtml);
 
@@ -826,9 +826,9 @@ var errorSubmissions = [];
                 </h4>
                 <h4 style="display: block; text-align: center;">You are not part of any team on world `+Game.world_id+`</h4>
               <p id="grepodataltip" style="text-align: center;">
-                  The intel you have been collecting on this world has not been shared with a team. 
-                  You can create or join a <strong>GrepoData team</strong> together with your alliance members. 
-                  All members of the team will be able to contribute and view eachothers intelligence. 
+                  The intel you have been collecting on this world has not been shared with a team.
+                  You can create or join a <strong>GrepoData team</strong> together with your alliance members.
+                  All members of the team will be able to contribute and view eachothers intelligence.
                   A team is only active on a specific game world; each world you play on requires a different team.
               </p>
               <div class="gd_no_team_footer">
@@ -837,7 +837,7 @@ var errorSubmissions = [];
               </div>
           </div>
         </form>
-      
+
     `;
             $('.gdteamspopup').append(formHtml);
 
