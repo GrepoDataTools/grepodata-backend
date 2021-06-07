@@ -52,16 +52,26 @@ class Report extends \Grepodata\Library\Router\BaseRoute
 
       // Get the latest n records that appear in all of these indexes or that were personally indexed by this user
       $KeyString = "'" . join("', '", array_keys($aActiveIndexes)) . "'";
-      $aHashes = DB::select(DB::raw("
-          SELECT distinct report_hash FROM (
-            SELECT report_hash, min(id) as sort_id
-            FROM Indexer_intel_shared 
-            WHERE (index_key is NULL and user_id = ".$oUser->id." and world = ".$WorldEscaped.") or index_key IN (".$KeyString.")
-            GROUP BY report_hash, user_id
-            HAVING user_id = ".$oUser->id." or COUNT(index_key) = ".count($aActiveIndexes)."
+
+        $aHashes = DB::select(DB::raw("
+          SELECT report_hash, min(sort_id) as sort_id
+            FROM (
+                (SELECT report_hash, min(id) as sort_id
+                 FROM Indexer_intel_shared
+                 WHERE index_key IN (".$KeyString.")
+                 GROUP BY report_hash
+                 having COUNT(index_key) = ".count($aActiveIndexes).")
+        
+                UNION
+        
+                (SELECT report_hash, min(id) as sort_id
+                 FROM Indexer_intel_shared
+                 WHERE user_id = ".$oUser->id." and world = ".$WorldEscaped."
+                 GROUP by report_hash)
+            ) as hashlist
+            GROUP BY report_hash
             ORDER BY sort_id DESC
-          ) as hashes
-          LIMIT ".$Window."
+            limit ".$Window."
         "));
 
       $aHashlist = array();
