@@ -186,6 +186,7 @@ class Report extends \Grepodata\Library\Router\BaseRoute
         $IntelId = 0;
         $LogPrefix = 'Unable to parse report with hash ' . $ReportHash . ' [user '.$oUser->id.' - v'.$ScriptVersion.' - world '.$World.' - '.$ReportType.']';
         $Explain = null;
+        $bParsingError = false;
         try {
           switch ($ReportType) {
             case 'inbox':
@@ -227,17 +228,21 @@ class Report extends \Grepodata\Library\Router\BaseRoute
               throw new \Exception("Unhandled report type: " . $ReportType);
           }
         } catch (InboxParserExceptionDebug | ForumParserExceptionDebug $e) {
+          // Parsing failed due to an expected event, don't log as failed
           Logger::debugInfo($LogPrefix . ' ('.$e->getMessage().')');
           $IntelId = -1;
           $Explain = $e->getMessage();
         } catch (InboxParserExceptionWarning | ForumParserExceptionWarning $e) {
           Logger::warning($LogPrefix . ' ('.$e->getMessage().')');
+          $bParsingError = true;
           $Explain = $e->getMessage();
         } catch (InboxParserExceptionError | ForumParserExceptionError $e) {
           Logger::error($LogPrefix . ' ('.$e->getMessage().')');
+          $bParsingError = true;
           $Explain = $e->getMessage();
         } catch (\Exception $e) {
           Logger::error('UNEXPECTED: ' . $LogPrefix . ' ('.$e->getMessage().')');
+          $bParsingError = true;
           $Explain = $e->getMessage();
         }
 
@@ -255,7 +260,8 @@ class Report extends \Grepodata\Library\Router\BaseRoute
           $oIntel->world = $World;
           $oIntel->report_json = $ReportJson;
           $oIntel->report_info = json_encode(substr($ReportInfo, 0, 100));
-          $oIntel->parsing_failed = true;
+          $oIntel->parsing_failed = true; // Unable to read report
+          $oIntel->parsing_error = $bParsingError;
           $oIntel->debug_explain = $Explain;
           $oIntel->save();
           $IntelId = $oIntel->id;

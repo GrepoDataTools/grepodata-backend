@@ -105,18 +105,20 @@ error_reporting(0);
     var repjson = document.getElementById('repjson').value;
     var reporthash = document.getElementById('reporthash').value;
     var failed = document.getElementById('failed').checked;
+    var error = document.getElementById('error').checked;
     var url = window.location.href;
     if(url.indexOf("?") > 0) {
       url += "&";
     } else {
       url += "?";
     }
-    url += "query="+query+"&level="+level+"&reporthash="+reporthash+"&failed="+failed+"&cityid="+cityid+"&repjson="+repjson;
+    url += "query="+query+"&level="+level+"&reporthash="+reporthash+"&failed="+failed+"&error="+error+"&cityid="+cityid+"&repjson="+repjson;
     window.location.href = url;
   }
 </script>
 
 <input id="failed" type="checkbox" name="failed" <?php echo ($_GET['failed']=='true'?'checked':'') ?>> Only show failed reports
+<input id="error" type="checkbox" name="error" <?php echo ($_GET['error']=='true'?'checked':'') ?>> Only show parsing errors
 <input placeholder="by index key" id="query" type="text" name="text" onsubmit="search()" value="<?php echo $_GET['query'];?>"/>
 <input placeholder="by report hash" id="reporthash" type="text" name="reporthash" autocomplete="off" onsubmit="search()" value="<?php echo $_GET['reporthash'];?>"/>
 <input placeholder="by intel id" id="cityid" type="text" name="cityid" autocomplete="off" onsubmit="search()" value="<?php echo $_GET['cityid'];?>"/>
@@ -178,6 +180,9 @@ try {
     }
     if (isset($_GET['failed']) && $_GET['failed'] == 'true') {
       $Reports->where('Indexer_intel.parsing_failed', '=', 1);
+    }
+    if (isset($_GET['error']) && $_GET['error'] == 'true') {
+      $Reports->where('Indexer_intel.parsing_error', '=', 1);
     }
   }
 

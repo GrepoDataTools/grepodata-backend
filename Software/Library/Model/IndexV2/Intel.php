@@ -40,7 +40,8 @@ use \Illuminate\Database\Eloquent\Model;
  * @property mixed soft_deleted
  * @property mixed report_json
  * @property mixed report_info
- * @property mixed parsing_failed
+ * @property mixed parsing_failed This indicates that report parsing has failed either due to an expected or unexpected event. All parsing failures trigger this flag.
+ * @property mixed parsing_error This indicates that report parsing has failed only due to an unexpected event. Expected parsing failures do not trigger this flag.
  * @property mixed debug_explain
  */
 class Intel extends Model
