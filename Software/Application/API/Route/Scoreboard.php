@@ -276,20 +276,20 @@ class Scoreboard extends \Grepodata\Library\Router\BaseRoute
       if (isset($aParams['guild']) && $aParams['guild'] !== '') {
         $oDiscord = \Grepodata\Library\Controller\Discord::firstOrNew($aParams['guild']);
         if ($oDiscord->server !== null) {
+          $SearchWorld = $oDiscord->server;
           if (isset($aParams['world']) && $aParams['world'] != '') {
-            // Try to find world using supplied world input (can be text string or actual world id)
-            try {
-              // try as world id
-              $oWorld = \Grepodata\Library\Controller\World::getWorldById($aParams['world']);
-              if ($oWorld->stopped === 1) {
-                throw new \Exception('inactive world');
-              }
-            } catch (\Exception $e) {
-              $aParams['world'] = $oDiscord->server;
+            $SearchWorld = $aParams['world'];
+          }
+
+          // Try to find world
+          try {
+            // try as world id
+            $oWorld = \Grepodata\Library\Controller\World::getWorldById($SearchWorld);
+            if ($oWorld->stopped === 1) {
+              throw new \Exception('inactive world');
             }
-          } else {
-            // use default server world
-            $aParams['world'] = $oDiscord->server;
+          } catch (\Exception $e) {
+            $aParams['world'] = DEFAULT_WORLD;
           }
         }
       }
