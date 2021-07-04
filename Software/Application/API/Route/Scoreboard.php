@@ -287,6 +287,8 @@ class Scoreboard extends \Grepodata\Library\Router\BaseRoute
             $oWorld = \Grepodata\Library\Controller\World::getWorldById($SearchWorld);
             if ($oWorld->stopped === 1) {
               throw new \Exception('inactive world');
+            } else {
+              $aParams['world'] = $SearchWorld;
             }
           } catch (\Exception $e) {
             $aParams['world'] = DEFAULT_WORLD;
