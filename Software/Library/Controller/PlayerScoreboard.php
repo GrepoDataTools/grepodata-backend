@@ -50,7 +50,7 @@ class PlayerScoreboard
   {
     return \Grepodata\Library\Model\PlayerScoreboard::where('world', '=', $World)
       ->orderBy('updated_at', 'desc')
-      ->skip(1)->take(1)->get()[0];
+      ->skip(1)->take(1)->get();
   }
 
   /**

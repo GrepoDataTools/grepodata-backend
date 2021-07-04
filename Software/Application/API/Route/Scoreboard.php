@@ -20,6 +20,7 @@ class Scoreboard extends \Grepodata\Library\Router\BaseRoute
       $aParams = self::validateParams(array());
 
       // Check discord args
+      $bUsingLatestDefault = false;
       $bMinimal = false;
       if (isset($aParams['minimal']) && $aParams['minimal'] === 'true') {
         $bMinimal = true;
@@ -32,6 +33,9 @@ class Scoreboard extends \Grepodata\Library\Router\BaseRoute
             try {
               // try as world id
               $oWorld = \Grepodata\Library\Controller\World::getWorldById($aParams['world']);
+              if ($oWorld->stopped === 1) {
+                throw new \Exception('inactive world');
+              }
             } catch (\Exception $e) {
               // try as world name
               try {
@@ -46,17 +50,18 @@ class Scoreboard extends \Grepodata\Library\Router\BaseRoute
               } catch (\Exception $e) {
                 Logger::warning("Cannot find scoreboard for world param: " . $aParams['world']);
                 $aParams['world'] = $oDiscord->server;
+                $bUsingLatestDefault = true;
               }
             }
           } else {
             // use default server world
             $aParams['world'] = $oDiscord->server;
+            $bUsingLatestDefault = true;
           }
         }
       }
 
       // Optional world
-      $bUsingLatestDefault = false;
       if (!isset($aParams['world']) || $aParams['world'] == '') {
         $aParams['world'] = DEFAULT_WORLD;
         try {
@@ -78,8 +83,16 @@ class Scoreboard extends \Grepodata\Library\Router\BaseRoute
       // Optional using date
       if (isset($aParams['yesterday']) && $aParams['yesterday'] === 'true') {
         $aScoreboard = PlayerScoreboard::yesterdayByWorld($aParams['world']);
-        if ($aScoreboard===null) {
-          throw new ModelNotFoundException();
+        if (count($aScoreboard)<=0) {
+          if ($bUsingLatestDefault) {
+            // try again with real default
+            $aScoreboard = PlayerScoreboard::yesterdayByWorld(DEFAULT_WORLD);
+          }
+          if (count($aScoreboard)<=0) {
+            throw new ModelNotFoundException();
+          }
+        } else {
+          $aScoreboard = $aScoreboard[0];
         }
       } elseif (isset($aParams['date']) && $aParams['date'] != '') {
         $aScoreboard = PlayerScoreboard::first($aParams['date'], $aParams['world']);
@@ -263,7 +276,21 @@ class Scoreboard extends \Grepodata\Library\Router\BaseRoute
       if (isset($aParams['guild']) && $aParams['guild'] !== '') {
         $oDiscord = \Grepodata\Library\Controller\Discord::firstOrNew($aParams['guild']);
         if ($oDiscord->server !== null) {
-          $aParams['world'] = $oDiscord->server;
+          if (isset($aParams['world']) && $aParams['world'] != '') {
+            // Try to find world using supplied world input (can be text string or actual world id)
+            try {
+              // try as world id
+              $oWorld = \Grepodata\Library\Controller\World::getWorldById($aParams['world']);
+              if ($oWorld->stopped === 1) {
+                throw new \Exception('inactive world');
+              }
+            } catch (\Exception $e) {
+              $aParams['world'] = $oDiscord->server;
+            }
+          } else {
+            // use default server world
+            $aParams['world'] = $oDiscord->server;
+          }
         }
       }
 
