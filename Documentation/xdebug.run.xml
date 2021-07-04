@@ -1,0 +1,5 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="xdebug" type="PhpWebAppRunConfigurationType" factoryName="PHP Web Application" server_name="api-grepodata-com" start_url="http://api-grepodata-com.local:8080">
+    <method v="2" />
+  </configuration>
+</component>
