@@ -753,9 +753,15 @@ class ForumParser
 
         //loop units
         if (strpos($aReportData["content"][5]["content"][1]["attributes"]["class"], "spy_units") === false) {
-          throw new ForumParserExceptionError("Spy report: unable to find spy units");
+          // Try to find spy units dynamically
+          $unitsRootArr = Helper::allByClass($aReportData, "spy_units", false);
+          if (empty($unitsRootArr)) {
+            throw new ForumParserExceptionError("Spy report: unable to find spy units");
+          }
+          $unitsRootArr = $unitsRootArr[0]['content'];
+        } else {
+          $unitsRootArr = $aReportData['content'][5]['content'][1]['content'];
         }
-        $unitsRootArr = $aReportData['content'][5]['content'][1]['content'];
         foreach ($unitsRootArr as $unitsChild) {
 
           if (is_array($unitsChild) && count($unitsChild) > 1) {
