@@ -100,12 +100,12 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
       IndexManagement::verifyUserCanRead($oUser, $oIndex->key_code);
 
       // Get intel
-      $aIntel = \Grepodata\Library\Controller\IndexV2\Intel::allByIndex($oIndex, true);
+      $aCursor = \Grepodata\Library\Controller\IndexV2\Intel::indexCursor($oIndex, true);
 
       $aOutput = array();
       $aBuildings = array();
-      foreach ($aIntel as $oIntel) {
-//        $aOutput[] = $oIntel->getPublicFields();
+      foreach ($aCursor as $oIntel) {
+//        $aOutput[] = $oIntel->getMinimalFields();
         $aOutput[] = \Grepodata\Library\Controller\IndexV2\Intel::formatAsTownIntel($oIntel, $oWorld, $aBuildings);
       }
 

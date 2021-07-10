@@ -71,6 +71,17 @@ class Intel
   }
 
   /**
+   * @param IndexInfo $oIndex
+   * @param bool $bLimitSelectionScope If set to true, selection scope will be limited to essential fields to reduce overhead of large requests
+   */
+  public static function indexCursor(IndexInfo $oIndex, $bLimitSelectionScope = false)
+  {
+    return self::selectByIndex($oIndex, $bLimitSelectionScope)
+      ->orderBy('parsed_date', 'desc')
+      ->cursor();
+  }
+
+  /**
    * @param $oUser
    * @param $ConquestId
    * @param bool $bCheckHiddenOwners
