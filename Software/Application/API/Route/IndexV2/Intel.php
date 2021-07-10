@@ -7,6 +7,8 @@ use Exception;
 use Grepodata\Library\Controller\Alliance;
 use Grepodata\Library\Controller\Town;
 use Grepodata\Library\Controller\World;
+use Grepodata\Library\Indexer\Validator;
+use Grepodata\Library\IndexV2\IndexManagement;
 use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\Indexer\IndexInfo;
 use Grepodata\Library\Model\IndexV2\Conquest;
@@ -73,6 +75,41 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
 
       ResponseCode::success($aResponse);
 
+    } catch (ModelNotFoundException $e) {
+      die(self::OutputJson(array(
+        'message'     => 'No intel found on this town in this index.',
+        'parameters'  => $aParams
+      ), 404));
+    }
+  }
+
+  public static function GetAllForIndexGET()
+  {
+    try {
+      $aParams = self::validateParams(array('access_token', 'index_key'));
+      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+
+      // Validate index key
+      $oIndex = Validator::IsValidIndex($aParams['index_key']);
+      if ($oIndex === null || $oIndex === false) {
+        ResponseCode::errorCode(7101, array());
+      }
+      $oWorld = World::getWorldById($oIndex->world);
+
+      // Check if user is allowed to see intel
+      IndexManagement::verifyUserCanRead($oUser, $oIndex->key_code);
+
+      // Get intel
+      $aIntel = \Grepodata\Library\Controller\IndexV2\Intel::allByIndex($oIndex, true);
+
+      $aOutput = array();
+      $aBuildings = array();
+      foreach ($aIntel as $oIntel) {
+//        $aOutput[] = $oIntel->getPublicFields();
+        $aOutput[] = \Grepodata\Library\Controller\IndexV2\Intel::formatAsTownIntel($oIntel, $oWorld, $aBuildings);
+      }
+
+      die(self::OutputJson($aOutput));
     } catch (ModelNotFoundException $e) {
       die(self::OutputJson(array(
         'message'     => 'No intel found on this town in this index.',

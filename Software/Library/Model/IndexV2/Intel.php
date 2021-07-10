@@ -147,6 +147,7 @@ class Intel extends Model
       //$Prefix.'report_json',
       //$Prefix.'report_info',
       $Prefix.'parsing_failed',
+      $Prefix.'parsing_error',
       //$Prefix.'debug_explain',
     );
   }

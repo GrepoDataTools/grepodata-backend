@@ -339,6 +339,11 @@ $oRouter->Add('reportHashListV2', new Route('/indexer/v2/getlatest', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Report',
   '_method'     => 'LatestReportHashes'
 )));
+$oRouter->Add('exportindexintelV2', new Route('/indexer/v2/export', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Intel',
+  '_method'     => 'GetAllForIndex',
+  '_ratelimit'  => $limit1PerMin
+)));
 $oRouter->Add('gettownintelV2', new Route('/indexer/v2/town', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Intel',
   '_method'     => 'GetTown'

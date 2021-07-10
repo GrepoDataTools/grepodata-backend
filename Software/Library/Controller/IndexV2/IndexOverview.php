@@ -57,7 +57,7 @@ class IndexOverview
   {
     $Key = $oIndex->key_code;
     $oWorld = World::getWorldById($oIndex->world);
-    $aCityRecords = Intel::allByIndex($oIndex);
+    $aCityRecords = Intel::allByIndex($oIndex, true);
 
     $aOldOwners = IndexOverview::getOwnerAllianceIds($oIndex->key_code);
 

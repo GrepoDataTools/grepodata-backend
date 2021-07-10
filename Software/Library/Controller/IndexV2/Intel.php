@@ -60,11 +60,12 @@ class Intel
 
   /**
    * @param IndexInfo $oIndex
+   * @param bool $bLimitSelectionScope If set to true, selection scope will be limited to essential fields to reduce overhead of large requests
    * @return \Grepodata\Library\Model\IndexV2\Intel[]|Builder[]|Collection
    */
-  public static function allByIndex(IndexInfo $oIndex)
+  public static function allByIndex(IndexInfo $oIndex, $bLimitSelectionScope = false)
   {
-    return self::selectByIndex($oIndex)
+    return self::selectByIndex($oIndex, $bLimitSelectionScope)
       ->orderBy('parsed_date', 'desc')
       ->get();
   }
@@ -671,12 +672,18 @@ class Intel
 
   /**
    * Select all intel for a specific index
+   * @param $bLimitSelectionScope bool If set to true, selection scope will be limited to essential fields to reduce overhead of large requests
    * @param IndexInfo $oIndex
    * @return Builder
    */
-  private static function selectByIndex(IndexInfo $oIndex)
+  private static function selectByIndex(IndexInfo $oIndex, $bLimitSelectionScope = false)
   {
-    return \Grepodata\Library\Model\IndexV2\Intel::select(['Indexer_intel.*'])
+    $aSelectRange = ['Indexer_intel.*'];
+    if ($bLimitSelectionScope===true) {
+      // limit scope to essential fields only to reduce overhead
+      $aSelectRange = \Grepodata\Library\Model\IndexV2\Intel::getMinimalSelect();
+    }
+    return \Grepodata\Library\Model\IndexV2\Intel::select($aSelectRange)
       ->join('Indexer_intel_shared', 'Indexer_intel_shared.intel_id', '=', 'Indexer_intel.id')
       ->where('Indexer_intel_shared.index_key', '=', $oIndex->key_code);
   }
