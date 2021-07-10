@@ -472,7 +472,7 @@ class InboxParser
             $aSeaUnits[$Unit] = $Value;
           } elseif ($bGroundVisible && in_array($Unit, self::heros)) {
             $Hero = $Unit;
-          } else if ($bGroundVisible) {
+          } else if ($bGroundVisible || ($bSeaVisible && in_array($Unit, self::myth_sea_units))) {
             foreach (self::myth_units as $UnitGod => $Units) {
               if (in_array($Unit, $Units)) {
                 $God = $UnitGod;
