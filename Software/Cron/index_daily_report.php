@@ -80,11 +80,21 @@ $oReport->save();
 
 // index error rate
 $aStats = DB::select( DB::raw("
-select count(*) as count, date(created_at) as date 
-from Indexer_intel
-where created_at >= date_sub(curdate(), interval 3 month) 
-and parsing_error = 1 
-group by date"
+SELECT date, sum(count) as count FROM (
+  select count(*) as count, date(created_at) as date 
+  from Indexer_intel
+  where created_at >= date_sub(curdate(), interval 3 month) 
+  and parsing_error = 1 
+  group by date
+  
+  UNION
+  select 0 as count, date(created_at) as date
+  from Indexer_intel
+  where created_at >= date_sub(curdate(), interval 3 month)
+  group by date
+) as total
+group by date
+"
 ));
 $oReport = DailyReport::firstOrNew(array('type' => 'indexer_error_rate'));
 $oReport->title = "Indexer report error rate";
