@@ -2264,7 +2264,10 @@ var errorSubmissions = [];
                         table = table + expired_header;
                     }
 
-                    var rowHeader = '<li class="' + (j % 2 === 0 ? 'odd' : 'even') + '" style="display: inherit; width: 100%; padding: 0 0 ' + (killed ? '0' : '4px') + ' 0;">';
+                    var rowHeader = '<li class="' + (j % 2 === 0 ? 'odd' : 'even') + ' gd-intel-row-'+id+'-'+j+'" style="display: inherit; width: 100%; padding: 0 0 ' + (killed ? '0' : '4px') + ' 0;">';
+                    if (intel.type === 'spy') {
+                        tooltips.push({id: 'gd-intel-row-' + id + '-' + j, text: 'Silver used: ' + intel.silver});
+                    }
                     table = table + rowHeader + row + '</li>\n';
                 }
 

@@ -509,19 +509,7 @@ admin@grepodata.com',
       BaseRoute::verifyCaptcha($aParams['captcha']);
     }
 
-    // Delete all personal data by overriding it with random values (linked data will be removed by cleanup script)
-    $oUser->username = "DELETED_" . IndexBuilderV2::generateIndexKey(8) . time();
-    $oUser->email = "DELETED_" . IndexBuilderV2::generateIndexKey(8) . time();
-    $oUser->passphrase = password_hash(IndexBuilderV2::generateIndexKey(12), PASSWORD_BCRYPT);
-    $oUser->token = bin2hex(random_bytes(16));
-    $oUser->save();
-
-    try {
-      // Delete roles
-      $aRoles = Roles::DeleteAllUserRoles($oUser);
-    } catch (\Exception $e){
-      Logger::error("Unable to remove user roles: " . $e->getMessage() . " [".$e->getTraceAsString()."]");
-    }
+    self::removeUser($oUser);
 
     Logger::error("Account removal completed: " . $oUser->id);
 
@@ -543,13 +531,27 @@ admin@grepodata.com',
       $aParams = self::validateParams(array('access_token', 'password'));
       $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
 
-      Logger::error("Account removal requested: " . $oUser->id);
-
       // verify password
       $bValid = password_verify($aParams['password'], $oUser->passphrase);
       if ($bValid === false) {
         ResponseCode::errorCode(3005, array(), 401);
       }
+
+      // If user is not yet confirmed, proceed with account deletion without confirmation
+      if ($oUser->is_confirmed != true) {
+
+        self::removeUser($oUser);
+
+        Logger::error("Account removal completed for non confirmed user: " . $oUser->id);
+
+        $aResponse = array(
+          'status' => 'Account deleted',
+          'result' => true
+        );
+        return self::OutputJson($aResponse);
+      }
+
+      Logger::error("Account removal requested: " . $oUser->id);
 
       // Create new user token
       $Token = bin2hex(random_bytes(16));
@@ -632,4 +634,22 @@ admin@grepodata.com',
     return $Result;
   }
 
+  private static function removeUser(\Grepodata\Library\Model\User $oUser)
+  {
+    // Delete all personal data by overriding it with random values (linked data will be removed by cleanup script)
+    $oUser->username = "DELETED_" . IndexBuilderV2::generateIndexKey(8) . time();
+    $oUser->email = "DELETED_" . IndexBuilderV2::generateIndexKey(8) . time();
+    $oUser->passphrase = password_hash(IndexBuilderV2::generateIndexKey(12), PASSWORD_BCRYPT);
+    $oUser->token = bin2hex(random_bytes(16));
+    $oUser->save();
+
+    try {
+      // Delete roles
+      $aRoles = Roles::DeleteAllUserRoles($oUser);
+    } catch (\Exception $e){
+      Logger::error("Unable to remove user roles: " . $e->getMessage() . " [".$e->getTraceAsString()."]");
+    }
+
+    return $oUser;
+  }
 }
