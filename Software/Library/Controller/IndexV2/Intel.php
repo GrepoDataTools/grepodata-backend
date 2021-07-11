@@ -77,7 +77,7 @@ class Intel
   public static function indexCursor(IndexInfo $oIndex, $bLimitSelectionScope = false)
   {
     return self::selectByIndex($oIndex, $bLimitSelectionScope)
-      ->orderBy('parsed_date', 'desc')
+      ->orderBy('id', 'desc')
       ->cursor();
   }
 

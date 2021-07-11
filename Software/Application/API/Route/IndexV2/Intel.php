@@ -106,7 +106,13 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
       $aBuildings = array();
       foreach ($aCursor as $oIntel) {
 //        $aOutput[] = $oIntel->getMinimalFields();
-        $aOutput[] = \Grepodata\Library\Controller\IndexV2\Intel::formatAsTownIntel($oIntel, $oWorld, $aBuildings);
+        $aIntel = \Grepodata\Library\Controller\IndexV2\Intel::formatAsTownIntel($oIntel, $oWorld, $aBuildings);
+        $aIntel['town_id'] = $oIntel->town_id;
+        $aIntel['town_name'] = $oIntel->town_name;
+        $aIntel['player_id'] = $oIntel->player_id;
+        $aIntel['player_name'] = $oIntel->player_name;
+        $aIntel['alliance_id'] = $oIntel->alliance_id;
+        $aOutput[] = $aIntel;
       }
 
       die(self::OutputJson($aOutput));

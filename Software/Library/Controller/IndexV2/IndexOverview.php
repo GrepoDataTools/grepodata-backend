@@ -7,6 +7,7 @@ use Grepodata\Library\Controller\World;
 use Grepodata\Library\Logger\Logger;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\Capsule\Manager as DB;
 
 class IndexOverview
 {
@@ -57,13 +58,14 @@ class IndexOverview
   {
     $Key = $oIndex->key_code;
     $oWorld = World::getWorldById($oIndex->world);
-    $aCityRecords = Intel::allByIndex($oIndex, true);
+    $aCityRecords = Intel::indexCursor($oIndex, true);
 
     $aOldOwners = IndexOverview::getOwnerAllianceIds($oIndex->key_code);
 
     // Process all records
     $aOwners = array();
     $aContributors = array();
+    $aContributorsActual = array();
     $aIndexedAlliances = array();
     $aIndexedPlayers = array();
     $aRecentIntel = array();
@@ -73,9 +75,13 @@ class IndexOverview
     $numAttacked = 0;
     $numTotal = 0;
     $aBuildings = array();
+    $bHasIntel = false;
     /** @var \Grepodata\Library\Model\IndexV2\Intel $oCity */
     foreach ($aCityRecords as $oCity) {
-      if (strtotime($oCity->created_at) > strtotime($LatestUpdate)) $LatestUpdate = $oCity->created_at;
+      if (strtotime($oCity->created_at) > strtotime($LatestUpdate)) {
+        $LatestUpdate = $oCity->created_at;
+      }
+      $bHasIntel = true;
 
       // Check owners
       if ($oCity->poster_alliance_id !== null) {
@@ -346,6 +352,46 @@ class IndexOverview
       } catch (\Exception $e) {}
     }
 
+    // Get list of actual contributors
+    try {
+//      SELECT raw.player_id, raw.user_id, raw.contributions, Player.name as player_name, `User`.`username` as username, raw.last_contribution, raw.first_contribution FROM (
+//        SELECT shared.player_id, user_shared.user_id, count(*) as contributions, MAX(shared.created_at) as last_contribution, MIN(shared.created_at) as first_contribution
+//        FROM `Indexer_intel_shared` as shared
+//      LEFT JOIN Indexer_intel_shared as user_shared ON shared.report_hash = user_shared.report_hash AND (shared.id + 1) = user_shared.id
+//        WHERE shared.index_key = '' AND user_shared.user_id IS NOT NULL
+//        group by shared.player_id, user_shared.user_id
+//        order by contributions DESC
+//        ) as raw
+//    LEFT JOIN Player ON Player.world = 'nl85' AND Player.grep_id = raw.player_id
+//    LEFT JOIN `User` ON `User`.id = raw.user_id
+      $Query = "
+      SELECT raw.player_id, 
+             raw.user_id, 
+             raw.contributions, 
+             Player.name as player_name, 
+             `User`.`username` as username, 
+             raw.last_contribution, 
+             raw.first_contribution 
+      FROM (
+        SELECT shared.player_id, 
+               user_shared.user_id, 
+               count(*) as contributions, 
+               MAX(shared.created_at) as last_contribution, 
+               MIN(shared.created_at) as first_contribution
+        FROM `Indexer_intel_shared` as shared
+        LEFT JOIN Indexer_intel_shared as user_shared ON shared.report_hash = user_shared.report_hash AND (shared.id + 1) = user_shared.id
+        WHERE shared.index_key = '".$oIndex->key_code."' AND user_shared.user_id IS NOT NULL
+        group by shared.player_id, user_shared.user_id
+        order by contributions DESC
+        ) as raw
+      LEFT JOIN Player ON Player.world = '".$oIndex->world."' AND Player.grep_id = raw.player_id
+      LEFT JOIN `User` ON `User`.id = raw.user_id
+      ";
+      $aContributorsActual = DB::select(DB::raw($Query));
+    } catch (\Exception $e) {
+      $aContributorsActual = array();
+    }
+
     // Check max version
     try {
       $v = Intel::maxVersion($oIndex);
@@ -358,16 +404,17 @@ class IndexOverview
 
 
     // Convert latest report time to server timezone
-    if (sizeof($aCityRecords) > 0) {
+    if ($bHasIntel) {
       $LatestUpdate = World::utcTimestampToServerTime($oWorld, strtotime($LatestUpdate));
     }
 
     $oIndexOverview = IndexOverview::firstOrNew($Key);
     $oIndexOverview->key_code           = $Key;
     $oIndexOverview->world              = $oIndex->world;
-    if (sizeof($aCityRecords) > 0) $oIndexOverview->latest_report = $LatestUpdate;
+    if ($bHasIntel) $oIndexOverview->latest_report = $LatestUpdate;
     $oIndexOverview->owners             = json_encode(array_values($aRealOwners));
     $oIndexOverview->contributors       = json_encode($aRealContributors);
+    $oIndexOverview->contributors_actual = json_encode($aContributorsActual);
     $oIndexOverview->alliances_indexed  = json_encode($aRealAlliancesIndexed);
     $oIndexOverview->players_indexed    = json_encode($aRealPlayersIndexed);
     $oIndexOverview->latest_intel       = json_encode($aRecentIntel);

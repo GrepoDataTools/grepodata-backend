@@ -9,6 +9,7 @@ use \Illuminate\Database\Eloquent\Model;
  * @property mixed world
  * @property mixed owners
  * @property mixed contributors
+ * @property mixed contributors_actual
  * @property mixed latest_report
  * @property mixed max_version
  * @property mixed alliances_indexed

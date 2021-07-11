@@ -182,6 +182,7 @@ class Index extends BaseRoute
         'update_message'    => USERSCRIPT_UPDATE_INFO,
         'owners'            => json_decode(urldecode($oIndexOverview['owners'])),
         'contributors'      => json_decode(urldecode($oIndexOverview['contributors'])),
+        'contributors_actual' => $bUserIsAdmin ? json_decode(urldecode($oIndexOverview['contributors_actual'])) : null,
         'alliances_indexed' => json_decode(urldecode($oIndexOverview['alliances_indexed'])),
         'players_indexed'   => json_decode(urldecode($oIndexOverview['players_indexed'])),
         'latest_intel'      => json_decode(urldecode($oIndexOverview['latest_intel'])),
