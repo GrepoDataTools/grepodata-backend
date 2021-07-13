@@ -795,9 +795,15 @@ class ForumParser
 
         //loop buildings
         if (strpos($aReportData["content"][5]["content"][3]["attributes"]["class"], "spy_buildings") === false) {
-          Logger::warning("Forum parser " . $ReportHash . ": Spy report: unable to find spy buildings");
+          // Try to find spy buildings dynamically
+          $buildsRootArr = Helper::allByClass($aReportData, "spy_buildings", false);
+          if (empty($buildsRootArr)) {
+            Logger::warning("Forum parser " . $ReportHash . ": Spy report: unable to find spy buildings");
+          }
+          $buildsRootArr = $buildsRootArr[0]['content'];
+        } else {
+          $buildsRootArr = $aReportData['content'][5]['content'][3]['content'];
         }
-        $buildsRootArr = $aReportData['content'][5]['content'][3]['content'];
         $bHasWall = false;
         foreach ($buildsRootArr as $buildsChild) {
 
