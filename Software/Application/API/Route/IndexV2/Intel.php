@@ -49,7 +49,9 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
           $aBuildings = array();
           $aTownIntelRecord = \Grepodata\Library\Controller\IndexV2\Intel::formatAsTownIntel($oIntel, $aWorlds[$oIntel->world], $aBuildings);
           $aTownIntelRecord['source_type'] = $oIntel->source_type;
-          $aTownIntelRecord['parsed'] = ($oIntel->parsing_failed==0?true:false);
+          $aTownIntelRecord['parsed'] = ($oIntel->parsing_failed==0?true:false); // Is the report parsed?
+          $aTownIntelRecord['parsed_err'] = ($oIntel->parsing_error==0?false:true); // Was there a parsing error?
+          $aTownIntelRecord['parsed_msg'] = ($oIntel->parsing_failed==0?'':$oIntel->debug_explain); // Reason for not parsing
           $aTownIntelRecord['world'] = $oIntel->world;
           $aTownIntelRecord['town_id'] = $oIntel->town_id;
           $aTownIntelRecord['town_name'] = $oIntel->town_name;
