@@ -685,24 +685,32 @@ class InboxParser
 
             // Apply the calculated BP gains
             $LandAttackPercentage = self::parseLandUnitPercentage($aCityUnitsAtt);
+            $AirAttackPercentage = self::parseLandUnitPercentage($aCityUnitsAtt, true);
             if ($bSeaVisible && !$bGroundVisible) {
-              // Sea is visible, subtract any dead sea units from BG gain and then assume remainder is subtracted from land units
-              $SeaUnitKillCountTotal = self::parseUnitKillCount($aCityUnitsDef, true, false);
-              $SeaUnitKillCountRegular = self::parseUnitKillCount($aCityUnitsDef, true, true);
-              $SeaUnitKillCountTsCs = $SeaUnitKillCountTotal - $SeaUnitKillCountRegular;
-              $LandBPGain = $GainedBattlePoints
-                - ($SeaUnitKillCountTsCs * $TsCsBoostFactor)
-                - ($SeaUnitKillCountRegular * $SeaBoostFactor);
-              $LandBPGain = (int) floor($LandBPGain / $LandBoostFactor);
               if ($LandAttackPercentage>0 && $GainedBattlePoints>=0) {
+                // Sea is visible, subtract any dead sea units from BG gain and then assume remainder is subtracted from land units
+                $SeaUnitKillCountTotal = self::parseUnitKillCount($aCityUnitsDef, true, false);
+                $SeaUnitKillCountRegular = self::parseUnitKillCount($aCityUnitsDef, true, true);
+                $SeaUnitKillCountTsCs = $SeaUnitKillCountTotal - $SeaUnitKillCountRegular;
+                $LandBPGain = $GainedBattlePoints
+                  - ($SeaUnitKillCountTsCs * $TsCsBoostFactor)
+                  - ($SeaUnitKillCountRegular * $SeaBoostFactor);
+                $LandBPGain = (int) floor($LandBPGain / $LandBoostFactor);
                 $aLandUnits = array("unknown" => "?(-$LandBPGain)");
               }
             } else if (!$bSeaVisible && !$bGroundVisible) {
               // Sea and land are not visible, apply BP loss using attacker unit distribution
-              $LandBoostFactor *= 10; // Land boost is greatly diminished due to naval units not being cleared
-              $LandBPGain = (int) floor(($GainedBattlePoints * $LandAttackPercentage) / $LandBoostFactor);
-              $SeaBPGain = (int) floor(($GainedBattlePoints - $LandBPGain) / $SeaBoostFactor);
-              $aLandUnits = array("unknown" => "?(-$LandBPGain)");
+              $LandBPGainBruto = (int) floor($GainedBattlePoints * $LandAttackPercentage); // How much of the BP was gained by land units
+              $LandBPGainByAir = (int) floor(($LandBPGainBruto / $LandBoostFactor) * $AirAttackPercentage); // How much of the BP was gained by myth units
+
+              // Remaining land BP was gained by non-mythical air units.
+              // Land boost is greatly diminished due to naval units not being cleared
+              $LandBoostFactor *= 10;
+              $LandBPGainByLand = (int) floor(($LandBPGainBruto - $LandBPGainByAir) / $LandBoostFactor);
+
+              $LandBPGainNetto = $LandBPGainByAir + $LandBPGainByLand;
+              $SeaBPGain = (int) floor(($GainedBattlePoints - $LandBPGainBruto) / $SeaBoostFactor);
+              $aLandUnits = array("unknown" => "?(-$LandBPGainNetto)");
               $aSeaUnits = array("unknown_naval" => "?(-$SeaBPGain)");
             }
           } catch (Exception $e) {
@@ -1139,12 +1147,14 @@ class InboxParser
    * returns a float between 0 and 1 that indicates relatively how much of the attackers units are land units
    * transport and cs units are not counted towards sea population
    * @param $aCityUnits
+   * @param bool $bOnlyParseAirAttack If set to true, only mythical units attacking via air are counted
    * @return float|int
    */
-  private static function parseLandUnitPercentage($aCityUnits)
+  private static function parseLandUnitPercentage($aCityUnits, $bOnlyParseAirAttack = false)
   {
     $SeaAttackPopulation = 0;
     $LandAttackPopulation = 0;
+    $LandPopOther = 0;
     $aUnitInfo = $aCityUnits[array_keys($aCityUnits)[0]]; // first round only
     if (key_exists('had', $aUnitInfo) && sizeof($aUnitInfo['had']) > 0) {
       foreach ($aUnitInfo['had'] as $Unit => $Value) {
@@ -1152,12 +1162,14 @@ class InboxParser
           if (!in_array($Unit, array('colonize_ship', 'small_transporter', 'big_transporter'))) {
             $SeaAttackPopulation += $Value * UnitStats::units[$Unit]['population'];
           }
-        } else {
+        } else if (!$bOnlyParseAirAttack || (UnitStats::units[$Unit]['uses_meteorology'] === true && UnitStats::units[$Unit]['requires_transport'] === false)) {
           $LandAttackPopulation += $Value * UnitStats::units[$Unit]['population'];
+        } else {
+          $LandPopOther += $Value * UnitStats::units[$Unit]['population'];
         }
       }
     }
-    return $LandAttackPopulation / ($LandAttackPopulation + $SeaAttackPopulation);
+    return $LandAttackPopulation / ($LandAttackPopulation + $SeaAttackPopulation + $LandPopOther);
   }
 
 }
