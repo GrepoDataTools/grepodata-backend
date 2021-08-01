@@ -2,6 +2,8 @@
 
 namespace Grepodata\Library\Router;
 
+use Carbon\Carbon;
+use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use ReallySimpleJWT\Exception\ValidateException;
@@ -62,9 +64,10 @@ class Authentication
    * @param $JWT
    * @param bool $bDieIfInvalid
    * @param bool $bIsRefreshToken
+   * @param bool $bUpdateActivity
    * @return bool|User
    */
-  public static function verifyJWT($JWT, $bDieIfInvalid = true, $bIsRefreshToken = false)
+  public static function verifyJWT($JWT, $bDieIfInvalid = true, $bIsRefreshToken = false, $bUpdateActivity=false)
   {
     $bValid = Token::validate($JWT, $bIsRefreshToken ? REFRESH_SECRET : JWT_SECRET);
     if ($bValid === false) {
@@ -79,6 +82,19 @@ class Authentication
 
     try {
       $oUser = \Grepodata\Library\Controller\User::GetUserById($aPayload['uid']);
+
+      if ($bUpdateActivity) {
+        try {
+          if ($oUser->last_activity < Carbon::now()->subHour()) {
+            // Only update if last activity is older then 1 hour
+            $oUser->last_activity = Carbon::now();
+            $oUser->save();
+          }
+        } catch (\Exception $e) {
+          Logger::warning("Unable to update user activity: ".$e->getMessage());
+        }
+      }
+
       return $oUser;
     } catch (ModelNotFoundException $e) {
       if ($bDieIfInvalid) {

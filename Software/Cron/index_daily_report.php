@@ -83,14 +83,14 @@ $aStats = DB::select( DB::raw("
 SELECT date, sum(count) as count FROM (
   select count(*) as count, date(created_at) as date 
   from Indexer_intel
-  where created_at >= date_sub(curdate(), interval 3 month) 
+  where created_at >= date_sub(curdate(), interval 3 week) 
   and parsing_error = 1 
   group by date
   
   UNION
   select 0 as count, date(created_at) as date
   from Indexer_intel
-  where created_at >= date_sub(curdate(), interval 3 month)
+  where created_at >= date_sub(curdate(), interval 3 week)
   group by date
 ) as total
 group by date
@@ -111,6 +111,21 @@ group by date"
 ));
 $oReport = DailyReport::firstOrNew(array('type' => 'indexer_generic_warning_rate'));
 $oReport->title = "GrepoData warning rate";
+$oReport->data = json_encode($aStats);
+$oReport->save();
+
+// Hourly new reports in last week
+$aStats = DB::select( DB::raw("
+SELECT date_format( created_at, '%Y-%m-%d %H:00:00' ) as datehour, count(*) as count, count(distinct indexed_by_user_id) as usercount
+FROM `Indexer_intel`
+where created_at >= date_sub(curdate(), interval 1 week)
+and created_at < curdate()
+group by datehour
+order by datehour DESC
+"
+));
+$oReport = DailyReport::firstOrNew(array('type' => 'indexer_hourly_new_reports'));
+$oReport->title = "New reports indexed per hour";
 $oReport->data = json_encode($aStats);
 $oReport->save();
 

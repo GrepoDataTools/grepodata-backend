@@ -25,7 +25,7 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
   {
     try {
       $aParams = self::validateParams(array('access_token'));
-      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token'], true, false, true);
 
       $From = $aParams['from'] ?? 0;
       $Size = $aParams['size'] ?? 20;
@@ -101,6 +101,8 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
       // Check if user is allowed to see intel
       IndexManagement::verifyUserCanRead($oUser, $oIndex->key_code);
 
+      ini_set('memory_limit','1G');
+
       // Get intel
       $aCursor = \Grepodata\Library\Controller\IndexV2\Intel::indexCursor($oIndex, true);
 
@@ -130,7 +132,7 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
   {
     try {
       $aParams = self::validateParams(array('access_token', 'world', 'town_id'));
-      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token'], true, false, true);
 
       // get world
       $oWorld = World::getWorldById($aParams['world']);

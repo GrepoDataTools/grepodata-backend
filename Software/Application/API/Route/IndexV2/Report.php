@@ -2,6 +2,7 @@
 
 namespace Grepodata\Application\API\Route\IndexV2;
 
+use Carbon\Carbon;
 use Grepodata\Library\Controller\Indexer\IndexInfo;
 use Grepodata\Library\Controller\IndexV2\Intel;
 use Grepodata\Library\Controller\IndexV2\IntelShared;
@@ -28,6 +29,15 @@ class Report extends \Grepodata\Library\Router\BaseRoute
       $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
       $World = $aParams['world'];
       $WorldEscaped = DB::connection()->getPdo()->quote($World);
+
+      try {
+        if ($oUser->userscript_active < Carbon::now()->subDays(3)) {
+          $oUser->userscript_active = Carbon::now();
+          $oUser->save();
+        }
+      } catch (\Exception $e) {
+        Logger::warning("Error updating userscript flag: ".$e->getMessage());
+      }
 
       // Get all active indexes for this user in this world
       $aIndexes = IndexInfo::allByUserAndWorld($oUser, $World);
@@ -102,7 +112,7 @@ class Report extends \Grepodata\Library\Router\BaseRoute
     try {
       // Validate params
       $aParams = self::validateParams(array('report_type', 'access_token', 'world', 'report_hash', 'report_text', 'report_json', 'report_poster', 'report_poster_id', 'report_poster_ally_id', 'script_version'));
-      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token'], true, false, true);
 
       // Get data
       $ReportType = $aParams['report_type'];

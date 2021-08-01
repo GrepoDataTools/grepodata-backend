@@ -131,7 +131,7 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
     $aParams = array();
     try {
       $aParams = self::validateParams(array('access_token', 'world', 'player_id'));
-      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token'], true, false, true);
 
       // get world
       $oWorld = World::getWorldById($aParams['world']);
@@ -175,7 +175,7 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
     $aParams = array();
     try {
       $aParams = self::validateParams(array('access_token', 'world', 'alliance_id'));
-      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token'], true, false, true);
 
       // get world
       $oWorld = World::getWorldById($aParams['world']);

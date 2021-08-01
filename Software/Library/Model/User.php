@@ -10,9 +10,11 @@ use \Illuminate\Database\Eloquent\Model;
  * @property mixed email
  * @property mixed is_confirmed
  * @property mixed is_linked
+ * @property mixed userscript_active
  * @property mixed passphrase
  * @property mixed token
  * @property mixed role
+ * @property mixed last_activity
  */
 class User extends Model
 {

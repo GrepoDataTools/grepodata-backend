@@ -154,8 +154,8 @@ class Common
       }
     }
 
-//    $bCombatExperience = true;
-    $bCombatExperience = false;
+    $bCombatExperience = true;
+//    $bCombatExperience = false;
 
     if ($Report->source_type === 'forum') {
       $aParsed = ForumParser::ParseReport(

@@ -113,7 +113,7 @@ class Index extends BaseRoute
     try {
       // Validate params
       $aParams = self::validateParams(array('access_token', 'key'));
-      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token'], true, false, true);
 
       // Validate index key
       $oIndex = Validator::IsValidIndex($aParams['key']);
