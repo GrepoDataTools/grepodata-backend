@@ -126,6 +126,13 @@ class Helper
             float: left;
             margin-right: 20px;
           }
+          .customTag {
+            color: #fff !important;
+            padding: 2px !important;
+            margin: 0 3px !important;
+            font-weight: 900 !important;
+            border-radius: 3px !important;
+          }
         </style>
       </head>
       <body>
