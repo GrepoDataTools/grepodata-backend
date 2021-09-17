@@ -698,10 +698,13 @@ var errorSubmissions = [];
                     login_window.close();
                     login_window = null;
                 }
+                // login_window = Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG,
+                //     '<a href="#" class="write_message" style="background: ' + gd_icon + '">' +
+                //     '</a>&nbsp;&nbsp;GrepoData login required',
+                //     {position: ['center','center'], width: 630, height: 405, minimizable: true});
                 login_window = Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG,
-                    '<a href="#" class="write_message" style="background: ' + gd_icon + '">' +
-                    '</a>&nbsp;&nbsp;GrepoData login required',
-                    {position: ['center','center'], width: 630, height: 405, minimizable: true});;
+                    'GrepoData login required',
+                    {width: 630, height: 405, minimizable: true});
 
                 // Window content
                 var content = '<div class="gdloginpopup" style="width: 630px; height: 295px;"><div style="text-align: center">' +
@@ -800,10 +803,13 @@ var errorSubmissions = [];
                 teams_window.close();
                 teams_window = null;
             }
+            // teams_window = Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG,
+            //     '<a href="#" class="write_message" style="background: ' + gd_icon + '">' +
+            //     '</a>&nbsp;&nbsp;GrepoData indexer teams',
+            //     {position: ['center','center'], width: 630, height: 405, minimizable: true});
             teams_window = Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG,
-                '<a href="#" class="write_message" style="background: ' + gd_icon + '">' +
-                '</a>&nbsp;&nbsp;GrepoData indexer teams',
-                {position: ['center','center'], width: 630, height: 405, minimizable: true});;
+                'GrepoData indexer teams',
+                {width: 630, height: 405, minimizable: true});
 
             // Window content
             var content = '<div class="gdteamspopup" style="width: 630px; height: 295px;"><div style="text-align: center">' +
@@ -1965,9 +1971,12 @@ var errorSubmissions = [];
                             } catch (e) {console.log("unable to close window", e);}
                         }
                         var intelUrl = frontend_url + '/intel/town/'+Game.world_id+'/'+id;
+                        // var intel_window = Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG,
+                        //     '<a target="_blank" href="'+intelUrl+'" class="write_message" style="background: ' + gd_icon + '"></a>&nbsp;&nbsp;' + translate.TOWN_INTEL + ': ' + town_name + (player_name!=''?(' (' + player_name + ')'):''),
+                        //     {position: ['center','center'], width: 660, height: 590, minimizable: true});
                         var intel_window = Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG,
-                            '<a target="_blank" href="'+intelUrl+'" class="write_message" style="background: ' + gd_icon + '"></a>&nbsp;&nbsp;' + translate.TOWN_INTEL + ': ' + town_name + (player_name!=''?(' (' + player_name + ')'):''),
-                            {position: ['center','center'], width: 660, height: 590, minimizable: true});
+                            translate.TOWN_INTEL + ': ' + town_name + (player_name!=''?(' (' + player_name + ')'):''),
+                            {width: 660, height: 590, minimizable: true});
                         // intel_window.setWidth(600);
                         // intel_window.setHeight(590);
                         openIntelWindows[content_id] = intel_window;

@@ -181,7 +181,7 @@ class InboxParser
           $ReportDateString = Helper::getTextContent($ReportDateString);
         }
         try {
-          $oDate = Carbon::createFromFormat($Format, $ReportDateString);
+          $oDate = Carbon::createFromFormat($Format, trim($ReportDateString));
         } catch (\Exception $e) {
           throw new InboxParserExceptionWarning("Error creating inbox date: " . $e->getMessage());
         }

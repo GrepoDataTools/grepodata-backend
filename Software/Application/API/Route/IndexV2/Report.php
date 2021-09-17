@@ -272,7 +272,7 @@ class Report extends \Grepodata\Library\Router\BaseRoute
           $oIntel->report_info = json_encode(substr($ReportInfo, 0, 100));
           $oIntel->parsing_failed = true; // Unable to read report
           $oIntel->parsing_error = $bParsingError;
-          $oIntel->debug_explain = $Explain;
+          $oIntel->debug_explain = substr($Explain, 0, 1000);
           $oIntel->save();
           $IntelId = $oIntel->id;
           if (empty($IntelId)) {
