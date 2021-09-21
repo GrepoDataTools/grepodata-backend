@@ -207,7 +207,14 @@ var errorSubmissions = [];
                         break;
                     default:
                         if (opt.url.includes('support_overview_active_player_supports_town')) {
-                            fix_support_overview_bug_9_2021(xhr)
+                            // Open support overview
+                            fix_support_overview_bug_9_2021(xhr);
+                        } else if (
+                            action == '/frontend_bridge/execute'
+                            && opt.data.includes('sendBack')
+                        ) {
+                            // Reload support overview after (partial) unit send back
+                            fix_support_overview_bug_9_2021(null);
                         }
                 }
             } catch (error) {
@@ -215,8 +222,20 @@ var errorSubmissions = [];
             }
         });
 
-        function fix_support_overview_bug_9_2021(xhr) {
+        var latest_support_overview_data = null;
+        function fix_support_overview_bug_9_2021(xhr_new) {
             try {
+                if (xhr_new != null) {
+                    latest_support_overview_data = xhr_new;
+                }
+                if (latest_support_overview_data == null) {
+                    return;
+                }
+                if ($('.supporters_list').length <= 0) {
+                    return;
+                }
+                var xhr = latest_support_overview_data;
+
                 var data = JSON.parse(xhr.responseText)
                 if (data == null) {
                     return;
