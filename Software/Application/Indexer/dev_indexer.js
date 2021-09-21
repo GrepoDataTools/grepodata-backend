@@ -205,11 +205,63 @@ var errorSubmissions = [];
                             setTimeout(enhanceCommandOverview, 20);
                         }
                         break;
+                    default:
+                        if (opt.url.includes('support_overview_active_player_supports_town')) {
+                            fix_support_overview_bug_9_2021(xhr)
+                        }
                 }
             } catch (error) {
                 errorHandling(error, "handleAjaxCompleteObserver");
             }
         });
+
+        function fix_support_overview_bug_9_2021(xhr) {
+            try {
+                var data = JSON.parse(xhr.responseText)
+                if (data == null) {
+                    return;
+                }
+
+                var support_units = data.json.collections.ActivePlayerSupportsTown.data;
+                if (support_units == null || support_units.length <= 0) {
+                    return;
+                }
+
+                var target_town = support_units[0].d.current_town_id
+
+                var towns = MM.getModels().Town;
+
+                var elements_to_fix = $('.support_row').each(function () {
+                    try {
+                        var support_row_id = $(this).attr('class').match(/support_row_(\d*)/gm)[0].match(/\d{1,}/gm)[0];
+                        var correct_link_data = support_units.filter(s => s.d.id == support_row_id)[0].d;
+                        var correct_home_town_id = correct_link_data.home_town_id;
+                        var correct_home_town_data = towns[correct_home_town_id].attributes;
+                        var townlink = $(this).find('.gp_town_link');
+                        if (townlink.length > 0) {
+                            var link_elem = townlink.get(0);
+                            var existing_link_data = decodeHashToJson(link_elem.getAttribute('href'));
+                            if (existing_link_data && existing_link_data.id == target_town) {
+                                // home town id = current town id
+                                // this means that the bug is present and we should fix it
+                                var fixed_json = existing_link_data
+                                fixed_json.id = correct_home_town_id
+                                fixed_json.name = correct_home_town_data.name
+                                fixed_json.ix = correct_home_town_data.island_x
+                                fixed_json.iy = correct_home_town_data.island_y
+                                var fixed_href = encodeJsonToHash(fixed_json)
+                                if (fixed_href != null && correct_home_town_data.name != null && fixed_href.length > 10 && correct_home_town_data.name.length > 1) {
+                                    link_elem.href = fixed_href;
+                                    link_elem.innerText = correct_home_town_data.name;
+                                }
+                            }
+                        }
+                    } catch (e) {console.log(e)}
+                });
+            } catch (e) {
+                errorHandling(e, "fix_support_overview_bug_9_2021");
+            }
+        }
 
         var parsedCommands = {};
         function enhanceCommandOverview() {
