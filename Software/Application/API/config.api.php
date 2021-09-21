@@ -470,17 +470,11 @@ $oRouter->Add('stats', new Route('/indexer/stats', array(
 )));
 
 
-
-// === Indexer V1 (backwards compatible routes)
+// === Indexer V1 (deprecated)
 $oRouter->Add('indexapitownv1', new Route('/indexer/api/town', array(
-  '_controller' => '\Grepodata\Application\API\Route\Indexer\IndexApiV1',
+  '_controller' => '\Grepodata\Application\API\Route\Indexer\DeprecatedRoutesV1',
   '_method'     => 'GetTown'
 )));
-// ===
-
-
-
-// === Indexer V1 (deprecated)
 $oRouter->Add('v1deprecatedconquestreports', new Route('/indexer/conquest', array(
   '_controller' => '\Grepodata\Application\API\Route\Indexer\DeprecatedRoutesV1',
   '_method'     => 'GetConquestReports'

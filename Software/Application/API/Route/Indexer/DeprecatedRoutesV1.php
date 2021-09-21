@@ -41,7 +41,7 @@ class DeprecatedRoutesV1 extends \Grepodata\Library\Router\BaseRoute
   // === \Browse
   public static function GetTownGET()
   {
-    die(self::OutputJson(array('deprecated' => true), 200));
+    die(self::OutputJson(array('deprecated' => true, 'message' => 'This endpoint is no longer supported. Please switch to the v2 indexer endpoints (authentication required)'), 200));
   }
   public static function GetPlayerGET()
   {
