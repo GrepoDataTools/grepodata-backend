@@ -211,6 +211,8 @@ var errorSubmissions = [];
                             fix_support_overview_bug_9_2021(xhr);
                         } else if (
                             action == '/frontend_bridge/execute'
+                            && 'data' in opt
+                            && opt.data != null
                             && opt.data.includes('sendBack')
                         ) {
                             // Reload support overview after (partial) unit send back

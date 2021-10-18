@@ -13,6 +13,7 @@ use \Illuminate\Database\Eloquent\Model;
  * @property mixed rank
  * @property mixed points
  * @property mixed members
+ * @property mixed domination_percentage
  * @property mixed name
  * @property mixed updated_at
  */

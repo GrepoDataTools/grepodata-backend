@@ -246,6 +246,16 @@ foreach ($worlds as $oWorld) {
       imagettftext($img, 14, 0, $imgSize + 70, 95+$offset, $aAlliances[$Id]['color'], $font, substr($aAlliances[$Id]['name'], 0, 16) . (strlen($aAlliances[$Id]['name'])>16?'..':''));
 //      imagettfstroketext($img, 12, 0, $imgSize + 70, 95+$offset, $aAlliances[$Id]['color'], $gdblack, $font, substr($aAlliances[$Id]['name'], 0, 16) . (strlen($aAlliances[$Id]['name'])>16?'..':''), 1);
       $offset += 20;
+
+      try {
+        $oAlliance = \Grepodata\Library\Controller\Alliance::firstOrFail($Id, $oWorld->grep_id);
+        if ($oAlliance->domination_percentage != $percentage) {
+          $oAlliance->domination_percentage = $percentage;
+          $oAlliance->save();
+        }
+      } catch (Exception $e) {
+        Logger::warning("Error saving alliance percentage: " . $e->getMessage());
+      }
     }
     unset($aAlliances);
     unset($aAlliancesInImage);

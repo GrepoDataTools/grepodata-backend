@@ -12,6 +12,7 @@ use \Illuminate\Database\Eloquent\Model;
  * @property mixed def
  * @property mixed towns
  * @property mixed members
+ * @property mixed domination_percentage
  */
 class AllianceHistory extends Model
 {
@@ -28,6 +29,7 @@ class AllianceHistory extends Model
       'def'           => $this->def,
       'towns'         => $this->towns,
       'members'       => $this->members,
+      'domination_percentage' => $this->domination_percentage,
     );
   }
 }

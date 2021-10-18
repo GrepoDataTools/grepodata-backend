@@ -227,8 +227,12 @@ class Alliance extends \Grepodata\Library\Router\BaseRoute
       // Validate params
       $aParams = self::validateParams(array('world','id','from','to'));
 
-      if ($aParams['from'] > 180) $aParams['from'] = 0;
-      if ($aParams['to'] > 180) $aParams['to'] = 180;
+      if ($aParams['from'] > 180) {
+        $aParams['from'] = 0;
+      }
+      if ($aParams['to'] > 180) {
+        $aParams['to'] = 180;
+      }
 
       // Find model
       $aAllianceHistories = \Grepodata\Library\Controller\AllianceHistory::getAllianceHistory($aParams['id'], $aParams['world'], $aParams['to']+1);

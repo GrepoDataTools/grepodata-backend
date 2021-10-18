@@ -38,6 +38,7 @@ class AllianceHistory
     $oAllianceHistory->def      = ($oAlliance->def != null) ? $oAlliance->def : '0';
     $oAllianceHistory->towns    = $oAlliance->towns;
     $oAllianceHistory->members  = $oAlliance->members;
+    $oAllianceHistory->domination_percentage = $oAlliance->domination_percentage;
     $oAllianceHistory->save();
   }
 

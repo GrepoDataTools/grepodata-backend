@@ -703,9 +703,14 @@ class InboxParser
               $LandBPGainBruto = (int) floor($GainedBattlePoints * $LandAttackPercentage); // How much of the BP was gained by land units
               $LandBPGainByAir = (int) floor(($LandBPGainBruto / $LandBoostFactor) * $AirAttackPercentage); // How much of the BP was gained by myth units
 
-              // Remaining land BP was gained by non-mythical air units.
-              // Land boost is greatly diminished due to naval units not being cleared
-              $LandBoostFactor *= 10;
+              if ($LandAttackPercentage != 1) {
+                // Any remaining land BP was gained by non-mythical air units.
+                // Land boost is greatly diminished due to naval units not being cleared and this being a naval attack
+                $LandBoostFactor *= 10;
+                if (($LandBPGainBruto - $LandBPGainByAir) > 0) {
+                  Logger::warning("Check001: $ReportHash");
+                }
+              }
               $LandBPGainByLand = (int) floor(($LandBPGainBruto - $LandBPGainByAir) / $LandBoostFactor);
 
               $LandBPGainNetto = $LandBPGainByAir + $LandBPGainByLand;
