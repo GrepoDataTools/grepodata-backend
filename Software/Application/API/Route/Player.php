@@ -64,9 +64,12 @@ class Player extends \Grepodata\Library\Router\BaseRoute
       $bHasGhostDetails = false;
       $GhostServerTime = null;
       if (!is_null($oPlayer->ghost_time)) {
+        // Conquest times are in UTC
+        // Ghost time = UTC timestamp when grepodata detected account reset (this can be delayed for a few hours)
         $bHasGhostDetails = true;
         $ConquestTimeLimit = Carbon::createFromFormat('Y-m-d H:i:s', $oPlayer->ghost_time); // ghost_time = UTC
         $GhostServerTime = $ConquestTimeLimit->copy()->setTimezone($oWorld->php_timezone)->format('Y-m-d H:i:s');
+        $ConquestTimeLimit = $ConquestTimeLimit->subHours(12); // correct for delay in data processing
       }
 
       // Pull ghost towns & conquests
@@ -82,7 +85,7 @@ class Player extends \Grepodata\Library\Router\BaseRoute
                Alliance.name as n_a_name,
                Conquest.time as conquest_time
         from Town_ghost
-        LEFT JOIN Conquest ON Conquest.town_id = Town_ghost.grep_id AND Conquest.world = ".$World." AND Conquest.time > '".$ConquestTimeLimit."'
+        LEFT JOIN Conquest ON Conquest.town_id = Town_ghost.grep_id AND Conquest.world = ".$World." AND Conquest.time > '".$ConquestTimeLimit."' AND Conquest.n_p_id != ".$Id."
         LEFT JOIN Player ON Player.grep_id = Conquest.n_p_id AND Player.world = ".$World."
         LEFT JOIN Alliance ON Alliance.grep_id = Conquest.n_a_id AND Alliance.world = ".$World."
         WHERE Town_ghost.player_id = ".$Id." 

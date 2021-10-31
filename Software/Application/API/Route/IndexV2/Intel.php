@@ -30,7 +30,7 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
       $From = $aParams['from'] ?? 0;
       $Size = $aParams['size'] ?? 20;
 
-      if ($From > 1000 || $Size > 50) {
+      if ($From > 2000 || $Size > 100) {
         throw new ModelNotFoundException();
       }
       $Start = round(microtime(true) * 1000);

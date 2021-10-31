@@ -469,6 +469,12 @@ $oRouter->Add('stats', new Route('/indexer/stats', array(
   '_method'     => 'Stats'
 )));
 
+// forum reactions
+$oRouter->Add('reactionslist', new Route('/reactions/thread', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Reaction',
+  '_method'     => 'ThreadReactions'
+)));
+
 
 // === Indexer V1 (deprecated)
 $oRouter->Add('indexapitownv1', new Route('/indexer/api/town', array(
