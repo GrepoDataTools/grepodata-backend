@@ -17,4 +17,5 @@ use \Illuminate\Database\Eloquent\Model;
 class Reaction extends Model
 {
   protected $table = 'Indexer_reaction';
+  protected $fillable = array('index_key', 'thread_id', 'post_id', 'user_id', 'reaction');
 }

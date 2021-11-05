@@ -10,6 +10,7 @@ var errorSubmissions = [];
     var time_regex = /([0-5]\d)(:)([0-5]\d)(:)([0-5]\d)(?!.*([0-5]\d)(:)([0-5]\d)(:)([0-5]\d))/gm;
     var gd_icon = "url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAXCAYAAAAV1F8QAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAYdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjAuNvyMY98AAAG0SURBVEhLYwACASA2AGIHGmGQ2SA7GGzf7oj4//5g7v/3B7L+vz+U///NVv//r9ZY/3+7K/b/683e/9/tSSTIf7M9DGhGzv8PR4r/v9uX9v/D0TKw+MdTzf9BdoAsSnm13gnEoQn+dLYLRKcAMUPBm62BYMH/f/9QFYPMfL3JE0QXQCzaFkIziz6d60FYBApvdIt07AJQ+ORgkJlfrs2DW1T9ar0jxRZJ7JkDxshiIDPf744B0dUgiwrebA8l2iJsBuISB5l5q58dREOC7u3OKJpZdHmKEsKi1xvdybIIpAamDpdFbze5ISzClrypZdGLZboIiz6d7cRrES4DibHozdYghEWfL0ygmUVvtwcjLPpwuJBmFj1ZpImw6N3uBNpZNE8ByaK9KXgtIheDzHy12gJuUfG7falYLSIHI5sBMvPlCiMQXQy2CFQPoVtEDQwy88VScByBLSqgpUVQH0HjaH8GWJAWGFR7A2mwRSkfjlUAM1bg/9cbXMAVFbhaBib5N9uCwGxQdU2ID662T9aDMag5AKrOQVX9u73JIIvANSyoPl8CxOdphEFmg9sMdGgFMQgAAH4W0yWXhEbUAAAAAElFTkSuQmCC')";
     var gd_icon_intel = "url('data:image/png;base64,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')";
+    var react_icon = "data:image/png;base64,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";
     var gd_icon_svg = '<svg aria-hidden="true" data-prefix="fas" data-icon="university" class="svg-inline--fa fa-university fa-w-16" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="color: #18bc9c; width: 18px;"><path fill="currentColor" d="M496 128v16a8 8 0 0 1-8 8h-24v12c0 6.627-5.373 12-12 12H60c-6.627 0-12-5.373-12-12v-12H24a8 8 0 0 1-8-8v-16a8 8 0 0 1 4.941-7.392l232-88a7.996 7.996 0 0 1 6.118 0l232 88A8 8 0 0 1 496 128zm-24 304H40c-13.255 0-24 10.745-24 24v16a8 8 0 0 0 8 8h464a8 8 0 0 0 8-8v-16c0-13.255-10.745-24-24-24zM96 192v192H60c-6.627 0-12 5.373-12 12v20h416v-20c0-6.627-5.373-12-12-12h-36V192h-64v192h-64V192h-64v192h-64V192H96z"></path></svg>';
     var launch_icon = '<svg aria-hidden="true" data-prefix="fas" data-icon="external-link" style="height: 20px; margin-left: 7px;" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="svg-inline--fa fa-external-link fa-w-16 fa-lg"><path fill="currentColor" d="M432,320H400a16,16,0,0,0-16,16V448H64V128H208a16,16,0,0,0,16-16V80a16,16,0,0,0-16-16H48A48,48,0,0,0,0,112V464a48,48,0,0,0,48,48H400a48,48,0,0,0,48-48V336A16,16,0,0,0,432,320ZM474.67,0H316a28,28,0,0,0-28,28V46.71A28,28,0,0,0,316.79,73.9L384,72,135.06,319.09l-.06.06a24,24,0,0,0,0,33.94l23.94,23.85.06.06a24,24,0,0,0,33.91-.09L440,128l-1.88,67.22V196a28,28,0,0,0,28,28H484a28,28,0,0,0,28-28V37.33h0A37.33,37.33,0,0,0,474.67,0Z" class=""></path></svg>';
 
@@ -22,11 +23,6 @@ var errorSubmissions = [];
         document.getElementsByTagName('head')[0].appendChild(script);
     }
 
-    // Cleanup old local intel var (storing viewed intel in local storage was possibly filling local storage)
-    try {
-        localStorage.removeItem('globals_i');
-    } catch (e) {}
-
     function loadCityIndex(globals) {
         // Settings
         var world = Game.world_id;
@@ -37,6 +33,7 @@ var errorSubmissions = [];
             context: true,
             keys_enabled: true,
             command_cancel_time: true,
+            forum_reactions: true,
             bug_reports: true,
             key_inbox_prev: '[',
             key_inbox_next: ']',
@@ -88,6 +85,8 @@ var errorSubmissions = [];
             SHORTCUT_FUNCTION: 'Function',
             SAVED: 'Settings saved',
             SHARE: 'Share',
+            FORUM_REACTIONS_TITLE: 'Forum reactions',
+            FORUM_REACTIONS_INFO: 'Add team reactions to the in-game alliance forum. All users on the same GrepoData team can see eachothers reactions.',
             CMD_OVERVIEW_TITLE: 'Enhance command overview',
             CMD_DEPARTURE_INFO: 'Add the return and cancel time to your own movements and add a link to town intel for incoming enemy movements.',
             CONTEXT_TITLE: 'Expand context menu',
@@ -138,6 +137,8 @@ var errorSubmissions = [];
                         SHORTCUT_FUNCTION: 'Functie',
                         SAVED: 'Instellingen opgeslagen',
                         SHARE: 'Delen',
+                        FORUM_REACTIONS_TITLE: 'Forum reacties',
+                        FORUM_REACTIONS_INFO: 'Voeg team reacties toe aan het alliantie forum. Alle leden van een GrepoData team kunnen elkaars reacties zien op het forum.',
                         CMD_OVERVIEW_TITLE: 'Uitgebreid beveloverzicht',
                         CMD_DEPARTURE_INFO: 'Voeg de annuleer en terugkeer tijd toe aan eigen bevelen. Voeg een intel link toe aan vijandige bevelen.',
                         CONTEXT_TITLE: 'Context menu uitbreiden',
@@ -192,6 +193,11 @@ var errorSubmissions = [];
                         if (gd_settings.forum === true) {
                             setTimeout(parseForumReport, 200);
                         }
+
+                        // Add reactions to posts
+                        if (gd_settings.forum_reactions === true) {
+                            setTimeout(parseForumTopicReactions, 20);
+                        }
                         break;
                     case "/player/index":
                         settings();
@@ -205,82 +211,292 @@ var errorSubmissions = [];
                             setTimeout(enhanceCommandOverview, 20);
                         }
                         break;
-                    default:
-                        if (opt.url.includes('support_overview_active_player_supports_town')) {
-                            // Open support overview
-                            fix_support_overview_bug_9_2021(xhr);
-                        } else if (
-                            action == '/frontend_bridge/execute'
-                            && 'data' in opt
-                            && opt.data != null
-                            && opt.data.includes('sendBack')
-                        ) {
-                            // Reload support overview after (partial) unit send back
-                            fix_support_overview_bug_9_2021(null);
-                        }
                 }
             } catch (error) {
                 errorHandling(error, "handleAjaxCompleteObserver");
             }
         });
 
-        var latest_support_overview_data = null;
-        function fix_support_overview_bug_9_2021(xhr_new) {
+        var threadReactions = {};
+        function parseForumTopicReactions() {
+            /**
+             * This function adds reactions to in-game forum posts
+             * Post id's are persistent and unique within each game world
+             * This allows users to react to forum posts and see eachothers reactions, as long as they are part of the same GrepoData team.
+             */
             try {
-                if (xhr_new != null) {
-                    latest_support_overview_data = xhr_new;
-                }
-                if (latest_support_overview_data == null) {
-                    return;
-                }
-                if ($('.supporters_list').length <= 0) {
-                    return;
-                }
-                var xhr = latest_support_overview_data;
+                var thread_id = $('#forum_thread_id_input').val()
 
-                var data = JSON.parse(xhr.responseText)
-                if (data == null) {
+                if (!thread_id || !user_has_team) {
                     return;
                 }
 
-                var support_units = data.json.collections.ActivePlayerSupportsTown.data;
-                if (support_units == null || support_units.length <= 0) {
-                    return;
-                }
+                // Load thread reactions before parsing posts
+                threadReactions = {};
+                getAccessToken().then(access_token => {
+                    if (access_token === false) {
+                        HumanMessage.error('GrepoData: login required to use forum reactions');
+                        // Die graceful without popup
+                        // showLoginPopup();
+                    } else {
+                        var data = {
+                            'world': world,
+                            'thread_id': thread_id,
+                            'access_token': access_token
+                        };
 
-                var target_town = support_units[0].d.current_town_id
-
-                var towns = MM.getModels().Town;
-
-                var elements_to_fix = $('.support_row').each(function () {
-                    try {
-                        var support_row_id = $(this).attr('class').match(/support_row_(\d*)/gm)[0].match(/\d{1,}/gm)[0];
-                        var correct_link_data = support_units.filter(s => s.d.id == support_row_id)[0].d;
-                        var correct_home_town_id = correct_link_data.home_town_id;
-                        var correct_home_town_data = towns[correct_home_town_id].attributes;
-                        var townlink = $(this).find('.gp_town_link');
-                        if (townlink.length > 0) {
-                            var link_elem = townlink.get(0);
-                            var existing_link_data = decodeHashToJson(link_elem.getAttribute('href'));
-                            if (existing_link_data && existing_link_data.id == target_town) {
-                                // home town id = current town id
-                                // this means that the bug is present and we should fix it
-                                var fixed_json = existing_link_data
-                                fixed_json.id = correct_home_town_id
-                                fixed_json.name = correct_home_town_data.name
-                                fixed_json.ix = correct_home_town_data.island_x
-                                fixed_json.iy = correct_home_town_data.island_y
-                                var fixed_href = encodeJsonToHash(fixed_json)
-                                if (fixed_href != null && correct_home_town_data.name != null && fixed_href.length > 10 && correct_home_town_data.name.length > 1) {
-                                    link_elem.href = fixed_href;
-                                    link_elem.innerText = correct_home_town_data.name;
+                        $.ajax({
+                            url: backend_url + "/reactions/thread",
+                            data: data,
+                            type: 'get',
+                            crossDomain: true,
+                            dataType: 'json',
+                            success: function (data) {
+                                if (data && 'success' in data) {
+                                    threadReactions = data.posts;
+                                    renderForumReactions(thread_id);
                                 }
-                            }
-                        }
-                    } catch (e) {console.log(e)}
+                            },
+                            error: function (jqXHR, textStatus) {
+                                console.log("error getting forum reactions");
+                            },
+                            timeout: 120000
+                        });
+                    }
                 });
-            } catch (e) {
-                errorHandling(e, "fix_support_overview_bug_9_2021");
+            } catch (error) {
+                errorHandling(error, "parseForumTopicReactions");
+            }
+        }
+
+        var emojilist = [
+            128077, // Thumbs up
+            128078, // Thumbs down
+            128516, // happy eyes
+            128533, // unhappy
+            128525, // love
+            127881, // party popper
+            128640, // rocket
+            128064, // eyes
+            // 128512, // happy
+            // 128528, // poker face
+            // 128533, // unhappy
+            // 129300, // think
+            // 128517, // cold sweat
+            // 129315, // rofl
+            // 128525, // love
+            // 128540, // crazy face
+        ]
+        function renderForumReactions(thread_id) {
+            try {
+                // Popup html
+                $('#postlist').prepend(`
+                        <div id="gd_new_reactions" class="gd_new_reactions" style="display: none;">
+                            <a class="gd_react_close" id="gd_react_close"></a>
+                            <div id="gd_new_reactions_options"></div>
+                            <div style="margin-top: 16px;">
+                                <div style="float: left;"><a id="gd_react_more_info">More info</a></div>
+                                <div style="float: right;">Powered by <a href="https://grepodata.com/indexer" target="_blank">GrepoData</a></div>
+                            </div>
+                        </div>
+                `)
+
+                // Click outside closes our popup
+                $('#postlist').click(function () {$('#gd_new_reactions').hide();})
+                $('#gd_new_reactions').click(function (event) {event.stopPropagation();})
+
+                // Show more info dialog
+                $('#gd_react_more_info').click(forumReactionsInfo);
+
+                // Close reactions popup
+                $('#gd_react_close').click(function () {$('#gd_new_reactions').hide();});
+
+                // Populate reaction popup
+                for (var i = 0; i < emojilist.length; i++) {
+                    var emoteHtml = `<div id="gd_react_new_${emojilist[i]}" data-emote="${emojilist[i]}" class="emote">&#${emojilist[i]};</div>`
+                    $('#gd_new_reactions_options').append(emoteHtml);
+
+                    $(`#gd_react_new_${emojilist[i]}`).click(function () {
+                        var reaction = $(this).data('emote')
+                        addPostReaction(thread_id, active_react_post, reaction);
+                        $('#gd_new_reactions').hide();
+                    })
+                }
+
+                // Parse forum posts
+                $('#postlist>li').each(function () {
+                    // Get post features
+                    var post_id = this.id
+                    var post_id = post_id.replace(/\D/g,'')
+
+                    var data = {}
+                    if (post_id in threadReactions) {
+                        data = threadReactions[post_id]
+                    }
+                    renderPostReactions(thread_id, post_id, data)
+                });
+
+            } catch (error) {
+                errorHandling(error, "renderForumReactions");
+            }
+        }
+
+        var active_react_post = null;
+        function renderPostReactions(thread_id, post_id, data = {}) {
+            /**
+             * Renders the reactions for the given post
+             */
+            try {
+                var post_header = $('#post_' + post_id).find('.author').eq(0);
+
+                $(`#gd_react_${post_id}`).remove();
+
+                //Primary container
+                reactionsHtml = `
+                    <div id="gd_react_${post_id}" class="gd_react_container">
+                        <div id="gd_reactions_add_${post_id}" class="reactions_add">
+                            <img class="gd_add_img" src="${react_icon}"/>
+                        </div>
+                    </div>
+                    `;
+                post_header.append(reactionsHtml);
+
+                // Add each emote
+                for (var i = emojilist.length-1; i >= 0; i--) {
+                    var emote = emojilist[i]
+                    if (!(emote in data)) {
+                        continue;
+                    }
+                    var player_list = data[emote].players.join(", ");
+                    var num_players = data[emote].players.length;
+                    var react_class = 'gd_react_box' + (data[emote].active ? ' active':'');
+                    var emote_html = `<div id="gd_reactions_${post_id}_${emote}" data-emote="${emote}" class="${react_class}"><div>&#${emote}; <span class="count">${num_players}</span></div></div>`
+                    $(`#gd_react_${post_id}`).prepend(emote_html);
+                    $(`#gd_reactions_${post_id}_${emote}`).tooltip(`${player_list} reacted with &#${emote};`);
+
+                    $(`#gd_reactions_${post_id}_${emote}`).click(function () {
+                        var toggled = !($(this).hasClass('active') ? true : false);
+                        var count = $(this).find('.count').get(0).innerText;
+                        var new_count = parseInt(count) + (toggled ? 1 : -1);
+                        if (new_count <= 0) {
+                            $(this).remove();
+                        } else {
+                            $(this).find('.count').get(0).innerText = new_count;
+                            $(this).toggleClass('active', toggled);
+                        }
+
+                        var emote = $(this).data('emote');
+
+                        if (toggled) {
+                            addPostReaction(thread_id, post_id, emote);
+                        } else {
+                            deletePostReaction(thread_id, post_id, emote);
+                        }
+
+                    });
+                }
+
+                // Listerner for new reaction popup
+                $(`#gd_reactions_add_${post_id}`).click(function (event) {
+                    event.stopPropagation();
+                    active_react_post = post_id;
+                    $(`#gd_new_reactions`).show();
+                    $("#gd_new_reactions").css({top: event.target.offsetParent.offsetTop + 27});
+                });
+            } catch (error) {
+                errorHandling(error, "renderPostReactions");
+            }
+        }
+
+        function forumReactionsInfo() {
+            var content = '<b>Forum reactions powered by GrepoData</b><br><ol>' +
+                '    <li>You can leave reactions to forum posts because you have installed the GrepoData city indexer usercript</li>' +
+                '    <li>Your team members can see your reactions, and you can see theirs, as long as they also have the GrepoData userscript isntalled and you are part of the same GrepoData team</li>' +
+                '    </ol>' +
+                '<p id="gd-disable-forum-reactions" style="margin-bottom: 30px;">Click <a>here</a> to disable forum reactions</p>' +
+                '<p id="gd-disabled-forum-reactions" style="display: none; color: darkgreen">Forum reactions have been disabled.</p>' +
+                '  <br /><small>Thank you for using <a href="https://grepodata.com" target="_blank">GrepoData</a>!</small>';
+
+            Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG).setContent(content)
+
+            $('#gd-disable-forum-reactions').click(function () {
+                gd_settings.forum_reactions = false;
+                saveSettings();
+                $('#gd-disabled-forum-reactions').show();
+                $('#gd-disable-forum-reactions').hide();
+                $('.gd_react_container').hide();
+                $('.gd_new_reactions').hide();
+            })
+        }
+
+        function addPostReaction(thread_id, post_id, reaction) {
+            try {
+                getAccessToken().then(access_token => {
+                    if (access_token !== false) {
+                        $.ajax({
+                            url: backend_url + "/reactions/new",
+                            data: {
+                                access_token: access_token,
+                                reaction: reaction,
+                                world: Game.world_id,
+                                player_id: Game.player_id,
+                                thread_id: thread_id,
+                                post_id: post_id
+                            },
+                            type: 'get',
+                            crossDomain: true,
+                            dataType: 'json',
+                            timeout: 30000
+                        }).fail(function (err) {
+                            console.log("Error adding reaction: ", err);
+                        }).done(function (response) {
+                            if ('success' in response) {
+                                var new_reactions = response.posts[post_id];
+                                threadReactions[post_id] = new_reactions;
+                                renderPostReactions(thread_id, post_id, threadReactions[post_id]);
+                            }
+                        });
+                    } else {
+                        showLoginPopup();
+                    }
+                });
+            } catch (error) {
+                errorHandling(error, "addPostReaction");
+            }
+        }
+
+        function deletePostReaction(thread_id, post_id, reaction) {
+            try {
+                getAccessToken().then(access_token => {
+                    if (access_token !== false) {
+                        $.ajax({
+                            url: backend_url + "/reactions/delete",
+                            data: {
+                                access_token: access_token,
+                                reaction: reaction,
+                                world: Game.world_id,
+                                thread_id: thread_id,
+                                post_id: post_id
+                            },
+                            type: 'get',
+                            crossDomain: true,
+                            dataType: 'json',
+                            timeout: 30000
+                        }).fail(function (err) {
+                            console.log("Error deleting reaction: ", err);
+                        }).done(function (response) {
+                            if ('success' in response) {
+                                var new_reactions = response.posts[post_id];
+                                threadReactions[post_id] = new_reactions;
+                                renderPostReactions(thread_id, post_id, threadReactions[post_id]);
+                            }
+                        });
+                    } else {
+                        showLoginPopup();
+                    }
+                });
+            } catch (error) {
+                errorHandling(error, "deletePostReaction");
             }
         }
 
@@ -475,6 +691,9 @@ var errorSubmissions = [];
                         }
                         if (!('context' in result)) {
                             result.context = true;
+                        }
+                        if (!('forum_reactions' in result)) {
+                            result.forum_reactions = true;
                         }
                         if ('departure_time' in result && !('command_cancel_time' in result)) {
                             result.command_cancel_time = result.departure_time;
@@ -1109,7 +1328,7 @@ var errorSubmissions = [];
 
         // settings btn
         var gdsettings = false;
-        $('.gods_area').append('<div class="btn_settings circle_button gd_settings_icon" style="right: 0px; top: 95px; z-index: 101;">\n' +
+        $('.gods_area').append('<div class="btn_settings circle_button gd_settings_icon" style="right: 0px; top: 87px; z-index: 101;">\n' +
             '\t<div style="margin: 7px 0px 0px 4px; width: 24px; height: 24px;">\n' +
             '\t'+gd_icon_svg+'\n' +
             '\t</div>\n' +
@@ -1878,6 +2097,13 @@ var errorSubmissions = [];
                         '\t\t\t</div>\n' +
                         '\t\t\t<br><br><hr>\n';
 
+                    // Forum reactions settings
+                    settingsHtml += '\t\t\t<p style="margin-left: 10px;"><strong>' + translate.FORUM_REACTIONS_TITLE + '</strong> <img style="height: 18px" src="'+react_icon+'"/></p>\n' +
+                        '\t\t\t<div style="margin-left: 30px;" class="checkbox_new forum_reactions_gd_enabled' + (gd_settings.forum_reactions === true ? ' checked' : '') + '">\n' +
+                        '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.FORUM_REACTIONS_INFO + '</div>\n' +
+                        '\t\t\t</div>\n' +
+                        '\t\t\t<br><br><hr>\n';
+
                     // Keyboard shortcut settings
                     settingsHtml += '\t\t\t<p style="margin-bottom: 10px; margin-left: 10px;"><strong>' + translate.SHORTCUTS + '</strong></p>\n' +
                         '\t\t\t<div style="margin-left: 30px;" class="checkbox_new keys_enabled_gd_enabled' + (gd_settings.keys_enabled === true ? ' checked' : '') + '">\n' +
@@ -1943,6 +2169,9 @@ var errorSubmissions = [];
                     });
                     $(".command_cancel_time_gd_enabled").click(function () {
                         settingsCbx('command_cancel_time', !gd_settings.command_cancel_time);
+                    });
+                    $(".forum_reactions_gd_enabled").click(function () {
+                        settingsCbx('forum_reactions', !gd_settings.forum_reactions);
                     });
                     $(".context_gd_enabled").click(function () {
                         settingsCbx('context', !gd_settings.context);
@@ -2098,7 +2327,7 @@ var errorSubmissions = [];
                 var unitHeight = 255;
                 var notesHeight = 170;
 
-                if (data.intel==null || data.intel.length <= 3) {
+                if (data.intel==null || data.intel.length <= 1) {
                     unitHeight = 150;
                     notesHeight = 275;
                 }
@@ -2638,6 +2867,7 @@ var errorSubmissions = [];
         }
 
         // Loads a list of report ids that have already been indexed by the current user or their allies.
+        var user_has_team = false;
         function loadIndexHashlist(check_login) {
             try {
                 getAccessToken().then(access_token => {
@@ -2669,6 +2899,7 @@ var errorSubmissions = [];
                                 if (b['active_teams'] !== undefined) {
                                     $.each(b['active_teams'], function (b, d) {
                                         has_teams = true;
+                                        user_has_team = true;
                                         globals.active_teams.push(d)
                                     });
                                 }

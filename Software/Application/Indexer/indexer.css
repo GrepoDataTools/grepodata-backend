@@ -112,6 +112,90 @@
     display: block;
 }
 
+/*Reactions*/
+.gd_react_container {
+    display: inline;
+    vertical-align: top;
+
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+    -khtml-user-select: none; /* Konqueror HTML */
+    -moz-user-select: none; /* Old versions of Firefox */
+    -ms-user-select: none; /* Internet Explorer/Edge */
+    user-select: none; /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
+}
+.gd_react_container .gd_react_box {
+    display: inline-block;
+    font-size: 13px;
+    border: 1px solid #c8a37f;
+    border-radius: 8px;
+    padding: 0px 5px 1px 2px;
+    margin-left: 3px;
+}
+.gd_react_container .active {
+    border: 1px solid #18bc9c !important;
+    background: rgba(24, 188, 156, 0.25) !important;
+}
+.gd_react_container .gd_react_box :hover {
+    cursor: pointer;
+}
+.gd_react_container .gd_new_reaction {
+    display: inline-block;
+}
+.gd_react_container .reactions_add {
+    display: inline-block;
+    visibility: hidden;
+}
+.post:hover .reactions_add {
+    visibility: visible;
+}
+.gd_react_container .reactions_add .gd_add_img {
+    height: 15px;
+    margin-top: -12px;
+    position: absolute;
+    margin-left: 2px;
+    opacity: .6;
+}
+.gd_react_container .reactions_add .gd_add_img:hover {
+    opacity: 1;
+    cursor: pointer;
+}
+.gd_new_reactions {
+    position: absolute;
+    display: block;
+    z-index: 9999;
+    width: 320px;
+    height: 60px;
+    overflow: auto;
+    background: #f5d590;
+    padding: 10px;
+    top: 27px;
+    left: 205px;
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    border: 2px solid #18bc9c;
+}
+.gd_new_reactions .emote {
+    font-size: 20px;
+    display: inline-block;
+    margin-right: 5px;
+    border: 2px solid transparent;
+}
+.gd_new_reactions .emote:hover {
+    cursor: pointer;
+    background: rgba(24, 188, 156, 0.25) !important;
+    border: 2px solid #18bc9c;
+}
+.gd_react_close {
+    font-size: 20px;
+    position: absolute;
+    right: 8px;
+    margin-top: -8px;
+}
+.gd_react_close:after{
+    display: inline-block;
+    content: "\00d7"; /* This will render the 'X' */
+}
+
 .gd-error-msg {
     color: #ea6153 !important;
 }

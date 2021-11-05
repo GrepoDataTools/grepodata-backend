@@ -46,4 +46,26 @@ class Reaction
 //  order by `id` asc
   }
 
+  public static function allByPost(User $oUser, $World, $PostId)
+  {
+    $oQuery = \Grepodata\Library\Model\IndexV2\Reaction::select([
+      'Indexer_reaction.*',
+      'Player.name'
+    ])
+      ->leftJoin('Indexer_roles', 'Indexer_roles.index_key', '=', 'Indexer_reaction.index_key')
+      ->leftJoin('Player', function($join)
+      {
+        $join->on('Player.grep_id', '=', 'Indexer_reaction.player_id')
+          ->on('Player.world', '=', 'Indexer_reaction.world');
+      });
+
+    $aResult = $oQuery
+      ->where('Indexer_reaction.world', '=', $World)
+      ->where('Indexer_reaction.post_id', '=', $PostId)
+      ->where('Indexer_roles.user_id', '=', $oUser->id)
+      ->orderBy('id', 'asc')
+      ->get();
+    return $aResult;
+  }
+
 }

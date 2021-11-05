@@ -474,6 +474,14 @@ $oRouter->Add('reactionslist', new Route('/reactions/thread', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Reaction',
   '_method'     => 'ThreadReactions'
 )));
+$oRouter->Add('reactionsnew', new Route('/reactions/new', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Reaction',
+  '_method'     => 'NewReaction'
+)));
+$oRouter->Add('reactionsdelete', new Route('/reactions/delete', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Reaction',
+  '_method'     => 'DeleteReaction'
+)));
 
 
 // === Indexer V1 (deprecated)
