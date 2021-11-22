@@ -58,31 +58,31 @@ class Report extends \Grepodata\Library\Router\BaseRoute
       }
 
       // Number of recent hashes to return
-      $Window = 250;
+      $Window = 300;
 
       // Get the latest n records that appear in all of these indexes or that were personally indexed by this user
       $KeyString = "'" . join("', '", array_keys($aActiveIndexes)) . "'";
 
-        $aHashes = DB::select(DB::raw("
-          SELECT report_hash, min(sort_id) as sort_id
-            FROM (
-                (SELECT report_hash, min(id) as sort_id
-                 FROM Indexer_intel_shared
-                 WHERE index_key IN (".$KeyString.")
-                 GROUP BY report_hash
-                 having COUNT(index_key) = ".count($aActiveIndexes).")
-        
-                UNION
-        
-                (SELECT report_hash, min(id) as sort_id
-                 FROM Indexer_intel_shared
-                 WHERE user_id = ".$oUser->id." and world = ".$WorldEscaped."
-                 GROUP by report_hash)
-            ) as hashlist
-            GROUP BY report_hash
-            ORDER BY sort_id DESC
-            limit ".$Window."
-        "));
+      $aHashes = DB::select(DB::raw("
+        SELECT report_hash, min(sort_id) as sort_id
+          FROM (
+              (SELECT report_hash, min(id) as sort_id
+               FROM Indexer_intel_shared
+               WHERE index_key IN (".$KeyString.")
+               GROUP BY report_hash
+               having COUNT(index_key) = ".count($aActiveIndexes).")
+      
+              UNION
+      
+              (SELECT report_hash, min(id) as sort_id
+               FROM Indexer_intel_shared
+               WHERE user_id = ".$oUser->id." and world = ".$WorldEscaped."
+               GROUP by report_hash)
+          ) as hashlist
+          GROUP BY report_hash
+          ORDER BY sort_id DESC
+          limit ".$Window."
+      "));
 
       $aHashlist = array();
       $bHasHashes = false;
@@ -94,9 +94,27 @@ class Report extends \Grepodata\Library\Router\BaseRoute
         }
       }
 
+      $aReactionThreads = DB::select(DB::raw("
+        SELECT thread_id, max(created_at) as active
+        FROM Indexer_reaction
+        WHERE index_key IN (".$KeyString.")
+        GROUP BY thread_id
+        order by active desc
+        limit ".$Window."
+      "));
+
+      $aActiveThreads = array();
+      foreach ($aReactionThreads as $Thread) {
+        $Thread = (array) $Thread;
+        if (isset($Thread['thread_id'])) {
+          $aActiveThreads[] = $Thread['thread_id'];
+        }
+      }
+
       $aResponse = array(
         'hashlist' => $aHashlist,
-        'active_teams' => $aAllIndexes
+        'active_teams' => $aAllIndexes,
+        'active_threads' => $aActiveThreads
       );
 
       die(self::OutputJson($aResponse, 200));

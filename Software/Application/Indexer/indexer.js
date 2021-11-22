@@ -41,7 +41,8 @@ var errorSubmissions = [];
         readSettingsCookie();
         setTimeout(function () {
             if (gd_settings.inbox === true || gd_settings.forum === true) {
-                loadIndexHashlist(false); // Get list of recently indexed report ids
+                loadIndexHashlist(false, true); // Get list of recently indexed report ids
+                setInterval(loadIndexHashlist, 5 * 60 * 1000); // Reload hash list every 5 minutes
             }
         }, 300);
         checkLogin(false);
@@ -227,43 +228,52 @@ var errorSubmissions = [];
             try {
                 var thread_id = $('#forum_thread_id_input').val()
 
-                if (!thread_id || !user_has_team) {
+                if (!thread_id || !user_has_team || isNaN(thread_id)) {
                     return;
                 }
 
-                // Load thread reactions before parsing posts
-                threadReactions = {};
-                getAccessToken().then(access_token => {
-                    if (access_token === false) {
-                        HumanMessage.error('GrepoData: login required to use forum reactions');
-                        // Die graceful without popup
-                        // showLoginPopup();
-                    } else {
-                        var data = {
-                            'world': world,
-                            'thread_id': thread_id,
-                            'access_token': access_token
-                        };
-
-                        $.ajax({
-                            url: backend_url + "/reactions/thread",
-                            data: data,
-                            type: 'get',
-                            crossDomain: true,
-                            dataType: 'json',
-                            success: function (data) {
-                                if (data && 'success' in data) {
-                                    threadReactions = data.posts;
-                                    renderForumReactions(thread_id);
-                                }
-                            },
-                            error: function (jqXHR, textStatus) {
-                                console.log("error getting forum reactions");
-                            },
-                            timeout: 120000
-                        });
+                // Only load thread reactions if thread is active or active threads are unknown
+                if (globals.active_threads === undefined || globals.active_threads.includes(parseInt(thread_id))) {
+                    if (verbose) {
+                        console.log("Loading reactions for active thread: " + thread_id)
                     }
-                });
+                    // Load thread reactions before parsing posts
+                    threadReactions = {};
+                    getAccessToken().then(access_token => {
+                        if (access_token === false) {
+                            HumanMessage.error('GrepoData: login required to use forum reactions');
+                            // Die graceful without popup
+                            // showLoginPopup();
+                        } else {
+                            var data = {
+                                'world': world,
+                                'thread_id': thread_id,
+                                'access_token': access_token
+                            };
+
+                            $.ajax({
+                                url: backend_url + "/reactions/thread",
+                                data: data,
+                                type: 'get',
+                                crossDomain: true,
+                                dataType: 'json',
+                                success: function (data) {
+                                    if (data && 'success' in data) {
+                                        threadReactions = data.posts;
+                                        renderForumReactions(thread_id);
+                                    }
+                                },
+                                error: function (jqXHR, textStatus) {
+                                    console.log("error getting forum reactions");
+                                },
+                                timeout: 120000
+                            });
+                        }
+                    });
+                } else {
+                    // Allow new reactions but skip loading previous reactions because this post is not active
+                    renderForumReactions(thread_id);
+                }
             } catch (error) {
                 errorHandling(error, "parseForumTopicReactions");
             }
@@ -295,8 +305,8 @@ var errorSubmissions = [];
                             <a class="gd_react_close" id="gd_react_close"></a>
                             <div id="gd_new_reactions_options"></div>
                             <div style="margin-top: 16px;">
-                                <div style="float: left;"><a id="gd_react_more_info">More info</a></div>
-                                <div style="float: right;">Powered by <a href="https://grepodata.com/indexer" target="_blank">GrepoData</a></div>
+                                <div style="float: right;"><a id="gd_react_more_info">More info</a></div>
+                                <div style="float: left; font-size: 10px; margin-top: 3px;">Powered by <a href="https://grepodata.com/indexer" target="_blank">GrepoData</a></div>
                             </div>
                         </div>
                 `)
@@ -352,8 +362,9 @@ var errorSubmissions = [];
                 $(`#gd_react_${post_id}`).remove();
 
                 //Primary container
+                var alignment_class = Object.keys(data).length > 0 ? 'gd_react_top' : ''
                 reactionsHtml = `
-                    <div id="gd_react_${post_id}" class="gd_react_container">
+                    <div id="gd_react_${post_id}" class="gd_react_container ${alignment_class}">
                         <div id="gd_reactions_add_${post_id}" class="reactions_add">
                             <img class="gd_add_img" src="${react_icon}"/>
                         </div>
@@ -411,7 +422,7 @@ var errorSubmissions = [];
         function forumReactionsInfo() {
             var content = '<b>Forum reactions powered by GrepoData</b><br><ol>' +
                 '    <li>You can leave reactions to forum posts because you have installed the GrepoData city indexer usercript</li>' +
-                '    <li>Your team members can see your reactions, and you can see theirs, as long as they also have the GrepoData userscript isntalled and you are part of the same GrepoData team</li>' +
+                '    <li>Your team members can see your reactions, and you can see theirs, as long as they also have the GrepoData userscript installed and you are part of the same GrepoData team</li>' +
                 '    </ol>' +
                 '<p id="gd-disable-forum-reactions" style="margin-bottom: 30px;">Click <a>here</a> to disable forum reactions</p>' +
                 '<p id="gd-disabled-forum-reactions" style="display: none; color: darkgreen">Forum reactions have been disabled.</p>' +
@@ -460,6 +471,7 @@ var errorSubmissions = [];
                         showLoginPopup();
                     }
                 });
+                globals.active_threads.push(parseInt(thread_id));
             } catch (error) {
                 errorHandling(error, "addPostReaction");
             }
@@ -2868,8 +2880,11 @@ var errorSubmissions = [];
 
         // Loads a list of report ids that have already been indexed by the current user or their allies.
         var user_has_team = false;
-        function loadIndexHashlist(check_login) {
+        function loadIndexHashlist(check_login = false, startup = false) {
             try {
+                if (verbose) {
+                    console.log("Loading grepodata hashlist")
+                }
                 getAccessToken().then(access_token => {
                     if (access_token === false) {
                         if (check_login === true) {
@@ -2903,8 +2918,16 @@ var errorSubmissions = [];
                                         globals.active_teams.push(d)
                                     });
                                 }
-                                if (has_hashes && !has_teams) {
-                                    // user has been using the indexer but is not part of a team on this world
+                                if (globals.active_threads === undefined) {
+                                    globals.active_threads = [];
+                                }
+                                if (b['active_threads'] !== undefined) {
+                                    $.each(b['active_threads'], function (b, d) {
+                                        globals.active_threads.push(d)
+                                    });
+                                }
+                                if (startup && has_hashes && !has_teams) {
+                                    // user has been using the indexer but is not part of a team on this world (only run this once at startup)
                                     showNoTeamNotification();
                                 }
                             } catch (u) {}

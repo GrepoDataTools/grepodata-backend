@@ -134,13 +134,14 @@ class Reaction extends \Grepodata\Library\Router\BaseRoute
       if (!key_exists($oReaction->post_id, $aCombined)) {
         $aCombined[$oReaction->post_id] = array();
       }
-      if (key_exists($oReaction->reaction, $aCombined[$oReaction->post_id])) {
-        $aCombined[$oReaction->post_id][$oReaction->reaction]['players'][] = $oReaction->name;
-      } else {
+      if (!key_exists($oReaction->reaction, $aCombined[$oReaction->post_id])) {
         $aCombined[$oReaction->post_id][$oReaction->reaction] = array(
-          'players' => array($oReaction->name),
+          'players' => array(),
           'active' => false
         );
+      }
+      if (!in_array($oReaction->name, $aCombined[$oReaction->post_id][$oReaction->reaction]['players'])) {
+        $aCombined[$oReaction->post_id][$oReaction->reaction]['players'][] = $oReaction->name;
       }
 
       if ($oReaction->user_id == $oUser->id) {
