@@ -40,9 +40,8 @@ var errorSubmissions = [];
         };
         readSettingsCookie();
         setTimeout(function () {
-            if (gd_settings.inbox === true || gd_settings.forum === true) {
+            if (gd_settings.inbox === true || gd_settings.forum === true || gd_settings.forum_reactions === true) {
                 loadIndexHashlist(false, true); // Get list of recently indexed report ids
-                setInterval(loadIndexHashlist, 5 * 60 * 1000); // Reload hash list every 5 minutes
             }
         }, 300);
         checkLogin(false);
@@ -170,6 +169,7 @@ var errorSubmissions = [];
         setInterval(parseInbox, 500);
 
         // Listen for game events
+        var last_hashlist_refresh = Date.now();
         $(document).ajaxComplete(function (e, xhr, opt) {
             try {
                 var url = opt.url.split("?"), action = "";
@@ -190,6 +190,12 @@ var errorSubmissions = [];
                     case "/message/view": // catch inbox previews
                     case "/message/preview": // catch inbox messages
                     case "/alliance_forum/forum": // catch forum messages
+                        // Reload hashlist if last refresh was more than 10 minutes ago
+                        if (Date.now() - last_hashlist_refresh >= 10 * 60 * 1000) {
+                            last_hashlist_refresh = Date.now();
+                            loadIndexHashlist(false, false);
+                        }
+
                         // Parse reports from forum and messages
                         if (gd_settings.forum === true) {
                             setTimeout(parseForumReport, 200);
@@ -2899,29 +2905,23 @@ var errorSubmissions = [];
                             try {
                                 var has_hashes = false;
                                 var has_teams = false;
-                                if (globals.reportsFound === undefined) {
-                                    globals.reportsFound = [];
-                                }
                                 if (b['hashlist'] !== undefined) {
+                                    globals.reportsFound = [];
                                     $.each(b['hashlist'], function (b, d) {
                                         has_hashes = true;
                                         globals.reportsFound.push(d)
                                     });
                                 }
-                                if (globals.active_teams === undefined) {
-                                    globals.active_teams = [];
-                                }
                                 if (b['active_teams'] !== undefined) {
+                                    globals.active_teams = [];
                                     $.each(b['active_teams'], function (b, d) {
                                         has_teams = true;
                                         user_has_team = true;
                                         globals.active_teams.push(d)
                                     });
                                 }
-                                if (globals.active_threads === undefined) {
-                                    globals.active_threads = [];
-                                }
                                 if (b['active_threads'] !== undefined) {
+                                    globals.active_threads = [];
                                     $.each(b['active_threads'], function (b, d) {
                                         globals.active_threads.push(d)
                                     });

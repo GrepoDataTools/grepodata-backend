@@ -427,9 +427,15 @@ class InboxParser
           }
         }
 
-        if ((!$bPlayerIsSender && !$bPlayerIsReceiver) || ($bPlayerIsReceiver && $bPlayerIsSender) || (!$bPlayerIsSender && $bReceiverIsGhost)) {
+        if ((!$bPlayerIsSender && $bPlayerIsReceiver) || (!$bPlayerIsSender && !$bPlayerIsReceiver) || ($bPlayerIsReceiver && $bPlayerIsSender) || (!$bPlayerIsSender && $bReceiverIsGhost)) {
+          // if owner can not be found, or if player is receiver, it could be an attack on conquest: check if there is a cs in defender units
           if (strpos(json_encode($aCityUnitsDef),self::kolo) !== false) {
-            $ReportType = "attack_on_conquest";
+            if ((!$bPlayerIsSender && $bPlayerIsReceiver)) {
+              Logger::warning("Check003 InboxParser ".$ReportHash);
+              // Can be attack on conquest but can also be a normal enemy attack where playerIsReceiver and where player is defending with a cs
+            } else {
+              $ReportType = "attack_on_conquest";
+            }
             $bPlayerIsReceiver = true;
             $bIsOngoingConquest = true;
 
@@ -444,13 +450,17 @@ class InboxParser
             } catch (\Exception $e) {
               Logger::warning("InboxParser $ReportHash: error parsing ongoing conquest details; " . $e->getMessage());
             }
-          } else {
+          } else if ((!$bPlayerIsSender && !$bPlayerIsReceiver) || ($bPlayerIsReceiver && $bPlayerIsSender) || (!$bPlayerIsSender && $bReceiverIsGhost)) {
             // unable to identify owner!
             throw new InboxParserExceptionWarning("inbox report owner not found");
           }
         }
 
-        if ($bPlayerIsSender) {
+        if ($bPlayerIsSender && $bPlayerIsReceiver && $bIsOngoingConquest) {
+          // Attacking an enemy conquest on their own city. parse own units
+          Logger::warning("Check002 InboxParser ".$ReportHash);
+          $aCityUnits = $aCityUnitsAtt;
+        } elseif ($bPlayerIsSender) {
           $aCityUnits = $aCityUnitsDef;
         } else {
           $aCityUnits = $aCityUnitsAtt;
@@ -901,8 +911,9 @@ class InboxParser
       }
 
       if ((!$bPlayerIsSender && !$bPlayerIsReceiver) || ($bPlayerIsReceiver && $bPlayerIsSender)) {
-        if ($ReportType === "attack_on_conquest") {
-          throw new InboxParserExceptionDebug("Ignoring friendly attack on conquest");
+        if ($bIsOngoingConquest) {
+          // throw new InboxParserExceptionDebug("Ignoring friendly attack on conquest");
+          // friendly attack on conquest, continue with indexing.
         } else if ($bPlayerIsReceiver && $bPlayerIsSender) {
           throw new InboxParserExceptionDebug("Sender and receiver are the same. Ignore report");
         } else {
@@ -911,7 +922,7 @@ class InboxParser
         }
       }
 
-      if ($bWisdom == true || $bPlayerIsSender == true) {
+      if ($bWisdom == true || ($bPlayerIsSender == true && !$bIsOngoingConquest)) {
         $TownId = $ReceiverTownId;
         $TownName = $ReceiverTownName;
         $PlayerId = $ReceiverPlayerId;

@@ -314,7 +314,7 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
       }
 
       // Find reports
-      $aReports = \Grepodata\Library\Controller\IndexV2\Intel::allByUserForConquest($oUser, $ConquestId, true);
+      $aReports = \Grepodata\Library\Controller\IndexV2\Intel::allByUserForConquest($oUser, $ConquestId, false);
       if (empty($aReports) || count($aReports) <= 0) {
         return self::OutputJson($aResponse);
       }
@@ -325,6 +325,7 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
           'date' => $oCity->parsed_date,
           'sort_date' => Carbon::parse($oCity->parsed_date),
           'attacker' => array(
+            'hash' => $oCity->hash,
             'town_id' => $oCity->town_id,
             'town_name' => $oCity->town_name,
             'player_id' => $oCity->player_id,

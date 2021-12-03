@@ -231,7 +231,6 @@ class SiegeParser
             // Add alliance to belligerents if needed
             if (!empty($oCity->alliance_id)
               && $oCity->alliance_id > 0
-              && $oCity->alliance_id != $oConquest->belligerent_alliance_id
             ) {
               try {
                 $oAlliance = Alliance::firstOrFail($oCity->alliance_id, $oCity->world);

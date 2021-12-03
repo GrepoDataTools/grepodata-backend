@@ -5,6 +5,7 @@ namespace Grepodata\Application\API\Route\IndexV2;
 use Grepodata\Library\Controller\Alliance;
 use Grepodata\Library\Controller\Indexer\IndexInfo;
 use Grepodata\Library\Controller\IndexV2\Event;
+use Grepodata\Library\Controller\IndexV2\IndexOverview;
 use Grepodata\Library\Controller\IndexV2\Roles;
 use Grepodata\Library\Controller\World;
 use Grepodata\Library\IndexV2\IndexManagement;
@@ -19,7 +20,7 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
 {
 
   /**
-   * Returns a list of all index owners for the given index
+   * Returns a list of all users that have access to the given index
    */
   public static function IndexUsersGET()
   {
@@ -30,21 +31,39 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
       IndexManagement::verifyUserIsAdmin($oUser, $aParams['index_key']);
 
       $aResult = Roles::getUsersByIndex($aParams['index_key']);
-      $aItems = array();
+      $aUsers = array();
       /** @var \Grepodata\Library\Model\IndexV2\Roles $oUser */
       foreach ($aResult as $oUser) {
-        $aItems[] = array(
+          $aUsers[$oUser->user_id] = array(
           'user_id' => $oUser->user_id,
           'role' => $oUser->role,
           'contribute' => $oUser->contribute,
           'username' => $oUser->username,
-          'player_name' => 'TODO',
+          'player_name' => null,
         );
       }
 
+      try {
+          $oIndexOverview = IndexOverview::firstOrFail($aParams['index_key']);
+          $aContributors = json_decode(urldecode($oIndexOverview['contributors_actual']), true);
+          if (is_array($aContributors) && count($aContributors) > 0) {
+              foreach ($aContributors as $aContributor) {
+                  if (key_exists($aContributor['user_id'], $aUsers)) {
+                      $aUsers[$aContributor['user_id']]['player_id'] = $aContributor['player_id'];
+                      $aUsers[$aContributor['user_id']]['player_name'] = $aContributor['player_name'];
+                      $aUsers[$aContributor['user_id']]['contributions'] = $aContributor['contributions'];
+                      $aUsers[$aContributor['user_id']]['last_contribution'] = $aContributor['last_contribution'];
+                      $aUsers[$aContributor['user_id']]['first_contribution'] = $aContributor['first_contribution'];
+                  }
+              }
+          }
+      } catch (\Exception $e) {
+          Logger::warning("Unable to expand index users: " . $e->getMessage());
+      }
+
       $aResponse = array(
-        'size'    => sizeof($aItems),
-        'data'   => $aItems
+        'size'    => sizeof($aUsers),
+        'data'   => array_values($aUsers)
       );
 
       ResponseCode::success($aResponse);
