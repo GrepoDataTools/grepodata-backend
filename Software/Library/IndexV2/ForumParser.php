@@ -751,7 +751,7 @@ class ForumParser
           }
         }
 
-        //loop units
+        //loop units (spy unit structure remains unchanged as of Feb 2022)
         if (strpos($aReportData["content"][5]["content"][1]["attributes"]["class"], "spy_units") === false) {
           // Try to find spy units dynamically
           $unitsRootArr = Helper::allByClass($aReportData, "spy_units", false);
@@ -928,49 +928,58 @@ class ForumParser
         self::ParseForumReportStats($cityInfo, $aReportStats, $ReportHash, $aBuildingNames);
 
         //loop units
-        $unitsRootArr = $aReportData['content'][5]['content'][1]['content'][5]['content'] ?? null;
-        if (empty($unitsRootArr)) {
-          throw new ForumParserExceptionWarning("Unable to find forum report units array");
-        }
+        $aEnemyUnits = Helper::allByClass($aReportData, 'report_side_defender_unit');
+        if (is_array($aEnemyUnits) && count($aEnemyUnits) > 0 && strpos(json_encode($aEnemyUnits), 'data-unit_count') !== false) {
+          // new parsing method (Post Feb 2022)
+          self::parseReportUnitsNewFormat($cityInfo, $aEnemyUnits);
+        } else {
+          // old parsing method (Pre Feb 2022)
+          Logger::warning("ForumParser " . $ReportHash . ": using old parsing method. ");
+          $unitsRootArr = $aReportData['content'][5]['content'][1]['content'][5]['content'] ?? null;
+          if (empty($unitsRootArr)) {
+            throw new ForumParserExceptionWarning("Unable to find forum report units array");
+          }
 
-        foreach ($unitsRootArr as $unitsChildren) {
+          foreach ($unitsRootArr as $unitsChildren) {
 
-          if (isset($unitsChildren['attributes']) && isset($unitsChildren['attributes']['class']) &&
-            strpos($unitsChildren['attributes']['class'], "report_units_type") !== FALSE) {
-            $subArr = $unitsChildren['content'];
+            if (isset($unitsChildren['attributes']) && isset($unitsChildren['attributes']['class']) &&
+              strpos($unitsChildren['attributes']['class'], "report_units_type") !== FALSE) {
+              $subArr = $unitsChildren['content'];
 
-            foreach ($subArr as $unitsChild) {
+              foreach ($subArr as $unitsChild) {
 
-              if (is_array($unitsChild) && count($unitsChild) > 1) {
-                $Value = $unitsChild['content'][1]['content'][1]['content'][0];
-                $Died = $unitsChild['content'][3]['content'][0];
-                $Class = $unitsChild['content'][1]['attributes']['class'];
+                if (is_array($unitsChild) && count($unitsChild) > 1) {
+                  $Value = $unitsChild['content'][1]['content'][1]['content'][0];
+                  $Died = $unitsChild['content'][3]['content'][0];
+                  $Class = $unitsChild['content'][1]['attributes']['class'];
 
-                // Parse unit names
-                foreach (self::aUnitNames as $Key => $aUnit) {
-                  if (strpos($Class, $Key)) {
-                    if ($aUnit['value'] === null) {
-                      // Regular unit (-killed)
-                      $cityInfo[$aUnit['type']] = $Value;
-                      if (strpos($Died, '-') !== FALSE) {
-                        $cityInfo[$aUnit['type']] .= "(" . $Died . ")";
+                  // Parse unit names
+                  foreach (self::aUnitNames as $Key => $aUnit) {
+                    if (strpos($Class, $Key)) {
+                      if ($aUnit['value'] === null) {
+                        // Regular unit (-killed)
+                        $cityInfo[$aUnit['type']] = $Value;
+                        if (strpos($Died, '-') !== FALSE) {
+                          $cityInfo[$aUnit['type']] .= "(" . $Died . ")";
+                        }
+                      } else {
+                        // Hero
+                        $cityInfo[$aUnit['type']] = $aUnit['value'];
                       }
-                    } else {
-                      // Hero
-                      $cityInfo[$aUnit['type']] = $aUnit['value'];
+                      if ($aUnit['god'] !== null) {
+                        // Set god for mythical unit
+                        $cityInfo['god'] = $aUnit['god'];
+                      }
+                      break;
                     }
-                    if ($aUnit['god'] !== null) {
-                      // Set god for mythical unit
-                      $cityInfo['god'] = $aUnit['god'];
-                    }
-                    break;
                   }
-                }
 
+                }
               }
             }
           }
         }
+
         break;
       case self::report_types['enemy']:
         // TOWN($aHeaderChainData[0]) FROM PLAYER($aHeaderChainData[1]) IS ATTACKING TOWN($aHeaderChainData[2])
@@ -1003,88 +1012,96 @@ class ForumParser
         }
 
         //loop units
-        if (count($aReportData['content'])>=6) {
-          $unitsRootArr = $aReportData['content'][5]['content'][1]['content'][1]['content'];
+        $aEnemyUnits = Helper::allByClass($aReportData, 'report_side_attacker_unit');
+        if (is_array($aEnemyUnits) && count($aEnemyUnits) > 0 && strpos(json_encode($aEnemyUnits), 'data-unit_count') !== false) {
+          // new parsing method (Post Feb 2022)
+          self::parseReportUnitsNewFormat($cityInfo, $aEnemyUnits);
         } else {
-          throw new ForumParserExceptionWarning("Unable to find unit parent element in enemy attack");
-        }
+          // old parsing method (Pre Feb 2022)
 
-        $bFoundUnits = false;
-        $bTitleTextPresent = false;
-        $bSmallTextPresent = false;
-        $SmallText = '';
-        $bReportUnitsPresent = false;
-        foreach ($unitsRootArr as $unitsChildren) {
-          if (($Class = $unitsChildren['attributes']['class'] ?? null) && ($Type = $unitsChildren['type'] ?? null)) {
-            $Class = strtolower($Class);
-            $Type = strtolower($Type);
+          if (count($aReportData['content']) >= 6) {
+            $unitsRootArr = $aReportData['content'][5]['content'][1]['content'][1]['content'];
+          } else {
+            throw new ForumParserExceptionWarning("Unable to find unit parent element in enemy attack");
+          }
 
-            if ($Class == "small bold" && $Type == 'div') {
-              $bTitleTextPresent = true;
-            } else if ($Class == "small" && $Type == 'div') {
-              $bSmallTextPresent = true;
-              $SmallText = $unitsChildren['content'][0] ?? '';
-            } else if (strpos($Class, "report_units_type") !== FALSE) {
-              $bReportUnitsPresent = true;
-              $subArr = $unitsChildren['content'];
+          $bFoundUnits = false;
+          $bTitleTextPresent = false;
+          $bSmallTextPresent = false;
+          $SmallText = '';
+          $bReportUnitsPresent = false;
+          foreach ($unitsRootArr as $unitsChildren) {
+            if (($Class = $unitsChildren['attributes']['class'] ?? null) && ($Type = $unitsChildren['type'] ?? null)) {
+              $Class = strtolower($Class);
+              $Type = strtolower($Type);
 
-              foreach ($subArr as $unitsChild) {
+              if ($Class == "small bold" && $Type == 'div') {
+                $bTitleTextPresent = true;
+              } else if ($Class == "small" && $Type == 'div') {
+                $bSmallTextPresent = true;
+                $SmallText = $unitsChildren['content'][0] ?? '';
+              } else if (strpos($Class, "report_units_type") !== FALSE) {
+                $bReportUnitsPresent = true;
+                $subArr = $unitsChildren['content'];
 
-                if (is_array($unitsChild) && count($unitsChild) > 1 && isset($unitsChild['content'][1]['attributes']['class'])) {
-                  $bFoundUnits = true;
+                foreach ($subArr as $unitsChild) {
 
-                  $Value = $unitsChild['content'][1]['content'][1]['content'][0];
-                  $Died = $unitsChild['content'][3]['content'][0];
-                  $Class = $unitsChild['content'][1]['attributes']['class'];
-                  if (!is_string($Value) && is_array($Value)) {
-                    $Value = Helper::getTextContent($Value);
-                    Logger::warning("ForumParser " . $ReportHash . ": unit child value is not string. extracted text: " . $Value);
-                  }
-                  if (!is_string($Died) && is_array($Died)) {
-                    $Died = Helper::getTextContent($Died);
-                    Logger::warning("ForumParser " . $ReportHash . ": unit child died is not string. extracted text: " . $Died);
-                  }
-                  if (!is_string($Class) && is_array($Class)) {
-                    $Class = Helper::getTextContent($Class);
-                    Logger::warning("ForumParser " . $ReportHash . ": unit child class is not string. extracted text: " . $Class);
-                  }
+                  if (is_array($unitsChild) && count($unitsChild) > 1 && isset($unitsChild['content'][1]['attributes']['class'])) {
+                    $bFoundUnits = true;
 
-                  // Parse unit names
-                  foreach (self::aUnitNames as $Key => $aUnit) {
-                    if (strpos($Class, $Key)) {
-                      if ($aUnit['value'] === null) {
-                        // Regular unit (-killed)
-                        $cityInfo[$aUnit['type']] = $Value;
-                        if (strpos($Died, '-') !== FALSE) {
-                          $cityInfo[$aUnit['type']] .= "(" . $Died . ")";
-                        }
-                      } else {
-                        // Hero
-                        $cityInfo[$aUnit['type']] = $aUnit['value'];
-                      }
-                      if ($aUnit['god'] !== null) {
-                        // Set god for mythical unit
-                        $cityInfo['god'] = $aUnit['god'];
-                      }
-                      break;
+                    $Value = $unitsChild['content'][1]['content'][1]['content'][0];
+                    $Died = $unitsChild['content'][3]['content'][0];
+                    $Class = $unitsChild['content'][1]['attributes']['class'];
+                    if (!is_string($Value) && is_array($Value)) {
+                      $Value = Helper::getTextContent($Value);
+                      Logger::warning("ForumParser " . $ReportHash . ": unit child value is not string. extracted text: " . $Value);
                     }
-                  }
+                    if (!is_string($Died) && is_array($Died)) {
+                      $Died = Helper::getTextContent($Died);
+                      Logger::warning("ForumParser " . $ReportHash . ": unit child died is not string. extracted text: " . $Died);
+                    }
+                    if (!is_string($Class) && is_array($Class)) {
+                      $Class = Helper::getTextContent($Class);
+                      Logger::warning("ForumParser " . $ReportHash . ": unit child class is not string. extracted text: " . $Class);
+                    }
 
+                    // Parse unit names
+                    foreach (self::aUnitNames as $Key => $aUnit) {
+                      if (strpos($Class, $Key)) {
+                        if ($aUnit['value'] === null) {
+                          // Regular unit (-killed)
+                          $cityInfo[$aUnit['type']] = $Value;
+                          if (strpos($Died, '-') !== FALSE) {
+                            $cityInfo[$aUnit['type']] .= "(" . $Died . ")";
+                          }
+                        } else {
+                          // Hero
+                          $cityInfo[$aUnit['type']] = $aUnit['value'];
+                        }
+                        if ($aUnit['god'] !== null) {
+                          // Set god for mythical unit
+                          $cityInfo['god'] = $aUnit['god'];
+                        }
+                        break;
+                      }
+                    }
+
+                  }
                 }
               }
             }
           }
-        }
 
-        if ($bTitleTextPresent==true && $bSmallTextPresent==true && $bReportUnitsPresent==false) {
-          if (
-            ($Locale == 'nl' && $SmallText!='Niet zichtbaar.') ||
-            ($Locale == 'de' && $SmallText!='Nicht sichtbar.')) {
-            throw new ForumParserExceptionError("Hidden troop check invalid for locale. string mismatch");
+          if ($bTitleTextPresent == true && $bSmallTextPresent == true && $bReportUnitsPresent == false) {
+            if (
+              ($Locale == 'nl' && $SmallText != 'Niet zichtbaar.') ||
+              ($Locale == 'de' && $SmallText != 'Nicht sichtbar.')) {
+              throw new ForumParserExceptionError("Hidden troop check invalid for locale. string mismatch");
+            }
+            throw new ForumParserExceptionDebug("Report units are probably hidden.");
+          } else if ($bFoundUnits === false) {
+            throw new ForumParserExceptionWarning("Unable to find any units in enemy attack");
           }
-          throw new ForumParserExceptionDebug("Report units are probably hidden.");
-        } else if ($bFoundUnits === false) {
-          throw new ForumParserExceptionWarning("Unable to find any units in enemy attack");
         }
 
         break;
@@ -1139,6 +1156,7 @@ class ForumParser
         }
 
         //loop units
+        Logger::warning("ForumParser $ReportHash: check conquest units parsing!; " . $e->getMessage());
         $aReportContents = $aReportData['content'][5]['content'][1]['content'] ?? null;
         if (empty($aReportContents)) throw new ForumParserExceptionWarning("Unable to locate report contents");
 
@@ -1264,6 +1282,42 @@ class ForumParser
               }
             }
 
+          }
+        }
+
+      }
+    }
+  }
+
+  private static function parseReportUnitsNewFormat(&$cityInfo, $aReportUnits) {
+    foreach ($aReportUnits as $unitsChild) {
+
+      if (is_array($unitsChild) && count($unitsChild) > 1) {
+        $oReportUnit = Helper::allByClass($unitsChild, 'report_unit')[0];
+        $Value = $oReportUnit['attributes']['data-unit_count'];
+        $Class = $oReportUnit['attributes']['class'];
+
+        $oDied = Helper::allByClass($unitsChild, 'report_losts')[0];
+        $Died = $oDied['content'][0];
+
+        // Parse unit names
+        foreach (self::aUnitNames as $Key => $aUnit) {
+          if (strpos($Class, $Key)) {
+            if ($aUnit['value'] === null) {
+              // Regular unit (-killed)
+              $cityInfo[$aUnit['type']] = $Value;
+              if (strpos($Died, '-') !== FALSE) {
+                $cityInfo[$aUnit['type']] .= "(" . $Died . ")";
+              }
+            } else {
+              // Hero
+              $cityInfo[$aUnit['type']] = $aUnit['value'];
+            }
+            if ($aUnit['god'] !== null) {
+              // Set god for mythical unit
+              $cityInfo['god'] = $aUnit['god'];
+            }
+            break;
           }
         }
 
