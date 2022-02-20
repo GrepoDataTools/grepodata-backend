@@ -401,24 +401,20 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
       $oUser->token = $Token;
       $oUser->save();
 
+      $MailBody =  self::mailTemplateActionRequired(
+        $oUser,
+        'Recover your <span style="color: #18bc9c;">GrepoData</span> password',
+        'You are receiving this message because a request was made to recover your account on grepodata.com. Please click on the button below to reset your password.',
+        'Reset Password',
+        'https://grepodata.com/reset/'.$Token
+      );
+
       // Send confirmation email
       $Result = Client::SendMail(
         'admin@grepodata.com',
         $oUser->email,
         'Grepodata password recovery',
-        'Hi,<br/>
-<br/>
-You are receiving this message because a request was made to recover your account on grepodata.com.<br/>
-<br/>
-Please click on the following link to reset your password:<br/>
-<br/>
-<a href="https://grepodata.com/reset/'.$Token.'">https://grepodata.com/reset/'.$Token.'</a><br/>
-<br/>
-If you did not request this email, someone else may have entered your email address into our password recovery form.<br/>
-You can ignore this email if you no longer wish to reset your password.<br/>
-<br/>
-Sincerely,<br/>
-admin@grepodata.com',
+        $MailBody,
         null,
         true,
         false);
@@ -558,24 +554,20 @@ admin@grepodata.com',
       $oUser->token = $Token;
       $oUser->save();
 
+      $MailBody =  self::mailTemplateActionRequired(
+        $oUser,
+        'Account removal <span style="color: #18bc9c;">GrepoData</span>',
+        'You are receiving this message because a request was made to delete your account on grepodata.com. Please click on the button below to confirm the removal of your account.',
+        'Delete Account',
+        'https://grepodata.com/delete/'.$Token
+      );
+
       // Send confirmation email
       $Result = Client::SendMail(
         'admin@grepodata.com',
         $oUser->email,
         'Grepodata account removal',
-        'Hi,<br/>
-<br/>
-You are receiving this message because a request was made to delete your account on grepodata.com.<br/>
-<br/>
-Please confirm your request by clicking on the following link:<br/>
-<br/>
-<a href="https://grepodata.com/delete/'.$Token.'">https://grepodata.com/delete/'.$Token.'</a><br/>
-<br/>
-If you did not request this email, someone else may have access to your GrepoData account.<br/>
-You can ignore this email if you no longer wish to remove your account.<br/>
-<br/>
-Sincerely,<br/>
-admin@grepodata.com',
+        $MailBody,
         null,
         true,
         false);
@@ -609,24 +601,20 @@ admin@grepodata.com',
       $oUser->save();
     }
 
+    $MailBody =  self::mailTemplateActionRequired(
+      $oUser,
+      'Welcome to <span style="color: #18bc9c;">GrepoData</span>',
+      'You are receiving this message because an account was created on grepodata.com using this email address. Please click on the button below to confirm your account.',
+      'Confirm Account',
+      'https://api.grepodata.com/confirm?token='.$Token
+    );
+
     $Result = false;
     $Result = Client::SendMail(
       'admin@grepodata.com',
       $oUser->email,
       'GrepoData Account Confirmation',
-      'Hi,<br/>
-<br/>
-You are receiving this message because an account was created on grepodata.com using this email address.<br/>
-<br/>
-Please click on the following link to confirm your account:<br/>
-<br/>
-<a href="https://api.grepodata.com/confirm?token='.$Token.'">https://api.grepodata.com/confirm?token='.$Token.'</a><br/>
-<br/>
-If you did not request this email, someone else may have entered your email address into our account registration form.<br/>
-You can ignore this email if you no longer wish to create an account for our website.<br/>
-<br/>
-Sincerely,<br/>
-admin@grepodata.com',
+      $MailBody,
       null,
       true,
       false);
@@ -651,5 +639,64 @@ admin@grepodata.com',
     }
 
     return $oUser;
+  }
+
+  private static function mailTemplateActionRequired(\Grepodata\Library\Model\User $oUser, $Title, $TextContent, $ActionName, $ActionLink)
+  {
+    $Template = '
+<table style="background-color: #ffffff; border: 1px solid #dedede; font-family: helvetica, roboto, arial, sans-serif; border-radius: 3px !important;" border="0" width="600" cellspacing="0" cellpadding="0">
+  <tbody>
+  <tr>
+    <td align="center" valign="top">
+      <table style="background-color: #304357; color: #ffffff; border-bottom: 0px; font-weight: bold; line-height: 100%; vertical-align: middle; font-family: helvetica, roboto, arial, sans-serif; border-radius: 3px 3px 0px 0px !important;" border="0" width="600" cellspacing="0" cellpadding="0">
+        <tbody>
+        <tr>
+          <td style="padding: 16px 48px; display: block;">
+            <h1 style="color: #ffffff; font-size: 30px; font-weight: 300; line-height: 150%; margin: 0px; text-align: left;">
+              '.$Title.'
+            </h1>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" valign="top">
+      <table border="0" width="600" cellspacing="0" cellpadding="0">
+        <tbody>
+        <tr>
+          <td style="background-color: #ffffff;" valign="top">
+            <table border="0" width="100%" cellspacing="0" cellpadding="20">
+              <tbody>
+              <tr>
+                <td style="padding: 48px;" valign="top">
+                  <p>Hi '.$oUser->username.',</p>
+                  <p>'.$TextContent.'</p>
+                  <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: auto;">
+                    <tr>
+                      <td style="font-family: sans-serif; font-size: 14px; vertical-align: top; background-color: #18bc9c; border-radius: 0px; text-align: center;" valign="top" bgcolor="#3498db" align="center">
+                        <a href="'.$ActionLink.'" target="_blank" style="display: inline-block; color: #ffffff; background-color: #18bc9c; border: solid 1px #18bc9c; border-radius: 0px; box-sizing: border-box; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: bold; margin: 0; padding: 12px 25px; text-transform: capitalize; border-color: #18bc9c;">
+                          '.$ActionName.'
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                  <p>If you need any help or support, please reply to this email</p>
+                  <p>Kind regards,<br/>The GrepoData team</p>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </td>
+  </tr>
+  </tbody>
+</table>
+    ';
+    return $Template;
   }
 }
