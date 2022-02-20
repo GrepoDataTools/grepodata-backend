@@ -133,6 +133,16 @@ class Authentication
 
   private static function invalidJWT()
   {
+    try {
+      $aTrace = debug_backtrace();
+      foreach ($aTrace as $aCall) {
+        if ($aCall['function'] == 'verifyJWT') {
+          Logger::warning("InvalidJWT called: ".json_encode($aCall));
+        }
+      }
+    } catch (\Exception $e) {
+      Logger::warning("Error tracing JWT failure: ".$e->getMessage());
+    }
     ResponseCode::errorCode(3003, array(), 401);
   }
 
