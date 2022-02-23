@@ -1181,6 +1181,7 @@ var errorSubmissions = [];
         };
 
         function loginError(message, verbose = false, timeout = 0) {
+            console.log('login error: ', message);
             let errormsg = message==''?"Unable to authenticate. Please try again later":message;
             $('#grepodatalerror').text(errormsg);
             $('#grepodatalerror').show();
@@ -1222,15 +1223,18 @@ var errorSubmissions = [];
                     }
                 },
                 error: function (error, textStatus) {
-                    if (error.responseJSON.error_code && (error.responseJSON.error_code === 3041 || error.responseJSON.error_code === 3042)) {
-                        // Unknown or expired script token. remove token and try again
+                    if (error.responseJSON.error_code
+                        && (
+                            error.responseJSON.error_code === 3041  // Token not found
+                            || error.responseJSON.error_code === 3042 // Expired (7 days)
+                            || error.responseJSON.error_code === 3043 // Invalid client
+                        )
+                    ) {
+                        // Unknown, invalid or expired script token. remove token and try again
                         clearInterval(script_token_interval);
                         deleteLocalToken('gd_indexer_script_token');
                         showLoginPopup();
-                        verbose ? setTimeout(loginError('Expired script token. Please try using the link again.'), 1000) : null;
-                    } else if (error.responseJSON.error_code && error.responseJSON.error_code === 3043) {
-                        // Invalid client
-                        verbose ? loginError('Your script token is not valid for this client. Please request a new token or contact us if this error persists.') : null;
+                        setTimeout(_ => {loginError('Expired script token. Please try using the link again.')}, 1000);
                     } else if (error.responseJSON.error_code && error.responseJSON.error_code === 3040) {
                         // Token is not yet linked
                         verbose ? loginError('Your script token is not yet verified. Click the link to try again.') : null;

@@ -213,6 +213,7 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
   {
     /**
      * Generate a unique script identifier with expiration
+     * Called from in-game userscript
      */
 
     $oToken = ScriptToken::NewScriptToken($_SERVER['REMOTE_ADDR']);
@@ -233,6 +234,7 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
   {
     /**
      * Check if the script link token has been verified and return an access_token for the connected user if true
+     * Called from in-game userscript with script_token
      */
 
     // Validate params
@@ -255,6 +257,7 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
     // Check client
     if ($oToken->client !== $_SERVER['REMOTE_ADDR']) {
       // Invalid client
+      Logger::warning("Remote mismatch during script token verification: ".$oToken->client.' != '.$_SERVER['REMOTE_ADDR']);
       ResponseCode::errorCode(3043, array(), 401);
     }
 
@@ -282,7 +285,7 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
   public static function AuthenticateScriptLinkPOST()
   {
     /**
-     * This method will Link the given script uuid to a user account
+     * This method will link the given script uuid to a user account
      * Called from Angular frontend with uuid
      */
 
@@ -314,6 +317,7 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
     // Check client
     if ($oToken->client !== $_SERVER['REMOTE_ADDR']) {
       // Invalid client
+      Logger::warning("Remote mismatch during script token authentication: ".$oToken->client.' != '.$_SERVER['REMOTE_ADDR']);
       ResponseCode::errorCode(3043, array(), 401);
     }
 
