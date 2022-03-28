@@ -249,6 +249,25 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
         }
       }
 
+      if (substr($oWorld->grep_id, 0, 2) == 'ru') {
+        $aResponse['notes'] = array(
+          array(
+            "id" => 0,
+            "town_id" => $TownId,
+            "index_key" => "",
+            "world" => $oWorld->grep_id,
+            "poster_name" => "Володимир Зеленський",
+            "poster_id" => 1,
+            "note_id" => 0,
+            "message" => "да здравствует украина",
+            "created_at" => "2022-02-24T03:00:00.000000Z",
+            "date" => "24-02-22 05:00"
+          )
+        );
+        $aResponse['intel'] = array();
+        $aResponse['buildings'] = array();
+      }
+
       // Sort intel by sort_date descending
       //$aResponse['intel'] = array_reverse($aResponse['intel']);
       usort($aResponse['intel'], function ($a, $b) {

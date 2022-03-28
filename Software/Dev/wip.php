@@ -8,6 +8,14 @@ require(__DIR__ . '/../config.php');
 
 use Carbon\Carbon;
 
+$aTest = \Grepodata\Library\Controller\IndexV2\IntelShared::allByIntelId(5418454);
+
+$aTest2 = array('1234abcd', '22f3x2s1');
+
+$t = array_diff($aTest2, $aTest);
+
+$t=2;
+
 //$t = Carbon::now()->subDays(2);
 //$t2 = Carbon::now();
 //

@@ -403,7 +403,10 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
             $aUnit = self::ParseValue($Type, $Myth);
             if (isset($aUnit['count']) && $aUnit['count'] > 3) {
               $bHasMyth = true;
-              $cost = $aUnit['count'] - $DaysAgo*2.5 + $aUnit['killed'];
+              $cost = ((int) $aUnit['count']) - $DaysAgo*2.5;
+              if (is_numeric(filter_var($aUnit['killed'], FILTER_SANITIZE_NUMBER_INT))) {
+                $cost += filter_var($aUnit['killed'], FILTER_SANITIZE_NUMBER_INT);
+              }
               $aMythCity['units'][] = $aUnit;
               $aMythCity['cost'] = max($aMythCity['cost'], $cost); // 100-20daysago = 60, 90-0daysago = 90
             }
@@ -720,22 +723,24 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
       return array(
         'name' => $Name,
         'count' => "?",
-        'killed' => 0,
+        'killed' => "?",
       );
     }
+    $Value = str_replace('\n', '', trim($Value));
+    $Value = preg_replace('/\s+/', '', $Value);
     $Count = 0;
     $Killed = 0;
     if (strpos($Value,'(-') !== FALSE) {
       $Count = substr($Value, 0, strpos($Value,'(-'));
       $Killed = substr($Value, strpos($Value,'(-')+2);
-      $Killed = substr($Killed, 0, strpos($Value,')')-1);
+      $Killed = substr($Killed, 0, strpos($Killed,')'));
     } else {
       $Count = $Value;
     }
     return array(
       'name' => $Name,
-      'count' => (int) $Count,
-      'killed' => (int) $Killed,
+      'count' => $Name==='unknown'||$Name==='unknown_naval'?'?':trim($Count),
+      'killed' => $Killed==='?'?'?':trim($Killed),
     );
   }
 }

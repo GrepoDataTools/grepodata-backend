@@ -351,6 +351,8 @@ class Intel
         'killed' => "?",
       );
     }
+    $Value = str_replace('\n', '', trim($Value));
+    $Value = preg_replace('/\s+/', '', $Value);
     $Count = 0;
     $Killed = 0;
     if (strpos($Value,'(-') !== FALSE) {
@@ -362,8 +364,8 @@ class Intel
     }
     return array(
       'name' => $Name,
-      'count' => $Name==='unknown'||$Name==='unknown_naval'?'?':((int) $Count),
-      'killed' => $Killed==='?'?'?':(int) $Killed,
+      'count' => $Name==='unknown'||$Name==='unknown_naval'?'?':trim($Count),
+      'killed' => $Killed==='?'?'?':trim($Killed),
     );
   }
 
@@ -473,16 +475,34 @@ class Intel
     foreach ($aInputUnits as $Key => $Value) {
       $Count = 0;
       $Killed = 0;
-      preg_match_all('/[0-9]{1,}/', $Value, $aValueMatches);
-      if (!empty($aValueMatches) && isset($aValueMatches[0][0])) {
-        $Count = (int) $aValueMatches[0][0];
-        if (isset($aValueMatches[0][1])) {
-          $Killed = (int) $aValueMatches[0][1];
+      $KilledNew = 0;
+      $aParts = explode('(', $Value);
+      if (!empty($aParts) && isset($aParts[0])) {
+        $Count = trim($aParts[0]);
+        if (isset($aParts[1])) {
+          $KilledRaw = str_replace(')', '', trim($aParts[1]));
+          $KilledRaw = str_replace('-', '', $KilledRaw);
+          $KilledNew = $KilledRaw;
+
+          // Backwards compatibility for old frontend:
+          if (strpos($KilledRaw, 'k')!==false) {
+            $KilledRaw = str_replace('k', '', $KilledRaw);
+            if (strpos($KilledRaw, '.')!==false||strpos($KilledRaw, ',')!==false) {
+              $KilledRaw = str_replace('.', '', $KilledRaw);
+              $KilledRaw = str_replace(',', '', $KilledRaw);
+              $KilledRaw .= '00';
+            } else {
+              $KilledRaw .= '000';
+            }
+          }
+          $Killed = $KilledRaw;
+
         }
       }
       $aParsed[] = array(
         'count' => $Count,
         'killed' => $Killed,
+        'killed_new' => $KilledNew,
         'name' => $Key,
         'raw' => $Value,
       );

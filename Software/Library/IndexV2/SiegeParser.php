@@ -213,15 +213,38 @@ class SiegeParser
             }
             $aDefUnits = $oConquestDetails->siegeUnits;
             foreach ($aDefUnits as $Key => $Value) {
-              preg_match('/\(-[0-9]{1,6}\)/', $Value, $aMatch);
-              if (!empty($aMatch)) {
-                $LostUnits = abs((int) filter_var($aMatch[0], FILTER_SANITIZE_NUMBER_INT));
-                if (!is_nan($LostUnits) && $LostUnits > 0) {
-                  if (!isset($aTotalLossesDef[$Key])) $aTotalLossesDef[$Key] = 0;
-                  $aTotalLossesDef[$Key] += $LostUnits;
-                  if ($Key === 'colonize_ship') {
-                    $bCsIsKilled = true;
+              $Count = 0;
+              $Killed = 0;
+              $KilledNew = 0;
+              $aParts = explode('(', $Value);
+              if (!empty($aParts) && isset($aParts[0])) {
+                $Count = trim($aParts[0]);
+                if (isset($aParts[1])) {
+                  $KilledRaw = str_replace(')', '', trim($aParts[1]));
+                  $KilledRaw = str_replace('-', '', $KilledRaw);
+
+                  // Parse thousands indicator:
+                  if (strpos($KilledRaw, 'k')!==false) {
+                    $KilledRaw = str_replace('k', '', $KilledRaw);
+                    if (strpos($KilledRaw, '.')!==false||strpos($KilledRaw, ',')!==false) {
+                      $KilledRaw = str_replace('.', '', $KilledRaw);
+                      $KilledRaw = str_replace(',', '', $KilledRaw);
+                      $KilledRaw .= '00';
+                    } else {
+                      $KilledRaw .= '000';
+                    }
                   }
+                  if (is_numeric($KilledRaw)) {
+                    $LostUnits = (int) $KilledRaw;
+                    if (!is_nan($LostUnits) && $LostUnits > 0) {
+                      if (!isset($aTotalLossesDef[$Key])) $aTotalLossesDef[$Key] = 0;
+                      $aTotalLossesDef[$Key] += $LostUnits;
+                      if ($Key === 'colonize_ship') {
+                        $bCsIsKilled = true;
+                      }
+                    }
+                  }
+
                 }
               }
             }

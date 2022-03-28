@@ -46,6 +46,25 @@ class IntelShared
 //    return $aResult;
   }
 
+  /**
+   * Returns a list of all the indexes that are linked to the given Intel ID
+   * @param $IntelId int identifier for Indexer_intel record
+   * @return mixed
+   */
+  public static function allByIntelId(int $IntelId)
+  {
+    return array_map(
+      function ($e) {
+        return $e['index_key'];
+      },
+      \Grepodata\Library\Model\IndexV2\IntelShared::where('intel_id', '=', $IntelId)
+        ->where('index_key', '<>', '')
+        ->distinct('index_key')
+        ->get('index_key')
+        ->toArray()
+    );
+  }
+
   public static function saveHashToIndex($ReportHash, $IntelId, IndexInfo $oIndex, $PlayerId = null)
   {
     $oIntelShared = new \Grepodata\Library\Model\IndexV2\IntelShared();

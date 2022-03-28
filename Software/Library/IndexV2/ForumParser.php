@@ -4,6 +4,7 @@ namespace Grepodata\Library\IndexV2;
 
 use Carbon\Carbon;
 use Exception;
+use Grepodata\Library\Controller\IndexV2\IntelShared;
 use Grepodata\Library\Controller\Player;
 use Grepodata\Library\Controller\Town;
 use Grepodata\Library\Controller\World;
@@ -377,6 +378,31 @@ class ForumParser
             ->where('report_type', '=', $aCityInfo['report_type'])
             ->where('luck', '=', ($aCityInfo['luck']??0))
             ->firstOrFail();
+
+          try {
+            // Duplicate may be caused because the report is also in an enemy index
+            // this is normal behavior for conquest reports because their structure is exactly the same for both the attacker and the defender (Hash may be different due to battle point difference)
+            // we now need to ensure that the intel is also added to the indexes of the current requestor, but ONLY for the indexes that were not parsed already
+
+            if ($aCityInfo['report_type'] == 'attack_on_conquest' && isset($aCityInfo['conquest_details']) && !empty($aCityInfo['conquest_details'])) {
+
+              // We need to skip indexes that were already parsed, otherwise the siege contribution is counted double
+              $aAlreadyParsed = IntelShared::allByIntelId($oIntel->id);
+              $aIndexesFiltered = array_diff($aIndexes, $aAlreadyParsed);
+
+              if (sizeof($aIndexesFiltered) > 0) {
+                // Save siege attack to new indexes
+                $oIntel->conquest_details = json_encode($aCityInfo['conquest_details']->jsonSerialize());
+                $SiegeId = SiegeParser::saveSiegeAttack($aCityInfo['conquest_details'], $oIntel, $aIndexesFiltered, $ReportHash);
+                if ($SiegeId != $oIntel->conquest_id) {
+                  Logger::warning("ForumParser $ReportHash: siege id mismatch for duplicate city object");
+                }
+              }
+            }
+          } catch (Exception $e) {
+            Logger::warning("ForumParser $ReportHash: unable to update conquest details after finding duplicate city object");
+          }
+
           return $oIntel->id;
         } catch (\Exception $e) {
           throw new ForumParserExceptionWarning("Unable to find duplicate intel entry");
@@ -1175,7 +1201,7 @@ class ForumParser
         $aDefenderUnits = Helper::allByClass($aReportData, 'report_side_defender_unit');
 
         if (empty($aAttackUnits) || empty($aDefenderUnits)) {
-          throw new ForumParserExceptionError("Unable to locate report units");
+          throw new ForumParserExceptionWarning("Unable to locate report units");
         }
 
         // parse incoming
@@ -1250,7 +1276,7 @@ class ForumParser
       if (is_array($unitsChild) && count($unitsChild) > 1) {
         $oReportUnit = Helper::allByClass($unitsChild, 'report_unit')[0];
         $Value = $oReportUnit['attributes']['data-unit_count'];
-        if (!key_exists('data-unit_count', $oReportUnit['attributes'])) {
+        if (!key_exists('data-unit_count', $oReportUnit['attributes']) && $oReportUnit['attributes']['id']!='unknown' && $oReportUnit['attributes']['id']!='unknown_naval') {
           Logger::warning("ForumParser " . $ReportHash . ": unit_count not found; ");
         }
         $Class = $oReportUnit['attributes']['class'];
@@ -1276,8 +1302,6 @@ class ForumParser
               if (strpos($Died, '-') !== FALSE) {
                 if ($Key === 'unknown' || $Key === 'unknown_naval') {
                   $Died = '-?';
-                } else {
-                  $Died = filter_var($Died, FILTER_SANITIZE_NUMBER_INT);
                 }
                 $cityInfo[$aUnit['type']] .= "(" . $Died . ")";
               }

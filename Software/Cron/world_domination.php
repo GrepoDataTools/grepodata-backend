@@ -55,6 +55,8 @@ foreach ($aWorlds as $oWorld) {
   $aTowns = \Grepodata\Library\Model\Town::select([
     'Town.*',
     'Player.alliance_id',
+    'Player.name AS player_name',
+    'Player.towns AS player_towns',
     'Alliance.name AS alliance_name',
     'Alliance.members AS alliance_members',
     'Alliance.towns AS alliance_towns'
@@ -135,6 +137,7 @@ foreach ($aWorlds as $oWorld) {
   // How big should the circle be in each direction?
   $aDominationPercentiles = array(70, 75, 80, 85, 90);
   $aDominationData = array();
+  $aDominationDataPlayers = array();
   foreach ($aDominationPercentiles as $domination_percentile) {
     $aIslandsListCopy = array();
 
@@ -154,8 +157,14 @@ foreach ($aWorlds as $oWorld) {
 
     // aggregate by alliance
     $aAlliances = array();
+    $aPlayers = array();
     foreach ($aDominationTowns as $oTown) {
+
       $AllianceId = $oTown->alliance_id ?? 0;
+//      if (in_array($oTown->player_id, array(73227, 24902, 796540, 1444674, 146472))) {
+//        $AllianceId = 17;
+//      }
+
       if (!key_exists($AllianceId, $aAlliances)) {
         $aAlliances[$AllianceId] = array(
           'i' => $AllianceId,
@@ -166,10 +175,26 @@ foreach ($aWorlds as $oWorld) {
         );
       }
       $aAlliances[$AllianceId]['t']++;
+
+      $PlayerId = $oTown->player_id ?? 0;
+      if (!key_exists($PlayerId, $aPlayers)) {
+        $aPlayers[$PlayerId] = array(
+          'i' => $PlayerId,
+          'tt' => $oTown->player_towns ?? 1,
+          'n' => $oTown->player_name ?? 'Unknown/Ghost',
+          't' => 0
+        );
+      }
+      $aPlayers[$PlayerId]['t']++;
     }
 
     // order by towns descending
     uasort($aAlliances, function ($a, $b) {
+      return $a['t'] < $b['t'];
+    });
+
+    // order by towns descending
+    uasort($aPlayers, function ($a, $b) {
       return $a['t'] < $b['t'];
     });
 
@@ -184,16 +209,24 @@ foreach ($aWorlds as $oWorld) {
         unset($aAlliances[$AllianceId]);
       }
     }
+    foreach ($aPlayers as $PlayerId => $aPlayer) {
+      $aPlayers[$PlayerId]['p'] = round(($aAlliance['t'] / $TotalTowns) * 100, 1); // domination percentage
+      $aPlayers[$PlayerId]['rots'] = $aAlliance['tt'] - $aAlliance['t'];
+    }
 
     $aDominationData[$domination_percentile] = $aAlliances;
+    $aDominationDataPlayers[$domination_percentile] = $aPlayers;
 
     unset($aIslandsListCopy);
   }
 
   // log 80th percentile
   if ($oWorld->grep_id == 'nl92') {
-    foreach ($aDominationData[90] as $aAlliance) {
+    foreach ($aDominationData[70] as $aAlliance) {
       Logger::silly($aAlliance['n'] . " = " . $aAlliance['t'] . " (" . $aAlliance['p'] . "%) (".$aAlliance['tpm']." towns per member)");
+    }
+    foreach ($aDominationDataPlayers[70] as $aPlayer) {
+      Logger::silly($aPlayer['n'] . " = " . $aPlayer['t'] . " steden waarvan " . $aPlayer['t'] . " domi, " . $aPlayer['rots'] . " rots of buiten cirkel");
     }
   }
 
