@@ -5,6 +5,7 @@ namespace Grepodata\Library\Controller\IndexV2;
 use Grepodata\Library\Model\Indexer\IndexInfo;
 use Grepodata\Library\Model\User;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Capsule\Manager as DB;
 
 class IntelShared
 {
@@ -63,6 +64,31 @@ class IntelShared
         ->get('index_key')
         ->toArray()
     );
+  }
+
+  /**
+   * Counts the number of reports that have not been shared with a specific index
+   * @param $UserId
+   * @param $World
+   * @param $IndexKey
+   * @return mixed
+   */
+  public static function countUncommitted($UserId, $World, $IndexKey)
+  {
+    $aUncommited = DB::select( DB::raw("
+        SELECT count(*) as count FROM `Indexer_intel_shared` WHERE `user_id` = ".$UserId." AND `world` LIKE '".$World."'
+        AND intel_id NOT IN (SELECT intel_id FROM Indexer_intel_shared WHERE index_key = '".$IndexKey."')
+      "));
+
+    $Uncommitted = 0;
+    if (count($aUncommited)>0) {
+      $aUncommitted = (array) $aUncommited[0];
+      if (key_exists('count', $aUncommitted) && $aUncommitted['count'] > 0) {
+        $Uncommitted = $aUncommitted['count'];
+      }
+    }
+
+    return (int) $Uncommitted;
   }
 
   public static function saveHashToIndex($ReportHash, $IntelId, IndexInfo $oIndex, $PlayerId = null)

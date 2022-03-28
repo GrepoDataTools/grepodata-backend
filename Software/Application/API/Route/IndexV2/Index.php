@@ -282,7 +282,7 @@ class Index extends BaseRoute
       $oIndex = IndexBuilderV2::buildNewIndex($aParams['world'], $aParams['index_name'], $oUser->id);
       if ($oIndex !== false && $oIndex !== null) {
 
-        Roles::SetUserIndexRole($oUser, $oIndex, Roles::ROLE_OWNER);
+        $oActiveRole = Roles::SetUserIndexRole($oUser, $oIndex, Roles::ROLE_OWNER);
 
         Event::addIndexJoinEvent($oIndex, $oUser, 'created_team');
 
@@ -292,6 +292,15 @@ class Index extends BaseRoute
           Logger::error("Error building index overview for new index " . $oIndex->key_code . " (".$e->getMessage().")");
         }
 
+        // Check for uncommitted intel
+        try {
+          $UncommittedCount = \Grepodata\Library\Controller\IndexV2\IntelShared::countUncommitted($oUser->id, $oIndex->world, $oIndex->key_code);
+          $oActiveRole->uncommitted_reports = $UncommittedCount;
+          $oActiveRole->uncommitted_status = 'Unread';
+          $oActiveRole->save();
+        } catch (\Exception $e) {
+          Logger::error("Error parsing owner index commitment: ".$e->getMessage());
+        }
 
         $aResponse = array(
           'status' => 'ok',

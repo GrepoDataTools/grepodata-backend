@@ -399,6 +399,16 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
         }
       }
 
+      // Check for uncommitted intel
+      try {
+        $UncommittedCount = \Grepodata\Library\Controller\IndexV2\IntelShared::countUncommitted($oUser->id, $oIndex->world, $oIndex->key_code);
+        $oActiveRole->uncommitted_reports = $UncommittedCount;
+        $oActiveRole->uncommitted_status = 'Unread';
+        $oActiveRole->save();
+      } catch (\Exception $e) {
+        Logger::error("Error parsing index commitment: ".$e->getMessage());
+      }
+
       // catch all: invalid invite link
       if ($oActiveRole==null) {
         ResponseCode::errorCode(3008);
