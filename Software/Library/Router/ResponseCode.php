@@ -63,6 +63,7 @@ define('GD_ERROR_6401', 'No user found for these parameters.');
 define('GD_ERROR_7000', 'Unable to handle indexer request');
 define('GD_ERROR_7100', 'No verified players found for this user.');
 define('GD_ERROR_7101', 'No index found for this key.');
+define('GD_ERROR_7201', 'User is not part of any teams on this world.');
 define('GD_ERROR_7500', 'Unauthorized. You do not have access to this index.');
 define('GD_ERROR_7501', 'Unauthorized. You are not an owner on this index.');
 define('GD_ERROR_7502', 'Unauthorized. You are not an admin on this index.');

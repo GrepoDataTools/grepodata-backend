@@ -24,6 +24,11 @@ class Notes extends \Grepodata\Library\Router\BaseRoute
       // Get indexes for player
       $aIndexList = \Grepodata\Library\Controller\Indexer\IndexInfo::allByUserAndWorld($oUser, $oWorld->grep_id);
 
+      // Check if user has indexes
+      if (count($aIndexList) <= 0) {
+        ResponseCode::errorCode(7201, array(), 403);
+      }
+
       // Save note to each index
       $PrimaryId = 0;
       foreach ($aIndexList as $oIndex) {
