@@ -7,6 +7,7 @@ define('GD_ERROR_0000', 'Undefined error code');
 define('GD_ERROR_1000', 'Unable to handle request');
 define('GD_ERROR_1010', 'Bad request. Invalid or missing parameters');
 define('GD_ERROR_1200', 'Unable to process request');
+define('GD_ERROR_1300', 'Request is already in progress');
 
 // Model not found
 define('GD_ERROR_2000', 'Model not found for these parameters.');
@@ -101,6 +102,7 @@ define('GD_SUCCESS_1250', 'Updated delete days');
 define('GD_SUCCESS_1260', 'Updated v1 join status');
 define('GD_SUCCESS_1300', 'User index access revoked');
 define('GD_SUCCESS_1400', 'V1 index key import successful');
+define('GD_SUCCESS_1410', 'Intel commit successful');
 define('GD_SUCCESS_1500', 'User left index successfully');
 
 define('GD_SUCCESS_4000', 'Profile request processed successfully');

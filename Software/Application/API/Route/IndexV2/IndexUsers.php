@@ -6,6 +6,7 @@ use Grepodata\Library\Controller\Alliance;
 use Grepodata\Library\Controller\Indexer\IndexInfo;
 use Grepodata\Library\Controller\IndexV2\Event;
 use Grepodata\Library\Controller\IndexV2\IndexOverview;
+use Grepodata\Library\Controller\IndexV2\IntelShared;
 use Grepodata\Library\Controller\IndexV2\Roles;
 use Grepodata\Library\Controller\World;
 use Grepodata\Library\IndexV2\IndexManagement;
@@ -423,6 +424,134 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
       ResponseCode::success($aResponse, 1201);
     } catch (\Exception $e) {
       Logger::warning("Error handling invite link: " . $e->getMessage());
+      ResponseCode::errorCode(1200);
+    }
+  }
+
+  /**
+   * Update uncommitted report status on the given user/index combination
+   */
+  public static function CommitPreviousIntelGET()
+  {
+    try {
+      $aParams = self::validateParams(array('access_token', 'index_key', 'action'));
+      $oUser = Authentication::verifyJWT($aParams['access_token']);
+
+      // User requires write access to be able to import
+      $oUserRole = IndexManagement::verifyUserCanWrite($oUser, $aParams['index_key']);
+
+      try {
+        $oIndex = IndexInfo::firstOrFail($aParams['index_key']);
+      } catch (ModelNotFoundException $e) {
+        ResponseCode::errorCode(2020);
+      }
+
+      ignore_user_abort(true);
+      set_time_limit(0);
+
+      if ($oUserRole->uncommitted_status == 'processing') {
+        // Request is already being processed.
+        ResponseCode::errorCode(1300);
+      }
+
+      // Update role status
+      $bIgnore = false;
+      switch ($aParams['action']) {
+        case 'ignore':
+          $oUserRole->uncommitted_status = 'ignore';
+          $bIgnore = true;
+          break;
+        case 'commit':
+          $oUserRole->uncommitted_status = 'processing';
+          break;
+        default:
+          ResponseCode::errorCode(1010, array('message'=>'action contains an invalid option. must be one of: ignore, commit'));
+      }
+      $oUserRole->save();
+
+      if ($bIgnore) {
+        ResponseCode::success();
+      }
+
+      // Commit existing intel
+      $bHasError = false;
+      try {
+        $time_start = microtime(true);
+
+        $aUncommittedIntel = IntelShared::getUncommitted($oUser->id, $oIndex->world, $oIndex->key_code);
+        Logger::error("Committing existing intel to index: " .$oUser->id."-".$oIndex->world."-".$oIndex->key_code."-".count($aUncommittedIntel));
+
+        foreach ($aUncommittedIntel as $aUncommitted) {
+          $aUncommitted = (array) $aUncommitted;
+          $oNewLink = new \Grepodata\Library\Model\IndexV2\IntelShared();
+          $oNewLink->intel_id = $aUncommitted['intel_id'];
+          $oNewLink->report_hash = $aUncommitted['report_hash'];
+          $oNewLink->index_key = $oIndex->key_code;
+          $oNewLink->player_id = $aUncommitted['player_id'];
+          $oNewLink->world = $oIndex->world;
+          $oNewLink->user_id = null;
+          $oNewLink->save();
+        }
+
+        Logger::warning("Completed existing intel import of ".count($aUncommittedIntel). " reports in ".(microtime(true) - $time_start)." seconds");
+
+        $oIndex->new_report = 1;
+        $oIndex->save();
+      } catch (\Exception $e) {
+        $bHasError = true;
+        Logger::error("Error committing existing intel to index. ".$oUser->id."-".$oIndex->world."-".$oIndex->key_code.". " . $e->getMessage());
+      }
+
+      // Commit notes
+      try {
+        $aUncommittedNotes = \Grepodata\Library\Controller\IndexV2\Notes::getUncommitted($oUser->id, $oIndex->world, $oIndex->key_code);
+        Logger::debugInfo("Committing existing notes to index: " .$oUser->id."-".$oIndex->world."-".$oIndex->key_code."-".count($aUncommittedNotes));
+
+        $aDuplicates = array();
+        foreach ($aUncommittedNotes as $aUncommitted) {
+          $aUncommitted = (array) $aUncommitted;
+
+          if (in_array($aUncommitted['note_id'], $aDuplicates)) {
+            continue;
+          }
+
+          $oNewNote = new \Grepodata\Library\Model\IndexV2\Notes();
+          $oNewNote->user_id = $oUser->id;
+          $oNewNote->index_key = $oIndex->key_code;
+          $oNewNote->world = $oIndex->world;
+          $oNewNote->town_id = $aUncommitted['town_id'];
+          $oNewNote->message = $aUncommitted['message'];
+          $oNewNote->note_id = $aUncommitted['note_id'];
+          $oNewNote->poster_id = $aUncommitted['poster_id'];
+          $oNewNote->poster_name = $aUncommitted['poster_name'];
+          $oNewNote->created_at = $aUncommitted['created_at'];
+          $oNewNote->updated_at = $aUncommitted['updated_at'];
+          $oNewNote->save();
+
+          $aDuplicates[] = $aUncommitted['note_id'];
+        }
+
+        $t=2;
+      } catch (\Exception $e) {
+        Logger::error("Error committing existing notes to index. ".$oUser->id."-".$oIndex->world."-".$oIndex->key_code.". " . $e->getMessage());
+      }
+
+      // Update role status
+      if (!$bHasError) {
+        $oUserRole->uncommitted_reports = 0;
+        $oUserRole->uncommitted_status = 'success';
+      } else {
+        $oUserRole->uncommitted_status = 'error';
+      }
+      $oUserRole->save();
+
+      $aResponse = array(
+        'processed' => true,
+        'has_error' => $bHasError
+      );
+      ResponseCode::success($aResponse, 1410);
+    } catch (\Exception $e) {
+      Logger::error("Error handling import request: " . $e->getMessage());
       ResponseCode::errorCode(1200);
     }
   }

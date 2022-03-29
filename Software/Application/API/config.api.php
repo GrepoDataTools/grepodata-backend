@@ -421,6 +421,13 @@ $oRouter->Add('searchindexusers', new Route('/indexer/search/user', array(
   '_method'     => 'SearchUsers'
 )));
 
+// Import uncommitted intel
+$oRouter->Add('commitprevintel', new Route('/indexer/commitprevintel', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\IndexUsers',
+  '_method'     => 'CommitPreviousIntel',
+  '_ratelimit'  => $limit3PerMin
+)));
+
 // Import V1 index keys
 $oRouter->Add('importv1keys', new Route('/migrate/importv1keys', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\IndexUsers',

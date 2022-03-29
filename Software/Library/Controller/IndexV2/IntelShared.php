@@ -91,6 +91,21 @@ class IntelShared
     return (int) $Uncommitted;
   }
 
+  /**
+   * Get all intel that has not yet been shared with a specific index
+   * @param $UserId
+   * @param $World
+   * @param $IndexKey
+   * @return mixed
+   */
+  public static function getUncommitted($UserId, $World, $IndexKey)
+  {
+    return DB::select( DB::raw("
+        SELECT * FROM `Indexer_intel_shared` WHERE `user_id` = ".$UserId." AND `world` LIKE '".$World."'
+        AND intel_id NOT IN (SELECT intel_id FROM Indexer_intel_shared WHERE index_key = '".$IndexKey."')
+      "));
+  }
+
   public static function saveHashToIndex($ReportHash, $IntelId, IndexInfo $oIndex, $PlayerId = null)
   {
     $oIntelShared = new \Grepodata\Library\Model\IndexV2\IntelShared();

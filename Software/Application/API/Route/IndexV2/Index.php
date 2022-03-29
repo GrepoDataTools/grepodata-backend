@@ -175,6 +175,8 @@ class Index extends BaseRoute
         'index_name'        => $oIndex->index_name,
         'role'              => $oIndexRole->role,
         'contribute'        => $oIndexRole->contribute,
+        'uncommitted_reports' => $oIndexRole->uncommitted_reports ?? 0,
+        'uncommitted_status' => $oIndexRole->uncommitted_status ?? '',
         'share_link'        => $bUserIsAdmin ? $oIndex->share_link : 'Unauthorized',
         'num_days'          => $bUserIsAdmin ? $oIndex->delete_old_intel_days : 0,
         'allow_join_v1_key' => $bUserIsAdmin ? $oIndex->allow_join_v1_key : 0,
