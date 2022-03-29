@@ -123,15 +123,15 @@ class Index extends BaseRoute
 
       $oWorld = World::getWorldById($oIndex->world);
 
-      if (!bDevelopmentMode) {
-        $oIndexRole = IndexManagement::verifyUserCanRead($oUser, $aParams['key']);
-        $bUserIsAdmin = in_array($oIndexRole->role, array(Roles::ROLE_ADMIN, Roles::ROLE_OWNER));
-      } else {
-        $oIndexRole = new \Grepodata\Library\Model\IndexV2\Roles();
-        $oIndexRole->role = 'owner';
-        $oIndexRole->contribute = false;
-        $bUserIsAdmin = true;
-      }
+//      if (!bDevelopmentMode) {
+      $oIndexRole = IndexManagement::verifyUserCanRead($oUser, $aParams['key']);
+      $bUserIsAdmin = in_array($oIndexRole->role, array(Roles::ROLE_ADMIN, Roles::ROLE_OWNER));
+//      } else {
+//        $oIndexRole = new \Grepodata\Library\Model\IndexV2\Roles();
+//        $oIndexRole->role = 'owner';
+//        $oIndexRole->contribute = false;
+//        $bUserIsAdmin = true;
+//      }
 
       $oIndexOverview = IndexOverview::firstOrFail($aParams['key']);
       if ($oIndexOverview == null) throw new ModelNotFoundException();

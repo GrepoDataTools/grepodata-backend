@@ -62,6 +62,7 @@ try {
   SELECT 
     reports, 
     index_count,
+    shared_count,
     user_count,
      users_today,
      users_week,
