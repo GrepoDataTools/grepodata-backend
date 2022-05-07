@@ -994,7 +994,6 @@ var errorSubmissions = [];
         }
 
         var login_window = null;
-        var is_v1_migrated = null;
         var script_token_interval = null;
         var refreshing_scripttoken = false;
         var interval_count = 0;
@@ -1023,26 +1022,10 @@ var errorSubmissions = [];
                 var login_window_element = $('.gdloginpopup').parent();
                 $(login_window_element).css({ top: 43 });
 
-                // Check if user migrated from a v1 script
-                var migration_complete = 'gd_key_migration_complete';
-                var v1_toggle_key = 'gd_index_toggle_v1';
-                if (getLocalToken(v1_toggle_key) && !getLocalToken(migration_complete)) {
-                    is_v1_migrated = getLocalToken(v1_toggle_key);
-                }
-
                 // Form Content
-                login_form_content = ''
-                if (is_v1_migrated == null) {
-                    login_form_content = `<h4 class="gd-title" style="text-align: center; font-size: 18px; display: block;">
-                                            Click the link below to sign in with your GrepoData account</h4>
-                                            <p style="display: block; text-align: center;">Sign in is required to use the city indexer userscript</p>`
-                } else {
-                    login_form_content = `<h4 class="gd-title" style="text-align: center; font-size: 16px; display: block; margin-top: -15px;">
-                            As of April 2021, a GrepoData login is required to use the city indexer.</h4>
-                        <p style="display: block; text-align: center;">We made this change in order to get approval for our city indexer tool.
-                            A GrepoData account is required to guarantee the security of the intel you collect and the people you share it with.
-                        <a href="https://grepodata.com/indexer">read more</a></p>`
-                }
+                login_form_content = `<h4 class="gd-title" style="text-align: center; font-size: 18px; display: block;">
+                                        Click the link below to sign in with your GrepoData account</h4>
+                                        <p style="display: block; text-align: center;">Sign in is required to use the city indexer userscript</p>`
 
                 // Build login form
                 formHtml = `
@@ -1216,7 +1199,6 @@ var errorSubmissions = [];
                         $('#gd-login-container').hide();
                         $('#gd-script-linked').show();
                         clearInterval(script_token_interval);
-                        checkV1KeyMigration(data.access_token);
                     } else {
                         // Unable
                         loginError('Unknown error. Please try again later or let us know if this error persists.', verbose);
@@ -1261,41 +1243,8 @@ var errorSubmissions = [];
                     }
                 } else {
                     console.log("GrepoData: Succesful authentication for player "+Game.player_id);
-                    checkV1KeyMigration(access_token);
                 }
             });
-        }
-
-        // V1 key migration
-        function checkV1KeyMigration(access_token) {
-            try {
-                var storage_key = 'gd_key_list_v1';
-                var migration_complete = 'gd_key_migration_complete';
-                if (getLocalToken(storage_key) && !getLocalToken(migration_complete)) {
-                    var keys = JSON.parse(localStorage.getItem(storage_key));
-                    console.log('Loaded old V1 keys from local storage', keys);
-
-                    // Migrate to V2
-                    $.ajax({
-                        url: backend_url + "/migrate/importv1keys",
-                        data: {
-                            access_token: access_token,
-                            index_keys: keys
-                        },
-                        type: 'post',
-                        crossDomain: true,
-                        dataType: 'json',
-                        timeout: 30000
-                    }).fail(function (err) {
-                        console.log("Error importing V1 keys: ", err);
-                    }).done(function (response) {
-                        console.log("V1 keys imported: ", response);
-                        setLocalToken(migration_complete, 'true');
-                    });
-                }
-            } catch (error) {
-                errorHandling(error, "checkV1KeyMigration");
-            }
         }
 
         // Decode entity hash
