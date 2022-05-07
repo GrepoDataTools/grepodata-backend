@@ -386,6 +386,8 @@ class ForumParser
 
             if ($aCityInfo['report_type'] == 'attack_on_conquest' && isset($aCityInfo['conquest_details']) && !empty($aCityInfo['conquest_details'])) {
 
+              Logger::warning("ForumParser $ReportHash; Check duplicate siege parse");
+
               // We need to skip indexes that were already parsed, otherwise the siege contribution is counted double
               $aAlreadyParsed = IntelShared::allByIntelId($oIntel->id);
               $aIndexesFiltered = array_diff($aIndexes, $aAlreadyParsed);
@@ -393,6 +395,7 @@ class ForumParser
               if (sizeof($aIndexesFiltered) > 0) {
                 // Save siege attack to new indexes
                 $oIntel->conquest_details = json_encode($aCityInfo['conquest_details']->jsonSerialize());
+                $oIntel->parsed_date = $aCityInfo['parsed_date'];
                 $SiegeId = SiegeParser::saveSiegeAttack($aCityInfo['conquest_details'], $oIntel, $aIndexesFiltered, $ReportHash);
                 if ($SiegeId != $oIntel->conquest_id) {
                   Logger::warning("ForumParser $ReportHash: siege id mismatch for duplicate city object");

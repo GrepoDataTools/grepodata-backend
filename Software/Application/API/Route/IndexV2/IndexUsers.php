@@ -475,11 +475,17 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
 
       // Commit existing intel
       $bHasError = false;
+      $ImportCount = 0;
       try {
         $time_start = microtime(true);
 
         $aUncommittedIntel = IntelShared::getUncommitted($oUser->id, $oIndex->world, $oIndex->key_code);
-        Logger::error("Committing existing intel to index: " .$oUser->id."-".$oIndex->world."-".$oIndex->key_code."-".count($aUncommittedIntel));
+        $ImportCount = count($aUncommittedIntel);
+        if ($ImportCount > 1000) {
+          Logger::error("Committing existing intel to index: " .$oUser->id."-".$oIndex->world."-".$oIndex->key_code."-".$ImportCount);
+        } else {
+          Logger::warning("Committing existing intel to index: " .$oUser->id."-".$oIndex->world."-".$oIndex->key_code."-".$ImportCount);
+        }
 
         foreach ($aUncommittedIntel as $aUncommitted) {
           $aUncommitted = (array) $aUncommitted;
@@ -540,6 +546,9 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
       if (!$bHasError) {
         $oUserRole->uncommitted_reports = 0;
         $oUserRole->uncommitted_status = 'success';
+        if (is_numeric($ImportCount) && $ImportCount > 0) {
+          Event::addImportEvent($oIndex, $oUser, $ImportCount);
+        }
       } else {
         $oUserRole->uncommitted_status = 'error';
       }

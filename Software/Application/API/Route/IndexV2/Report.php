@@ -16,10 +16,17 @@ use Grepodata\Library\Exception\InboxParserExceptionWarning;
 use Grepodata\Library\Indexer\IndexBuilderV2;
 use Grepodata\Library\Logger\Logger;
 
+use Grepodata\Library\Router\ResponseCode;
 use Illuminate\Database\Capsule\Manager as DB;
 
 class Report extends \Grepodata\Library\Router\BaseRoute
 {
+
+  /**
+   * API /indexer/v2/getlatest
+   *
+   * Returns a list of recent report hashes for the given user & world
+   */
   public static function LatestReportHashesGET()
   {
     $aParams = array();

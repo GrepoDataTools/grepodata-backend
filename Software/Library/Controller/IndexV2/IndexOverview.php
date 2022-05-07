@@ -287,7 +287,7 @@ class IndexOverview
         $oOwnerActual->index_key = $oIndex->key_code;
         $oOwnerActual->alliance_id = $RealOwner['alliance_id'];
         $oOwnerActual->alliance_name = $RealOwner['alliance_name']??'';
-        $oOwnerActual->hide_intel = true; // Default = true
+        $oOwnerActual->hide_intel = false; // Default = false
         $oOwnerActual->share = (int) $RealOwner['contributions'] ?? 0;
         $oOwnerActual->save();
 

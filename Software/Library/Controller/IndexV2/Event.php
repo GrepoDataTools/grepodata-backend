@@ -218,6 +218,33 @@ class Event
   }
 
   /**
+   * Add index import event
+   * @param IndexInfo $oIndex
+   * @param User $EditingUser
+   * @param $ImportCount
+   */
+  public static function addImportEvent(IndexInfo $oIndex, User $EditingUser, $ImportCount)
+  {
+    try {
+      $oWorld = World::getWorldById($oIndex->world);
+      $oEvent = new \Grepodata\Library\Model\IndexV2\Event();
+      $oEvent->world = $oIndex->world;
+      $oEvent->local_time = $oWorld->getServerTime();
+      $oEvent->admin_only = false;
+      $oEvent->index_key = $oIndex->key_code;
+      $aEvent = array(
+        self::eventPart('text', 'User '),
+        self::eventPart('user', $EditingUser->username),
+        self::eventPart('text', ' imported '.$ImportCount.' of their reports into this index.'),
+      );
+      $oEvent->json = json_encode($aEvent);
+      $oEvent->save();
+    } catch (\Exception $e) {
+      Logger::warning("Error saving import event: ".$e->getMessage());
+    }
+  }
+
+  /**
    * Add index name change
    * @param $oIndex
    * @param User $EditingUser

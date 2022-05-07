@@ -66,7 +66,7 @@ foreach ($worlds as $oWorld) {
 
           // Check town owner
           if ($oTown !== null && $oCity->player_id != $oTown->player_id) {
-            // Town changed owner. Keep intel that changed owner and somehow indicate this in the client (e.g. flag 'changed_owner=>true')
+            // Town changed owner. Keep intel that changed owner and indicate this in the client (e.g. flag 'changed_owner=>true')
             $oCity->player_id = $oTown->player_id;
             $oCity->is_previous_owner_intel = true;
             $bSave = true;
@@ -110,7 +110,9 @@ foreach ($worlds as $oWorld) {
           }
         }
 
-      } catch (\Exception $e) {}
+      } catch (\Exception $e) {
+        Logger::warning("Error updating intel towns for world " . $oWorld->grep_id . " (".$e->getMessage().")");
+      }
     }
 
     // Check if we can resolve an ongoing siege

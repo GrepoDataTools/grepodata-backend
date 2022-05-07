@@ -136,7 +136,7 @@ class IndexOwners extends \Grepodata\Library\Router\BaseRoute
         $oOwnerActual->index_key = $oIndex->key_code;
         $oOwnerActual->alliance_id = $oAlliance->grep_id;
         $oOwnerActual->alliance_name = $oAlliance->name;
-        $oOwnerActual->hide_intel = true; // Default = true
+        $oOwnerActual->hide_intel = false; // Default = false
         $oOwnerActual->share = 0;
         $oOwnerActual->save();
 

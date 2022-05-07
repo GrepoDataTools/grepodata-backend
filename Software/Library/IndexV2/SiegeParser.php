@@ -41,6 +41,15 @@ class SiegeParser
 //      if (Carbon::now()->diffInDays($ReportDate) > 14) {
 //        return null;
 //      }
+      if (is_string($ReportDate)) {
+        try {
+          Logger::warning("SiegeParser $ReportHash: converting parsed intel date; ".$ReportDate);
+          $ReportDate = Carbon::createFromTimestampUTC(strtotime($ReportDate));
+        } catch (Exception $e) {
+          Logger::warning("SiegeParser $ReportHash: error converting parsed intel date; ".$e->getMessage());
+          return null;
+        }
+      }
 
       // try to find an existing conquest entry for the besieged town
       $aConquests = Conquest::allByTownIdByWorld($oConquestDetails->siegeTownId, $oCity->world);
