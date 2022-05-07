@@ -41,7 +41,7 @@ var errorSubmissions = [];
         readSettingsCookie();
         setTimeout(function () {
             if (gd_settings.inbox === true || gd_settings.forum === true || gd_settings.forum_reactions === true) {
-                loadIndexHashlist(false, true); // Get list of recently indexed report ids
+                loadIndexHashlist(false, true, false); // Get list of recently indexed report ids
             }
         }, 300);
         checkLogin(false);
@@ -193,7 +193,7 @@ var errorSubmissions = [];
                         // Reload hashlist if last refresh was more than 10 minutes ago
                         if (Date.now() - last_hashlist_refresh >= 10 * 60 * 1000) {
                             last_hashlist_refresh = Date.now();
-                            loadIndexHashlist(false, false);
+                            loadIndexHashlist(false, false, false);
                         }
 
                         // Parse reports from forum and messages
@@ -833,7 +833,7 @@ var errorSubmissions = [];
             } catch (e) {}
         }
 
-        function getAccessToken() {
+        function getAccessToken(force_refresh = false) {
             return new Promise(resolve => {
                 try {
                     // Get access token from local storage
@@ -849,7 +849,7 @@ var errorSubmissions = [];
 
                         let currentTime = new Date().getTime() / 1000;
 
-                        if (currentTime > expiration - 60) {
+                        if ((currentTime > expiration - 60) || force_refresh===true) {
                             // Token expired, try to refresh
                             console.log("GrepoData: Access token expired.");
                             var refresh_token = getLocalToken('gd_indexer_refresh_token');
@@ -1381,7 +1381,7 @@ var errorSubmissions = [];
         };
 
         // Add the given forum report to the index
-        function addToIndexFromForum(reportId, reportElement, reportPoster, reportHash) {
+        function addToIndexFromForum(reportId, reportElement, reportPoster, reportHash, is_retry_attempt = false) {
             var reportJson = JSON.parse(mapDOM(reportElement, true));
             var reportText = reportElement.innerText;
 
@@ -1419,8 +1419,38 @@ var errorSubmissions = [];
                         dataType: 'json',
                         success: function (data) {
                         },
-                        error: function (jqXHR, textStatus) {
-                            console.log("error saving forum report");
+                        error: function (error, textStatus) {
+                            console.log("error saving forum report: ", error);
+
+                            if (error.responseJSON.error_code
+                                && error.responseJSON.error_code === 3003
+                                && is_retry_attempt === false
+                            ) {
+                                // invalid JWT (probably expired, not caught because local client time is out of sync)
+                                // try to force refresh the access token
+                                getAccessToken(true).then(access_token => {
+                                    if (access_token === false) {
+                                        // If the force refresh was not succesful, we need a new explicit login from the user
+                                        HumanMessage.error('GrepoData: login required to index reports');
+                                        showLoginPopup();
+                                        $('.rh' + reportHash).each(function () {
+                                            $(this).css("color", '#ea6153');
+                                            $(this).find('.middle').get(0).innerText = translate.ERROR + ' ✗';
+                                            $(this).off("click");
+                                        });
+                                    } else {
+                                        // try again with new token
+                                        addToIndexFromForum(reportId, reportElement, reportPoster, reportHash, true);
+                                    }
+                                });
+                            } else {
+                                errorHandling(Error(error.responseText), 'ajaxIndexForumReport');
+                                $('.rh' + reportHash).each(function () {
+                                    $(this).css("color", '#ea6153');
+                                    $(this).find('.middle').get(0).innerText = translate.ERROR + ' ✗';
+                                    $(this).off("click");
+                                });
+                            }
                         },
                         timeout: 120000
                     });
@@ -1431,7 +1461,7 @@ var errorSubmissions = [];
         }
 
         // Add the given inbox report to the index
-        function addToIndexFromInbox(reportHash, reportElement) {
+        function addToIndexFromInbox(reportHash, reportElement, is_retry_attempt = false) {
             var reportJson = JSON.parse(mapDOM(reportElement, true));
             var reportText = reportElement.innerText;
 
@@ -1485,13 +1515,38 @@ var errorSubmissions = [];
                         crossDomain: true,
                         success: function (data) {
                         },
-                        error: function (jqXHR, textStatus) {
-                            errorHandling(Error(jqXHR.responseText), 'ajaxIndexInboxReport');
-                            var btn = document.getElementById("gd_index_rep_txt");
-                            var btnC = document.getElementById("gd_index_rep_");
-                            btnC.setAttribute('style', 'color: #ea6153; float: right;');
-                            btn.innerText = translate.ERROR + ' ✗';
-                            btn.setAttribute('title', 'Oops, something went wrong. Developers have been notified (if you enabled bug reports).');
+                        error: function (error, textStatus) {
+                            console.log("error saving inbox report: ", error);
+
+                            if (error.responseJSON.error_code
+                                && error.responseJSON.error_code === 3003
+                                && is_retry_attempt === false
+                            ) {
+                                // invalid JWT (probably expired, not caught because local client time is out of sync)
+                                // try to force refresh the access token
+                                getAccessToken(true).then(access_token => {
+                                    if (access_token === false) {
+                                        // If the force refresh was not succesful, we need a new explicit login from the user
+                                        HumanMessage.error('GrepoData: login required to index reports');
+                                        showLoginPopup();
+                                        var btn = document.getElementById("gd_index_rep_txt");
+                                        var btnC = document.getElementById("gd_index_rep_");
+                                        btnC.setAttribute('style', 'color: #ea6153; float: right;');
+                                        btn.innerText = translate.ERROR + ' ✗';
+                                    } else {
+                                        // try again with new token
+                                        addToIndexFromInbox(reportHash, reportElement, true);
+                                    }
+                                });
+                            } else {
+                                errorHandling(Error(error.responseText), 'ajaxIndexForumReport');
+                                var btn = document.getElementById("gd_index_rep_txt");
+                                var btnC = document.getElementById("gd_index_rep_");
+                                btnC.setAttribute('style', 'color: #ea6153; float: right;');
+                                btn.innerText = translate.ERROR + ' ✗';
+                                btn.setAttribute('title', 'Oops, something went wrong. Developers have been notified (if you enabled bug reports).');
+                            }
+
                         },
                         timeout: 120000
                     });
@@ -1670,7 +1725,7 @@ var errorSubmissions = [];
                                 if ($('#gd_index_rep_txt').get(0)) {
                                     $('#gd_index_rep_txt').get(0).innerText = translate.SEND;
                                 }
-                                addToIndexFromInbox(reportHash, reportElement);
+                                addToIndexFromInbox(reportHash, reportElement, false);
                             }, false);
                         }
 
@@ -1708,7 +1763,7 @@ var errorSubmissions = [];
                                     '    <br /><br /><small>Thank you for using <a href="https://grepodata.com" target="_blank">GrepoData</a>!</small>';
 
                                 Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG).setContent(content)
-                                addToIndexFromInbox(reportHash, reportElement);
+                                addToIndexFromInbox(reportHash, reportElement, false);
 
                                 $(".gd_copy_command_" + reportHash).click(function () {
                                     $(".gd_copy_input_" + reportHash).select();
@@ -1818,7 +1873,7 @@ var errorSubmissions = [];
                 search_limit -= 1;
             }
 
-            addToIndexFromForum(reportId, reportElement, reportPoster, reportHash);
+            addToIndexFromForum(reportId, reportElement, reportPoster, reportHash, false);
         }
 
         // Forum reports
@@ -2899,15 +2954,15 @@ var errorSubmissions = [];
 
         // Loads a list of report ids that have already been indexed by the current user or their allies.
         var user_has_team = false;
-        function loadIndexHashlist(check_login = false, startup = false) {
+        function loadIndexHashlist(check_login = false, startup = false, is_retry_attempt = false) {
             try {
                 if (verbose) {
                     console.log("Loading grepodata hashlist")
                 }
                 getAccessToken().then(access_token => {
                     if (access_token === false) {
-                        if (check_login === true) {
-                            showLoginPopup()
+                        if (startup === true) {
+                            showLoginNotification();
                         }
                     } else {
                         $.ajax({
@@ -2944,6 +2999,24 @@ var errorSubmissions = [];
                                     showNoTeamNotification();
                                 }
                             } catch (u) {}
+                        }).fail(function (error) {
+                            console.log('Unable to get latest hashlist: ', error);
+                            if (error.responseJSON.error_code
+                                && error.responseJSON.error_code === 3003
+                                && is_retry_attempt === false
+                            ) {
+                                // invalid JWT (probably expired, not caught because local client time is out of sync)
+                                // try to force refresh the access token
+                                getAccessToken(true).then(access_token => {
+                                    if (access_token === false) {
+                                        // If the force refresh was not succesful, we need a new explicit login from the user
+                                        showLoginNotification();
+                                    } else {
+                                        // try again with new token
+                                        loadIndexHashlist(check_login, startup, true);
+                                    }
+                                });
+                            }
                         });
                     }
                 });
