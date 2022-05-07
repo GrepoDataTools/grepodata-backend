@@ -204,14 +204,18 @@ class Diff
               )
             ),
             array(
-              'match' => array(
-                'HourOfDay' => $HourOfDay
+              'range' => array(
+                'HourOfDay' => array(
+                  'gte' => $HourOfDay-1,
+                  'lt' => $HourOfDay+2
+                )
               )
             ),
           )
         )
       ),
     );
+
     $aAttDiffs = $ElasticsearchClient->search(array(
       'index' => $IndexName,
       'type' => self::TypeAtt,
@@ -228,45 +232,46 @@ class Diff
       'def' => array(),
     );
 
-    if (isset($aAttDiffs['hits']['total']) && $aAttDiffs['hits']['total'] > 0) {
-      foreach ($aAttDiffs['hits']['hits'] as $aHit) {
-        if (isset($aResponse['att'][$aHit['_source']['PlayerId']])) {
-          $aResponse['att'][$aHit['_source']['PlayerId']]['value'] += $aHit['_source']['Diff'];
-        } else {
-          $aResponse['att'][$aHit['_source']['PlayerId']] = array(
-            'id' => $aHit['_source']['PlayerId'],
-            'name' => $aHit['_source']['PlayerName'],
-            'alliance_id' => $aHit['_source']['AllianceId'],
-            'value' => $aHit['_source']['Diff'],
-          );
+    foreach (array('att' => $aAttDiffs, 'def' => $aDefDiffs) as $Type => $aDiffs) {
+
+      if (isset($aDiffs['hits']['total']) && $aDiffs['hits']['total'] > 0) {
+        foreach ($aDiffs['hits']['hits'] as $aHit) {
+          if (!isset($aResponse[$Type][$aHit['_source']['PlayerId']])) {
+            $PrevHourName = ($HourOfDay-1) < 0 ? 23 : ($HourOfDay-1);
+            $aResponse[$Type][$aHit['_source']['PlayerId']] = array(
+              'id' => $aHit['_source']['PlayerId'],
+              'name' => $aHit['_source']['PlayerName'],
+              'alliance_id' => $aHit['_source']['AllianceId'],
+              'value' => 0,
+              'series' => array(
+                $HourOfDay - 1 => array('name' => '±' . $PrevHourName . ':00', 'value' => 0),
+                $HourOfDay => array('name' => '±' . ($HourOfDay) . ':00', 'value' => 0),
+                $HourOfDay + 1 => array('name' => '±' . ($HourOfDay + 1) . ':00', 'value' => 0)
+              )
+            );
+          }
+
+          $aResponse[$Type][$aHit['_source']['PlayerId']]['value'] += $aHit['_source']['Diff'];
+          $aResponse[$Type][$aHit['_source']['PlayerId']]['series'][$aHit['_source']['HourOfDay']]['value'] += $aHit['_source']['Diff'];
+
         }
       }
+
+      // Sort by total value descending
+      uasort($aResponse[$Type], function ($Player1, $Player2) {
+        return $Player1['value'] > $Player2['value'] ? -1 : 1;
+      });
+
+      // Get series as values and order by hour of day ascending
+      $aResponse[$Type] = array_map(function($aSeries) {
+        ksort($aSeries['series']);
+        $aSeries['series'] = array_values($aSeries['series']);
+        return $aSeries;
+      }, $aResponse[$Type]);
+
+      // Get array values
+      $aResponse[$Type] = array_values($aResponse[$Type]);
     }
-    uasort($aResponse['att'], function ($Player1, $Player2) {
-      // sort by score descending
-      return $Player1['value'] > $Player2['value'] ? -1 : 1;
-    });
-    $aResponse['att'] = array_values($aResponse['att']);
-    
-    if (isset($aDefDiffs['hits']['total']) && $aDefDiffs['hits']['total'] > 0) {
-      foreach ($aDefDiffs['hits']['hits'] as $aHit) {
-        if (isset($aResponse['def'][$aHit['_source']['PlayerId']])) {
-          $aResponse['def'][$aHit['_source']['PlayerId']]['value'] += $aHit['_source']['Diff'];
-        } else {
-          $aResponse['def'][$aHit['_source']['PlayerId']] = array(
-            'id'          => $aHit['_source']['PlayerId'],
-            'name'        => $aHit['_source']['PlayerName'],
-            'alliance_id' => $aHit['_source']['AllianceId'],
-            'value'       => $aHit['_source']['Diff'],
-          );
-        }
-      }
-    }
-    uasort($aResponse['def'], function ($Player1, $Player2) {
-      // sort by score descending
-      return $Player1['value'] > $Player2['value'] ? -1 : 1;
-    });
-    $aResponse['def'] = array_values($aResponse['def']);
 
     return $aResponse;
   }

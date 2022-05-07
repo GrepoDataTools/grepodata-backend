@@ -49,6 +49,12 @@ class Service
       $oContext = new RequestContext();
       $oContext->fromRequest($oRequest);
 
+      if ($oContext->getPathInfo() === '/sync') {
+        header('Access-Control-Allow-Origin: *');
+        header('GD-Server-Time: '.time());
+        die(BaseRoute::OutputJson(array('time' => time()), 200));
+      }
+
       // Matcher
       $oMatcher = new UrlMatcher(static::$aRouteCollection, $oContext);
       $aMatchedParameters = $oMatcher->match($oContext->getPathInfo());
