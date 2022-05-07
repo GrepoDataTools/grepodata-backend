@@ -7,6 +7,7 @@ use Grepodata\Library\Cron\InnoData;
 use Grepodata\Library\Elasticsearch\Client;
 use Grepodata\Library\Model\CronStatus;
 use Grepodata\Library\Model\Operation_log;
+use Redis;
 
 require('./../../../config.php');
 require('./../config.api.php');
@@ -27,113 +28,113 @@ if (isset($_GET['flush'])) {
 <body>
 
 <style>
-	.link {
-		color: #859fb9;
-		text-decoration: none;
-		cursor: hand;
-	}
-	body {
-		font-family: "Open Sans", sans-serif;
-		line-height: 0.9;
-		background: #1f1e1e;
-		color: #b9b9b9;
-	}
-	button {
-		background: #3d778a;
-		color: #fff;
-		border: 1px solid #b2c9c4;
-		padding: 4px 20px;
-		cursor: hand;
-	}
-	input, select {
-		background: #1f1e1e;
-		color: #fff;
-		border: 1px solid #568d8e;
-		padding: 4px;
-	}
-	table {
-		border: 1px solid #ccc;
-		border-collapse: collapse;
-		margin: 0;
-		padding: 0;
-		width: 100%;
-		table-layout: fixed;
-	}
+    .link {
+        color: #859fb9;
+        text-decoration: none;
+        cursor: hand;
+    }
+    body {
+        font-family: "Open Sans", sans-serif;
+        line-height: 0.9;
+        background: #1f1e1e;
+        color: #b9b9b9;
+    }
+    button {
+        background: #3d778a;
+        color: #fff;
+        border: 1px solid #b2c9c4;
+        padding: 4px 20px;
+        cursor: hand;
+    }
+    input, select {
+        background: #1f1e1e;
+        color: #fff;
+        border: 1px solid #568d8e;
+        padding: 4px;
+    }
+    table {
+        border: 1px solid #ccc;
+        border-collapse: collapse;
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        table-layout: fixed;
+    }
 
-	table caption {
-		font-size: 1.5em;
-		margin: .5em 0 .75em;
-	}
+    table caption {
+        font-size: 1.5em;
+        margin: .5em 0 .75em;
+    }
 
-	table tr {
-		/*background-color: #f8f8f8;*/
-		background-color: #191e1d;;
-		border: 1px solid #384146;
-		/*border: 1px solid #ddd;*/
-		padding: .35em;
-	}
-	table tr.error {
-		border: 2px solid #f00;
-		background: #6c2128;
-	}
-	table tr.warning {
-		border: 2px solid #8a821e;
-		background: #252217;
-	}
+    table tr {
+        /*background-color: #f8f8f8;*/
+        background-color: #191e1d;;
+        border: 1px solid #384146;
+        /*border: 1px solid #ddd;*/
+        padding: .35em;
+    }
+    table tr.error {
+        border: 2px solid #f00;
+        background: #6c2128;
+    }
+    table tr.warning {
+        border: 2px solid #8a821e;
+        background: #252217;
+    }
 
-	table th,
-	table td {
-		padding: .225em;
-		text-align: center;
-	}
+    table th,
+    table td {
+        padding: .225em;
+        text-align: center;
+    }
 
-	table th {
-		font-size: .85em;
-		letter-spacing: .1em;
-		text-transform: uppercase;
-	}
+    table th {
+        font-size: .85em;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+    }
 
-	.status.open:before {
-		background-color: #94E185;
-		border-color: #78D965;
-		box-shadow: 0px 0px 4px 1px #94E185;
-	}
-	.status.in-progress:before {
-		background-color: #FFC182;
-		border-color: #FFB161;
-		box-shadow: 0px 0px 4px 1px #FFC182;
-	}
-	.status.dead:before {
-		background-color: #C9404D;
-		border-color: #C42C3B;
-		box-shadow: 0px 0px 4px 1px #C9404D;
-	}
-	.status:before {
-		content: ' ';
-		display: inline-block;
-		width: 7px;
-		height: 7px;
-		margin-right: 10px;
-		border: 1px solid #000;
-		border-radius: 7px;
-	}
+    .status.open:before {
+        background-color: #94E185;
+        border-color: #78D965;
+        box-shadow: 0px 0px 4px 1px #94E185;
+    }
+    .status.in-progress:before {
+        background-color: #FFC182;
+        border-color: #FFB161;
+        box-shadow: 0px 0px 4px 1px #FFC182;
+    }
+    .status.dead:before {
+        background-color: #C9404D;
+        border-color: #C42C3B;
+        box-shadow: 0px 0px 4px 1px #C9404D;
+    }
+    .status:before {
+        content: ' ';
+        display: inline-block;
+        width: 7px;
+        height: 7px;
+        margin-right: 10px;
+        border: 1px solid #000;
+        border-radius: 7px;
+    }
 
-	.server-health {
-		min-width: 20%;
-		height: 25px;
-		margin: 10px;
-		color: #1f1e1e;
-		padding: 3px;
-	}
-	.server-health.green {
-		background: #94e185;
-	}
-	.server-health.red {
-		background: #c9404d;
-	}
-	.job:hover {
-		background: #283130;
-	}
+    .server-health {
+        min-width: 20%;
+        height: 25px;
+        margin: 10px;
+        color: #1f1e1e;
+        padding: 3px;
+    }
+    .server-health.green {
+        background: #94e185;
+    }
+    .server-health.red {
+        background: #c9404d;
+    }
+    .job:hover {
+        background: #283130;
+    }
 </style>
 
 <script>
@@ -268,7 +269,28 @@ if (!isset($_SESSION['inno_html'])) {
 } else {
   echo $_SESSION['inno_html'];
 }
+
+// redis
+$redis_html = '';
+if (!isset($_SESSION['redis_html'])) {
+  try {
+    $redis = new Redis();
+    $redis->connect(REDIS_HOST, REDIS_PORT, 0);
+    $redis->ping();
+    $redis_html =  '<span class="server-health green">REDIS: OK</span>';
+  } catch (\Exception $e) {
+    $redis_html =  '<span class="server-health red">REDIS: OFFLINE</span>';
+  }
+  $_SESSION['redis_html'] = $redis_html;
+} else {
+  $redis_html = $_SESSION['redis_html'];
+}
+echo $redis_html;
+
 echo '<a class="link" onclick="flush_session()">Refresh</a></p>';
+
+//exec("/home/vps/.nvm/versions/node/v8.9.4/bin/node /home/vps/.nvm/versions/node/v8.9.4/lib/node_modules/pm2/bin/pm2 list 2>&1", $pm2status);
+//echo json_encode($pm2status);
 
 if (isset($bAbort) && $bAbort == true) {
   echo '</br></br><table><tr class="error"><th>CRITICAL: SQL server is down</th></tr></table>';
@@ -391,9 +413,9 @@ if ($aJobs !== false) {
 </script>
 
 <div id="dashboard_div">
-	<!--Divs that will hold each control and chart-->
-	<div id="filter_div"></div>
-	<div id="chart_div" style="height: 350px; background: whitesmoke; margin-bottom: 5px;"></div>
+    <!--Divs that will hold each control and chart-->
+    <div id="filter_div"></div>
+    <div id="chart_div" style="height: 350px; background: whitesmoke; margin-bottom: 5px;"></div>
 </div>
 
 
@@ -401,12 +423,12 @@ if ($aJobs !== false) {
 <!--<button onclick="search()">Go</button><br/><br/>-->
 
 <select id="level" name="level">
-	<option value="0" <?php echo isset($_GET['level']) && $_GET['level'] == 0 ? 'selected':''?>>All</option>
-	<option value="1" <?php echo isset($_GET['level']) && $_GET['level'] == 1 ? 'selected':''?>>1 - Error</option>
-	<option value="2" <?php echo isset($_GET['level']) && $_GET['level'] == 2 ? 'selected':''?>>2 - Warning</option>
-	<option value="3" <?php echo isset($_GET['level']) && $_GET['level'] == 3 ? 'selected':''?>>3 - Info</option>
-	<option value="4" <?php echo isset($_GET['level']) && $_GET['level'] == 4 ? 'selected':''?>>4 - Silly</option>
-	<option value="10" <?php echo isset($_GET['level']) && $_GET['level'] == 10 ? 'selected':''?>>10 - Indexer</option>
+    <option value="0" <?php echo isset($_GET['level']) && $_GET['level'] == 0 ? 'selected':''?>>All</option>
+    <option value="1" <?php echo isset($_GET['level']) && $_GET['level'] == 1 ? 'selected':''?>>1 - Error</option>
+    <option value="2" <?php echo isset($_GET['level']) && $_GET['level'] == 2 ? 'selected':''?>>2 - Warning</option>
+    <option value="3" <?php echo isset($_GET['level']) && $_GET['level'] == 3 ? 'selected':''?>>3 - Info</option>
+    <option value="4" <?php echo isset($_GET['level']) && $_GET['level'] == 4 ? 'selected':''?>>4 - Silly</option>
+    <option value="10" <?php echo isset($_GET['level']) && $_GET['level'] == 10 ? 'selected':''?>>10 - Indexer</option>
     <option value="100" <?php echo isset($_GET['level']) && $_GET['level'] == 100 ? 'selected':''?>>100 - V2 migration</option>
 </select>
 <button onclick="search()">Go</button>
@@ -474,6 +496,25 @@ if (isset($_GET['refresh']) && $_GET['refresh'] >= 1) {
         setTimeout(function() { location.reload(); }, " . ($_GET['refresh'] * 1000) . ");
     </script>";
 }
+
+
+// redis info
+$redis_info = '';
+if (!isset($_SESSION['redis_info'])) {
+  try {
+    $redis = new Redis();
+    $redis->connect(REDIS_HOST, REDIS_PORT, 0);
+    $info = $redis->info();
+    $redis_info = json_encode($info, JSON_PRETTY_PRINT);
+  } catch (\Exception $e) {
+    $redis_info = '<span class="server-health red">REDIS: OFFLINE</span>';
+  }
+  $_SESSION['redis_info'] = $redis_info;
+} else {
+  $redis_info = $_SESSION['redis_info'];
+}
+echo "<pre>".$redis_info."</pre>";
+
 
 ?>
 
