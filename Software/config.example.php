@@ -18,6 +18,8 @@ define('PRIVATE_CAPTCHA_KEY', '');
 define('PRIVATE_JWT_SECRET', '');
 define('PRIVATE_JWT_REFRESH', '');
 
+define('PRIVATE_DEV_TOKEN', '');
+
 define('WORLD_DATA_URL', '');
 
 define('PRIVATE_MAIL_TRANSPORT_HOST', ''); // SMTP config

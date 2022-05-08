@@ -85,10 +85,28 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
     }
   }
 
+  /**
+   * This route is for developers only. Due to the high resource demand, you need a dev_token to call this route.
+   * If you want to use this route, please contact admin@grepodata.com to get a dev_token
+   * @throws Exception
+   */
   public static function GetAllForIndexGET()
   {
     try {
       $aParams = self::validateParams(array('access_token', 'index_key'));
+
+      if (!key_exists('dev_token', $aParams)) {
+        die(self::OutputJson(array(
+          'message'     => 'Missing parameter: dev_token. This route requires a dev_token. Please contact admin@grepodata.com to get one.'
+        ), 403));
+      }
+
+      if ($aParams['dev_token'] !== PRIVATE_DEV_TOKEN) {
+        die(self::OutputJson(array(
+          'message'     => 'dev_token invalid/expired. Please contact admin@grepodata.com to get a new dev_token.'
+        ), 403));
+      }
+
       $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
 
       // Validate index key
