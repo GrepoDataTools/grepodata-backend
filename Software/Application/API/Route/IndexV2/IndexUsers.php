@@ -260,6 +260,7 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
   /**
    * Import one or more v1 index keys for the authenticated user
    * @throws \Exception
+   * @Deprecated Use V2 index instead. Still used by frontend explicit V1 import; implicit import is already gone
    */
   public static function ImportV1KeysPOST()
   {

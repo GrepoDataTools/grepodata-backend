@@ -232,12 +232,14 @@ class Diff
       'def' => array(),
     );
 
+    $PrevHourName = ($HourOfDay-1) < 0 ? 23 : ($HourOfDay-1);
     foreach (array('att' => $aAttDiffs, 'def' => $aDefDiffs) as $Type => $aDiffs) {
 
+      $MaxScore = 0;
       if (isset($aDiffs['hits']['total']) && $aDiffs['hits']['total'] > 0) {
         foreach ($aDiffs['hits']['hits'] as $aHit) {
           if (!isset($aResponse[$Type][$aHit['_source']['PlayerId']])) {
-            $PrevHourName = ($HourOfDay-1) < 0 ? 23 : ($HourOfDay-1);
+
             $aResponse[$Type][$aHit['_source']['PlayerId']] = array(
               'id' => $aHit['_source']['PlayerId'],
               'name' => $aHit['_source']['PlayerName'],
@@ -254,6 +256,9 @@ class Diff
           $aResponse[$Type][$aHit['_source']['PlayerId']]['value'] += $aHit['_source']['Diff'];
           $aResponse[$Type][$aHit['_source']['PlayerId']]['series'][$aHit['_source']['HourOfDay']]['value'] += $aHit['_source']['Diff'];
 
+          if ($aResponse[$Type][$aHit['_source']['PlayerId']]['value'] > $MaxScore) {
+            $MaxScore = $aResponse[$Type][$aHit['_source']['PlayerId']]['value'];
+          }
         }
       }
 
@@ -262,12 +267,62 @@ class Diff
         return $Player1['value'] > $Player2['value'] ? -1 : 1;
       });
 
+      // Group players with small value together
+      if (count($aResponse[$Type]) > 15) {
+        $Limit = (int) min(500, $MaxScore * 0.05);
+        $aDiffLeaders = array_filter($aResponse[$Type], function ($aDiff) use ($Limit) {
+          return $aDiff['value'] > $Limit;
+        });
+        $aDiffOthers = array_filter($aResponse[$Type], function ($aDiff) use ($Limit) {
+          return $aDiff['value'] <= $Limit;
+        });
+        // group others
+        $aDiffLeaders['others'] = array(
+          'id' => 0,
+          'name' => 'Others (<'.$Limit.')',
+          'alliance_id' => 0,
+          'alliance_name' => '',
+          'value' => array_reduce($aDiffOthers, function ($Carry, $Item) {return $Carry + $Item['value'];}),
+          'series' => array(
+            $HourOfDay - 1 => array('name' => '±' . $PrevHourName . ':00', 'value' => array_reduce($aDiffOthers, function ($Carry, $Item) use ($HourOfDay) {
+              return $Carry + $Item['series'][$HourOfDay - 1]['value'];
+            })),
+            $HourOfDay => array('name' => '±' . ($HourOfDay) . ':00', 'value' => array_reduce($aDiffOthers, function ($Carry, $Item) use ($HourOfDay) {
+              return $Carry + $Item['series'][$HourOfDay]['value'];
+            })),
+            $HourOfDay + 1 => array('name' => '±' . ($HourOfDay + 1) . ':00', 'value' => array_reduce($aDiffOthers, function ($Carry, $Item) use ($HourOfDay) {
+              return $Carry + $Item['series'][$HourOfDay + 1]['value'];
+            }))
+          )
+        );
+        $aResponse[$Type] = $aDiffLeaders;
+      }
+
       // Get series as values and order by hour of day ascending
       $aResponse[$Type] = array_map(function($aSeries) {
         ksort($aSeries['series']);
         $aSeries['series'] = array_values($aSeries['series']);
         return $aSeries;
       }, $aResponse[$Type]);
+
+      // Add alliance names
+      $aAllianceNames = array();
+      foreach ($aResponse[$Type] as $Id => $Player) {
+        $AllianceId = $Player['alliance_id'];
+        if (key_exists($AllianceId, $aAllianceNames)) {
+          $AllianceName = $aAllianceNames[$AllianceId];
+        } else {
+          try {
+            $oAlliance = \Grepodata\Library\Controller\Alliance::first($AllianceId, $oWorld->grep_id);
+            $AllianceName = $oAlliance->name ?? 'Other';
+          } catch (\Exception $e) {
+            $AllianceName = 'Unknown/No alliance';
+            Logger::warning("Unable to get alliance for hourly diff: ".$AllianceId.' '.$oWorld->grep_id);
+          }
+          $aAllianceNames[$AllianceId] = $AllianceName;
+        }
+        $aResponse[$Type][$Id]['alliance_name'] = $AllianceName ?? 'Other';
+      }
 
       // Get array values
       $aResponse[$Type] = array_values($aResponse[$Type]);
