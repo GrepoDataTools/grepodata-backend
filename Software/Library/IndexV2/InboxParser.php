@@ -6,6 +6,7 @@ namespace Grepodata\Library\IndexV2;
 use Carbon\Carbon;
 use Exception;
 use Grepodata\Library\Controller\Alliance;
+use Grepodata\Library\Controller\IndexV2\IntelShared;
 use Grepodata\Library\Controller\Player;
 use Grepodata\Library\Exception\InboxParserExceptionDebug;
 use Grepodata\Library\Exception\InboxParserExceptionError;
@@ -427,28 +428,44 @@ class InboxParser
           }
         }
 
+        $bParseConquestDetails = false;
         if ((!$bPlayerIsSender && $bPlayerIsReceiver) || (!$bPlayerIsSender && !$bPlayerIsReceiver) || ($bPlayerIsReceiver && $bPlayerIsSender) || (!$bPlayerIsSender && $bReceiverIsGhost)) {
           // if owner can not be found, or if player is receiver, it could be an attack on conquest: check if there is a cs in defender units
           if (strpos(json_encode($aCityUnitsDef),self::kolo) !== false) {
             if ((!$bPlayerIsSender && $bPlayerIsReceiver)) {
-              Logger::warning("Check003 InboxParser ".$ReportHash);
               // Can be attack on conquest but can also be a normal enemy attack where playerIsReceiver and where player is defending with a cs
+              // The prior bSupport check does not catch these reports
+
+              // player and town names are not allowed to have comma's in them. Thus we can use the presence of a comma to detect if the report is about a siege
+              $ReportTitle = Helper::allById($aReportData, 'report_report_header', true);
+              $ReportTitleTxt = Helper::getTextContent($ReportTitle, 0, false, true);
+              if (strpos(json_encode($ReportTitleTxt),',') !== false) {
+                Logger::warning("Check004 InboxParser (attack on conquest) ".$ReportHash);
+                $ReportType = "attack_on_conquest";
+                $bParseConquestDetails = true;
+              } else {
+                Logger::warning("Check003 InboxParser (attack on conquest) ".$ReportHash);
+              }
             } else {
               $ReportType = "attack_on_conquest";
+              $bParseConquestDetails = true;
             }
-            $bPlayerIsReceiver = true;
-            $bIsOngoingConquest = true;
 
-            // Parse conquests
-            $oConquestDetails = new ConquestDetails();
-            try {
-              // try to parse conquest details
-              $oConquestDetails->siegeTownId = $ReceiverTownId;
-              $oConquestDetails->siegeTownName = $ReceiverTownName;
-              $oConquestDetails->siegePlayerId = $PosterId;
-              $oConquestDetails->siegePlayerName = $ReportPoster;
-            } catch (\Exception $e) {
-              Logger::warning("InboxParser $ReportHash: error parsing ongoing conquest details; " . $e->getMessage());
+            if ($bParseConquestDetails) {
+              $bPlayerIsReceiver = true;
+              $bIsOngoingConquest = true;
+
+              // Parse conquests
+              $oConquestDetails = new ConquestDetails();
+              try {
+                // try to parse conquest details
+                $oConquestDetails->siegeTownId = $ReceiverTownId;
+                $oConquestDetails->siegeTownName = $ReceiverTownName;
+                $oConquestDetails->siegePlayerId = $PosterId;
+                $oConquestDetails->siegePlayerName = $ReportPoster;
+              } catch (\Exception $e) {
+                Logger::warning("InboxParser $ReportHash: error parsing ongoing conquest details; " . $e->getMessage());
+              }
             }
           } else if ((!$bPlayerIsSender && !$bPlayerIsReceiver) || ($bPlayerIsReceiver && $bPlayerIsSender) || (!$bPlayerIsSender && $bReceiverIsGhost)) {
             // unable to identify owner!
@@ -1060,13 +1077,41 @@ class InboxParser
       if (strpos($e->getMessage(), 'Duplicate entry') !== false) {
         // try to find duplicate intel id
         try {
-          $oIntel = Intel::where('town_id', '=', $TownId)
+          $oIntelExisting = Intel::where('town_id', '=', $TownId)
             ->where('world', '=', $World)
             ->where('parsed_date', '=', $ParsedDate)
             ->where('report_type', '=', $ReportType)
             ->where('luck', '=', ($Luck??0))
             ->firstOrFail();
-          return $oIntel->id;
+
+          try {
+            // Duplicate may be caused because the report is already indexed by an enemy team
+            // this is normal behavior for conquest reports because their structure is exactly the same for both the attacker and the defender (Hash may be different due to battle point difference)
+            // we now need to ensure that the intel is also added to the indexes of the current requestor, but ONLY for the indexes that were not parsed already
+
+            if ($ReportType == 'attack_on_conquest' && isset($oConquestDetails) && !empty($oConquestDetails)) {
+
+              Logger::warning("InboxParser $ReportHash; Check duplicate siege parse");
+
+              // We need to skip indexes that were already parsed, otherwise the siege contribution is counted double
+              $aAlreadyParsed = IntelShared::allByIntelId($oIntelExisting->id);
+              $aIndexesFiltered = array_diff($aIndexes, $aAlreadyParsed);
+
+              if (sizeof($aIndexesFiltered) > 0) {
+                // Save siege attack to new indexes
+                $oIntelExisting->conquest_details = json_encode($oConquestDetails->jsonSerialize());
+                $oIntelExisting->parsed_date = $ParsedDate;
+                $SiegeId = SiegeParser::saveSiegeAttack($oConquestDetails, $oIntelExisting, $aIndexesFiltered, $ReportHash);
+                if ($SiegeId != $oIntelExisting->conquest_id) {
+                  Logger::warning("InboxParser $ReportHash: siege id mismatch for duplicate city object");
+                }
+              }
+            }
+          } catch (Exception $e) {
+            Logger::warning("InboxParser $ReportHash: unable to update conquest details after finding duplicate city object");
+          }
+
+          return $oIntelExisting->id;
         } catch (\Exception $e) {
           throw new InboxParserExceptionWarning("Unable to find duplicate intel entry");
         }

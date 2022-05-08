@@ -225,10 +225,11 @@ class Helper
    * @param $Element array Input node from forum or inbox parsers
    * @param int $Depth
    * @param bool $bOnlyParseContent
+   * @param bool $bNumericKeysOnly
    * @return string text content
    * @throws ParserDefaultWarning
    */
-  public static function getTextContent($Element, $Depth=0, $bOnlyParseContent = False)
+  public static function getTextContent($Element, $Depth=0, $bOnlyParseContent = false, $bNumericKeysOnly = false)
   {
     if (!is_array($Element)) {
       throw new ParserDefaultWarning("Element must be array");
@@ -246,11 +247,13 @@ class Helper
     }
 
     $textContent = array();
-    foreach ($iterator as $Child) {
+    foreach ($iterator as $Key => $Child) {
       if (is_array($Child)) {
-        $textContent[] = self::getTextContent($Child, $Depth+1, $bOnlyParseContent);
+        $textContent[] = self::getTextContent($Child, $Depth+1, $bOnlyParseContent, $bNumericKeysOnly);
       } else if (is_string($Child)) {
-        $textContent[] = $Child;
+        if (!$bNumericKeysOnly || is_numeric($Key)) {
+          $textContent[] = $Child;
+        }
       }
     }
 
