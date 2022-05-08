@@ -32,6 +32,12 @@ class Daily
       Logger::warning("Stopping daily import: empty player data retrieved from endpoint");
       return false;
     }
+    try {
+      // Save players to disk
+      LocalData::setLocalPlayerData($oWorld->grep_id, $aPlayerData);
+    } catch (\Exception $e) {
+      Logger::warning("Error saving player data to disk: ".$e->getMessage());
+    }
 
     $aAllianceData = InnoData::loadAllianceData($oWorld->grep_id);
     if (!is_array($aAllianceData) || sizeof($aAllianceData)<=0) {

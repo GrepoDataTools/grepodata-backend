@@ -152,4 +152,29 @@ class Intel extends Model
     );
   }
 
+  /**
+   * Returns a list of identifier column names to be selected in a SQL query
+   * @param bool $bPrefix
+   * @return string[]
+   */
+  public static function getIdentifierSelect($bPrefix = true): array
+  {
+    $Prefix = '';
+    if ($bPrefix) {
+      $Prefix = 'Indexer_intel.';
+    }
+
+    return array(
+      $Prefix.'id',
+      $Prefix.'town_id',
+      $Prefix.'player_id',
+      $Prefix.'player_name',
+      $Prefix.'is_previous_owner_intel',
+      $Prefix.'town_name',
+      $Prefix.'alliance_id',
+      $Prefix.'indexed_by_user_id',
+      $Prefix.'hash',
+    );
+  }
+
 }

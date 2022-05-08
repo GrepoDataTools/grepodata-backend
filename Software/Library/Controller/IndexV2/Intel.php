@@ -82,6 +82,24 @@ class Intel
   }
 
   /**
+   * Get a cursor to iterate all intel for a given world
+   * @param World $oWorld
+   * @param bool $bIdentifiersOnly If set to true, selection scope will be limited to essential fields to reduce overhead of large requests
+   * @return \Grepodata\Library\Model\IndexV2\Intel[]
+   */
+  public static function worldCursor(World $oWorld, $bIdentifiersOnly = false)
+  {
+    $aSelectRange = ['Indexer_intel.*'];
+    if ($bIdentifiersOnly===true) {
+      // limit scope to essential fields only to reduce overhead
+      $aSelectRange = \Grepodata\Library\Model\IndexV2\Intel::getIdentifierSelect(true);
+    }
+    return \Grepodata\Library\Model\IndexV2\Intel::select($aSelectRange)
+      ->where('world', '=', $oWorld->grep_id)
+      ->cursor();
+  }
+
+  /**
    * @param $oUser
    * @param $ConquestId
    * @param bool $bCheckHiddenOwners
@@ -508,16 +526,6 @@ class Intel
       );
     }
     return $aParsed;
-  }
-
-  /**
-   * Get all intel for a given world
-   * @param World $oWorld
-   * @return \Grepodata\Library\Model\IndexV2\Intel[]
-   */
-  public static function allByWorld(World $oWorld)
-  {
-    return \Grepodata\Library\Model\IndexV2\Intel::where('world', '=', $oWorld->grep_id)->get();
   }
 
   /**

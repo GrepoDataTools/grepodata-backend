@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Grepodata\Library\Controller\Player;
 use Grepodata\Library\Controller\Town;
 use Grepodata\Library\Cron\Common;
+use Grepodata\Library\Cron\LocalData;
 use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\IndexV2\Roles;
 use Illuminate\Database\Capsule\Manager as DB;
@@ -35,75 +36,111 @@ foreach ($worlds as $oWorld) {
     // Check commands 'php SCRIPTNAME[=0] INDEX[=1]'
     if (isset($argv[1]) && $argv[1]!=null && $argv[1]!='' && $argv[1]!=$oWorld->grep_id) continue;
 
+    Logger::silly("Start intel enhancement for world ".$oWorld->grep_id
+      .". Memory usage: used=" . round(memory_get_usage(false)/1048576,2) . "MB, real=" . round(memory_get_usage(true)/1048576,2) . "MB");
+
     $ChangedOwner = 0;
     $Updated = 0;
+    $Total = 0;
     $TownNameUpdated = 0;
     $AllianceUpdated = 0;
     $NamesUpdated = 0;
+    $SkippedMissingTowns = 0;
+    $MissingPlayers = 0;
+    $GhostTowns = 0;
 
-    // Get all intel for this world
-    $aIntelRecords = \Grepodata\Library\Controller\IndexV2\Intel::allByWorld($oWorld);
+    // Get all intel records for this world
+    $aIntelCursor = \Grepodata\Library\Controller\IndexV2\Intel::worldCursor($oWorld, true);
 
-    $aCachedTowns = array();
-    $aCachedPlayers = array();
-    foreach ($aIntelRecords as $oCity) {
+    // Load local towns & players
+    $aLocalTowns = LocalData::getLocalTownData($oWorld->grep_id);
+    $aLocalPlayers = LocalData::getLocalPlayerData($oWorld->grep_id);
+
+    if (!$aLocalTowns || !is_array($aLocalTowns) || count($aLocalTowns) <= 0) {
+      Logger::warning("Missing local town data for intel enhancement");
+      continue;
+    }
+
+    if (!$aLocalPlayers || !is_array($aLocalPlayers) || count($aLocalPlayers) <= 0) {
+      Logger::warning("Missing local player data for intel enhancement");
+      continue;
+    }
+
+    // Iterate over all intel
+    foreach ($aIntelCursor as $oCity) {
+      $Total++;
+
       // Update towns
       try {
-        // TODO: use local cached town file to skip database requests?
-        if (key_exists($oCity->town_id, $aCachedTowns)) {
-          $oTown = $aCachedTowns[$oCity->town_id];
+
+        if (is_null($oCity->town_id) || $oCity->parsing_failed == true) {
+          // we can skip unparsed intel
+          continue;
+        }
+
+        // Get latest town data from local file
+        if (key_exists($oCity->town_id, $aLocalTowns)) {
+          $oTown = $aLocalTowns[$oCity->town_id];
         } else {
-          $oTown = Town::first($oCity->town_id, $oWorld->grep_id);
-          $aCachedTowns[$oCity->town_id] = $oTown;
+          // town no longer exists, skip update
+          $SkippedMissingTowns++;
+          continue;
+        }
+
+        if ($oTown == null || $oTown['grep_id'] == null) {
+          // town data missing, skip update
+          $SkippedMissingTowns++;
+          continue;
         }
 
         // Check if town still belongs to player
-        if ($oTown !== null && $oTown->player_id == 0) {
+        if ($oTown['player_id'] == 0) {
           // Town is now a ghost town, keep intel active
+          $GhostTowns++;
           continue;
         } else {
           $bSave = false;
 
           // Check town owner
-          if ($oTown !== null && $oCity->player_id != $oTown->player_id) {
+          if ($oCity->player_id != $oTown['player_id']) {
             // Town changed owner. Keep intel that changed owner and indicate this in the client (e.g. flag 'changed_owner=>true')
-            $oCity->player_id = $oTown->player_id;
+            $oCity->player_id = $oTown['player_id'];
             $oCity->is_previous_owner_intel = true;
             $bSave = true;
             $ChangedOwner++;
           }
 
           // Update town name
-          if ($oTown !== null && $oCity->town_name != $oTown->name) {
-            $oCity->town_name = $oTown->name;
+          if ($oCity->town_name != $oTown['name']) {
+            $oCity->town_name = $oTown['name'];
             $TownNameUpdated++;
             $bSave = true;
           }
 
           // Get player
-          // TODO: use local cached player file to skip database requests?
-          if (key_exists($oCity->player_id, $aCachedPlayers)) {
-            $oPlayer = $aCachedPlayers[$oCity->player_id];
+          $oPlayer = null;
+          if (key_exists($oCity->player_id, $aLocalPlayers)) {
+            $oPlayer = $aLocalPlayers[$oCity->player_id];
           } else {
-            $oPlayer = Player::first($oCity->player_id, $oWorld->grep_id);
-            $aCachedPlayers[$oCity->player_id] = $oPlayer;
+            // Player can be missing if account was reset; intel should stay active
+            $MissingPlayers++;
           }
 
           // Update alliance id
-          if ($oPlayer != null && $oCity->alliance_id != $oPlayer->alliance_id) {
-            $oCity->alliance_id = $oPlayer->alliance_id;
+          if ($oPlayer !== null && $oCity->alliance_id != $oPlayer['alliance_id']) {
+            $oCity->alliance_id = $oPlayer['alliance_id'];
             $AllianceUpdated++;
             $bSave = true;
           }
 
           // Update player name
-          if ($oPlayer !== null && $oCity->player_name != $oPlayer->name) {
-            $oCity->player_name = $oPlayer->name;
+          if ($oPlayer !== null && $oCity->player_name != $oPlayer['name']) {
+            $oCity->player_name = $oPlayer['name'];
             $NamesUpdated++;
             $bSave = true;
           }
 
-          // Save changes
+          // Save changes if needed
           if ($bSave === true) {
             $Updated++;
             $oCity->save();
@@ -162,11 +199,14 @@ foreach ($worlds as $oWorld) {
       Logger::warning("Error parsing ongoing sieges for world " . $oWorld->grep_id . ": " . $e->getMessage());
     }
 
-    unset($aCachedTowns);
-    unset($aCachedPlayers);
+    Logger::debugInfo("Processed ".$Total." intel records for world ".$oWorld->grep_id
+      ." - Num updated: $Updated (town: $TownNameUpdated, alliance: $AllianceUpdated, player: $NamesUpdated), "
+      ." - Errors: (missing town: $SkippedMissingTowns, missing players: $MissingPlayers), "
+      ."new owner: $ChangedOwner");
 
-    Logger::debugInfo("Processed ".count($aIntelRecords)." intel records for world ".$oWorld->grep_id
-      ." - Num updated: $Updated (town: $TownNameUpdated, alliance: $AllianceUpdated, player: $NamesUpdated), new owner: $ChangedOwner");
+    unset($aLocalTowns);
+    unset($aLocalPlayers);
+    unset($aIntelCursor);
 
   } catch (\Exception $e) {
     Logger::error("Error enhancing intel for world " . $oWorld->grep_id . " (".$e->getMessage().")");
@@ -175,7 +215,8 @@ foreach ($worlds as $oWorld) {
 
 }
 
-// Remove duplicate roles (caused by rare race condition on V1 import)
+// Deprecated:
+// Remove duplicate roles (caused by rare race condition on V1 (implicit) import)
 try {
   $aDuplicates = (array) DB::select( DB::raw("
         SELECT Indexer_roles.user_id, Indexer_roles.index_key, COUNT(*)
