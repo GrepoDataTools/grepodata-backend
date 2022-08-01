@@ -1705,13 +1705,20 @@ var errorSubmissions = [];
                         shareBtn.addEventListener('click', () => {
                             if ($('#gd_share_rep_txt').get(0)) {
                                 var hashI = ('r' + reportHash).replace('-', 'm');
-                                var content = '<b>Share this report on Discord:</b><br><ul>' +
+                                var content = '<ul>' +
                                     '    <li>1. Install the GrepoData bot in your Discord server (<a href="https://grepodata.com/discord" target="_blank">link</a>).</li>' +
-                                    '    <li>2. Insert the following code in your Discord server.<br/>The bot will then create the screenshot for you!' +
-                                    '    </ul><br/><input type="text" class="gd_copy_input_' + reportHash + '" value="' + `!gd report ${hashI}` + '"> <a href="#" class="gd_copy_command_' + reportHash + '">Copy to clipboard</a><span class="gd_copy_done_' + reportHash + '" style="display: none; float: right;"> Copied!</span>' +
-                                    '    <br /><br /><small>Thank you for using <a href="https://grepodata.com" target="_blank">GrepoData</a>!</small>';
+                                    '    <li>2. Paste the <strong>slash command</strong> shown below in your Discord server. A popup with slash commands should appear.</li>' +
+                                    '    <li>3. Press enter to select the GrepoData command, and press enter again to confirm.<br/>' +
+                                    '    </ul><br/><input style="width: 200px;" type="text" class="gd_copy_input_' + reportHash + '" value="' + `/gdreport hash: ${hashI}` + '"> <a href="#" class="gd_copy_command_' + reportHash + '">Copy to clipboard</a><span class="gd_copy_done_' + reportHash + '" style="display: none; float: right;"> Copied!</span>' +
+                                    '    <br /><br />' +
+                                    '<img style="width: 400px;" src="https://api.grepodata.com/img_gdreport.png">';
 
-                                Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG).setContent(content)
+                                Layout.wnd.Create(
+                                    GPWindowMgr.TYPE_DIALOG,
+                                    "Share this report on Discord",
+                                    {width: 400, height: 280, minimizable: false}
+                                ).setContent(content);
+
                                 addToIndexFromInbox(reportHash, reportElement, false);
 
                                 $(".gd_copy_command_" + reportHash).click(function () {
@@ -1967,13 +1974,20 @@ var errorSubmissions = [];
                                 var reportId = $(this).attr('report_id');
 
                                 var hashI = ('r' + reportHash).replace('-', 'm');
-                                var content = '<b>Share this report on Discord:</b><br><ul>' +
+                                var content = '<ul>' +
                                     '    <li>1. Install the GrepoData bot in your Discord server (<a href="https://grepodata.com/discord" target="_blank">link</a>).</li>' +
-                                    '    <li>2. Insert the following code in your Discord server.<br/>The bot will then create the screenshot for you!' +
-                                    '    </ul><br/><input type="text" class="gd_copy_input_' + reportHash + '" value="' + `!gd report ${hashI}` + '"> <a href="#" class="gd_copy_command_' + reportHash + '">Copy to clipboard</a><span class="gd_copy_done_' + reportHash + '" style="display: none; float: right;"> Copied!</span>' +
-                                    '    <br /><br /><small>Thank you for using <a href="https://grepodata.com" target="_blank">GrepoData</a>!</small>';
+                                    '    <li>2. Paste the <strong>slash command</strong> shown below in your Discord server. A popup with slash commands should appear.</li>' +
+                                    '    <li>3. Press enter to select the GrepoData command, and press enter again to confirm.<br/>' +
+                                    '    </ul><br/><input style="width: 200px;" type="text" class="gd_copy_input_' + reportHash + '" value="' + `/gdreport hash: ${hashI}` + '"> <a href="#" class="gd_copy_command_' + reportHash + '">Copy to clipboard</a><span class="gd_copy_done_' + reportHash + '" style="display: none; float: right;"> Copied!</span>' +
+                                    '    <br /><br />' +
+                                    '<img style="width: 400px;" src="https://api.grepodata.com/img_gdreport.png">';
 
-                                Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG).setContent(content);
+                                Layout.wnd.Create(
+                                    GPWindowMgr.TYPE_DIALOG,
+                                    "Share this report on Discord",
+                                    {width: 400, height: 280, minimizable: false}
+                                ).setContent(content);
+
                                 addForumReportById(reportId, reportHash);
 
                                 $(".gd_copy_command_" + reportHash).click(function () {
