@@ -22,7 +22,7 @@ class UnitStats
 
     "siren"             => array('population' => 16, 'speed' => 16,  'uses_meteorology' => false, 'uses_cartography' => true, 'requires_transport' => false),
     "satyr"             => array('population' => 16, 'speed' => 136,  'uses_meteorology' => true, 'uses_cartography' => false, 'requires_transport' => true),
-    "ladon"             => array('population' => 85, 'speed' => 100, 'uses_meteorology' => true, 'uses_cartography' => false, 'requires_transport' => true),
+    "ladon"             => array('population' => 85, 'speed' => 100, 'uses_meteorology' => true, 'uses_cartography' => false, 'requires_transport' => false),
     "spartoi"           => array('population' => 10, 'speed' => 16,  'uses_meteorology' => true, 'uses_cartography' => false, 'requires_transport' => true),
 
     "manticore"         => array('population' => 45, 'speed' => 22,  'uses_meteorology' => true, 'uses_cartography' => false, 'requires_transport' => false),

@@ -105,11 +105,23 @@ class Daily
             } catch (\Exception $e) {}
 
             // Detect ghost event (new points is substantially lower than old points)
-            if ((int) $aData['points'] < 10000 &&
-              (int) $oPlayer->points > 5000 &&
-              $aData['points'] < (0.5 * ((int) $oPlayer->points))) {
+            if (
+              (int) $aData['points'] < 5000 &&
+              (int) $oPlayer->points > 50000
+            ) {
               $oPlayer->ghost_alliance = $oPlayer->alliance_id;
               $oPlayer->ghost_time = Carbon::now();
+            }
+
+            // Reactivate ghosted players if they started playing again (this usually happens with players that ghost in the early game)
+            if (
+              $oPlayer->is_ghost == 1 &&
+              $aData['points'] > 5000
+            ) {
+              Logger::warning('reactivated ghost '.$oPlayer->grep_id.' '.$oWorld->grep_id);
+              $oPlayer->is_ghost = null;
+              $oPlayer->ghost_alliance = null;
+              $oPlayer->ghost_time = null;
             }
 
             foreach ($aData as $Key => $Value) {

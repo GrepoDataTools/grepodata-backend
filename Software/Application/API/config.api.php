@@ -92,10 +92,10 @@ $oRouter->Add('getnews', new Route('/news', array(
 )));
 
 // Events
-//$oRouter->Add('getusereventsindexer', new Route('/events/user', array(
-//  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Event',
-//  '_method'     => 'GetAllByUser'
-//)));
+$oRouter->Add('getusereventsindexer', new Route('/events/user', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Event',
+  '_method'     => 'GetAllByUser'
+)));
 $oRouter->Add('getteameventsindexer', new Route('/events/team', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Event',
   '_method'     => 'GetAllByTeam'

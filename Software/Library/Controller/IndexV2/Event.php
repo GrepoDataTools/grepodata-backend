@@ -11,13 +11,13 @@ use Grepodata\Library\Model\User;
 class Event
 {
 
-//  /**
-//   * Get all events for a user
-//   * @param User $oUser
-//   * @return \Grepodata\Library\Model\IndexV2\Event[]
-//   */
-//  public static function getAllByUser(User $oUser)
-//  {
+  /**
+   * Get all events for a user
+   * @param User $oUser
+   * @return \Grepodata\Library\Model\IndexV2\Event[]
+   */
+  public static function getAllByUser(User $oUser, $From = 0, $Size = 20)
+  {
 //    return \Grepodata\Library\Model\IndexV2\Event::select(['*'])
 //      ->leftJoin('Indexer_roles', 'Indexer_roles.index_key', '=', 'Indexer_event.index_key')
 //      ->where('Indexer_roles.user_id', '=', $oUser->id)
@@ -28,7 +28,23 @@ class Event
 //      })
 //      ->orderBy('id', 'desc')
 //      ->get();
-//  }
+    return \Grepodata\Library\Model\IndexV2\Event::where('json', 'LIKE', '%{"type":"user","text":"'.$oUser->username.'",%')
+      ->orderBy('id', 'desc')
+      ->offset($From)
+      ->limit($Size)
+      ->get();
+  }
+
+  /**
+   * Count the number of events for this user
+   * @param User $oUser
+   * @return \Grepodata\Library\Model\IndexV2\Event[]
+   */
+  public static function countAllByUser(User $oUser)
+  {
+    return \Grepodata\Library\Model\IndexV2\Event::where('json', 'LIKE', '%{"type":"user","text":"'.$oUser->username.'",%')
+      ->count();
+  }
 
   /**
    * Get all team events

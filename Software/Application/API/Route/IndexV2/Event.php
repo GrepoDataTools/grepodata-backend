@@ -10,30 +10,44 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 class Event extends \Grepodata\Library\Router\BaseRoute
 {
 
-//  public static function GetAllByUserGET()
-//  {
-//    try {
-//      $aParams = self::validateParams(array('access_token'));
-//      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
-//
-//      // Get events
-//      $aEvents = \Grepodata\Library\Controller\IndexV2\Event::getAllByUser($oUser);
-//
-//      $aResponse = array(
-//        'count' => 0,
-//        'items' => array()
-//      );
-//      foreach ($aEvents as $oEvent) {
-//        $aResponse['items'][] = $oEvent->getPublicFields();
-//      }
-//      $aResponse['count'] = count($aResponse['items']);
-//
-//      ResponseCode::success($aResponse);
-//    } catch (\Exception $e) {
-//      Logger::warning("Error getting user events: ".$e->getMessage());
-//      ResponseCode::errorCode(1000, array(), 404);
-//    }
-//  }
+  public static function GetAllByUserGET()
+  {
+    try {
+      $aParams = self::validateParams(array('access_token'));
+      $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+
+      $From = 0;
+      $Size = 20;
+      if (isset($aParams['size']) && $aParams['size'] < 50) {
+        $Size = $aParams['size'];
+      }
+      if (isset($aParams['from']) && $aParams['from'] < 5000) {
+        $From = $aParams['from'];
+      }
+
+      // Get events
+      $aEvents = \Grepodata\Library\Controller\IndexV2\Event::getAllByUser($oUser, $From, $Size);
+
+      $aResponse = array(
+        'count' => 0,
+        'items' => array()
+      );
+      foreach ($aEvents as $oEvent) {
+        $aResponse['items'][] = $oEvent->getPublicFields();
+      }
+      $aResponse['count'] = count($aResponse['items']);
+
+      if ($From == 0 && count($aResponse['items']) >= $Size) {
+        // count total
+        $aResponse['total'] = \Grepodata\Library\Controller\IndexV2\Event::countAllByUser($oUser);
+      }
+
+      ResponseCode::success($aResponse);
+    } catch (\Exception $e) {
+      Logger::warning("Error getting user events: ".$e->getMessage());
+      ResponseCode::errorCode(1000, array(), 404);
+    }
+  }
 
   public static function GetAllByTeamGET()
   {
@@ -82,7 +96,7 @@ class Event extends \Grepodata\Library\Router\BaseRoute
 
       ResponseCode::success($aResponse);
     } catch (\Exception $e) {
-      Logger::warning("Error getting user events: ".$e->getMessage());
+      Logger::warning("Error getting team events: ".$e->getMessage());
       ResponseCode::errorCode(1000, array(), 404);
     }
   }
