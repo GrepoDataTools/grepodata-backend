@@ -323,7 +323,7 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
             // Add write role on the index
             Roles::SetUserIndexRole($oUser, $oIndex, Roles::ROLE_WRITE);
             Event::addIndexJoinEvent($oIndex, $oUser, 'v1_redirect');
-            Logger::v2Migration("Successful import of a v1 key ".$oIndex->key_code." ".$oUser->id);
+            Logger::error("Successful import of a v1 key ".$oIndex->key_code." ".$oUser->id);
           }
 
         } catch (ModelNotFoundException $e) {
@@ -331,7 +331,7 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
             ResponseCode::errorCode(7101);
           }
         } catch (\Exception $e) {
-          Logger::v2Migration("WARNING: Exception while importing V1 index key '" . $IndexKey . "' for user " . $oUser->id . ". " . $e->getMessage());
+          Logger::error("WARNING: Exception while importing V1 index key '" . $IndexKey . "' for user " . $oUser->id . ". " . $e->getMessage());
         }
       }
 
@@ -393,10 +393,10 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
           // Allow for v1 redirects
           $oActiveRole = Roles::SetUserIndexRole($oUser, $oIndex, Roles::ROLE_WRITE);
           Event::addIndexJoinEvent($oIndex, $oUser, 'v1_redirect');
-          Logger::v2Migration("Successful join via v1 redirect ".$oIndex->key_code." ".$oUser->id);
+          Logger::error("Successful join via v1 redirect ".$oIndex->key_code." ".$oUser->id);
         } else {
           // Not a V1 index or v1 joining is disabled
-          Logger::v2Migration("Failed attempt to join via v1 redirect (not a v1 index or v1 joining disabled) ".json_encode($aParams));
+          Logger::error("Failed attempt to join with v1 redirect (not a v1 index or v1 joining disabled) ".json_encode($aParams));
           ResponseCode::errorCode(7601);
         }
       }
