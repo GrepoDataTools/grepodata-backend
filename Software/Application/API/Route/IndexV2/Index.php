@@ -198,7 +198,7 @@ class Index extends BaseRoute
         'message'     => 'No index overview found for these parameters.',
         'parameters'  => $aParams
       ), 404));
-    } catch (Exception $e) {
+    } catch (\Exception $e) {
       Logger::error("Unknown error while getting index: ".$e->getMessage());
       die(self::OutputJson(array(
         'message'     => 'No index overview found for these parameters.',

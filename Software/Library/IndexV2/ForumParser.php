@@ -594,12 +594,14 @@ class ForumParser
           } elseif (key_exists('class', $aAttributes)) {
             $aLinkData = json_decode(base64_decode($LinkDataEncoded), true);
             $Class = $aAttributes['class'];
-            if (str_contains($Class, 'gp_town_link')) {
-              $aHeaderChainData[] = $aLinkData;
+            $aHeaderChainData[] = $aLinkData;
+            if (key_exists('tp', $aLinkData) && $aLinkData['tp'] == 'temple') {
+              $aHeaderChainType[] = 'temple';
+            }
+            elseif (str_contains($Class, 'gp_town_link')) {
               $aHeaderChainType[] = 'town';
             }
             elseif (str_contains($Class, 'gp_player_link')) {
-              $aHeaderChainData[] = $aLinkData;
               $aHeaderChainType[] = 'player';
             }
             else {
@@ -678,6 +680,9 @@ class ForumParser
         }
 
         throw new ForumParserExceptionDebug("Empty report chain likely caused by bandit/quest report: " . $ReportChainString);
+        break;
+      case 'town-temple':
+        throw new ForumParserExceptionDebug("Attack on temple is ignored: " . $ReportChainString);
         break;
       default:
         throw new ForumParserExceptionWarning("Unknown forum parser report chain: " . $ReportChainString);

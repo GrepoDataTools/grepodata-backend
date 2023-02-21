@@ -107,7 +107,7 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
       }
     }
 
-    $Masked = \Grepodata\Library\Router\Authentication::maskEmail($oUser->email);
+    $Masked = $oUser->email;
 
     // Response
     $aResponseData = array(
@@ -408,7 +408,7 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
       $MailBody =  self::mailTemplateActionRequired(
         $oUser,
         'Recover your <span style="color: #18bc9c;">GrepoData</span> password',
-        'You are receiving this message because a request was made to recover your account on grepodata.com. Please click on the button below to reset your password.',
+        'You are receiving this message because a request was made to recover your GrepoData account. Please click on the button below to reset your password.',
         'Reset Password',
         'https://grepodata.com/reset/'.$Token
       );
@@ -531,12 +531,6 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
       $aParams = self::validateParams(array('access_token', 'password'));
       $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
 
-      // verify password
-      $bValid = password_verify($aParams['password'], $oUser->passphrase);
-      if ($bValid === false) {
-        ResponseCode::errorCode(3005, array(), 401);
-      }
-
       // If user is not yet confirmed, proceed with account deletion without confirmation
       if ($oUser->is_confirmed != true) {
 
@@ -551,6 +545,12 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
         return self::OutputJson($aResponse);
       }
 
+      // verify password
+      $bValid = password_verify($aParams['password'], $oUser->passphrase);
+      if ($bValid === false) {
+        ResponseCode::errorCode(3005, array(), 401);
+      }
+
       Logger::error("Account removal requested: " . $oUser->id);
 
       // Create new user token
@@ -561,7 +561,7 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
       $MailBody =  self::mailTemplateActionRequired(
         $oUser,
         'Account removal <span style="color: #18bc9c;">GrepoData</span>',
-        'You are receiving this message because a request was made to delete your account on grepodata.com. Please click on the button below to confirm the removal of your account.',
+        'You are receiving this message because a request was made to delete your GrepoData account. Please click on the button below to confirm the removal of your account.',
         'Delete Account',
         'https://grepodata.com/delete/'.$Token
       );
@@ -608,7 +608,7 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
     $MailBody =  self::mailTemplateActionRequired(
       $oUser,
       'Welcome to <span style="color: #18bc9c;">GrepoData</span>',
-      'You are receiving this message because an account was created on grepodata.com using this email address. Please click on the button below to confirm your account.',
+      'You are receiving this message because a GrepoData account was created using this email address. Please click on the button below to confirm your account.',
       'Confirm Account',
       'https://api.grepodata.com/confirm?token='.$Token
     );
@@ -687,7 +687,7 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
                     </tr>
                   </table>
                   <p>If you need any help or support, please reply to this email</p>
-                  <p>Kind regards,<br/>The GrepoData team</p>
+                  <p>Yours truly,<br/>The GrepoData team</p>
                 </td>
               </tr>
               </tbody>
