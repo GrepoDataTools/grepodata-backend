@@ -428,13 +428,6 @@ $oRouter->Add('commitprevintel', new Route('/indexer/commitprevintel', array(
   '_ratelimit'  => $limit3PerMin
 )));
 
-// Import V1 index keys
-$oRouter->Add('importv1keys', new Route('/migrate/importv1keys', array(
-  '_controller' => '\Grepodata\Application\API\Route\IndexV2\IndexUsers',
-  '_method'     => 'ImportV1Keys',
-  '_ratelimit'  => $limit50PerMin
-)));
-
 // Join via invite link
 $oRouter->Add('verifyInviteLink', new Route('/indexer/invite', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\IndexUsers',

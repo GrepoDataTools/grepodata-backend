@@ -160,9 +160,11 @@ try {
 try {
   Logger::debugInfo("Processing log records");
   $LogsDeleted = Operation_log::where('level', '>', '2', 'and')
+    ->where('level', '<', '10', 'and')
     ->where('created_at', '<', Carbon::now()->subDays(14))
     ->delete();
   $LogsDeleted += Operation_log::where('level', '>', '1', 'and')
+    ->where('level', '<', '10', 'and')
     ->where('created_at', '<', Carbon::now()->subDays(90))
     ->delete();
   Logger::debugInfo("Deleted " . $LogsDeleted . " old log records.");
