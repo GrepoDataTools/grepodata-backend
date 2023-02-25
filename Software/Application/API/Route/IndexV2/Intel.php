@@ -5,6 +5,7 @@ namespace Grepodata\Application\API\Route\IndexV2;
 use Carbon\Carbon;
 use Exception;
 use Grepodata\Library\Controller\Alliance;
+use Grepodata\Library\Controller\IndexV2\Roles;
 use Grepodata\Library\Controller\Town;
 use Grepodata\Library\Controller\World;
 use Grepodata\Library\Indexer\Validator;
@@ -39,6 +40,19 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
       $Total = $aIntelResult[1];
       $ElapsedMs = round(microtime(true) * 1000) - $Start;
 
+      if ($ElapsedMs > 1000) {
+        # TODO: log each query duration to ES
+        Logger::warning("Slow query warning: GetIntelForUserGet > ".$ElapsedMs."ms > ".$oUser->id);
+      }
+
+      $aRoles = Roles::allByUser($oUser);
+      $aUserKeyList = array();
+      foreach ($aRoles as $oRole) {
+        if ($oRole->contribute == 1) {
+          $aUserKeyList[] = $oRole->index_key;
+        }
+      }
+
       $aIntelData = array();
       $aWorlds = array();
       foreach ($aIntel as $oIntel) {
@@ -60,7 +74,14 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
           $aTownIntelRecord['alliance_id'] = $oIntel->alliance_id;
           $aTownIntelRecord['alliance_name'] = Alliance::first($oIntel->alliance_id, $oIntel->world)->name ?? '';
           if (isset($oIntel['shared_via_indexes'])) {
-            $aTownIntelRecord['shared_via_indexes'] = $oIntel['shared_via_indexes'];
+             $aTeamsFiltered = array();
+             $aTargets = explode(", ", $oIntel['shared_via_indexes']);
+             foreach ($aTargets as $IndexKey) {
+               if (in_array($IndexKey, $aUserKeyList)) {
+                 $aTeamsFiltered[] = $IndexKey;
+               }
+             }
+            $aTownIntelRecord['shared_via_indexes'] = join(", ", $aTeamsFiltered);
           }
           $aIntelData[] = $aTownIntelRecord;
         } catch (\Exception $e) {

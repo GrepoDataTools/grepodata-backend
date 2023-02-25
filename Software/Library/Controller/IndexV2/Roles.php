@@ -125,5 +125,14 @@ class Roles
       ->first();
   }
 
+  /**
+   * Return all roles for the given user
+   * @param User $oUser
+   * @return \Grepodata\Library\Model\IndexV2\Roles
+   */
+  public static function allByUser(User $oUser)
+  {
+    return \Grepodata\Library\Model\IndexV2\Roles::where('user_id', '=', $oUser->id)->get();
+  }
 
 }

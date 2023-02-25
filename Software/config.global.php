@@ -15,8 +15,8 @@ define('INNO_DATA_ALLIANCE_ATT',  'alliance_kills_att.txt.gz');
 define('INNO_DATA_ALLIANCE_DEF',  'alliance_kills_def.txt.gz');
 define('INNO_DATA_CONQUERS',      'conquers.txt.gz');
 
-define('USERSCRIPT_VERSION',      '5.0.2');
-define('USERSCRIPT_UPDATE_INFO',  'Major update to improve index security. A GrepoData account will now be required to continue using the indexer. Read more: grepodata.com/indexer');
+define('USERSCRIPT_VERSION',      '5.0.0');
+define('USERSCRIPT_UPDATE_INFO',  '');
 
 define('DEFAULT_SERVER',  'en');
 define('DEFAULT_WORLD',   'en32');
