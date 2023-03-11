@@ -98,6 +98,8 @@ class Helper
         <meta charset=\"UTF-8\" />
         <script src=\"http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js\"></script>
         <style>
+          .previous_button {display: none !important;}
+          .next_button {display: none !important;}
           .game_arrow_right {display: none !important;}
           .game_arrow_left {display: none !important;}
           .game_arrow_delete {display: none !important;}

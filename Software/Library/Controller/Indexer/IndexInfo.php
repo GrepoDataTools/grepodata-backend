@@ -41,31 +41,37 @@ class IndexInfo
   /**
    * Return all indexes that the user has rights on
    * @param User $oUser
+   * @param bool $bDoSort
    * @return \Grepodata\Library\Model\Indexer\IndexInfo[]
    */
-  public static function allByUser(User $oUser)
+  public static function allByUser(User $oUser, $bDoSort = true)
   {
-    return \Grepodata\Library\Model\Indexer\IndexInfo::select(['Indexer_info.*', 'Indexer_roles.role', 'Indexer_roles.contribute', 'Indexer_roles.id AS sort_id'])
-      ->join('Indexer_roles', 'Indexer_roles.index_key', '=', 'Indexer_info.key_code')
-      ->where('Indexer_roles.user_id', '=', $oUser->id)
-      ->orderBy('Indexer_roles.id', 'desc')
-      ->get();
+    $Query = \Grepodata\Library\Model\Indexer\IndexInfo::select(['Indexer_info.*', 'Indexer_roles.role', 'Indexer_roles.contribute', 'Indexer_roles.id AS sort_id']);
+    $Query->join('Indexer_roles', 'Indexer_roles.index_key', '=', 'Indexer_info.key_code');
+    $Query->where('Indexer_roles.user_id', '=', $oUser->id);
+    if ($bDoSort) {
+      $Query->orderBy('Indexer_roles.id', 'desc');
+    }
+    return $Query->get();
   }
 
   /**
    * Return all indexes that the user has rights on within this world
    * @param User $oUser
    * @param $World
+   * @param bool $bDoSort
    * @return \Grepodata\Library\Model\Indexer\IndexInfo[]
    */
-  public static function allByUserAndWorld(User $oUser, $World)
+  public static function allByUserAndWorld(User $oUser, $World, $bDoSort = true)
   {
-    return \Grepodata\Library\Model\Indexer\IndexInfo::select(['Indexer_info.*', 'Indexer_roles.role', 'Indexer_roles.contribute'])
-      ->join('Indexer_roles', 'Indexer_roles.index_key', '=', 'Indexer_info.key_code')
-      ->where('Indexer_roles.user_id', '=', $oUser->id)
-      ->where('Indexer_info.world', '=', $World)
-      ->orderBy('Indexer_info.created_at', 'desc')
-      ->get();
+    $Query = \Grepodata\Library\Model\Indexer\IndexInfo::select(['Indexer_info.*', 'Indexer_roles.role', 'Indexer_roles.contribute']);
+    $Query->join('Indexer_roles', 'Indexer_roles.index_key', '=', 'Indexer_info.key_code');
+    $Query->where('Indexer_roles.user_id', '=', $oUser->id);
+    $Query->where('Indexer_info.world', '=', $World);
+    if ($bDoSort) {
+      $Query->orderBy('Indexer_info.created_at', 'desc');
+    }
+    return $Query->get();
   }
 
 }

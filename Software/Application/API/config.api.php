@@ -26,16 +26,6 @@ $limit100PerMin = array(
   'window' => 3*60
 );
 
-// DEMO
-//$oRouter->Add('sharecommandsupload', new Route('/commands/upload', array(
-//  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Commands',
-//  '_method'     => 'UploadCommands'
-//)));
-//$oRouter->Add('sharecommandsget', new Route('/commands/get', array(
-//  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Commands',
-//  '_method'     => 'GetCommands'
-//)));
-
 // === AUTH
 // Register
 $oRouter->Add('register', new Route('/auth/register', array(
@@ -85,10 +75,30 @@ $oRouter->Add('changepassword', new Route('/auth/changepassword', array(
 )));
 // ===
 
-// News
-$oRouter->Add('getnews', new Route('/news', array(
-  '_controller' => '\Grepodata\Application\API\Route\News',
-  '_method'     => 'News'
+// === Operations
+$oRouter->Add('getactiveops', new Route('/commands/activeteams', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Commands',
+  '_method'     => 'ActiveTeams',
+  '_ratelimit'  => $limit50PerMin,
+  '_killswitch' => OPERATIONS_KILLSWITCH
+)));
+$oRouter->Add('sharecommandsupload', new Route('/commands/upload', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Commands',
+  '_method'     => 'UploadCommands',
+  '_ratelimit'  => $limit50PerMin,
+  '_killswitch' => OPERATIONS_KILLSWITCH
+)));
+$oRouter->Add('sharecommandsget', new Route('/commands/get', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Commands',
+  '_method'     => 'GetCommands',
+  '_ratelimit'  => $limit50PerMin,
+  '_killswitch' => OPERATIONS_KILLSWITCH
+)));
+$oRouter->Add('sharecommandsupdate', new Route('/commands/update', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Commands',
+  '_method'     => 'UpdateCommand',
+  '_ratelimit'  => $limit50PerMin,
+  '_killswitch' => OPERATIONS_KILLSWITCH
 )));
 
 // Events

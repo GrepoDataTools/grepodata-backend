@@ -10,6 +10,8 @@ class RedisClient
   const ALLIANCE_WARS_PREFIX = 'gd_alliance_wars_'; // followed by: {alliance_id}{world}
   const INDEXER_PLAYER_PREFIX = 'gd_indexer_player_intel_'; // followed by: {uid}{player_id}{world}
   const INDEXER_ALLIANCE_PREFIX = 'gd_indexer_alliance_intel_'; // followed by: {uid}{alliance_id{world}
+  const COMMAND_STATE_PREFIX = 'cmd_state_'; // followed by: {team}
+  const COMMAND_DATA_PREFIX = 'cmd_data_'; // followed by: {team}
 
   /**
    * @return Redis
@@ -26,7 +28,7 @@ class RedisClient
   }
 
   /**
-   * Store a value
+   * Store a value (do not overwrite)
    * @param $Key
    * @param $Data
    * @param int $TimeoutSeconds Time in seconds
@@ -40,6 +42,25 @@ class RedisClient
       return $oRedis->set($Key, $Data, ['nx', 'ex'=>$TimeoutSeconds]);
     } catch (\Exception $e) {
       Logger::warning("Redis SetKey Exception: ".$e->getMessage()." [".$e->getTraceAsString()."]");
+    }
+    return false;
+  }
+
+  /**
+   * Store a value and overwrite the old value if it already exists
+   * @param $Key
+   * @param $Data
+   * @param int $TimeoutSeconds Time in seconds
+   * @return bool
+   */
+  public static function UpsertKey($Key, $Data, $TimeoutSeconds=60): bool
+  {
+    if (bDevelopmentMode) return false;
+    try {
+      $oRedis = self::GetInstance();
+      return $oRedis->set($Key, $Data, ['ex'=>$TimeoutSeconds]);
+    } catch (\Exception $e) {
+      Logger::warning("Redis UpsertKey Exception: ".$e->getMessage()." [".$e->getTraceAsString()."]");
     }
     return false;
   }

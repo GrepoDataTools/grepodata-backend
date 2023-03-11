@@ -54,6 +54,7 @@ class Command extends Model
       'attacking_strategy' => $this->attacking_strategy,
       'units' => json_decode($this->units, true),
       'arrival_at' => $this->arrival_at,
+      'arrival_at_human' => date('H:i:s M d',$this->arrival_at) ,
       'started_at' => $this->started_at
     );
   }

@@ -65,6 +65,7 @@ define('GD_ERROR_7000', 'Unable to handle indexer request');
 define('GD_ERROR_7100', 'No verified players found for this user.');
 define('GD_ERROR_7101', 'No index found for this key.');
 define('GD_ERROR_7201', 'User is not part of any teams on this world.');
+define('GD_ERROR_7202', 'User is not part of any teams.');
 define('GD_ERROR_7500', 'Unauthorized. You do not have access to this index.');
 define('GD_ERROR_7501', 'Unauthorized. You are not an owner on this index.');
 define('GD_ERROR_7502', 'Unauthorized. You are not an admin on this index.');
@@ -82,6 +83,15 @@ define('GD_ERROR_7570', "User is already a member of this index.");
 define('GD_ERROR_7601', "V1 key joining is disabled by owner.");
 define('GD_ERROR_7602', "Not a V1 index.");
 define('GD_ERROR_7610', "Owner can not leave the index if there are still other members and no other owners.");
+
+// Operations
+define('GD_ERROR_8000', 'Unable to handle operations request');
+define('GD_ERROR_8010', 'No active operations');
+define('GD_ERROR_8020', 'No active commands in operation');
+define('GD_ERROR_8110', 'Invalid command action');
+define('GD_ERROR_8120', 'Admin rights required to perform this action');
+define('GD_ERROR_8200', 'Command update failed');
+define('GD_ERROR_8300', 'Sorry, our commands server is down. Admin is notified');
 
 // === Success codes
 define('GD_SUCCESS_1000', 'Request processed successfully');
@@ -105,8 +115,13 @@ define('GD_SUCCESS_1400', 'V1 index key import successful');
 define('GD_SUCCESS_1410', 'Intel commit successful');
 define('GD_SUCCESS_1500', 'User left index successfully');
 
+// Profile
 define('GD_SUCCESS_4000', 'Profile request processed successfully');
 define('GD_SUCCESS_4200', 'Account unlinking was successful');
+
+// Operations
+define('GD_SUCCESS_8000', 'Ops request processed successfully');
+define('GD_SUCCESS_8010', 'No new commands');
 
 
 class ResponseCode

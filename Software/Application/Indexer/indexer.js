@@ -32,6 +32,7 @@ var errorSubmissions = [];
             stats: true,
             context: true,
             keys_enabled: true,
+            command_share: true,
             command_cancel_time: true,
             forum_reactions: true,
             bug_reports: true,
@@ -87,8 +88,9 @@ var errorSubmissions = [];
             SHARE: 'Share',
             FORUM_REACTIONS_TITLE: 'Forum reactions',
             FORUM_REACTIONS_INFO: 'Add team reactions to the in-game alliance forum. All users on the same GrepoData team can see eachothers reactions.',
-            CMD_OVERVIEW_TITLE: 'Enhance command overview',
+            CMD_OVERVIEW_TITLE: 'Share command overview',
             CMD_DEPARTURE_INFO: 'Add the return and cancel time to your own movements and add a link to town intel for incoming enemy movements.',
+            CMD_SHARING_INFO: 'Add a button to share your commands with your GrepoData teams.',
             CONTEXT_TITLE: 'Expand context menu',
             CONTEXT_INFO: 'Add an intel shortcut to the town context menu. The shortcut opens the intel for this town.',
             BUG_REPORTS: 'Upload anonymous bug reports to help improve our script.',
@@ -139,8 +141,9 @@ var errorSubmissions = [];
                         SHARE: 'Delen',
                         FORUM_REACTIONS_TITLE: 'Forum reacties',
                         FORUM_REACTIONS_INFO: 'Voeg team reacties toe aan het alliantie forum. Alle leden van een GrepoData team kunnen elkaars reacties zien op het forum.',
-                        CMD_OVERVIEW_TITLE: 'Uitgebreid beveloverzicht',
+                        CMD_OVERVIEW_TITLE: 'Beveloverzicht delen',
                         CMD_DEPARTURE_INFO: 'Voeg de annuleer en terugkeer tijd toe aan eigen bevelen. Voeg een intel link toe aan vijandige bevelen.',
+                        CMD_SHARING_INFO: 'Knop toevoegen om bevelen te uploaden naar je GrepoData teams.',
                         CONTEXT_TITLE: 'Context menu uitbreiden',
                         CONTEXT_INFO: 'Voeg een intel snelkoppeling toe aan het context menu als je op een stad klikt. De snelkoppeling verwijst naar de verzamelde intel van de stad.',
                         BUG_REPORTS: 'Anonieme bug reports uploaden om het script te verbeteren.',
@@ -214,8 +217,11 @@ var errorSubmissions = [];
                         linkToStats(action, opt);
                         break;
                     case "/town_overviews/command_overview":
+                        if (gd_settings.command_share === true) {
+                            setTimeout(_ => {parseCommandOverview(xhr)}, 20);
+                        }
                         if (gd_settings.command_cancel_time === true) {
-                            setTimeout(enhanceCommandOverview, 20);
+                            setTimeout(enhanceCommandOverview, 50);
                         }
                         break;
                 }
@@ -223,6 +229,213 @@ var errorSubmissions = [];
                 errorHandling(error, "handleAjaxCompleteObserver");
             }
         });
+
+        var tracked_commands = {}; // dict format: {getCommandId(command): command.arrival_at}
+        function getCommandId(command) {
+            // command hash format: {command.id}_{command.return}_{command.power_id}
+            // command.id: id is unique for each command and is consistent between sessions
+            // command.arrival_at: arrival_at helps to track changes staged commands (e.g. colonization)
+            // command.return: returning commands have the same id, so we need to use return to see if it is a returning command
+            // command.power_id: power_id is used to see if changes have been made such as wisdom or sea storm
+            return command.id + '_' + command.arrival_at + '_' + command.return + '_' + command.power_id;
+        }
+
+        function updateOpsSyncButton(text, enabled = true, status = 'ok', callback = (_ => { return 1 })) {
+            //$('#gd_cmd_vrvw_share').find('.js-caption').eq(0).html(text);
+            $('#gd_cmd_vrvw_share_txt').html(text);
+            if (enabled && callback != null) {
+                $('#gd_cmd_vrvw_share').removeClass("disabled");
+                $('#gd_cmd_vrvw_share').unbind("click").bind("click", callback);
+            } else if (!enabled) {
+                $('#gd_cmd_vrvw_share').addClass("disabled");
+                $('#gd_cmd_vrvw_share').off("click");
+            }
+            if (status == 'ok') {
+                $('#gd_cmd_vrvw_share_txt').css("color", '#36cd5b');
+            } else if (status == 'error') {
+                $('#gd_cmd_vrvw_share_txt').css("color", '#ff5252');
+            } else {
+                $('#gd_cmd_vrvw_share_txt').css("color", '#fc6');
+            }
+        }
+
+        function showSyncStatusToast(toastHtml, timeout = 15000) {
+            if ($('#gd_cmd_vrvw_toast').length == 0) {
+                $('#place_defense').append(`<div id="gd_cmd_vrvw_toast"></div>`)
+            }
+            $('#gd_cmd_vrvw_toast').html(toastHtml);
+            $('#gd_cmd_vrvw_toast').show();
+            setTimeout(function() { $("#gd_cmd_vrvw_toast").hide(); }, timeout);
+        }
+
+        let activeOperation = null;
+        function parseCommandOverview(xhr) {
+            try {
+                var xhr_data = JSON.parse(xhr.responseText);
+                var commands = xhr_data.json.data.commands;
+                var current_time = Date.now() / 1000;
+                verbose ? console.log('========================') : null;
+                verbose ? console.log('parsing command overview', commands) : null;
+
+                if ($('#gd_cmd_vrvw_share').length == 0) {
+                    $('#command_overview_tabs').parent().find('.game_list_footer').eq(0).append(`
+                <div class="button_new disabled" id="gd_cmd_vrvw_share" name="Share with team" style="float: right; margin: 2px; " rel="#gpwnd_1000">
+                    <div class="left"></div><div class="right"></div>
+                    <div class="caption js-caption">
+                        <div style="width: 23px; height: 20px; margin-left: -17px; position: absolute; background: `+gd_icon+`"></div>
+                        <div id="gd_cmd_vrvw_share_txt" style="margin-left: 17px;">Loading ♻</div>
+                        <div class="effect js-effect"></div>
+                    </div>
+                </div>`);
+                }
+
+                // Filter new commands (subset of current commands that is not in tracked commands)
+                let new_commands = commands.filter(command => {
+                    return Object.keys(tracked_commands).indexOf(getCommandId(command)) < 0;
+                });
+                verbose ? console.log('new commands: ', new_commands) : null;
+
+                // Get current command id list
+                let current_command_ids = commands.map((command) => getCommandId(command));
+
+                // Filter cancelled commands (subset of [active] tracked_commands that is not in current commands)
+                let missing_tracked_command_ids = Object.keys(tracked_commands).filter(command_id => {
+                    // TODO is_active needs a few second margin for commands that just arrived
+                    let is_active = tracked_commands[command_id].arrival_at > current_time; // command is active if its arrival time is in the future
+                    let is_current = current_command_ids.indexOf(command_id) >= 0; // command is current if it exists in the list of current commands
+                    return is_active && !is_current;
+                });
+                let missing_tracked_commands = missing_tracked_command_ids.map(command_id => tracked_commands[command_id]);
+                verbose ? console.log("missing tracked commands: ", missing_tracked_commands) : null
+
+                // Get list of new command ids, their arrival and their real id
+                var new_command_ids = {}
+                new_commands.forEach(command => {
+                    new_command_ids[getCommandId(command)] = {
+                        arrival_at: command.arrival_at,
+                        id: command.id
+                    }
+                });
+                verbose ? console.log('new commands ids: ', new_command_ids) : null;
+
+                // Check if there are any updates
+                let num_updates = new_commands.length + missing_tracked_commands.length;
+                if (num_updates <= 0) {
+                    if (commands.length <= 0) {
+                        updateOpsSyncButton('No commands', false, '');
+                    } else {
+                        updateOpsSyncButton('Synchronized ✓', false, 'ok');
+                    }
+                    return
+                }
+
+                // Send updates
+                let uploading = false;
+                updateOpsSyncButton(`Share with team (${num_updates})`, true, '', (
+                    _ => {
+                        if (uploading) {
+                            console.log('already uploading')
+                            return;
+                        }
+                        console.log('sharing with team');
+                        uploading = true;
+                        updateOpsSyncButton('Uploading ♻', true, '', null);
+
+                        getAccessToken().then(access_token => {
+                            if (access_token === false) {
+                                HumanMessage.error('GrepoData: login required to upload command overview');
+                                uploading = false;
+                                updateOpsSyncButton('Login required', true, 'error', null);
+                                showLoginPopup();
+                            } else {
+                                var data = {
+                                    'access_token': access_token,
+                                    'world': Game.world_id,
+                                    'del_commands': JSON.stringify(missing_tracked_commands),
+                                    'commands': JSON.stringify(new_commands),
+                                    'player_name': Game.player_name || '',
+                                    'player_id': Game.player_id || 0,
+                                    'alliance_id': Game.alliance_id || 0
+                                };
+
+                                $.ajax({
+                                    url: "https://api.grepodata.com/commands/upload",
+                                    data: data,
+                                    type: 'post',
+                                    crossDomain: true,
+                                    dataType: 'json',
+                                    success: function (data) {
+                                        console.log('upload complete', data);
+
+                                        if ('error_code' in data) {
+                                            switch (data.error_code) {
+                                                case 7201:
+                                                    // no teams
+                                                    HumanMessage.error('GrepoData: you are not in a team. Join or create a team to share your command overview.');
+                                                    updateOpsSyncButton('Not in a team', true, 'error', null);
+                                                    break;
+                                                default:
+                                                    HumanMessage.error('GrepoData: unexpected error. Please try again later or contact us if this error persists.');
+                                                    updateOpsSyncButton('Error. Try again', true, 'error', null);
+                                            }
+                                        } else {
+                                            // add uploaded commands to tracked commands
+                                            tracked_commands = Object.assign({}, tracked_commands, new_command_ids);
+
+                                            // Remove deleted commands from tracked commands
+                                            tracked_commands = Object.keys(tracked_commands).reduce(function (filtered, command_id) {
+                                                if (missing_tracked_command_ids.indexOf(command_id) < 0) filtered[command_id] = tracked_commands[command_id];
+                                                return filtered;
+                                            }, {});
+
+                                            toastHtml = null;
+                                            if ('added_teams' in data) {
+                                                if (data.added_teams.length <= 0) {
+                                                    HumanMessage.error('GrepoData: you are not contributing to any teams. Enable contributions to synchronize your command overview');
+                                                    updateOpsSyncButton('Contributions Disabled', true, 'error', null);
+                                                } else if (data.added_teams.length == 1) {
+                                                    // Show notification with link to Ops center
+                                                    let team = data.added_teams[0];
+                                                    toastHtml = `<a class="gd_cmd_toast_a" href="http://localhost:4200/operations/`+team+`/`+world+`" target="_blank">View Operation</a>`;
+                                                } else {
+                                                    // Show notification with link to Ops center
+                                                    toastHtml = `<a class="gd_cmd_toast_a" href="http://localhost:4200/profile/ops" target="_blank">View Operations</a>`;
+                                                }
+
+                                                if (toastHtml) {
+                                                    showSyncStatusToast(toastHtml);
+                                                    updateOpsSyncButton('Synchronized ✓', false, 'ok');
+                                                }
+                                            } else {
+                                                updateOpsSyncButton('Synchronized ✓', false, 'ok');
+                                            }
+
+                                            verbose ? console.log('synced command ids: ', tracked_commands) : null;
+                                        }
+
+                                        uploading = false;
+                                    },
+                                    error: function (jqXHR, textStatus) {
+                                        console.error("error saving commands", jqXHR);
+                                        if (jqXHR && 'status' in jqXHR && jqXHR.status == 503 && jqXHR.responseJSON && 'message' in jqXHR.responseJSON) {
+                                            HumanMessage.error('GrepoData: '+jqXHR.responseJSON.message);
+                                            updateOpsSyncButton('Service Unavailable', false, 'error', null);
+                                        } else {
+                                            HumanMessage.error('GrepoData: unexpected error. Please try again later or contact us if this error persists.');
+                                            updateOpsSyncButton('Error. Try again', true, 'error', null);
+                                        }
+                                        uploading = false;
+                                    },
+                                    timeout: 120000
+                                });
+                            }
+                        });
+                    }
+                ));
+            } catch (error) {
+                errorHandling(error, "parseCommandOverview");
+            }
+        }
 
         var threadReactions = {};
         function parseForumTopicReactions() {
@@ -712,6 +925,9 @@ var errorSubmissions = [];
                         }
                         if (!('forum_reactions' in result)) {
                             result.forum_reactions = true;
+                        }
+                        if (!('command_share' in result)) {
+                            result.command_share = true;
                         }
                         if ('departure_time' in result && !('command_cancel_time' in result)) {
                             result.command_cancel_time = result.departure_time;
@@ -1776,13 +1992,13 @@ var errorSubmissions = [];
                 if (gd_settings.keys_enabled === true && !['textarea', 'input'].includes(e.srcElement.tagName.toLowerCase()) && reportElement !== null) {
                     switch (e.key) {
                         case gd_settings.key_inbox_prev:
-                            var prev = reportElement.getElementsByClassName('last_report game_arrow_left');
+                            var prev = reportElement.getElementsByClassName('previous_button');
                             if (prev.length === 1 && prev[0] != null) {
                                 prev[0].click();
                             }
                             break;
                         case gd_settings.key_inbox_next:
-                            var next = reportElement.getElementsByClassName('next_report game_arrow_right');
+                            var next = reportElement.getElementsByClassName('next_button');
                             if (next.length === 1 && next[0] != null) {
                                 next[0].click();
                             }
@@ -2116,6 +2332,16 @@ var errorSubmissions = [];
                         '\t\t\t</div>\n' +
                         '\t\t\t<br><br><hr>\n';
 
+                    // Command overview settings
+                    settingsHtml += '\t\t\t<p style="margin-left: 10px;"><strong>' + translate.CMD_OVERVIEW_TITLE + '</strong></p>\n' +
+                        '\t\t\t<div style="margin-left: 30px; margin-bottom: 10px;" class="checkbox_new command_share_gd_enabled' + (gd_settings.command_share === true ? ' checked' : '') + '">\n' +
+                        '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.CMD_SHARING_INFO + '</div>\n' +
+                        '\t\t\t</div>\n' +
+                        '\t\t\t<div style="margin-left: 30px;" class="checkbox_new command_cancel_time_gd_enabled' + (gd_settings.command_cancel_time === true ? ' checked' : '') + '">\n' +
+                        '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.CMD_DEPARTURE_INFO + '</div>\n' +
+                        '\t\t\t</div>\n' +
+                        '\t\t\t<br><br><hr>\n';
+
                     // Stats link
                     settingsHtml += '\t\t\t<p style="margin-left: 10px; display: inline-flex; height: 14px;"><strong>' + translate.STATS_LINK_TITLE + '</strong> <span style="background: '+gd_icon+'; width: 26px; height: 24px; margin-top: -5px; margin-left: 10px;"></span></p>\n' +
                         '\t\t\t<div style="margin-left: 30px;" class="checkbox_new stats_gd_enabled' + (gd_settings.stats === true ? ' checked' : '') + '">\n' +
@@ -2127,13 +2353,6 @@ var errorSubmissions = [];
                     settingsHtml += '\t\t\t<p style="margin-left: 10px; display: inline-flex; height: 14px;"><strong>' + translate.CONTEXT_TITLE + '</strong> <span style="background: '+gd_icon_intel+'; width: 50px; height: 50px; transform: scale(0.6); margin-top: -18px;"></span></p>\n' +
                         '\t\t\t<div style="margin-left: 30px;" class="checkbox_new context_gd_enabled' + (gd_settings.context === true ? ' checked' : '') + '">\n' +
                         '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.CONTEXT_INFO + '</div>\n' +
-                        '\t\t\t</div>\n' +
-                        '\t\t\t<br><br><hr>\n';
-
-                    // Command overview settings
-                    settingsHtml += '\t\t\t<p style="margin-left: 10px;"><strong>' + translate.CMD_OVERVIEW_TITLE + '</strong></p>\n' +
-                        '\t\t\t<div style="margin-left: 30px;" class="checkbox_new command_cancel_time_gd_enabled' + (gd_settings.command_cancel_time === true ? ' checked' : '') + '">\n' +
-                        '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.CMD_DEPARTURE_INFO + '</div>\n' +
                         '\t\t\t</div>\n' +
                         '\t\t\t<br><br><hr>\n';
 
@@ -2206,6 +2425,9 @@ var errorSubmissions = [];
                     });
                     $(".stats_gd_enabled").click(function () {
                         settingsCbx('stats', !gd_settings.stats);
+                    });
+                    $(".command_share_gd_enabled").click(function () {
+                        settingsCbx('command_share', !gd_settings.command_share);
                     });
                     $(".command_cancel_time_gd_enabled").click(function () {
                         settingsCbx('command_cancel_time', !gd_settings.command_cancel_time);

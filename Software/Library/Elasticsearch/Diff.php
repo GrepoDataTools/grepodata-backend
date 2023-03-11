@@ -646,55 +646,6 @@ class Diff
   }
 
   /**
-   * Returns the day of week and hour of day aggregations for the given player
-   * @param Player $oPlayer
-   * @return array
-   */
-  public static function GetAttDiffHeatmapByPlayer(\Grepodata\Library\Model\Player $oPlayer)
-  {
-    $ElasticsearchClient = \Grepodata\Library\Elasticsearch\Client::GetInstance(3);
-    $IndexName = self::IndexIdentifier;
-
-    // Find diff heatmap
-    $aSearchParams = array(
-      "query" => array(
-        "bool" => array(
-          "must" => array(
-            array("match" => array("PlayerId" => $oPlayer->grep_id)),
-            array("match" => array("Server"   => substr($oPlayer->world, 0, 2))),
-            array("range" => array("Date"     => array("gte" => strtotime("-4 week"))))
-          )
-        )
-      ),
-      "aggregations" => array(
-        "day" => array("terms"=>array("field"=>"DayOfWeek", "size"=>10)),
-        "hour" => array("terms"=>array("field"=>"HourOfDay", "size"=>30)),
-      )
-    );
-    $aAttDiffs = $ElasticsearchClient->search(array(
-      'index' => $IndexName,
-      'type' => self::TypeAtt,
-      'body' => $aSearchParams
-    ));
-
-    $aResponse = array();
-    if (isset($aAttDiffs['hits']['total']) && $aAttDiffs['hits']['total'] > 0 && isset($aAttDiffs['aggregations']['hour']['buckets'])) {
-      $aResponse['hour'] = array();
-      foreach ($aAttDiffs['aggregations']['hour']['buckets'] as $aHour) {
-        if ($aHour['key'] >= 0) {
-          $aResponse['hour'][$aHour['key']] = $aHour['doc_count'];
-        }
-      }
-      $aResponse['day'] = array();
-      foreach ($aAttDiffs['aggregations']['day']['buckets'] as $aHour) {
-        $aResponse['day'][$aHour['key']] = $aHour['doc_count'];
-      }
-    }
-
-    return $aResponse;
-  }
-
-  /**
    * Clean old att diff records in elasticsearch for all worlds
    * @param string $Timespan
    * @return bool

@@ -65,6 +65,7 @@ class Report extends \Grepodata\Library\Router\BaseRoute
       }
 
       // Number of recent hashes to return
+      // TODO if user indexes a report that they already indexed; then hashlist is too short. we should then call getlatest again but with a bigger window
       $Window = 300;
 
       // Get the latest n records that appear in all of these indexes or that were personally indexed by this user

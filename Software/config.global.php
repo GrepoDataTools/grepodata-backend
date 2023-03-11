@@ -18,5 +18,7 @@ define('INNO_DATA_CONQUERS',      'conquers.txt.gz');
 define('USERSCRIPT_VERSION',      '5.0.0');
 define('USERSCRIPT_UPDATE_INFO',  '');
 
+define('OPERATIONS_KILLSWITCH', '');
+
 define('DEFAULT_SERVER',  'en');
 define('DEFAULT_WORLD',   'en32');

@@ -121,21 +121,32 @@ class Index extends BaseRoute
         ResponseCode::errorCode(7101, array());
       }
 
+      // Check world status
       $oWorld = World::getWorldById($oIndex->world);
 
-//      if (!bDevelopmentMode) {
+      // Verify user index role
       $oIndexRole = IndexManagement::verifyUserCanRead($oUser, $aParams['key']);
       $bUserIsAdmin = in_array($oIndexRole->role, array(Roles::ROLE_ADMIN, Roles::ROLE_OWNER));
-//      } else {
-//        $oIndexRole = new \Grepodata\Library\Model\IndexV2\Roles();
-//        $oIndexRole->role = 'owner';
-//        $oIndexRole->contribute = false;
-//        $bUserIsAdmin = true;
-//      }
 
+      // Build minimal response
+      $aResponseMinimal = array(
+        'is_admin'   => $bUserIsAdmin,
+        'index_name' => $oIndex->index_name,
+        'contribute' => $oIndexRole->contribute,
+        'role'       => $oIndexRole->role,
+        'share_link' => $bUserIsAdmin ? $oIndex->share_link : 'Unauthorized',
+        'unix_offset' => $oWorld->getUnixOffset(),
+      );
+
+      if (isset($aParams['minimal']) && $aParams['minimal'] == true) {
+        return self::OutputJson($aResponseMinimal);
+      }
+
+      // Get overview
       $oIndexOverview = IndexOverview::firstOrFail($aParams['key']);
       if ($oIndexOverview == null) throw new ModelNotFoundException();
 
+      // Get conquests
       $aRecentConquests = array();
       try {
         $oWorld = World::getWorldById($oIndex->world);
@@ -159,8 +170,16 @@ class Index extends BaseRoute
         Logger::warning("Error loading recent conquests: " . $e->getMessage());
       }
 
-      $aResponse = array(
-        'is_admin'          => $bUserIsAdmin,
+      // Build expanded response
+      $aResponseExpanded = array(
+        'index_version'     => $oIndex->index_version,
+        'new_report'        => $oIndex->new_report,
+        'uncommitted_reports' => $oIndexRole->uncommitted_reports ?? 0,
+        'uncommitted_status' => $oIndexRole->uncommitted_status ?? '',
+        'num_days'          => $bUserIsAdmin ? $oIndex->delete_old_intel_days : 0,
+        'allow_join_v1_key' => $bUserIsAdmin ? $oIndex->allow_join_v1_key : 0,
+        'has_v2_owner'      => $oIndex->created_by_user > 0,
+        'world_stopped'     => $oWorld->stopped == 1,
         'world'             => $oIndexOverview['world'],
         'total_reports'     => $oIndexOverview['total_reports'],
         'spy_reports'       => $oIndexOverview['spy_reports'],
@@ -169,19 +188,6 @@ class Index extends BaseRoute
         'latest_report'     => $oIndexOverview['latest_report'],
         'max_version'       => $oIndexOverview['max_version'],
         'recent_conquests'  => $aRecentConquests,
-        'latest_version'    => USERSCRIPT_VERSION,
-        'index_version'     => $oIndex->index_version,
-        'world_stopped'     => $oWorld->stopped == 1,
-        'index_name'        => $oIndex->index_name,
-        'role'              => $oIndexRole->role,
-        'contribute'        => $oIndexRole->contribute,
-        'uncommitted_reports' => $oIndexRole->uncommitted_reports ?? 0,
-        'uncommitted_status' => $oIndexRole->uncommitted_status ?? '',
-        'share_link'        => $bUserIsAdmin ? $oIndex->share_link : 'Unauthorized',
-        'num_days'          => $bUserIsAdmin ? $oIndex->delete_old_intel_days : 0,
-        'allow_join_v1_key' => $bUserIsAdmin ? $oIndex->allow_join_v1_key : 0,
-        'has_v2_owner'      => $oIndex->created_by_user > 0,
-        'update_message'    => USERSCRIPT_UPDATE_INFO,
         'owners'            => json_decode(urldecode($oIndexOverview['owners'])),
         'contributors'      => json_decode(urldecode($oIndexOverview['contributors'])),
         'contributors_actual' => $bUserIsAdmin ? json_decode(urldecode($oIndexOverview['contributors_actual'])) : null,
@@ -189,6 +195,7 @@ class Index extends BaseRoute
         'players_indexed'   => json_decode(urldecode($oIndexOverview['players_indexed'])),
         'latest_intel'      => json_decode(urldecode($oIndexOverview['latest_intel'])),
       );
+      $aResponse = array_merge($aResponseMinimal, $aResponseExpanded);
 
       return self::OutputJson($aResponse);
 

@@ -484,7 +484,7 @@ if ($Logs !== false) {
       $Log->message
     );
     $msg = str_replace('\n','<br/>&nbsp;&nbsp;&nbsp;', $msg);
-    echo '<tr class="'.($Log->level <= 2 && (!isset($_GET['level']) || ($_GET['level'] != 1 && $_GET['level'] != 2)) ? ($Log->level == 1 ? 'error' : 'warning') : '').'"><td style="width: 15%;">' . $Log->created_at . '</td><td>' . $Log->level . '</td><td><a class="link" href="?pid=' . $Log->pid . '">' . $Log->pid . '<a/></td><td style="width: 70%; text-align: left;">' . $msg . '</td></tr>';
+    echo '<tr class="'.($Log->level <= 2 && (!isset($_GET['level']) || ($_GET['level'] != 1 && $_GET['level'] != 2)) ? ($Log->level == 1 ? 'error' : 'warning') : '').'"><td style="width: 15%;">' . $Log->created_at . '.' . substr($Log->microtime, 0, 3). '</td><td>' . $Log->level . '</td><td><a class="link" href="?pid=' . $Log->pid . '">' . $Log->pid . '<a/></td><td style="width: 70%; text-align: left;">' . $msg . '</td></tr>';
 //      echo $Log->created_at . ' --- ' . $Log->level . ' --- <a class="link" onclick="pid(' . $Log->pid . ')">' . $Log->pid . '<a/> --- ' . $Log->message . '<br/>';
   }
   echo '</table>';

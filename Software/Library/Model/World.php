@@ -35,6 +35,21 @@ class World extends Model
   }
 
   /**
+   * Returns UNIX offset in seconds
+   * @return integer
+   */
+  public function getUnixOffset()
+  {
+    $ServerTime = $this->getServerTime();
+    $ServerTime->setTime(0,0);
+
+    $unix = Carbon::now();
+    $unix->setTime(0,0);
+
+    return $ServerTime->diffInRealSeconds($unix, false);
+  }
+
+  /**
    * Returns the UTC date time of the most recent world reset
    * @return string Date string with format: Y-m-d H:i:s
    */

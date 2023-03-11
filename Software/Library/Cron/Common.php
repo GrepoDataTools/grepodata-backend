@@ -33,7 +33,7 @@ class Common
 
     // Inactive cron
     if (isset($oCronStatus->active) && $oCronStatus->active == false) {
-      Logger::error("Cronjob disabled: " . basename($Path));
+      Logger::warning("Cronjob disabled: " . basename($Path));
       die("Cronjob disabled: " . basename($Path));
     }
 

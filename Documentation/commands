@@ -5,3 +5,5 @@ pm2 start index.js --name grepodata-discord-acc --interpreter "node@13.8.0" --cw
 sudo certbot --apache -d grepodata.com -d api.grepodata.com -d ci.grepodata.com -d test.grepodata.com -d apitest.grepodata.com
 
 sudo ufw allow from {{DEV_IPV4}} proto tcp to any port 3000,3306,5000,5544,9000,9200
+
+bin/cerebro -Dhttp.port=9000

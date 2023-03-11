@@ -31,37 +31,6 @@ if ($worlds === false) {
 $WorldCount = count($worlds);
 Logger::warning("Diff worlds: retrieved $WorldCount active worlds from database.");
 
-//$QueryDateLimit = Carbon::now()->subDays(14); // If updated within last 14 days
-
-///** @var $oWorld World */
-//foreach ($worlds as $oWorld) {
-//  // Check commands 'php SCRIPTNAME[=0] WORLD[=1]'
-//  if (isset($argv[1]) && $argv[1]!=null && $argv[1]!='' && $argv[1]!=$oWorld->grep_id) continue;
-//
-//  try {
-//    Logger::debugInfo("Processing diffs for world ".$oWorld->grep_id.".");
-//    Logger::debugInfo("Diff script memory usage: used=" . round(memory_get_usage(false)/1048576,2) . "MB, real=" . round(memory_get_usage(true)/1048576,2) . "MB");
-//
-//    // Loop players for this world
-//    $aPlayers = Player::allByWorldAndUpdate($oWorld->grep_id, $QueryDateLimit);
-//    /** @var \Grepodata\Library\Model\Player $oPlayer */
-//    foreach ($aPlayers as $oPlayer) {
-//      try {
-//        $aHeatmap = Diff::GetAttDiffHeatmapByPlayer($oPlayer);
-//
-//        if (is_array($aHeatmap) && sizeof($aHeatmap)>=0) {
-//          $oPlayer->heatmap = json_encode($aHeatmap);
-//          $oPlayer->save();
-//        }
-//
-//      } catch (\Exception $e) {}
-//    }
-//    unset($aPlayers);
-//  } catch (\Exception $e) {
-//    Logger::error("Error processing diffs for world " . $oWorld->grep_id . ": " . $e->getMessage());
-//  }
-//}
-
 try {
   // Cleanup
   Logger::debugInfo("Cleaning old diffs.");

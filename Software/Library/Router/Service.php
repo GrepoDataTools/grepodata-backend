@@ -49,6 +49,13 @@ class Service
       $oContext = new RequestContext();
       $oContext->fromRequest($oRequest);
 
+      if ($oContext->getMethod() == 'OPTIONS') {
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Headers: access_token, Origin, X-Requested-With, Content-Type, Accept');
+        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+        die();
+      }
+
       if ($oContext->getPathInfo() === '/sync') {
         header('Access-Control-Allow-Origin: *');
         header('GD-Server-Time: '.time());
@@ -81,6 +88,12 @@ class Service
               }
             }
 
+            // Check if killswitch is set
+            if (isset($aMatchedParameters['_killswitch']) && $aMatchedParameters['_killswitch']!=='' && strlen($aMatchedParameters['_killswitch'])>0) {
+              header('Access-Control-Allow-Origin: *');
+              die(BaseRoute::OutputJson(array('disabled' => true, 'message' => $aMatchedParameters['_killswitch']), 503));
+            }
+
             if ($RateLimit !== null) {
               $ResourceId = $aMatchedParameters['_controller'] . $MethodName . $_SERVER['REMOTE_ADDR'];
               $RateLimiter = \RateLimit\RateLimiterFactory::createRedisBackedRateLimiter([
@@ -110,12 +123,7 @@ class Service
           }
         }
 
-        if ($oContext->getMethod() == 'OPTIONS') {
-          header('Access-Control-Allow-Origin: *');
-          header('Access-Control-Allow-Headers: access_token, Origin, X-Requested-With, Content-Type, Accept');
-          header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-          die();
-        } else if (method_exists($oController, $MethodName)) {
+        if (method_exists($oController, $MethodName)) {
           header("Access-Control-Allow-Origin: *");
           die($oController::{$MethodName}());
         } else {
