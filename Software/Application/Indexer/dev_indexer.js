@@ -324,7 +324,7 @@ var errorSubmissions = [];
                     if (commands.length <= 0) {
                         updateOpsSyncButton('No commands', false, '');
                     } else {
-                        updateOpsSyncButton('Synchronized ✓', false, 'ok');
+                        updateOpsSyncButton('No new commands ✓', false, '');
                     }
                     return
                 }
@@ -396,10 +396,10 @@ var errorSubmissions = [];
                                                 } else if (data.added_teams.length == 1) {
                                                     // Show notification with link to Ops center
                                                     let team = data.added_teams[0];
-                                                    toastHtml = `<a class="gd_cmd_toast_a" href="http://localhost:4200/operations/`+team+`/`+world+`" target="_blank">View Operation</a>`;
+                                                    toastHtml = `<a class="gd_cmd_toast_a" href="https://grepodata.com/operations/`+team+`/`+world+`" target="_blank">View Operation</a>`;
                                                 } else {
                                                     // Show notification with link to Ops center
-                                                    toastHtml = `<a class="gd_cmd_toast_a" href="http://localhost:4200/profile/ops" target="_blank">View Operations</a>`;
+                                                    toastHtml = `<a class="gd_cmd_toast_a" href="https://grepodata.com/profile/ops" target="_blank">View Operations</a>`;
                                                 }
 
                                                 if (toastHtml) {

@@ -143,12 +143,15 @@ class Commands
         if (key_exists('is_attack_spot', $aCommand) && $aCommand['is_attack_spot'] === true) $subtype = 'attack_spot';
         elseif (key_exists('is_quest', $aCommand) && $aCommand['is_quest'] === true) $subtype = 'quest';
         elseif (key_exists('is_temple', $aCommand) && $aCommand['is_temple'] === true) $subtype = 'temple';
+        elseif (key_exists('colonization_finished_at', $aCommand) && $aCommand['colonization_finished_at'] > 0) {
+          $subtype = 'cs_eta';
+        }
 
         // Comments
         $aComments = array();
         if (key_exists('custom_command_name', $aCommand) && !is_null($aCommand['custom_command_name'])) {
           $Now = $oWorld->getServerTime()->format('H:i:s M d');
-          $aComments[] = self::EncodeCommandComment($PlayerName, $Now, base64_encode($aCommand['custom_command_name']));
+          $aComments[] = self::EncodeCommandComment($PlayerName, $Now, $aCommand['custom_command_name']);
         }
 
         // Target town & foundation override
@@ -167,10 +170,10 @@ class Commands
         $aParsedCommand = array(
           'team'       => $Team,
           'updated_at' => $UpdatedAt,
-          'arrival_at' => $aCommand['arrival_at'],
+          'arrival_at' => $aCommand['arrival_at']??0,
           'arrival_human' => $ArrivalHuman,
           'cancel_human' => $CancelHuman,
-          'started_at' => $aCommand['started_at'],
+          'started_at' => $aCommand['started_at']??0,
           'upload_uid' => $UserId,
           'upload_id'  => $PlayerId,
           'upload_n'   => $PlayerName,
@@ -188,7 +191,7 @@ class Commands
           'src_ply_id' => $aCommand['origin_town_player_id']??0,
           'src_twn_n'  => $aCommand['origin_town_name']??'',
           'src_all_n'  => $aCommand['origin_town_player_alliance_name']??'',
-          'src_ply_n'  => $aCommand['origin_town_player_name']??'',
+          'src_ply_n'  => $aCommand['origin_town_player_name']??$aCommand['origin_player_name']??'',
           'trg_twn_id' => $aCommand['destination_town_id']??0,
           'trg_all_id' => $aCommand['destination_town_player_alliance_id']??0,
           'trg_ply_id' => $aCommand['destination_town_player_id']??0,
@@ -206,9 +209,9 @@ class Commands
     }
 
     // Upload to elasticsearch
-    error_log(json_encode($aParams));
+    //error_log(json_encode($aParams));
     $aResponse = $ElasticsearchClient->bulk($aParams);
-    error_log(json_encode($aResponse));
+    //error_log(json_encode($aResponse));
 
     // Check for errors
     $NumErrors = 0;
@@ -392,14 +395,6 @@ class Commands
       }
     }
 
-//    $aResponse = array_merge($aResponse, $aResponse);
-//    $aResponse = array_merge($aResponse, $aResponse);
-//    $aResponse = array_merge($aResponse, $aResponse);
-//    $aResponse = array_merge($aResponse, $aResponse);
-//    $aResponse = array_merge($aResponse, $aResponse);
-//    $aResponse = array_merge($aResponse, $aResponse);
-//    $aResponse = array_merge($aResponse, $aResponse);
-
     return $aResponse;
   }
 
@@ -420,8 +415,6 @@ class Commands
     if ($UpdatedAt <= 0) {
       $UpdatedAt = time();
     }
-
-    // TODO: not being user atm
 
     // Update delete_status and updated_at for the given document ids
     $aDeleteScript = array(
@@ -613,6 +606,11 @@ class Commands
         $aComments[] = self::DecodeCommandComment($comment);
       }
       $aData['comments'] = $aComments;
+    }
+
+    // Units
+    if (key_exists('units', $aData) && strlen($aData['units']) > 0) {
+      $aData['units'] = json_decode($aData['units'], true);
     }
 
     return $aData;

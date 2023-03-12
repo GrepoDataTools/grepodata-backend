@@ -124,8 +124,7 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
         $LastPull = $aParams['last_get_cmd'];
 
         // Add a margin to deal with batch insert delays on Elasticsearch
-        // TODO: check if this is sufficient
-        $LastPull -= 5;
+        $LastPull -= 4;
       }
 
       // Get current timestamp
@@ -174,8 +173,6 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
       // Verify user
       $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
 
-      // TODO allow user to mention other user by in-game name (have to link user to probable in-game name in some cron job)
-
       // Verify team role
       $oIndexRole = IndexManagement::verifyUserCanRead($oUser, $Team);
       $bUserIsAdmin = in_array($oIndexRole->role, array(Roles::ROLE_ADMIN, Roles::ROLE_OWNER));
@@ -212,8 +209,11 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
       // Format output
       $aCommandsResponse = array();
       foreach ($aCommands as $aCommand) {
-        if (key_exists('units', $aCommand) && strlen($aCommand['units']) > 0) {
-          $aCommand['units'] = json_decode($aCommand['units'], true);
+        // Soft deletions should be treated as hard deletions if user is not uploader or if user is not admin
+        if (!$bUserIsAdmin && key_exists('upload_uid', $aCommand) && key_exists('delete_status', $aCommand)) {
+          if ($oUser->id != $aCommand['upload_uid'] && $aCommand['delete_status'] == 'soft') {
+            $aCommand['delete_status'] = 'hard';
+          }
         }
         $aCommandsResponse[] = $aCommand;
       }

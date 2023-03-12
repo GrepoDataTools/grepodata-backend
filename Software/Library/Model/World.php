@@ -40,13 +40,9 @@ class World extends Model
    */
   public function getUnixOffset()
   {
-    $ServerTime = $this->getServerTime();
-    $ServerTime->setTime(0,0);
-
-    $unix = Carbon::now();
-    $unix->setTime(0,0);
-
-    return $ServerTime->diffInRealSeconds($unix, false);
+    $ServerTimezone = new DateTimeZone($this->php_timezone);
+    $Now = new \DateTime();
+    return $ServerTimezone->getOffset($Now);
   }
 
   /**
