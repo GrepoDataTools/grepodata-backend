@@ -60,6 +60,10 @@ var errorSubmissions = [];
             ADDED: 'Indexed',
             ERROR: 'Error',
             VIEW: 'View intel',
+            CMD_SHARE_UPLOAD: 'Share with team',
+            CMD_SHARE_SYNCED: 'Synchronized ✓',
+            CMD_SHARE_NONE: 'No commands',
+            CMD_SHARE_NONEW: 'No new commands ✓',
             TOWN_INTEL: 'Town intelligence',
             STATS_LINK: 'Show buttons that link to player/alliance statistics on grepodata.com',
             STATS_LINK_TITLE: 'Link to statistics',
@@ -74,7 +78,7 @@ var errorSubmissions = [];
             SHORTCUTS_INBOX_PREV: 'Previous report (inbox)',
             SHORTCUTS_INBOX_NEXT: 'Next report (inbox)',
             MY_TEAMS: 'Your teams on world ',
-            MY_TEAMS_CONTRIBUTE: 'If you enable the contribute checkbox, newly indexed reports will be shared with the team.',
+            MY_TEAMS_CONTRIBUTE: 'If you enable the contribute checkbox, newly indexed reports and uploaded commands will be shared with the respective team.',
             TEAM_NAME: 'Team name',
             TEAM_ROLE: 'Your role',
             TEAM_CONTRIBUTE: 'Contribute',
@@ -113,6 +117,10 @@ var errorSubmissions = [];
                         ADDED: 'Geindexeerd',
                         ERROR: 'Error',
                         VIEW: 'Intel bekijken',
+                        CMD_SHARE_UPLOAD: 'Upload naar team',
+                        CMD_SHARE_SYNCED: 'Gesynchroniseerd',
+                        CMD_SHARE_NONE: 'Geen bevelen',
+                        CMD_SHARE_NONEW: 'Geen nieuwe bevelen',
                         TOWN_INTEL: 'Stad intel',
                         STATS_LINK: 'Knoppen toevoegen die linken naar speler/alliantie statistieken op grepodata.com',
                         STATS_LINK_TITLE: 'Link naar statistieken',
@@ -127,10 +135,10 @@ var errorSubmissions = [];
                         SHORTCUTS_INBOX_PREV: 'Vorige rapport (inbox)',
                         SHORTCUTS_INBOX_NEXT: 'Volgende rapport (inbox)',
                         MY_TEAMS: 'Jouw teams op wereld ',
-                        MY_TEAMS_CONTRIBUTE: 'Nieuwe rapporten worden gedeeld met het team als je de \'Intel delen\' checkbox aanvinkt.',
+                        MY_TEAMS_CONTRIBUTE: 'Geïndexeerd rapporten en geüploade bevelen worden gedeeld met het team als je de \'Bijdragen\' checkbox aanvinkt.',
                         TEAM_NAME: 'Team naam',
                         TEAM_ROLE: 'Jouw rol',
-                        TEAM_CONTRIBUTE: 'Intel delen',
+                        TEAM_CONTRIBUTE: 'Bijdragen',
                         TEAM_ACTION: 'Actie (nieuw tabblad)',
                         TEAM_ACTION_OVERVIEW: 'Team overzicht',
                         COLLECT_INTEL: 'Intel verzamelen',
@@ -230,7 +238,6 @@ var errorSubmissions = [];
             }
         });
 
-        var tracked_commands = {}; // dict format: {getCommandId(command): command.arrival_at}
         function getCommandId(command) {
             // command hash format: {command.id}_{command.return}_{command.power_id}
             // command.id: id is unique for each command and is consistent between sessions
@@ -241,7 +248,6 @@ var errorSubmissions = [];
         }
 
         function updateOpsSyncButton(text, enabled = true, status = 'ok', callback = (_ => { return 1 })) {
-            //$('#gd_cmd_vrvw_share').find('.js-caption').eq(0).html(text);
             $('#gd_cmd_vrvw_share_txt').html(text);
             if (enabled && callback != null) {
                 $('#gd_cmd_vrvw_share').removeClass("disabled");
@@ -259,7 +265,7 @@ var errorSubmissions = [];
             }
         }
 
-        function showSyncStatusToast(toastHtml, timeout = 15000) {
+        function showSyncStatusToast(toastHtml, timeout = 20000) {
             if ($('#gd_cmd_vrvw_toast').length == 0) {
                 $('#place_defense').append(`<div id="gd_cmd_vrvw_toast"></div>`)
             }
@@ -268,7 +274,7 @@ var errorSubmissions = [];
             setTimeout(function() { $("#gd_cmd_vrvw_toast").hide(); }, timeout);
         }
 
-        let activeOperation = null;
+        let is_filtered_upload = false;
         function parseCommandOverview(xhr) {
             try {
                 var xhr_data = JSON.parse(xhr.responseText);
@@ -278,29 +284,30 @@ var errorSubmissions = [];
                 verbose ? console.log('parsing command overview', commands) : null;
 
                 if ($('#gd_cmd_vrvw_share').length == 0) {
-                    $('#command_overview_tabs').parent().find('.game_list_footer').eq(0).append(`
-                <div class="button_new disabled" id="gd_cmd_vrvw_share" name="Share with team" style="float: right; margin: 2px; " rel="#gpwnd_1000">
-                    <div class="left"></div><div class="right"></div>
-                    <div class="caption js-caption">
-                        <div style="width: 23px; height: 20px; margin-left: -17px; position: absolute; background: `+gd_icon+`"></div>
-                        <div id="gd_cmd_vrvw_share_txt" style="margin-left: 17px;">Loading ♻</div>
-                        <div class="effect js-effect"></div>
-                    </div>
-                </div>`);
+                    let share_html = `
+                    <div class="button_new disabled" id="gd_cmd_vrvw_share" name="Share with team" style="float: right; margin: 2px; " rel="#gpwnd_1000">
+                        <div class="left"></div><div class="right"></div>
+                        <div class="caption js-caption">
+                            <div style="width: 23px; height: 20px; margin-left: -17px; position: absolute; background: `+gd_icon+`"></div>
+                            <div id="gd_cmd_vrvw_share_txt" style="margin-left: 17px;">Loading ♻</div>
+                            <div class="effect js-effect"></div>
+                        </div>
+                    </div>`;
+                    $(share_html).insertAfter($('#command_overview_tabs').parent().find('#type_filter'))
                 }
+                $('#command_overview_tabs').parent().find('#command_filter > div').eq(0).children("*").css('margin', '2px 1px');
 
                 // Filter new commands (subset of current commands that is not in tracked commands)
                 let new_commands = commands.filter(command => {
                     return Object.keys(tracked_commands).indexOf(getCommandId(command)) < 0;
                 });
-                verbose ? console.log('new commands: ', new_commands) : null;
+                verbose ? console.log('new commands: ', new_commands, ' filtered: ', is_filtered_upload) : null;
 
                 // Get current command id list
                 let current_command_ids = commands.map((command) => getCommandId(command));
 
                 // Filter cancelled commands (subset of [active] tracked_commands that is not in current commands)
                 let missing_tracked_command_ids = Object.keys(tracked_commands).filter(command_id => {
-                    // TODO is_active needs a few second margin for commands that just arrived
                     let is_active = tracked_commands[command_id].arrival_at > current_time; // command is active if its arrival time is in the future
                     let is_current = current_command_ids.indexOf(command_id) >= 0; // command is current if it exists in the list of current commands
                     return is_active && !is_current;
@@ -308,133 +315,309 @@ var errorSubmissions = [];
                 let missing_tracked_commands = missing_tracked_command_ids.map(command_id => tracked_commands[command_id]);
                 verbose ? console.log("missing tracked commands: ", missing_tracked_commands) : null
 
-                // Get list of new command ids, their arrival and their real id
-                var new_command_ids = {}
-                new_commands.forEach(command => {
-                    new_command_ids[getCommandId(command)] = {
-                        arrival_at: command.arrival_at,
-                        id: command.id
-                    }
-                });
-                verbose ? console.log('new commands ids: ', new_command_ids) : null;
+                // User filtered during precious uploads so history is no longer clean
+                let upload_commands = new_commands;
+                if (is_filtered_upload) {
+                    upload_commands = commands;
+                }
+
+                // Upload callback
+                let upload_callback = function () {
+                    cmdUploadDialog(upload_commands, missing_tracked_commands, missing_tracked_command_ids);
+                }
 
                 // Check if there are any updates
                 let num_updates = new_commands.length + missing_tracked_commands.length;
                 if (num_updates <= 0) {
                     if (commands.length <= 0) {
-                        updateOpsSyncButton('No commands', false, '');
+                        updateOpsSyncButton(translate.CMD_SHARE_NONE, false, '');
                     } else {
-                        updateOpsSyncButton('No new commands ✓', false, '');
+                        updateOpsSyncButton(translate.CMD_SHARE_NONEW, true, '', upload_callback);
                     }
                     return
+                } else {
+                    // Update upload button
+                    updateOpsSyncButton(`${translate.CMD_SHARE_UPLOAD} (${num_updates})`, true, '', upload_callback);
                 }
 
-                // Send updates
-                let uploading = false;
-                updateOpsSyncButton(`Share with team (${num_updates})`, true, '', (
-                    _ => {
-                        if (uploading) {
-                            console.log('already uploading')
-                            return;
-                        }
-                        console.log('sharing with team');
-                        uploading = true;
-                        updateOpsSyncButton('Uploading ♻', true, '', null);
-
-                        getAccessToken().then(access_token => {
-                            if (access_token === false) {
-                                HumanMessage.error('GrepoData: login required to upload command overview');
-                                uploading = false;
-                                updateOpsSyncButton('Login required', true, 'error', null);
-                                showLoginPopup();
-                            } else {
-                                var data = {
-                                    'access_token': access_token,
-                                    'world': Game.world_id,
-                                    'del_commands': JSON.stringify(missing_tracked_commands),
-                                    'commands': JSON.stringify(new_commands),
-                                    'player_name': Game.player_name || '',
-                                    'player_id': Game.player_id || 0,
-                                    'alliance_id': Game.alliance_id || 0
-                                };
-
-                                $.ajax({
-                                    url: "https://api.grepodata.com/commands/upload",
-                                    data: data,
-                                    type: 'post',
-                                    crossDomain: true,
-                                    dataType: 'json',
-                                    success: function (data) {
-                                        console.log('upload complete', data);
-
-                                        if ('error_code' in data) {
-                                            switch (data.error_code) {
-                                                case 7201:
-                                                    // no teams
-                                                    HumanMessage.error('GrepoData: you are not in a team. Join or create a team to share your command overview.');
-                                                    updateOpsSyncButton('Not in a team', true, 'error', null);
-                                                    break;
-                                                default:
-                                                    HumanMessage.error('GrepoData: unexpected error. Please try again later or contact us if this error persists.');
-                                                    updateOpsSyncButton('Error. Try again', true, 'error', null);
-                                            }
-                                        } else {
-                                            // add uploaded commands to tracked commands
-                                            tracked_commands = Object.assign({}, tracked_commands, new_command_ids);
-
-                                            // Remove deleted commands from tracked commands
-                                            tracked_commands = Object.keys(tracked_commands).reduce(function (filtered, command_id) {
-                                                if (missing_tracked_command_ids.indexOf(command_id) < 0) filtered[command_id] = tracked_commands[command_id];
-                                                return filtered;
-                                            }, {});
-
-                                            toastHtml = null;
-                                            if ('added_teams' in data) {
-                                                if (data.added_teams.length <= 0) {
-                                                    HumanMessage.error('GrepoData: you are not contributing to any teams. Enable contributions to synchronize your command overview');
-                                                    updateOpsSyncButton('Contributions Disabled', true, 'error', null);
-                                                } else if (data.added_teams.length == 1) {
-                                                    // Show notification with link to Ops center
-                                                    let team = data.added_teams[0];
-                                                    toastHtml = `<a class="gd_cmd_toast_a" href="https://grepodata.com/operations/`+team+`/`+world+`" target="_blank">View Operation</a>`;
-                                                } else {
-                                                    // Show notification with link to Ops center
-                                                    toastHtml = `<a class="gd_cmd_toast_a" href="https://grepodata.com/profile/ops" target="_blank">View Operations</a>`;
-                                                }
-
-                                                if (toastHtml) {
-                                                    showSyncStatusToast(toastHtml);
-                                                    updateOpsSyncButton('Synchronized ✓', false, 'ok');
-                                                }
-                                            } else {
-                                                updateOpsSyncButton('Synchronized ✓', false, 'ok');
-                                            }
-
-                                            verbose ? console.log('synced command ids: ', tracked_commands) : null;
-                                        }
-
-                                        uploading = false;
-                                    },
-                                    error: function (jqXHR, textStatus) {
-                                        console.error("error saving commands", jqXHR);
-                                        if (jqXHR && 'status' in jqXHR && jqXHR.status == 503 && jqXHR.responseJSON && 'message' in jqXHR.responseJSON) {
-                                            HumanMessage.error('GrepoData: '+jqXHR.responseJSON.message);
-                                            updateOpsSyncButton('Service Unavailable', false, 'error', null);
-                                        } else {
-                                            HumanMessage.error('GrepoData: unexpected error. Please try again later or contact us if this error persists.');
-                                            updateOpsSyncButton('Error. Try again', true, 'error', null);
-                                        }
-                                        uploading = false;
-                                    },
-                                    timeout: 120000
-                                });
-                            }
-                        });
-                    }
-                ));
             } catch (error) {
                 errorHandling(error, "parseCommandOverview");
             }
+        }
+
+        let cmd_upload_settings = {}
+        var cmd_upload_dialog = null;
+        let dialog_z_index = 1100
+        function cmdUploadDialog(new_commands, missing_tracked_commands, missing_tracked_command_ids) {
+            if (!globals || !('active_teams' in globals) || globals.active_teams.length <= 0) {
+                // No settings to display, hard route
+                verbose ? console.log('No local teams list; uploading without settings') : null;
+                uploadCommands(new_commands, missing_tracked_commands, missing_tracked_command_ids);
+                return;
+            }
+
+            if (cmd_upload_dialog != null) {
+                cmd_upload_dialog.close();
+                cmd_upload_dialog = null;
+            }
+
+            // header
+            let sharing_dialog = '<p style="margin-top: 0;">Select the teams you want to share with, then press upload.</p>';
+            sharing_dialog += '<div class="gd_cmd_share_container"><table class="gd-settings-team-table"><tr><th>Team</th><th>Upload yes/no</th><th>Share commands yes/no</th></tr>';
+
+            // for each user team
+            let team_keys = []
+            for (var j = 0; j < Object.keys(globals.active_teams).length; j++) {
+                let team = globals.active_teams[j];
+                team_keys.push(team.key);
+                if (!(team.key in cmd_upload_settings)) {
+                    // Init team settings on first run
+                    let do_share = (team.contribute == 1 && team.role !== 'read')
+
+                    // See if we have cached settings for this team
+                    let cached_settings = {};
+                    if (do_share && 'cmd_team_settings' in gd_settings && team.key in gd_settings.cmd_team_settings) {
+                        cached_settings = gd_settings.cmd_team_settings[team.key]
+                    }
+
+                    cmd_upload_settings[team.key] = {
+                        do_share: 'do_share' in cached_settings ? cached_settings.do_share : do_share,
+                        attacks: 'attacks' in cached_settings ? cached_settings.attacks : do_share,
+                        supports: 'supports' in cached_settings ? cached_settings.supports : do_share,
+                        returns: 'returns' in cached_settings ? cached_settings.returns : do_share,
+                    }
+                }
+
+                // create table row
+                sharing_dialog += `<tr><td><a href="https://grepodata.com/profile/team/${team.key}" target="_blank">${team.name}</a></td>`;
+                if (team.role === 'read') {
+                    sharing_dialog += '<td colspan="2">You do not have permission to write to this team.</td>';
+                } else {
+                    sharing_dialog += `<td>
+                        <div id="gd_cmd_select_${team.key}_do_share" class="checkbox_new cmd_cbx_${team.key}_do_share `+(cmd_upload_settings[team.key].do_share?'checked':'')+`" title="Share the uploaded commands with this team"><div class="cbx_icon"></div>&nbsp;Upload</div>
+                    </td>
+                    <td class="gd-cmd-checkbox-column">
+                        <div id="gd_cmd_select_${team.key}_attack" class="checkbox_new cmd_cbx_${team.key}_attacks `+(cmd_upload_settings[team.key].attacks?'checked':'')+`" title="Attack commands"><div class="cbx_icon"></div>&nbsp;Attacks & spies</div><br/>
+                        <div id="gd_cmd_select_${team.key}_support" class="checkbox_new cmd_cbx_${team.key}_supports `+(cmd_upload_settings[team.key].supports?'checked':'')+`" title="Support commands"><div class="cbx_icon"></div>&nbsp;Supports</div><br/>
+                        <div id="gd_cmd_select_${team.key}_return" class="checkbox_new cmd_cbx_${team.key}_returns `+(cmd_upload_settings[team.key].returns?'checked':'')+`" title="Returning commands"><div class="cbx_icon"></div>&nbsp;Returns</div><br/>
+                    </td></tr>`
+                }
+                sharing_dialog += '</tr>';
+            }
+            sharing_dialog += '</table></div>';
+
+            // Select all
+            let show_select_all = team_keys.length > 1;
+            sharing_dialog += `<div class="gd-cmd_share_footer">`;
+            if (show_select_all) {
+                sharing_dialog += '<div id="gd_cmd_select_all" class="checkbox_new cmd_cbx_all" title="Select all"><div class="cbx_icon"></div>&nbsp;Select all</div>';
+            }
+
+            // buttons
+            sharing_dialog += `<br/><div id="gd_cmd_do_upload" class="button_new gd_cmd_do_upload" style=""><div class="left"></div><div class="right"></div><div class="caption js-caption">${translate.CMD_SHARE_UPLOAD}</div></div></div>`;
+
+            // Show dialog
+            cmd_upload_dialog = Layout.wnd.Create(
+                GPWindowMgr.TYPE_DIALOG,
+                "GrepoData Team Operations",
+                {width: 400, height: 220, minimizable: false}
+            )
+
+            // set content
+            cmd_upload_dialog.setContent(sharing_dialog);
+            try {
+                dialog_z_index += 41
+                cmd_upload_dialog.setZIndex(dialog_z_index)
+            } catch (e) {}
+
+            // Checkbox click handlers
+            let select_all = false;
+            let options = ['do_share', 'attacks', 'supports', 'returns'];
+            team_keys.forEach(team => {
+                options.forEach(option => {
+                    $(".cmd_cbx_"+team+"_"+option).click(function () {
+                        let value = !cmd_upload_settings[team][option];
+                        cmdCbx(team, option, value);
+                        if (value == false && show_select_all) {
+                            select_all = false;
+                            $(".cmd_cbx_all").get(0).classList.remove("checked");
+                        }
+                    });
+                })
+            })
+
+            if (show_select_all) {
+                // select all
+                $(".cmd_cbx_all").click(function () {
+                    select_all = !select_all
+                    team_keys.forEach(team => {
+                        cmdCbx(team, 'do_share', select_all)
+                    })
+                    if (select_all) {
+                        $(".cmd_cbx_all").get(0).classList.add("checked");
+                    } else {
+                        $(".cmd_cbx_all").get(0).classList.remove("checked");
+                    }
+                });
+            }
+
+            // Do upload handler
+            $(".gd_cmd_do_upload").click(function () {
+                verbose ? console.log('uploading with settings: ', cmd_upload_settings) : null;
+
+                // Save settings for next time
+                gd_settings.cmd_team_settings = cmd_upload_settings;
+                saveSettings();
+
+                // Do upload
+                uploadCommands(new_commands, missing_tracked_commands, missing_tracked_command_ids, cmd_upload_settings);
+
+                cmd_upload_dialog.close();
+            });
+        }
+
+        function cmdCbx(team, option, value) {
+            // Update class
+            if (value === true) {
+                $(".cmd_cbx_"+team+"_"+option).get(0).classList.add("checked");
+            }
+            else {
+                $(".cmd_cbx_"+team+"_"+option).get(0).classList.remove("checked");
+            }
+            // Set value
+            cmd_upload_settings[team][option] = value;
+
+            // Group overrides
+            if (option === 'do_share') {
+                cmdCbx(team, 'attacks', value);
+                cmdCbx(team, 'supports', value);
+                cmdCbx(team, 'returns', value);
+            } else if (value === true) {
+                $(".cmd_cbx_"+team+"_do_share").get(0).classList.add("checked");
+                cmd_upload_settings[team]['do_share'] = true;
+            }
+        }
+
+        var tracked_commands = {}; // dict format: {getCommandId(command): {arrival_at: command.arrival_at, id: command.id}}
+        let uploading_commands = false;
+        function uploadCommands(new_commands, del_commands, del_commands_ids, share_settings=null) {
+            if (uploading_commands) {
+                console.log('already uploading')
+                return;
+            }
+            uploading_commands = true;
+            updateOpsSyncButton('Uploading ♻', true, '', null);
+
+            let share_settings_encoded = '';
+            if (share_settings!=null) {
+                share_settings_encoded = JSON.stringify(share_settings)
+
+                // Check if upload was clean; if not, we can not trust that tracked id list is accurate
+                try {
+                    is_filtered_upload = Object.keys(share_settings).reduce((prev, team) => prev + share_settings[team].attacks==false + share_settings[team].supports==false + share_settings[team].returns==false + share_settings[team].do_share==false, 0);
+                    verbose ? console.log('is filtered upload: ', is_filtered_upload, share_settings) : null;
+                } catch (e) {
+                    is_filtered_upload = true;
+                }
+            }
+
+            getAccessToken().then(access_token => {
+                if (access_token === false) {
+                    HumanMessage.error('GrepoData: login required to upload command overview');
+                    uploading_commands = false;
+                    updateOpsSyncButton('Login required', true, 'error', null);
+                    showLoginPopup();
+                } else {
+                    var data = {
+                        'access_token': access_token,
+                        'world': Game.world_id,
+                        'del_commands': JSON.stringify(del_commands),
+                        'commands': JSON.stringify(new_commands),
+                        'share_settings': share_settings_encoded,
+                        'player_name': Game.player_name || '',
+                        'player_id': Game.player_id || 0,
+                        'alliance_id': Game.alliance_id || 0
+                    };
+
+                    $.ajax({
+                        url: "https://api.grepodata.com/commands/upload",
+                        data: data,
+                        type: 'post',
+                        crossDomain: true,
+                        dataType: 'json',
+                        success: function (data) {
+                            console.log('upload complete', data);
+
+                            if ('error_code' in data) {
+                                switch (data.error_code) {
+                                    case 7201:
+                                        // no teams
+                                        HumanMessage.error('GrepoData: you are not in a team. Join or create a team to share your command overview.');
+                                        updateOpsSyncButton('Not in a team', true, 'error', null);
+                                        break;
+                                    default:
+                                        HumanMessage.error('GrepoData: unexpected error. Please try again later or contact us if this error persists.');
+                                        updateOpsSyncButton('Error. Try again', true, 'error', null);
+                                }
+                            } else {
+
+                                if ('added_teams' in data && data.added_teams.length <= 0) {
+                                    HumanMessage.error('GrepoData: you are not contributing to any teams. Enable contributions to synchronize your command overview');
+                                    updateOpsSyncButton(translate.CMD_SHARE_UPLOAD, true, '', null);
+                                } else {
+                                    // Get list of new command ids, their arrival and their real id
+                                    var new_command_ids = {}
+                                    new_commands.forEach(command => {
+                                        new_command_ids[getCommandId(command)] = {
+                                            arrival_at: command.arrival_at,
+                                            id: command.id
+                                        }
+                                    });
+                                    verbose ? console.log('new commands ids: ', new_command_ids) : null;
+
+                                    // add uploaded commands to tracked commands
+                                    tracked_commands = Object.assign({}, tracked_commands, new_command_ids);
+
+                                    // Remove deleted commands from tracked commands
+                                    tracked_commands = Object.keys(tracked_commands).reduce(function (filtered, command_id) {
+                                        if (del_commands_ids.indexOf(command_id) < 0) filtered[command_id] = tracked_commands[command_id];
+                                        return filtered;
+                                    }, {});
+
+                                    // Show operation link toast
+                                    if (data.added_teams.length == 1) {
+                                        // Show notification with link to Ops center
+                                        let team = data.added_teams[0];
+                                        toastHtml = `<a class="gd_cmd_toast_a" href="https://grepodata.com/operations/`+team+`/`+world+`" target="_blank">View Operation</a>`;
+                                    } else {
+                                        // Show notification with link to Ops center
+                                        toastHtml = `<a class="gd_cmd_toast_a" href="https://grepodata.com/profile/ops" target="_blank">View Operations</a>`;
+                                    }
+                                    showSyncStatusToast(toastHtml);
+
+                                    updateOpsSyncButton(translate.CMD_SHARE_SYNCED, true, 'ok', null);
+                                }
+
+                                verbose ? console.log('synced command ids: ', tracked_commands) : null;
+                            }
+
+                            uploading_commands = false;
+                        },
+                        error: function (jqXHR, textStatus) {
+                            console.error("error saving commands", jqXHR);
+                            if (jqXHR && 'status' in jqXHR && jqXHR.status == 503 && jqXHR.responseJSON && 'message' in jqXHR.responseJSON) {
+                                HumanMessage.error('GrepoData: '+jqXHR.responseJSON.message);
+                                updateOpsSyncButton('Service Unavailable', false, 'error', null);
+                            } else {
+                                HumanMessage.error('GrepoData: unexpected error. Please try again later or contact us if this error persists.');
+                                updateOpsSyncButton('Error. Try again', true, 'error', null);
+                            }
+                            uploading_commands = false;
+                        },
+                        timeout: 120000
+                    });
+                }
+            });
         }
 
         var threadReactions = {};
@@ -507,12 +690,12 @@ var errorSubmissions = [];
             127881, // party popper
             128640, // rocket
             128064, // eyes
+            129315, // rofl
             // 128512, // happy
             // 128528, // poker face
             // 128533, // unhappy
             // 129300, // think
             // 128517, // cold sweat
-            // 129315, // rofl
             // 128525, // love
             // 128540, // crazy face
         ]
@@ -936,6 +1119,9 @@ var errorSubmissions = [];
                         }
                         if (!('bug_reports' in result)) {
                             result.bugreports = true;
+                        }
+                        if (!('cmd_team_settings' in result)) {
+                            result.cmd_team_settings = {};
                         }
                         gd_settings = result;
                     }
@@ -1955,8 +2141,12 @@ var errorSubmissions = [];
                         var grepodataFooter = document.createElement('div');
                         grepodataFooter.setAttribute('id', 'gd_inbox_footer');
                         grepodataFooter.appendChild(addBtn);
-                        grepodataFooter.appendChild(shareBtn)
-                        footerElement.appendChild(grepodataFooter);
+                        grepodataFooter.appendChild(shareBtn);
+                        if ($('#report_report').find('.azasasasd').last().length > 0) {
+                            $(grepodataFooter).insertAfter($('#report_report').find('a').last());
+                        } else {
+                            footerElement.appendChild(grepodataFooter);
+                        }
 
                         // Set footer button placement
                         var folderElement = footerElement.querySelector('#select_folder_id');
@@ -2403,6 +2593,12 @@ var errorSubmissions = [];
                         deleteLocalToken('gd_indexer_refresh_token');
                         HumanMessage.success('GrepoData logged out succesfully.');
                         showLoginPopup();
+                        try {
+                            // forget cached teams
+                            gd_settings.cmd_team_settings = {};
+                            saveSettings();
+                            globals.active_teams = [];
+                        } catch (e) {}
                     });
                     $("#gdsettingslogin").click(function () {
                         $("#gdsettingslogged_in").hide();

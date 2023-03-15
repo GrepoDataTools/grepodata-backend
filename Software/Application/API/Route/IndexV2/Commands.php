@@ -409,7 +409,10 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
         ResponseCode::errorCode(7201);
       }
 
-      // TODO: test what happens if a cancelled/deleted command reappears (i.e. enemy used helmet) doc should be updated!
+      $aShareSettings = array();
+      if (key_exists('share_settings', $aParams)) {
+        $aShareSettings = json_decode($aParams['share_settings'], true);
+      }
 
       // Parse commands and persist to database
       $MaxUploadCount = 1000;
@@ -443,14 +446,28 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
           // User is not allowed to write or contributions are disabled
           $aSkippedTeams[] = $oTeam->key_code;
           continue;
-        } else{
-          $aAddedTeams[] = $oTeam->key_code;
         }
+
+        // Use user settings to ignore certain teams/reports
+        $aTeamShareSettings = array();
+        if (key_exists($oTeam->key_code, $aShareSettings)) {
+          $aTeamShareSettings = $aShareSettings[$oTeam->key_code];
+
+          if (key_exists('do_share', $aTeamShareSettings)) {
+            if ($aTeamShareSettings['do_share']===false) {
+              // User has chosen not to contribute to this team
+              $aSkippedTeams[] = $oTeam->key_code;
+              continue;
+            }
+          }
+        }
+
+        $aAddedTeams[] = $oTeam->key_code;
 
         // Upsert command batch in elasticasearch
         try {
           $NumErrors = \Grepodata\Library\Elasticsearch\Commands::UpsertCommandBatch(
-            $oWorld, $oTeam->key_code, $oUser->id, $aParams['player_id'], $aParams['player_name'], $aNewCommands, $aDelCommands);
+            $oWorld, $oTeam->key_code, $oUser->id, $aParams['player_id'], $aParams['player_name'], $aNewCommands, $aDelCommands, $aTeamShareSettings);
         } catch (NoNodesAvailableException $e) {
           // ES cluster is down
           Logger::error("OPS upload: ES no alive nodes");

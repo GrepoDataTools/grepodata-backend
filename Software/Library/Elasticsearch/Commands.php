@@ -43,7 +43,7 @@ class Commands
    * @param $aDelCommands
    * @return bool
    */
-  public static function UpsertCommandBatch(\Grepodata\Library\Model\World $oWorld, $Team, $UserId, $PlayerId, $PlayerName, $aNewCommands, $aDelCommands)
+  public static function UpsertCommandBatch(\Grepodata\Library\Model\World $oWorld, $Team, $UserId, $PlayerId, $PlayerName, $aNewCommands, $aDelCommands, $aShareSettings=array())
   {
     self::EnsureIndex();
 
@@ -58,6 +58,7 @@ class Commands
     $UpdatedAt = time();
 
     // Delete commands: we simply override the command _id using the bulk upsert
+    $bHasRecords = false;
     foreach ($aDelCommands as $aCommand) {
       try {
         // This command should already exist; we will override it with the new deleted status
@@ -79,6 +80,8 @@ class Commands
             'delete_status' => 'hard'
           )
         );
+
+        $bHasRecords = true;
       } catch (\Exception $e) {
         Logger::warning('OPS: Exception preparing command delete item: '.$e->getMessage());
       }
@@ -88,6 +91,25 @@ class Commands
     $aParsedNewCommands = array();
     foreach ($aNewCommands as $aCommand) {
       try {
+
+        // main type
+        $CommandType = $aCommand['type']??'default';
+
+        // Check user filters
+        if (isset($aShareSettings)) {
+          if ($CommandType !== 'support' && key_exists('attacks', $aShareSettings) && $aShareSettings['attacks'] === false) {
+            // User has chosen to not share attack commands for this team
+            continue;
+          }
+          if ($CommandType === 'support' && key_exists('supports', $aShareSettings) && $aShareSettings['supports'] === false) {
+            // User has chosen to not share support commands for this team
+            continue;
+          }
+          if ($aCommand['return']===true && key_exists('returns', $aShareSettings) && $aShareSettings['returns'] === false) {
+            // User has chosen to not share returning commands for this team
+            continue;
+          }
+        }
 
         // Generate id (_id --> {arrival_at}{cmd_id}{team})
         $_id = self::BuildCommandId($aCommand, $Team);
@@ -135,15 +157,25 @@ class Commands
           $CancelHuman = $CancelHuman->format('H:i:s M d');
         }
 
-        // main type
-        $CommandType = $aCommand['type']??'default';
+        if ($CommandType == 'revolt' || strpos('colonization', $CommandType) !== false) {
+          error_log(json_encode($aCommand));
+        }
 
         // Subtype
         $subtype = 'default';
-        if (key_exists('is_attack_spot', $aCommand) && $aCommand['is_attack_spot'] === true) $subtype = 'attack_spot';
-        elseif (key_exists('is_quest', $aCommand) && $aCommand['is_quest'] === true) $subtype = 'quest';
-        elseif (key_exists('is_temple', $aCommand) && $aCommand['is_temple'] === true) $subtype = 'temple';
-        elseif (key_exists('colonization_finished_at', $aCommand) && $aCommand['colonization_finished_at'] > 0) {
+        if (key_exists('is_attack_spot', $aCommand) && $aCommand['is_attack_spot'] === true) {
+          $subtype = 'attack_spot';
+        } elseif (key_exists('is_quest', $aCommand) && $aCommand['is_quest'] === true) {
+          $subtype = 'quest';
+        } elseif (key_exists('is_temple', $aCommand) && $aCommand['is_temple'] === true) {
+          $subtype = 'temple';
+        } else if ($CommandType == 'attack_takeover' && key_exists('command_type', $aCommand)) {
+          // takeover actual
+          // if travelling cs, then command_type is 'command'
+          // if landed cs, then command_type is 'attack_takeover'
+          $subtype = $aCommand['command_type'];
+        } elseif (key_exists('colonization_finished_at', $aCommand) && $aCommand['colonization_finished_at'] > 0) {
+          // This might only appear for foundation commands (non-cs)
           $subtype = 'cs_eta';
         }
 
@@ -200,12 +232,18 @@ class Commands
           'trg_ply_n'  => $aCommand['destination_town_player_name']??'',
         );
         $aParams['body'][] = $aParsedCommand;
+        $bHasRecords = true;
 
         // Save parsed command in case we need it to retry later
         $aParsedNewCommands[$_id] = $aParsedCommand;
       } catch (\Exception $e) {
         Logger::warning('OPS: Exception preparing command batch item: '.$e->getMessage());
       }
+    }
+
+    if (!$bHasRecords) {
+      // No changes to be done. return
+      return 0;
     }
 
     // Upload to elasticsearch
@@ -216,9 +254,14 @@ class Commands
     // Check for errors
     $NumErrors = 0;
     $aRetryAsUpdateIds = array();
+    $bCaughtError = false;
     if (isset($aResponse['errors']) && $aResponse['errors'] == true) {
       foreach ($aResponse['items'] as $aItem) {
-        if (isset($aItem['create']['error'])) {
+        if (isset($aItem['update']['error'])) {
+          // This can happen when a tracked command is deleted by userscript but was never actually indexed because user did not share with this team or command type
+          Logger::warning("OPS: ES command update errors: " . json_encode($aItem['update']['error']));
+          $bCaughtError = true;
+        } else if (isset($aItem['create']['error'])) {
           $NumErrors += 1;
           if (isset($aItem['create']['error']['type']) && $aItem['create']['error']['type'] == 'version_conflict_engine_exception') {
             // this is a normal failure mode for 'create' operations. Doc already existed so it is skipped
@@ -227,15 +270,21 @@ class Commands
 
             // Save the id of the failed command
             $aRetryAsUpdateIds[] = $aItem['create']['_id'];
+            $bCaughtError = true;
             continue;
           }
           Logger::warning("OPS: ES command create errors: " . json_encode($aItem['create']['error']));
+          $bCaughtError = true;
         }
+      }
+      if (!$bCaughtError) {
+        Logger::warning("OPS: ES command uncaught bulk insert error: " . json_encode($aResponse));
       }
     }
 
     if (count($aRetryAsUpdateIds) <= 0){
       // No updates required, all creates succeeded
+      error_log("No retries needed");
       return $NumErrors;
     }
 
@@ -249,6 +298,7 @@ class Commands
         'type'  => self::TypeCommand,
         'body'  => array()
       );
+      error_log("Num retries: ".count($aRetryAsUpdateIds));
       foreach ($aRetryAsUpdateIds as $_id) {
         if (!key_exists($_id, $aParsedNewCommands)) {
           continue;
