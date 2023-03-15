@@ -100,20 +100,25 @@ class Service
                 'host' => REDIS_HOST,
                 'port' => REDIS_PORT,
               ], $RateLimit, $RateWindow);
+              $bRateExceeded = false;
               try {
                 $RateLimiter->hit($ResourceId);
               } catch (RateLimitExceededException $e) {
                 try {
-                  Logger::error("Rate limit exceeded on resource " . $ResourceId);
                   $TTL = RedisClient::GetTTL($ResourceId);
                   if ($TTL <= 0) {
                     $Deleted = RedisClient::Delete($ResourceId);
-                    Logger::error("Deleted expired redis resource " . $ResourceId . " (ttl: ".$TTL.", deleted: ".$Deleted.")");
+                    Logger::warning("Deleted expired redis resource " . $ResourceId . " (ttl: ".$TTL.", deleted: ".$Deleted.")");
+                  } else {
+                    $bRateExceeded = true;
                   }
                 } catch (\Exception $exc) {
                   Logger::error("Uncaught exception checking rate limit expiry on resource " . $ResourceId . " => " . $exc->getMessage());
-
                 }
+              }
+
+              if ($bRateExceeded === true) {
+                Logger::error("Rate limit exceeded on resource " . $ResourceId);
                 header('Access-Control-Allow-Origin: *');
                 die(BaseRoute::OutputJson(array('message' => 'Too many requests. You have exceeded the rate limit for this specific resource. Please try again in a minute.'), 429));
               }
