@@ -176,6 +176,17 @@ class Commands
           // if travelling cs, then command_type is 'command'
           // if landed cs, then command_type is 'attack_takeover'
           $subtype = $aCommand['command_type'];
+        } else if ($CommandType == 'revolt' && key_exists('started_at', $aCommand) && key_exists('finished_at', $aCommand) && !key_exists('sword', $aCommand)) {
+          // Parse ongoing revolt
+          // The started_at property indicates the phase 2 start, the finished_at property indicates the phase 2 end.
+          // Note: finished_at==arrival_at for these commands, so we don't have to save finished_at
+          $subtype = 'ongoing_revolt';
+
+          // We use the cancel_human property to store the phase 2 start (otherwise we need to drop index to add a column)
+          // The phase 2 end human time is already stored in arrival_human
+          $RevoltPhase2Start = Carbon::createFromFormat('H:i:s M d', date('H:i:s M d', $aCommand['started_at']), 'UTC');
+          $RevoltPhase2Start->setTimezone($oWorld->php_timezone);
+          $CancelHuman = $RevoltPhase2Start->format('H:i:s M d');
         } elseif (key_exists('colonization_finished_at', $aCommand) && $aCommand['colonization_finished_at'] > 0) {
           // This might only appear for foundation commands (non-cs)
           $subtype = 'cs_eta';
