@@ -277,7 +277,15 @@ var errorSubmissions = [];
         let is_filtered_upload = false;
         function parseCommandOverview(xhr) {
             try {
+                if (xhr === undefined || !('responseText' in xhr) || xhr.responseText === undefined) {
+                    // Request aborted or failed
+                    return;
+                }
                 var xhr_data = JSON.parse(xhr.responseText);
+                if (!('json' in xhr_data) || !('data' in  xhr_data.json) || !('commands' in  xhr_data.json.data) || xhr_data.json.data.commands === undefined) {
+                    // if no advisor or city is being conquered, then commands is undefined
+                    return;
+                }
                 var commands = xhr_data.json.data.commands;
                 var current_time = Date.now() / 1000;
                 verbose ? console.log('========================') : null;

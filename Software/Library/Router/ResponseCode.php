@@ -91,6 +91,8 @@ define('GD_ERROR_8020', 'No active commands in operation');
 define('GD_ERROR_8110', 'Invalid command action');
 define('GD_ERROR_8120', 'Admin rights required to perform this action');
 define('GD_ERROR_8200', 'Command update failed');
+define('GD_ERROR_8210', 'No commands were updated');
+define('GD_ERROR_8220', 'Invalid update input content');
 define('GD_ERROR_8300', 'Sorry, our commands server is down. Admin is notified');
 
 // === Success codes

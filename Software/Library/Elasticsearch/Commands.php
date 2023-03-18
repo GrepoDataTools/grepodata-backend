@@ -55,6 +55,7 @@ class Commands
       'body'  => array()
     );
 
+    $NumUploaded = 0;
     $UpdatedAt = time();
 
     // Delete commands: we simply override the command _id using the bulk upsert
@@ -81,6 +82,7 @@ class Commands
           )
         );
 
+        $NumUploaded -= 1;
         $bHasRecords = true;
       } catch (\Exception $e) {
         Logger::warning('OPS: Exception preparing command delete item: '.$e->getMessage());
@@ -233,6 +235,7 @@ class Commands
         );
         $aParams['body'][] = $aParsedCommand;
         $bHasRecords = true;
+        $NumUploaded += 1;
 
         // Save parsed command in case we need it to retry later
         $aParsedNewCommands[$_id] = $aParsedCommand;
@@ -252,7 +255,6 @@ class Commands
     //error_log(json_encode($aResponse));
 
     // Check for errors
-    $NumErrors = 0;
     $aRetryAsUpdateIds = array();
     $bCaughtError = false;
     if (isset($aResponse['errors']) && $aResponse['errors'] == true) {
@@ -260,9 +262,10 @@ class Commands
         if (isset($aItem['update']['error'])) {
           // This can happen when a tracked command is deleted by userscript but was never actually indexed because user did not share with this team or command type
           Logger::warning("OPS: ES command update errors: " . json_encode($aItem['update']['error']));
+          $NumUploaded += 1; // delete failed so decrement is undone
           $bCaughtError = true;
         } else if (isset($aItem['create']['error'])) {
-          $NumErrors += 1;
+          $NumUploaded -= 1; // create failed so increment is undone
           if (isset($aItem['create']['error']['type']) && $aItem['create']['error']['type'] == 'version_conflict_engine_exception') {
             // this is a normal failure mode for 'create' operations. Doc already existed so it is skipped
             // However, we still need to update the command because units might have changed or the command might have been hidden and reappeared (spell)
@@ -285,7 +288,7 @@ class Commands
     if (count($aRetryAsUpdateIds) <= 0){
       // No updates required, all creates succeeded
       error_log("No retries needed");
-      return $NumErrors;
+      return $NumUploaded;
     }
 
     try {
@@ -353,7 +356,6 @@ class Commands
       if (isset($aRetryResponse['errors']) && $aRetryResponse['errors'] == true) {
         foreach ($aRetryResponse['items'] as $aItem) {
           if (isset($aItem['update']['error'])) {
-            $NumErrors += 1;
             Logger::warning("OPS: ES command batch update errors: " . json_encode($aItem['update']['error']));
           }
         }
@@ -363,7 +365,7 @@ class Commands
       Logger::warning('OPS: Error retrying bulk update: '.$e->getMessage());
     }
 
-    return $NumErrors;
+    return $NumUploaded;
   }
 
   /**
@@ -449,15 +451,15 @@ class Commands
   }
 
   /**
-   * Soft delete commands by id. Also checks if user is allowed to delete the command.
-   * @param array $aCommandEsIds List of Elasticsearch document _id's
-   * @param User $oUser User that is submitting the request
-   * @param bool $bVerifyUserId If true, document uploader will be verified against $oUser
+   * Hard delete all commands by from user. Also checks if user is allowed to delete the commands
+   * @param string $Team 8 character index key
+   * @param int $UserId
+   * @param bool $bDeleteByUserId If false, user must be admin and all commands for this team will be updated.
    * @param string $DeleteStatus Can be one of: soft, hard
    * @param int $UpdatedAt Update UNIX timestamp
    * @return int|mixed
    */
-  public static function SoftDeleteCommandsByIds(array $aCommandEsIds, User $oUser, bool $bVerifyUserId=true, string $DeleteStatus = 'soft', int $UpdatedAt = 0)
+  public static function UpdateDeleteStatusByTeamOrUser(string $Team, int $UserId, bool $bDeleteByUserId=false, string $DeleteStatus = 'soft', int $UpdatedAt = 0)
   {
     $ElasticsearchClient = \Grepodata\Library\Elasticsearch\Client::GetInstance(3);
     $IndexName = self::IndexIdentifier;
@@ -466,10 +468,15 @@ class Commands
       $UpdatedAt = time();
     }
 
-    // Update delete_status and updated_at for the given document ids
+    // Update delete_status and updated_at for all documents that match the query
     $aDeleteScript = array(
       'script' => array(
-        'source' => "ctx._source.updated_at = params.updated_at; ctx._source.delete_status = params.delete_status;",
+        'source' => "
+            if (ctx._source.delete_status == 'hard') { 
+              ctx.op = 'noop'
+            } else {
+              ctx._source.updated_at = params.updated_at; ctx._source.delete_status = params.delete_status
+            }",
         'lang' => 'painless',
         'params' => array(
           'delete_status' => $DeleteStatus,
@@ -480,8 +487,15 @@ class Commands
         'bool' => array(
           'must' => array(
             array(
-              'terms' => array(
-                '_id' => $aCommandEsIds
+              'term' => array(
+                'team' => $Team, // Only update commands in the given team
+              )
+            ),
+            array(
+              'range' => array(
+                'arrival_at' => array(
+                  'gt' => time() // Only update future commands, others have expired already
+                )
               )
             )
           )
@@ -489,11 +503,11 @@ class Commands
       )
     );
 
-    if ($bVerifyUserId) {
-      // Add a user check if required
+    if ($bDeleteByUserId==true) {
+      // Only delete commands for the given user
       $aDeleteScript['query']['bool']['must'][] = array(
         'term' => array(
-          'upload_uid' => $oUser->id
+          'upload_uid' => $UserId // Only update commands uploaded by the given user
         )
       );
     }
@@ -504,15 +518,17 @@ class Commands
       'body' => $aDeleteScript
     ));
 
-    error_log(json_encode($aResponse));
+    error_log("OPS: delete by query result: ".json_encode($aResponse));
 
     $NumUpdated = 0;
     if ($aResponse !== false && is_array($aResponse) && isset($aResponse['total']) && $aResponse['total'] >= 0) {
       $NumUpdated = $aResponse['total'];
+    } else {
+      Logger::warning("OPS: unexpected update by query result; ". json_encode($aResponse));
     }
 
-    if ($NumUpdated != count($aCommandEsIds)) {
-      Logger::warning("OPS: ES soft delete count mismatch; ". json_encode($aResponse));
+    if (isset($aResponse['failures']) && is_array($aResponse['failures']) && count($aResponse['failures'])>0) {
+      Logger::warning("OPS: ES update by query error; ". json_encode($aResponse));
     }
 
     return $NumUpdated;
