@@ -169,6 +169,8 @@ class Commands
           $subtype = 'attack_spot';
         } elseif (key_exists('is_quest', $aCommand) && $aCommand['is_quest'] === true) {
           $subtype = 'quest';
+        } elseif ($CommandType == 'portal_attack_olympus' || $CommandType == 'portal_support_olympus') {
+          $subtype = 'portal';
         } elseif (key_exists('is_temple', $aCommand) && $aCommand['is_temple'] === true) {
           $subtype = 'temple';
         } else if ($CommandType == 'attack_takeover' && key_exists('command_type', $aCommand)) {
