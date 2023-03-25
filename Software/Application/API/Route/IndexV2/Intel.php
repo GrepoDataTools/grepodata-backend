@@ -20,9 +20,11 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
 {
 
   /**
+   * API route: /indexer/v2/userintel
+   * Method: GET
    * Returns all intel collected by this user, ordered by index date
    */
-  public static function GetIntelForUserGet()
+  public static function GetIntelForUserGET()
   {
     try {
       $aParams = self::validateParams(array('access_token'));
@@ -41,17 +43,16 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
       $ElapsedMs = round(microtime(true) * 1000) - $Start;
 
       if ($ElapsedMs > 1000) {
-        # TODO: log each query duration to ES
         Logger::warning("Slow query warning: GetIntelForUserGet > ".$ElapsedMs."ms > ".$oUser->id);
       }
 
-      $aRoles = Roles::allByUser($oUser);
-      $aUserKeyList = array();
-      foreach ($aRoles as $oRole) {
-        if ($oRole->contribute == 1) {
-          $aUserKeyList[] = $oRole->index_key;
-        }
-      }
+//      $aRoles = Roles::allByUser($oUser);
+//      $aUserKeyList = array();
+//      foreach ($aRoles as $oRole) {
+//        if ($oRole->contribute == 1) {
+//          $aUserKeyList[] = $oRole->index_key;
+//        }
+//      }
 
       $aIntelData = array();
       $aWorlds = array();
@@ -73,16 +74,16 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
           $aTownIntelRecord['player_name'] = $oIntel->player_name;
           $aTownIntelRecord['alliance_id'] = $oIntel->alliance_id;
           $aTownIntelRecord['alliance_name'] = Alliance::first($oIntel->alliance_id, $oIntel->world)->name ?? '';
-          if (isset($oIntel['shared_via_indexes'])) {
-             $aTeamsFiltered = array();
-             $aTargets = explode(", ", $oIntel['shared_via_indexes']);
-             foreach ($aTargets as $IndexKey) {
-               if (in_array($IndexKey, $aUserKeyList)) {
-                 $aTeamsFiltered[] = $IndexKey;
-               }
-             }
-            $aTownIntelRecord['shared_via_indexes'] = join(", ", $aTeamsFiltered);
-          }
+//          if (isset($oIntel['shared_via_indexes'])) {
+//             $aTeamsFiltered = array();
+//             $aTargets = explode(", ", $oIntel['shared_via_indexes']);
+//             foreach ($aTargets as $IndexKey) {
+//               if (in_array($IndexKey, $aUserKeyList)) {
+//                 $aTeamsFiltered[] = $IndexKey;
+//               }
+//             }
+//            $aTownIntelRecord['shared_via_indexes'] = join(", ", $aTeamsFiltered);
+//          }
           $aIntelData[] = $aTownIntelRecord;
         } catch (\Exception $e) {
           Logger::warning("Unable to render user intel record: " . $e->getMessage());
@@ -107,6 +108,8 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
   }
 
   /**
+   * API route: /indexer/v2/export
+   * Method: GET
    * This route is for developers only. Due to the high resource demand, you need a dev_token to call this route.
    * If you want to use this route, please contact admin@grepodata.com to get a dev_token
    * @throws Exception

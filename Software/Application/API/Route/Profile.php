@@ -13,6 +13,11 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class Profile extends BaseRoute
 {
+
+  /**
+   * API route: /profile/indexes
+   * Method: GET
+   */
   public static function IndexesGET()
   {
     // Validate params
@@ -24,7 +29,9 @@ class Profile extends BaseRoute
       ResponseCode::errorCode(3010, array(), 403);
     }
 
+    $Start = round(microtime(true) * 1000);
     $aIndexes = \Grepodata\Library\Controller\Indexer\IndexInfo::allByUser($oUser);
+
     $aIndexItems = array();
     foreach ($aIndexes as $oIndex) {
 
@@ -67,6 +74,11 @@ class Profile extends BaseRoute
       );
     }
 
+    $ElapsedMs = round(microtime(true) * 1000) - $Start;
+    if ($ElapsedMs > 1000) {
+      Logger::warning("Slow request warning: IndexesGET > ".$ElapsedMs."ms > ".$oUser->id);
+    }
+
     // optional sort by number of reports descending
     if (isset($aParams['sort_by'])) {
       if ($aParams['sort_by'] == 'reports') {
@@ -105,6 +117,7 @@ class Profile extends BaseRoute
     }
 
     $aResponse = array(
+      'query_ms' => $ElapsedMs,
       'rows' => sizeof($aIndexItems),
       'items' => $aIndexItems,
     );

@@ -537,6 +537,8 @@ class Intel
    */
   public static function allByUser(User $oUser, $From = 0, $Size = 20)
   {
+    //DB::enableQueryLog();
+
 //    $query = \Grepodata\Library\Model\IndexV2\Intel::select(['Indexer_intel.*'])
 //      ->join('Indexer_intel_shared', 'Indexer_intel_shared.intel_id', '=', 'Indexer_intel.id')
 //      ->where('Indexer_intel_shared.user_id', '=', $oUser->id)
@@ -545,7 +547,7 @@ class Intel
 //    $Total = $query->count();
 //    $aIntel = $query->offset($From)->limit($Size+1)->get();
 
-//    return \Grepodata\Library\Model\IndexV2\Intel::select(['Indexer_intel.*'])
+//    $aIntel = \Grepodata\Library\Model\IndexV2\Intel::select(['Indexer_intel.*'])
 //      ->join('Indexer_intel_shared', 'Indexer_intel_shared.intel_id', '=', 'Indexer_intel.id')
 //      ->where('Indexer_intel_shared.user_id', '=', $oUser->id)
 //      ->orderBy('Indexer_intel.parsed_date', 'desc')
@@ -554,34 +556,45 @@ class Intel
 //      ->limit($Size+1)
 //      ->get();
 
-    // Query to expand initial result with list of indexes that the intel was shared with
-    $query = \Grepodata\Library\Model\IndexV2\IntelShared::select([
-        'Indexer_intel.*',
-        DB::raw("group_concat(distinct Indexer_intel_shared.index_key SEPARATOR ', ') as shared_via_indexes")
-      ])
-      ->join(DB::raw('(
-        SELECT Indexer_intel.*
-        FROM Indexer_intel
-        JOIN Indexer_intel_shared ON Indexer_intel_shared.intel_id = Indexer_intel.id
-        WHERE Indexer_intel_shared.user_id = "' . $oUser->id . '"
-      ) as Indexer_intel'),
-      function($join)
-      {
-        $join->on('Indexer_intel_shared.intel_id', '=', 'Indexer_intel.id');
-      });
 
-    // If this is the first query, count the total rows
-    $Total = null;
-    if ($From==0) {
-      $Total = $query->distinct('Indexer_intel.id')->count('Indexer_intel.id');
-    }
+    // METHOD 1: Do not check shared indexes; Simply get latest intel with an offset. uses index
+    $query = \Grepodata\Library\Model\IndexV2\Intel::select(\Grepodata\Library\Model\IndexV2\Intel::getMinimalSelect(true))
+      ->where('Indexer_intel.indexed_by_user_id', '=', $oUser->id)
+      ->orderBy('Indexer_intel.id', 'desc');
+    $Total = $query->count();
+    $aIntel = $query->offset($From)->limit($Size+1)->get();
 
-    // Get the paginated records
-    $aIntel = $query->groupBy('Indexer_intel.id')
-      ->orderBy('Indexer_intel.id', 'desc')
-      ->offset($From)
-      ->limit($Size)
-      ->get();
+    // METHOD 2: aggregate shared_via_indexes (does not use index; slow query)
+//    // Query to expand initial result with list of indexes that the intel was shared with
+//    $query = \Grepodata\Library\Model\IndexV2\IntelShared::select([
+//        'Indexer_intel.*',
+//        DB::raw("group_concat(distinct Indexer_intel_shared.index_key SEPARATOR ', ') as shared_via_indexes")
+//      ])
+//      ->join(DB::raw('(
+//        SELECT Indexer_intel.*
+//        FROM Indexer_intel
+//        JOIN Indexer_intel_shared ON Indexer_intel_shared.intel_id = Indexer_intel.id
+//        WHERE Indexer_intel_shared.user_id = "' . $oUser->id . '"
+//      ) as Indexer_intel'),
+//      function($join)
+//      {
+//        $join->on('Indexer_intel_shared.intel_id', '=', 'Indexer_intel.id');
+//      });
+//
+//    // If this is the first query, count the total rows
+//    $Total = null;
+//    if ($From==0) {
+//      $Total = $query->distinct('Indexer_intel.id')->count('Indexer_intel.id');
+//    }
+//
+//    // Get the paginated records
+//    $aIntel = $query->groupBy('Indexer_intel.id')
+//      ->orderBy('Indexer_intel.id', 'desc')
+//      ->offset($From)
+//      ->limit($Size)
+//      ->get();
+
+    //$query = DB::getQueryLog();
 
     return [$aIntel, $Total];
 
