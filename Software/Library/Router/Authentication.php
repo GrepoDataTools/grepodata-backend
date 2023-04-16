@@ -83,6 +83,10 @@ class Authentication
     try {
       $oUser = \Grepodata\Library\Controller\User::GetUserById($aPayload['uid']);
 
+      if ($oUser->is_deleted === 1) {
+        self::invalidJWT();
+      }
+
       if ($bUpdateActivity) {
         try {
           if ($oUser->last_activity < Carbon::now()->subHour()) {

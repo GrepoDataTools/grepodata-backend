@@ -10,6 +10,7 @@ use \Illuminate\Database\Eloquent\Model;
  * @property mixed email
  * @property mixed is_confirmed
  * @property mixed is_linked
+ * @property mixed is_deleted
  * @property mixed userscript_active
  * @property mixed passphrase
  * @property mixed token

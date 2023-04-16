@@ -631,6 +631,7 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
     // Delete all personal data by overriding it with random values (linked data will be removed by cleanup script)
     $oUser->username = "DELETED_" . IndexBuilderV2::generateIndexKey(8) . time();
     $oUser->email = "DELETED_" . IndexBuilderV2::generateIndexKey(8) . time();
+    $oUser->is_deleted = true;
     $oUser->passphrase = password_hash(IndexBuilderV2::generateIndexKey(12), PASSWORD_BCRYPT);
     $oUser->token = bin2hex(random_bytes(16));
     $oUser->save();
