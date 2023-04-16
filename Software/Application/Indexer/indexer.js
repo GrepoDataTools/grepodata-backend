@@ -560,7 +560,7 @@ var errorSubmissions = [];
                                 switch (data.error_code) {
                                     case 7201:
                                         // no teams
-                                        HumanMessage.error('GrepoData: you are not in a team. Join or create a team to share your command overview.');
+                                        HumanMessage.error('GrepoData: you are not part of any GrepoData teams on this world. Join or create a team to share your command overview.');
                                         updateOpsSyncButton('Not in a team', true, 'error', null);
                                         break;
                                     default:
@@ -1406,7 +1406,6 @@ var errorSubmissions = [];
         var login_window = null;
         var script_token_interval = null;
         var refreshing_scripttoken = false;
-        var interval_count = 0;
         function showLoginPopup() {
             // This function is called when there is no access_token available
 
@@ -1459,7 +1458,7 @@ var errorSubmissions = [];
               </div>
               <div id="gd-script-linked" class="gd-login-container" style="display: none;">
                   <h4 class="gd-title" style="text-align: center; place-content: center;">
-                    You are now logged in. Happy indexing!
+                    You are now signed in. Happy indexing!
                   </h4>
                   <br/>
                   <p style="text-align: center; place-content: center;">Thank you for using GrepoData.</p>
@@ -1488,16 +1487,19 @@ var errorSubmissions = [];
                 });
                 $('#gd_script_auth_link').click(function () {
                     console.log("GrepoData: script link clicked");
-
-                    clearInterval(script_token_interval);
-                    interval_count = 0;
-                    script_token_interval = setInterval(checkScriptToken, 3000);
-
+                    startPollCheckScriptToken();
                     $('#grepodatalerror').hide();
                     $('#grepodataltip').show();
                 });
 
             });
+        }
+
+        var interval_count = 0;
+        function startPollCheckScriptToken() {
+            clearInterval(script_token_interval);
+            interval_count = 0;
+            script_token_interval = setInterval(checkScriptToken, 3000);
         }
 
         var teams_window = null;
@@ -1573,7 +1575,7 @@ var errorSubmissions = [];
             return JSON.parse(jsonPayload);
         };
 
-        function loginError(message, verbose = false, timeout = 0) {
+        function loginError(message, verbose_check = false, timeout = 0) {
             console.log('login error: ', message);
             let errormsg = message==''?"Unable to authenticate. Please try again later":message;
             $('#grepodatalerror').text(errormsg);
@@ -1581,10 +1583,10 @@ var errorSubmissions = [];
             if (timeout>0) {
                 setTimeout(_ => {$('#grepodatalerror').hide();}, timeout);
             }
-            verbose ? HumanMessage.error(errormsg) : null;
+            verbose_check ? HumanMessage.error(errormsg) : null;
         }
 
-        function checkScriptToken(verbose=false) {
+        function checkScriptToken(verbose_check=false) {
             interval_count += 1;
             if (interval_count>100) {
                 clearInterval(script_token_interval);
@@ -1611,7 +1613,7 @@ var errorSubmissions = [];
                         clearInterval(script_token_interval);
                     } else {
                         // Unable
-                        loginError('Unknown error. Please try again later or let us know if this error persists.', verbose);
+                        loginError('Unknown error. Please try again later or let us know if this error persists.', verbose_check);
                     }
                 },
                 error: function (error, textStatus) {
@@ -1629,10 +1631,14 @@ var errorSubmissions = [];
                         setTimeout(_ => {loginError('Expired script token. Please try again or contact us if this error persists.')}, 1000);
                     } else if (error.responseJSON.error_code && error.responseJSON.error_code === 3040) {
                         // Token is not yet linked
-                        verbose ? loginError('Your script token is not yet verified. Click the link to try again.') : null;
+                        if (verbose_check) {
+                            loginError('Your script token is not yet verified. Click the link and sign in using your GrepoData account.', verbose_check);
+                            window.open("https://grepodata.com/link/" + script_token);
+                            startPollCheckScriptToken();
+                        }
                     } else {
                         // Unknown
-                        loginError('Unknown error. Please try again later or let us know if this error persists.', verbose);
+                        loginError('Unknown error. Please try again later or let us know if this error persists.', verbose_check);
                     }
                 },
                 timeout: 30000
