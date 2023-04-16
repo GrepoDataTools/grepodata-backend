@@ -407,6 +407,7 @@ class IndexUsers extends \Grepodata\Library\Router\BaseRoute
           $oNewLink->player_id = $aUncommitted['player_id'];
           $oNewLink->world = $oIndex->world;
           $oNewLink->user_id = null;
+          $oNewLink->upload_uid = $oUser->id;
           $oNewLink->save();
         }
 

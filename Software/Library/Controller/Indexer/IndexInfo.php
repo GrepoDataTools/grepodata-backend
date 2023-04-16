@@ -39,6 +39,16 @@ class IndexInfo
   }
 
   /**
+   * @param $World string
+   * @return \Grepodata\Library\Model\Indexer\IndexInfo[]
+   */
+  public static function allByWorld($World)
+  {
+    return \Grepodata\Library\Model\Indexer\IndexInfo::where('world', '=', $World)
+      ->get();
+  }
+
+  /**
    * Return all indexes that the user has rights on
    * @param User $oUser
    * @param bool $bDoSort

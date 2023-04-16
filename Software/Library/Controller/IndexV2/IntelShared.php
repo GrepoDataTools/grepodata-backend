@@ -2,6 +2,7 @@
 
 namespace Grepodata\Library\Controller\IndexV2;
 
+use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\Indexer\IndexInfo;
 use Grepodata\Library\Model\User;
 use Illuminate\Database\Eloquent\Collection;
@@ -106,16 +107,17 @@ class IntelShared
       "));
   }
 
-  public static function saveHashToIndex($ReportHash, $IntelId, IndexInfo $oIndex, $PlayerId = null)
+  public static function saveHashToIndex($ReportHash, $IntelId, IndexInfo $oIndex, $PlayerId = null, $UploadUid = null)
   {
     $oIntelShared = new \Grepodata\Library\Model\IndexV2\IntelShared();
     $oIntelShared->intel_id = $IntelId;
     $oIntelShared->report_hash = $ReportHash;
     $oIntelShared->index_key = $oIndex->key_code;
     $oIntelShared->user_id = null;
+    $oIntelShared->upload_uid = $UploadUid;
     $oIntelShared->player_id = $PlayerId;
     $oIntelShared->world = $oIndex->world;
-    $oIntelShared->save();
+    self::saveSharedLink($oIntelShared);
   }
 
   public static function saveHashToUser($ReportHash, $IntelId, User $oUser, $World, $PlayerId = null)
@@ -125,9 +127,24 @@ class IntelShared
     $oIntelShared->report_hash = $ReportHash;
     $oIntelShared->index_key = null;
     $oIntelShared->user_id = $oUser->id;
+    $oIntelShared->upload_uid = $oUser->id;
     $oIntelShared->player_id = $PlayerId;
     $oIntelShared->world = $World;
-    $oIntelShared->save();
+    self::saveSharedLink($oIntelShared);
+  }
+
+  private static function saveSharedLink(\Grepodata\Library\Model\IndexV2\IntelShared $oIntelShared)
+  {
+    try {
+      $oIntelShared->save();
+    } catch (\Exception $e) {
+      if (strpos($e->getMessage(), 'Duplicate entry') !== false) {
+        // Duplicate entry error is raised when the unique index constraint is violated
+        Logger::warning('Duplicate IntelShared entry: ' . $oIntelShared->report_hash . ' - ' . $e->getMessage());
+      } else {
+        Logger::error('Error saving IntelShared entry: ' . $e->getMessage());
+      }
+    }
   }
 
 }

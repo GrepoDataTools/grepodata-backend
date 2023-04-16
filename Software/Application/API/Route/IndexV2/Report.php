@@ -206,7 +206,7 @@ class Report extends \Grepodata\Library\Router\BaseRoute
         }
         foreach ($aIndexes as $oIndex) {
           if (!in_array($oIndex->key_code, $aIndexKeys)) {
-            IntelShared::saveHashToIndex($ReportHash, $IntelId, $oIndex, $ReportPosterId ?? null);
+            IntelShared::saveHashToIndex($ReportHash, $IntelId, $oIndex, $ReportPosterId ?? null, $oUser->id);
 
             // Toggle new report switch on index
             if ($oIndex->new_report != 1) {
@@ -312,7 +312,7 @@ class Report extends \Grepodata\Library\Router\BaseRoute
         foreach ($aIndexes as $oIndex) {
           if ($oIndex->role != Roles::ROLE_READ && $oIndex->contribute == true) {
             // only save if user has write access on the index and if the user has chosen to contribute to this index
-            IntelShared::saveHashToIndex($ReportHash, $IntelId, $oIndex, $ReportPosterId ?? null);
+            IntelShared::saveHashToIndex($ReportHash, $IntelId, $oIndex, $ReportPosterId ?? null, $oUser->id);
 
             // Toggle new report switch on index
             if ($oIndex->new_report != 1) {

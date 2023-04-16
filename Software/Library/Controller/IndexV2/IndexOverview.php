@@ -354,16 +354,7 @@ class IndexOverview
 
     // Get list of actual contributors
     try {
-//      SELECT raw.player_id, raw.user_id, raw.contributions, Player.name as player_name, `User`.`username` as username, raw.last_contribution, raw.first_contribution FROM (
-//        SELECT shared.player_id, user_shared.user_id, count(*) as contributions, MAX(shared.created_at) as last_contribution, MIN(shared.created_at) as first_contribution
-//        FROM `Indexer_intel_shared` as shared
-//      LEFT JOIN Indexer_intel_shared as user_shared ON shared.report_hash = user_shared.report_hash AND (shared.id + 1) = user_shared.id
-//        WHERE shared.index_key = '' AND user_shared.user_id IS NOT NULL
-//        group by shared.player_id, user_shared.user_id
-//        order by contributions DESC
-//        ) as raw
-//    LEFT JOIN Player ON Player.world = 'nl85' AND Player.grep_id = raw.player_id
-//    LEFT JOIN `User` ON `User`.id = raw.user_id
+      // TODO: use upload_uid instead of left join on self
       $Query = "
       SELECT raw.player_id, 
              raw.user_id, 
@@ -373,15 +364,14 @@ class IndexOverview
              raw.last_contribution, 
              raw.first_contribution 
       FROM (
-        SELECT shared.player_id, 
-               user_shared.user_id, 
+        SELECT player_id, 
+               upload_uid as user_id, 
                count(*) as contributions, 
-               MAX(shared.created_at) as last_contribution, 
-               MIN(shared.created_at) as first_contribution
-        FROM `Indexer_intel_shared` as shared
-        LEFT JOIN Indexer_intel_shared as user_shared ON shared.report_hash = user_shared.report_hash AND (shared.id + 1) = user_shared.id
-        WHERE shared.index_key = '".$oIndex->key_code."' AND user_shared.user_id IS NOT NULL
-        group by shared.player_id, user_shared.user_id
+               MAX(created_at) as last_contribution, 
+               MIN(created_at) as first_contribution
+        FROM Indexer_intel_shared
+        WHERE index_key = '".$oIndex->key_code."' AND upload_uid IS NOT NULL
+        group by player_id, upload_uid
         order by contributions DESC
         ) as raw
       LEFT JOIN Player ON Player.world = '".$oIndex->world."' AND Player.grep_id = raw.player_id
