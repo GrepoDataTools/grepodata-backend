@@ -11,9 +11,9 @@ use Grepodata\Library\Model\AllianceChanges;
 use Grepodata\Library\Model\AllianceHistory;
 use Grepodata\Library\Model\AllianceScoreboard;
 use Grepodata\Library\Model\Conquest;
-use Grepodata\Library\Model\Indexer\DailyReport;
 use Grepodata\Library\Model\IndexV2\Intel;
 use Grepodata\Library\Model\IndexV2\IntelShared;
+use Grepodata\Library\Controller\IndexV2\DailyReport;
 use Grepodata\Library\Model\Island;
 use Grepodata\Library\Model\Player;
 use Grepodata\Library\Model\PlayerHistory;
@@ -138,35 +138,14 @@ foreach ($Worlds as $oWorld) {
     Logger::debugInfo("Deleted $DeletedShared intel link records");
 
     // Persist deleted rows to keep track of total stats
-    increment_persisted_property('persist_property_intel_towns_deleted', $DistinctTowns);
-    increment_persisted_property('persist_property_intel_raw_deleted', $DeletedIntel);
-    increment_persisted_property('persist_property_intel_shared_deleted', $DeletedShared);
+    DailyReport::increment_persisted_property('persist_property_intel_towns_deleted', $DistinctTowns);
+    DailyReport::increment_persisted_property('persist_property_intel_raw_deleted', $DeletedIntel);
+    DailyReport::increment_persisted_property('persist_property_intel_shared_deleted', $DeletedShared);
 
     $oWorld->cleaned = 1;
     $oWorld->save();
   } catch (\Exception $e) {
     Logger::error("CRITICAL: Error cleaning stopped world: " . $e->getMessage());
-  }
-}
-
-/**
- * Persist count to database
- * @param $type
- * @param $increment
- */
-function increment_persisted_property($type, $increment) {
-  try {
-    $oReport = DailyReport::firstOrNew(array('type' => $type));
-    $oReport->title = "Number of records deleted";
-    if (empty($oReport->data)) {
-      $oReport->data = $increment;
-    } else {
-      $oReport->data = $oReport->data + $increment;
-    }
-    Logger::warning("Persisting to database: $type = ".$oReport->data);
-    $oReport->save();
-  } catch (\Exception $e) {
-    Logger::error("Error persisting record count to database: ".$e->getMessage() . " [$type; $increment]");
   }
 }
 

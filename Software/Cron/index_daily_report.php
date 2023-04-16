@@ -64,18 +64,25 @@ try {
     index_count,
     shared_count,
     user_count,
-     users_today,
-     users_week,
-     users_month,
-     teams_today,
-     teams_week,
-     teams_month,
-     reports_today,
-      created_at
+    users_today,
+    users_week,
+    users_month,
+    teams_today,
+    teams_week,
+    teams_month,
+    commands_count,
+    commands_today,
+    commands_users_today,
+    commands_users_week,
+    commands_users_month,
+    commands_teams_today,
+    commands_teams_week,
+    commands_teams_month,
+    reports_today,
+    created_at
   FROM `Index_stats` 
   WHERE HOUR(created_at) <= 1 
   AND created_at >= date_sub(curdate(), interval 1 year)
-  AND created_at >= '2021-04-23'
   ORDER BY `Index_stats`.`created_at` ASC"
   ));
   $oReport = DailyReport::firstOrNew(array('type' => 'indexer_stats_agg'));

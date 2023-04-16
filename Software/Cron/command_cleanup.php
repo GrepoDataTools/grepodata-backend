@@ -3,6 +3,7 @@
 namespace Grepodata\Cron;
 
 use Carbon\Carbon;
+use Grepodata\Library\Controller\IndexV2\DailyReport;
 use Grepodata\Library\Cron\Common;
 use Grepodata\Library\Elasticsearch\Commands;
 use Grepodata\Library\Logger\Logger;
@@ -23,6 +24,7 @@ Common::markAsRunning(__FILE__, 3*60);
 try {
   $NumCleaned = Commands::CleanCommands();
   Logger::debugInfo("Cleaned commands: ". $NumCleaned);
+  DailyReport::increment_persisted_property('persist_property_commands_deleted', $NumCleaned);
 } catch (\Exception $e) {
   Logger::error("CRITICAL: Error cleaning indexer report info records: " . $e->getMessage());
 }

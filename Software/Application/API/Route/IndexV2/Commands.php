@@ -6,13 +6,13 @@ use Carbon\Carbon;
 use Elasticsearch\Common\Exceptions\NoNodesAvailableException;
 use Exception;
 use Grepodata\Library\Controller\Indexer\IndexInfo;
+use Grepodata\Library\Controller\IndexV2\CommandLog;
 use Grepodata\Library\Controller\IndexV2\Roles;
 use Grepodata\Library\Controller\World;
 use Grepodata\Library\IndexV2\IndexManagement;
 use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Redis\RedisClient;
 use Grepodata\Library\Router\ResponseCode;
-use Illuminate\Support\Facades\Log;
 
 class Commands extends \Grepodata\Library\Router\BaseRoute
 {
@@ -254,6 +254,7 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
   {
     $aParams = array();
     try {
+      $start = microtime(true) * 1000;
       $aParams = self::validateParams(array('access_token', 'team', 'es_id', 'action', 'content', 'world'));
       $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
 
@@ -456,6 +457,11 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
         $OperationDataKey = RedisClient::COMMAND_DATA_PREFIX.$aParams['team'];
         RedisClient::Delete($OperationDataKey);
 
+        // Log
+        $duration = (int) (microtime(true) * 1000 - $start);
+        $Action = 'update_'.$aParams['action'];
+        CommandLog::log($Action, $Team, 0, 0, $NumUpdated, 0, $duration, $oUser->id);
+
       } catch (Exception $e) {
         Logger::warning('OPS: Error updating operation state after edit in Redis ' .$e->getMessage());
       }
@@ -504,7 +510,13 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
       $aShareSettings = array();
       if (key_exists('share_settings', $aParams)) {
         $aShareSettings = json_decode($aParams['share_settings'], true);
+
+        if (is_null($aShareSettings) || !is_array($aShareSettings)) {
+          Logger::warning("OPS: bad share settings input: ".$aParams['share_settings']);
+          $aShareSetting = array();
+        }
       }
+
 
       // Parse commands and persist to database
       $MaxUploadCount = 1000;
@@ -530,7 +542,7 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
       // Index
       $aSkippedTeams = array();
       $aAddedTeams = array();
-      $NumErrors = 0;
+      $MaxCreated = 0;
       foreach ($aTeams as $oTeam) {
         if ($oTeam->role == Roles::ROLE_READ || $oTeam->contribute !== 1) {
           // User is not allowed to write or contributions are disabled
@@ -611,20 +623,24 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
           $OperationDataKey = RedisClient::COMMAND_DATA_PREFIX.$oTeam->key_code;
           RedisClient::Delete($OperationDataKey);
 
+          if ($NumCreated > $MaxCreated) {
+            $MaxCreated = $NumCreated;
+          }
+
         } catch (Exception $e) {
           Logger::warning('OPS: Error updating operation state in Redis ' .$e->getMessage());
         }
       }
 
       $duration = (int) (microtime(true) * 1000 - $start);
-      if ($duration > 300) {
+      if ($duration > 1000) {
         $logmsg = "OPS: CMD index time: ". $duration . "ms, " . count($aNewCommands) . " commands, " . count($aTeams) . " teams";
         Logger::warning($logmsg);
       }
 
       $aResponse = array(
         'duration' => $duration,
-        'num_created' => $NumCreated,
+        'num_created' => $MaxCreated,
         'added_teams' => $aAddedTeams,
         'skipped_teams' => $aSkippedTeams
       );

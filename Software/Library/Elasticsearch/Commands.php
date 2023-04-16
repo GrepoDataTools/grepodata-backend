@@ -4,6 +4,7 @@ namespace Grepodata\Library\Elasticsearch;
 
 use Carbon\Carbon;
 use Elasticsearch\ClientBuilder;
+use Grepodata\Library\Controller\IndexV2\CommandLog;
 use Grepodata\Library\Indexer\UnitStats;
 use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Model\User;
@@ -56,7 +57,11 @@ class Commands
     );
 
     $NumUploaded = 0;
+    $NumCreated = 0;
+    $NumDeleted = 0;
+    $NumUpdated = 0;
     $UpdatedAt = time();
+    $start = microtime(true) * 1000;
 
     // Delete commands: we simply override the command _id using the bulk upsert
     $bHasRecords = false;
@@ -83,6 +88,7 @@ class Commands
         );
 
         $NumUploaded -= 1;
+        $NumDeleted += 1;
         $bHasRecords = true;
       } catch (\Exception $e) {
         Logger::warning('OPS: Exception preparing command delete item: '.$e->getMessage());
@@ -159,8 +165,16 @@ class Commands
           $CancelHuman = $CancelHuman->format('H:i:s M d');
         }
 
-        if ($CommandType == 'revolt' || strpos('colonization', $CommandType) !== false) {
-          error_log(json_encode($aCommand));
+        //if ($CommandType == 'revolt') {
+        //  error_log(json_encode($aCommand));
+        //}
+
+        if (key_exists('griffin', $aCommand) && key_exists('manticore', $aCommand) && $aCommand['griffin'] > 0 && $aCommand['manticore'] > 0 ) {
+          // Command can not have mythical units from 2 different gods. Probably a command where all units are 1; weird
+          $Units = json_encode(array())??'';
+          if (key_exists('own_command', $aCommand) && $aCommand['own_command']!==false) {
+            Logger::warning("OPS: check invalid command input: ".json_encode($aCommand));
+          }
         }
 
         // Subtype
@@ -249,6 +263,7 @@ class Commands
         $aParams['body'][] = $aParsedCommand;
         $bHasRecords = true;
         $NumUploaded += 1;
+        $NumCreated += 1;
 
         // Save parsed command in case we need it to retry later
         $aParsedNewCommands[$_id] = $aParsedCommand;
@@ -276,9 +291,11 @@ class Commands
           // This can happen when a tracked command is deleted by userscript but was never actually indexed because user did not share with this team or command type
           Logger::warning("OPS: ES command update errors: " . json_encode($aItem['update']['error']));
           $NumUploaded += 1; // delete failed so decrement is undone
+          $NumDeleted -= 1;
           $bCaughtError = true;
         } else if (isset($aItem['create']['error'])) {
           $NumUploaded -= 1; // create failed so increment is undone
+          $NumCreated -= 1;
           if (isset($aItem['create']['error']['type']) && $aItem['create']['error']['type'] == 'version_conflict_engine_exception') {
             // this is a normal failure mode for 'create' operations. Doc already existed so it is skipped
             // However, we still need to update the command because units might have changed or the command might have been hidden and reappeared (spell)
@@ -298,85 +315,90 @@ class Commands
       }
     }
 
-    if (count($aRetryAsUpdateIds) <= 0){
-      // No updates required, all creates succeeded
-      error_log("No retries needed");
-      return $NumUploaded;
-    }
-
-    try {
-      // scenario 1: units changed after spell was applied to command --> doc exists but units update is required
-      // scenario 2: hidden command reappears, but user already hard deleted the original upload --> doc exists but delete status needs to be reset
-
+    if (count($aRetryAsUpdateIds) > 0) {
       // Retry the failed create documents using an update query
-      $aRetryParams = array(
-        'index' => self::IndexIdentifier,
-        'type'  => self::TypeCommand,
-        'body'  => array()
-      );
-      error_log("Num retries: ".count($aRetryAsUpdateIds));
-      foreach ($aRetryAsUpdateIds as $_id) {
-        if (!key_exists($_id, $aParsedNewCommands)) {
-          continue;
-        }
-        $aCommand = $aParsedNewCommands[$_id];
 
-        // For the retry, we use a script update operation instead of a create operation
-        $aRetryParams['body'][] = array(
-          'update' => array(
-            '_index' => self::IndexIdentifier,
-            '_type'  => self::TypeCommand,
-            '_id'    => $_id,
-          )
+      try {
+        // scenario 1: units changed after spell was applied to command --> doc exists but units update is required
+        // scenario 2: hidden command reappears, but user already hard deleted the original upload --> doc exists but delete status needs to be reset
+
+        $aRetryParams = array(
+          'index' => self::IndexIdentifier,
+          'type' => self::TypeCommand,
+          'body' => array()
         );
+        error_log("Num retries: " . count($aRetryAsUpdateIds));
+        foreach ($aRetryAsUpdateIds as $_id) {
+          if (!key_exists($_id, $aParsedNewCommands)) {
+            continue;
+          }
+          $aCommand = $aParsedNewCommands[$_id];
 
-        // Command may have reappeared after being hidden or the units might have changed after a spell was applied
-        // script update (only deletion status, units and updated_at should be changed; the original doc is maintained in case the command reappears later)
-        // https://www.elastic.co/guide/en/elasticsearch/painless/current/painless-lang-spec.html
-        $aRetryParams['body'][] = array(
-          'script' => array(
-            'source' => "
-            boolean noop = true; 
-            if (ctx._source.delete_status == 'hard') { 
-              ctx._source.delete_status = ''; 
-              noop = false
-            }
-            if (ctx._source.units != params.units) { 
-              ctx._source.units = params.units; 
-              noop = false
-            }
-            if (noop === true) {
-              ctx.op = 'noop'
-            } else {
-              ctx._source.updated_at = params.updated_at
-            }
-          ",
-            'lang' => 'painless',
-            'params' => array(
-              'units' => $aCommand['units'],
-              'updated_at' => $UpdatedAt
+          // For the retry, we use a script update operation instead of a create operation
+          $aRetryParams['body'][] = array(
+            'update' => array(
+              '_index' => self::IndexIdentifier,
+              '_type' => self::TypeCommand,
+              '_id' => $_id,
             )
-          )
-        );
-      }
+          );
 
-      $aRetryResponse = $ElasticsearchClient->bulk($aRetryParams);
+          // Command may have reappeared after being hidden or the units might have changed after a spell was applied
+          // script update (only deletion status, units and updated_at should be changed; the original doc is maintained in case the command reappears later)
+          // https://www.elastic.co/guide/en/elasticsearch/painless/current/painless-lang-spec.html
+          $aRetryParams['body'][] = array(
+            'script' => array(
+              'source' => "
+              boolean noop = true; 
+              if (ctx._source.delete_status == 'hard') { 
+                ctx._source.delete_status = ''; 
+                noop = false
+              }
+              if (ctx._source.units != params.units) { 
+                ctx._source.units = params.units; 
+                noop = false
+              }
+              if (noop === true) {
+                ctx.op = 'noop'
+              } else {
+                ctx._source.updated_at = params.updated_at
+              }
+            ",
+              'lang' => 'painless',
+              'params' => array(
+                'units' => $aCommand['units'],
+                'updated_at' => $UpdatedAt
+              )
+            )
+          );
+        }
 
-      //error_log(json_encode($aRetryParams));
-      //error_log(json_encode($aRetryResponse));
+        $aRetryResponse = $ElasticsearchClient->bulk($aRetryParams);
 
-      // Catch update errors
-      if (isset($aRetryResponse['errors']) && $aRetryResponse['errors'] == true) {
+        //error_log(json_encode($aRetryParams));
+        //error_log(json_encode($aRetryResponse));
+
+        // Catch update errors
         foreach ($aRetryResponse['items'] as $aItem) {
           if (isset($aItem['update']['error'])) {
             Logger::warning("OPS: ES command batch update errors: " . json_encode($aItem['update']['error']));
+          } else if (isset($aItem['update']['result']) && $aItem['update']['result'] !== 'noop') {
+            $NumUpdated += 1;
           }
         }
-      }
 
-    } catch (\Exception $e) {
-      Logger::warning('OPS: Error retrying bulk update: '.$e->getMessage());
+      } catch (\Exception $e) {
+        Logger::warning('OPS: Error retrying bulk update: ' . $e->getMessage());
+      }
     }
+
+    $duration = (int) (microtime(true) * 1000 - $start);
+    if ($duration > 300) {
+      $logmsg = "OPS: CMD index time: ". $duration . "ms, " . count($aNewCommands) . " commands, " . $Team;
+      Logger::warning($logmsg);
+    }
+
+    CommandLog::log('upload', $Team, count($aNewCommands), $NumCreated, $NumUpdated, $NumDeleted, $duration, $UserId);
 
     return $NumUploaded;
   }
@@ -689,7 +711,11 @@ class Commands
 
     // Units
     if (key_exists('units', $aData) && strlen($aData['units']) > 0) {
-      $aData['units'] = json_decode($aData['units'], true);
+      $Encoded = $aData['units'];
+      $aData['units'] = json_decode($Encoded, true);
+      if (key_exists('griffin', $aData['units']) && key_exists('manticore', $aData['units']) && $aData['units']['griffin'] > 0 && $aData['units']['manticore'] > 0 ) {
+        Logger::error("OPS: check invalid units response: ".json_encode($Encoded));
+      }
     }
 
     return $aData;
