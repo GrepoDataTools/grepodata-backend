@@ -175,7 +175,7 @@ class Event
           $aEvent = array(
             self::eventPart('text', 'Alliance '),
             self::eventPart('alliance', $AllianceName),
-            self::eventPart('text', ' was added as a team owner by '),
+            self::eventPart('text', ' was added as a team contributor by '),
             self::eventPart('user', $oEdittingUser->username)
           );
           break;
@@ -183,7 +183,7 @@ class Event
           $aEvent = array(
             self::eventPart('text', 'Alliance '),
             self::eventPart('alliance', $AllianceName),
-            self::eventPart('text', ' was removed as a team owner by '),
+            self::eventPart('text', ' was removed as a team contributor by '),
             self::eventPart('user', $oEdittingUser->username)
           );
           break;
@@ -192,13 +192,13 @@ class Event
           $aEvent = array(
             self::eventPart('text', 'Alliance '),
             self::eventPart('alliance', $AllianceName),
-            self::eventPart('text', ' was automatically identified as a team owner due to their contributions to this team (you can change the team owners in the team settings)')
+            self::eventPart('text', ' was automatically identified as a team contributor due to their uploads to this team (you can change the team contributors in the team settings)')
           );
       }
       $oEvent->json = json_encode($aEvent);
       $oEvent->save();
     } catch (\Exception $e) {
-      Logger::warning("Error saving owner alliance event: ".$e->getMessage());
+      Logger::warning("Error saving contributor alliance event: ".$e->getMessage());
     }
   }
 

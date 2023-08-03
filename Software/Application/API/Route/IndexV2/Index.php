@@ -200,7 +200,11 @@ class Index extends BaseRoute
       return self::OutputJson($aResponse);
 
     } catch (ModelNotFoundException $e) {
-      Logger::error("Error getting index: ".$e->getMessage());
+      $key = '';
+      if (key_exists('key', $aParams) && isset($aParams['key'])) {
+        $key = $aParams['key'];
+      }
+      Logger::error("Error getting index [".$key."]: ".$e->getMessage());
       die(self::OutputJson(array(
         'message'     => 'No index overview found for these parameters.',
         'parameters'  => $aParams

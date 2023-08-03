@@ -3,6 +3,7 @@
 namespace Grepodata\Application\API\Http;
 
 use Carbon\Carbon;
+use Grepodata\Library\Controller\Indexer\IndexInfo;
 use Grepodata\Library\Cron\InnoData;
 use Grepodata\Library\Elasticsearch\Client;
 use Grepodata\Library\Model\CronStatus;
@@ -514,6 +515,32 @@ if (!isset($_SESSION['redis_info'])) {
   $redis_info = $_SESSION['redis_info'];
 }
 echo "<pre>".$redis_info."</pre>";
+
+
+// redis cmd keys
+$redis_keys = '';
+if (!isset($_SESSION['redis_cmd_keys'])) {
+  try {
+    $redis = new Redis();
+    $redis->connect(REDIS_HOST, REDIS_PORT, 0);
+    $cmd_keys = $redis->keys('cmd_state_*');
+    $aOpLines = array();
+    foreach ($cmd_keys as $key) {
+        $aOperationSate = $redis->get($key);
+        $team = end(explode('_', $key));
+        $IndexInfo = IndexInfo::first($team);
+        $world = $IndexInfo->world;
+        $aOpLines[] = array($key, $IndexInfo->index_name.' ('.$world.')', $aOperationSate);
+    }
+    $redis_keys = var_export($aOpLines, JSON_PRETTY_PRINT);
+  } catch (\Exception $e) {
+    $redis_keys = '<span class="server-health red">REDIS: OFFLINE</span>';
+  }
+  $_SESSION['redis_cmd_keys'] = $redis_keys;
+} else {
+  $redis_keys = $_SESSION['redis_cmd_keys'];
+}
+echo "<pre>".$redis_keys."</pre>";
 
 
 ?>

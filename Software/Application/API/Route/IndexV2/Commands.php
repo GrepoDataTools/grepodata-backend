@@ -37,7 +37,7 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
       $aOperations = array();
       $bHasActiveOperation = false;
       $Limit = Carbon::now();
-      $Limit = $Limit->subDays(30);
+      $Limit = $Limit->subDays(90);
       foreach ($aTeams as $aTeam) {
 
         // Check in redis if team has an active op

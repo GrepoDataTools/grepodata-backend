@@ -2125,7 +2125,7 @@ var errorSubmissions = [];
                                     '    <li>1. Install the GrepoData bot in your Discord server (<a href="https://grepodata.com/discord" target="_blank">link</a>).</li>' +
                                     '    <li>2. Paste the <strong>slash command</strong> shown below in your Discord server. A popup with slash commands should appear.</li>' +
                                     '    <li>3. Press enter to select the GrepoData command, and press enter again to confirm.<br/>' +
-                                    '    </ul><br/><input style="width: 200px;" type="text" class="gd_copy_input_' + reportHash + '" value="' + `/gdreport hash: ${hashI}` + '"> <a href="#" class="gd_copy_command_' + reportHash + '">Copy to clipboard</a><span class="gd_copy_done_' + reportHash + '" style="display: none; float: right;"> Copied!</span>' +
+                                    '    </ul><br/><input style="width: 200px;" type="text" class="gd_copy_input_' + reportHash + '" value="' + `/report hash: ${hashI}` + '"> <a href="#" class="gd_copy_command_' + reportHash + '">Copy to clipboard</a><span class="gd_copy_done_' + reportHash + '" style="display: none; float: right;"> Copied!</span>' +
                                     '    <br /><br />' +
                                     '<img style="width: 400px;" src="https://api.grepodata.com/img_gdreport.png">';
 
@@ -2398,7 +2398,7 @@ var errorSubmissions = [];
                                     '    <li>1. Install the GrepoData bot in your Discord server (<a href="https://grepodata.com/discord" target="_blank">link</a>).</li>' +
                                     '    <li>2. Paste the <strong>slash command</strong> shown below in your Discord server. A popup with slash commands should appear.</li>' +
                                     '    <li>3. Press enter to select the GrepoData command, and press enter again to confirm.<br/>' +
-                                    '    </ul><br/><input style="width: 200px;" type="text" class="gd_copy_input_' + reportHash + '" value="' + `/gdreport hash: ${hashI}` + '"> <a href="#" class="gd_copy_command_' + reportHash + '">Copy to clipboard</a><span class="gd_copy_done_' + reportHash + '" style="display: none; float: right;"> Copied!</span>' +
+                                    '    </ul><br/><input style="width: 200px;" type="text" class="gd_copy_input_' + reportHash + '" value="' + `/report hash: ${hashI}` + '"> <a href="#" class="gd_copy_command_' + reportHash + '">Copy to clipboard</a><span class="gd_copy_done_' + reportHash + '" style="display: none; float: right;"> Copied!</span>' +
                                     '    <br /><br />' +
                                     '<img style="width: 400px;" src="https://api.grepodata.com/img_gdreport.png">';
 

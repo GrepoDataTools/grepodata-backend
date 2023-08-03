@@ -553,14 +553,14 @@ class Commands
       'body' => $aDeleteScript
     ));
 
-    error_log("OPS: delete by query result: ".json_encode($aResponse));
-
     $NumUpdated = 0;
     if ($aResponse !== false && is_array($aResponse) && isset($aResponse['total']) && $aResponse['total'] >= 0) {
       $NumUpdated = $aResponse['total'];
     } else {
       Logger::warning("OPS: unexpected update by query result; ". json_encode($aResponse));
     }
+
+    Logger::warning('OPS: Batch update result ['.$NumUpdated.']. ' .json_encode($aDeleteScript)." -- ".json_encode($aResponse));
 
     if (isset($aResponse['failures']) && is_array($aResponse['failures']) && count($aResponse['failures'])>0) {
       Logger::warning("OPS: ES update by query error; ". json_encode($aResponse));
