@@ -19,7 +19,8 @@
     "ramsey/uuid": "^3.9",
     "ext-json": "*",
     "sendgrid/sendgrid": "^7.9",
-    "cboden/ratchet": "^0.4.4"
+    "cboden/ratchet": "^0.4.4",
+    "clue/redis-react": "^2.6"
   },
   "autoload": {
     "psr-4": {

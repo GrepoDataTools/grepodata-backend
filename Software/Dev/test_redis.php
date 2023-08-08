@@ -12,6 +12,7 @@ $Window = 60;
 
 $RateLimiter = \RateLimit\RateLimiterFactory::createRedisBackedRateLimiter([
   'host' => REDIS_HOST,
+//  'host' => 'localhost',
   'port' => REDIS_PORT,
 ], $Limit, $Window);
 try {
