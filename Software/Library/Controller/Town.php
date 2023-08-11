@@ -107,6 +107,25 @@ class Town
 
   /**
    * @param $World
+   * @param $x_min
+   * @param $x_max
+   * @param $y_min
+   * @param $y_max
+   * @return bool|Collection|\Grepodata\Library\Model\Town[]
+   */
+  public static function allInRange($World, $x_min, $x_max, $y_min, $y_max)
+  {
+    // TODO: cache in Redis, requests will be duplicated and data does not change frequently
+    return \Grepodata\Library\Model\Town::where('world', '=', $World, 'and')
+      ->where('island_x','>=', $x_min)
+      ->where('island_x','<=', $x_max)
+      ->where('island_y','>=', $y_min)
+      ->where('island_y','<=', $y_max)
+      ->cursor();
+  }
+
+  /**
+   * @param $World
    * @param $Id
    * @return bool|Collection|\Grepodata\Library\Model\Town[]
    */

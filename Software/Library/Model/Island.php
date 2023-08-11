@@ -21,18 +21,19 @@ class Island extends Model
     return array(
       'world'       => $this->world,
       'grep_id'     => $this->grep_id,
-      'island_x'    => $this->island_x,
-      'island_y'    => $this->island_y,
+      'ix'          => $this->island_x,
+      'iy'          => $this->island_y,
+      'island_type' => $this->island_y,
     );
   }
 
   public function getMinimalFields()
   {
     return array(
-      'world'       => $this->world,
       'grep_id'     => $this->grep_id,
-      'island_x'    => $this->island_x,
-      'island_y'    => $this->island_y,
+      'ix'          => $this->island_x,
+      'iy'          => $this->island_y,
+      'island_type' => $this->island_y,
     );
   }
 }

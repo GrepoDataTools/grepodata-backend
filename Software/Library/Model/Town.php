@@ -30,6 +30,7 @@ class Town extends Model
       'player_id' => $this->player_id,
       'ix'        => $this->island_x,
       'iy'        => $this->island_y,
+      'island_i'  => $this->island_i,
       'ocean'     => (int) (floor($this->island_x/100) . floor($this->island_y/100)),
     );
   }
@@ -42,6 +43,8 @@ class Town extends Model
       'points'  => $this->points,
       'ix'      => $this->island_x,
       'iy'      => $this->island_y,
+      'island_i' => $this->island_i,
+      'player_id' => $this->player_id,
       'ocean'   => (int) (floor($this->island_x/100) . floor($this->island_y/100)),
     );
   }
