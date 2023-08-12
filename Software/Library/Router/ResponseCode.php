@@ -95,6 +95,11 @@ define('GD_ERROR_8210', 'No commands were updated');
 define('GD_ERROR_8220', 'Invalid update input content');
 define('GD_ERROR_8300', 'Sorry, our commands server is down. Admin is notified');
 
+// Map
+define('GD_ERROR_9000', 'Unable to handle map request');
+define('GD_ERROR_9010', 'Window width exceeds limit');
+define('GD_ERROR_9020', 'Window height exceeds limit');
+
 // === Success codes
 define('GD_SUCCESS_1000', 'Request processed successfully');
 define('GD_SUCCESS_1100', 'Renewed existing access token');

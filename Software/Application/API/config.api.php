@@ -204,6 +204,16 @@ $oRouter->Add('worldAllianceChanges', new Route('/world/changes', array(
   '_method'     => 'AllianceChanges'
 )));
 
+// Towns & islands
+$oRouter->Add('getTowns', new Route('/towns', array(
+  '_controller' => '\Grepodata\Application\API\Route\Town',
+  '_method'     => 'Towns'
+)));
+$oRouter->Add('getIslands', new Route('/islands', array(
+  '_controller' => '\Grepodata\Application\API\Route\Island',
+  '_method'     => 'Islands'
+)));
+
 // Player
 $oRouter->Add('playerInfo', new Route('/player/info', array(
   '_controller' => '\Grepodata\Application\API\Route\Player',
