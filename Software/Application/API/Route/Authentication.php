@@ -13,9 +13,11 @@ use Grepodata\Library\Indexer\IndexBuilder;
 use Grepodata\Library\Indexer\IndexBuilderV2;
 use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Mail\Client;
+use Grepodata\Library\Redis\RedisClient;
 use Grepodata\Library\Router\BaseRoute;
 use Grepodata\Library\Router\ResponseCode;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Ramsey\Uuid\Uuid;
 
 class Authentication extends \Grepodata\Library\Router\BaseRoute
 {
@@ -224,22 +226,29 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
 
     // Get list of teams that user is a part of
     $aTeams = Roles::allByUser($oUser);
-    $aPayload = array();
+    $aTeamList = array();
     foreach ($aTeams as $oRole) {
-      $aPayload[] = $oRole->index_key;
+      $aTeamList[] = $oRole->index_key;
     }
 
-    if (count($aPayload)<=0) {
+    if (count($aTeamList)<=0) {
       // User is not in any teams, websocket connection is not needed.
       ResponseCode::errorCode(7201);
     }
 
-    // Create new websocket token for user
-    $oToken = ScriptToken::NewWebSocketToken($_SERVER['REMOTE_ADDR'], $oUser, $aPayload);
+    // Create new websocket token for user (tokens are stored in Redis)
+    $Token = Uuid::uuid4();
+    $RedisKey = 'wst-'.$Token;
+    $aPayload = array(
+      'user_id' => $oUser->id,
+      'client' => $_SERVER['REMOTE_ADDR'],
+      'teams' => $aTeamList,
+    );
+    RedisClient::SetKey($RedisKey, json_encode($aPayload), 120);
 
     // Response
     $aResponse = array(
-      'websocket_token'  => $oToken->token->toString(),
+      'websocket_token'  => $RedisKey,
     );
 
     ResponseCode::success($aResponse, 1155);
