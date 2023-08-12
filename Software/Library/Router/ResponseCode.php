@@ -39,6 +39,8 @@ define('GD_ERROR_3040', 'Unlinked script token');
 define('GD_ERROR_3041', 'Invalid script token');
 define('GD_ERROR_3042', 'Expired script token');
 define('GD_ERROR_3043', 'Invalid client');
+define('GD_ERROR_3100', 'Unable to handle WebSocket request');
+define('GD_ERROR_3101', 'Unable to hande WebSocket request');
 
 // Profile
 define('GD_ERROR_4000', 'Unable to handle profile request');
@@ -112,6 +114,7 @@ define('GD_SUCCESS_1130', 'Password changed');
 define('GD_SUCCESS_1140', 'Account confirmation requested');
 define('GD_SUCCESS_1150', 'Script token created');
 define('GD_SUCCESS_1151', 'Script token authenticated');
+define('GD_SUCCESS_1155', 'WebSocket token created');
 define('GD_SUCCESS_1160', 'Account removed');
 define('GD_SUCCESS_1200', 'Renewed share link');
 define('GD_SUCCESS_1201', 'Verified share link');

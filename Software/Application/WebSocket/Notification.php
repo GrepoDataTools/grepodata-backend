@@ -30,19 +30,49 @@ class Notification implements MessageComponentInterface {
     // Store the new connection to send messages to later
     $this->clients->attach($conn);
 
-    // TODO: switch to non-blocking mysql interface https://github.com/friends-of-reactphp/mysql
-    $oUser = User::GetUserById(1);
-
-    // TODO: 1) REST API gives websocket ticket to userscript (/indexer/v2/getlatest)
-    // TODO: 2) userscripts inits a websocket connection using the ticket
-    // TODO: 3) validate websocket ticket against database and get teams for user
-    // TODO: 4) if authenticated, connection subscribes to a topic for each team
-
-    echo "New connection! ({$conn->resourceId}, {$oUser->username})\n";
+    echo "New connection! ({$conn->resourceId})\n";
   }
 
   public function onMessage(ConnectionInterface $from, $msg) {
     // In this application if clients send data it's because the user hacked around in console
+
+    try {
+      $aData = json_decode($msg, true);
+      if (key_exists('websocket_token', $aData)) {
+
+        // TODO: this should all be done using async code...
+
+//        // Check token
+//        try {
+//          $oToken = ScriptToken::GetScriptToken($aData['websocket_token']);
+//        } catch (ModelNotFoundException $e) {
+//          ResponseCode::errorCode(3041, array(), 401);
+//        }
+//
+//        // Check expiration
+//        $Limit = Carbon::now()->subDays(7);
+//        if ($oToken->created_at < $Limit) {
+//          // token expired
+//          ResponseCode::errorCode(3042, array(), 401);
+//        }
+//
+//        // Check client
+//        if ($oToken->client !== $_SERVER['REMOTE_ADDR']) {
+//          // Invalid client
+//          Logger::warning("Remote mismatch during script token verification: ".$oToken->client.' != '.$_SERVER['REMOTE_ADDR']);
+//          ResponseCode::errorCode(3043, array(), 401);
+//        }
+
+        // TODO: get teams for user
+        // TODO: subscribe user connection to respective team topics
+
+        return;
+      }
+    } catch (\Exception $e) {
+      echo "Error authenticating client: " . $e->getMessage() . ' [' . $e->getTraceAsString() . ']';
+    }
+
+    // Invalid message, close connection
     $from->close();
   }
 

@@ -73,6 +73,12 @@ $oRouter->Add('changepassword', new Route('/auth/changepassword', array(
   '_method'     => 'ChangePassword',
   '_ratelimit'  => $limit10PerMin
 )));
+// Websocket auth
+$oRouter->Add('getwstoken', new Route('/auth/websocket', array(
+  '_controller' => '\Grepodata\Application\API\Route\Authentication',
+  '_method'     => 'WebSocketToken',
+  '_ratelimit'  => $limit50PerMin
+)));
 // ===
 
 // === Operations

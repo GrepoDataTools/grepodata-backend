@@ -209,6 +209,42 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
     ResponseCode::success($aResponse, 1110);
   }
 
+  public static function WebSocketTokenPOST()
+  {
+    /**
+     * Generate a unique websocket identifier with expiration
+     * Called from in-game userscript
+     */
+
+    // Validate params
+    $aParams = self::validateParams(array('access_token'));
+
+    // Verify token
+    $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
+
+    // Get list of teams that user is a part of
+    $aTeams = Roles::allByUser($oUser);
+    $aPayload = array();
+    foreach ($aTeams as $oRole) {
+      $aPayload[] = $oRole->index_key;
+    }
+
+    if (count($aPayload)<=0) {
+      // User is not in any teams, websocket connection is not needed.
+      ResponseCode::errorCode(7201);
+    }
+
+    // Create new websocket token for user
+    $oToken = ScriptToken::NewWebSocketToken($_SERVER['REMOTE_ADDR'], $oUser, $aPayload);
+
+    // Response
+    $aResponse = array(
+      'websocket_token'  => $oToken->token->toString(),
+    );
+
+    ResponseCode::success($aResponse, 1155);
+  }
+
   public static function NewScriptLinkGET()
   {
     /**

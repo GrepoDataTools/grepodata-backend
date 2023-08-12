@@ -23,7 +23,7 @@ class Island extends Model
       'grep_id'     => $this->grep_id,
       'ix'          => $this->island_x,
       'iy'          => $this->island_y,
-      'island_type' => $this->island_y,
+      'island_type' => $this->island_type,
     );
   }
 
@@ -33,7 +33,7 @@ class Island extends Model
       'grep_id'     => $this->grep_id,
       'ix'          => $this->island_x,
       'iy'          => $this->island_y,
-      'island_type' => $this->island_y,
+      'island_type' => $this->island_type,
     );
   }
 }
