@@ -25,39 +25,6 @@ var errorSubmissions = [];
     }
 
     function loadCityIndex(globals) {
-        // Settings
-        var world = Game.world_id;
-        var gd_settings = {
-            inbox: true,
-            forum: true,
-            stats: true,
-            context: true,
-            keys_enabled: true,
-            command_share: true,
-            command_cancel_time: true,
-            forum_reactions: true,
-            bug_reports: true,
-            key_inbox_prev: '[',
-            key_inbox_next: ']',
-        };
-        readSettingsCookie();
-        setTimeout(function () {
-            if (gd_settings.inbox === true || gd_settings.forum === true || gd_settings.forum_reactions === true) {
-                loadIndexHashlist(false, true, false); // Get list of recently indexed report ids
-            }
-        }, 300);
-        checkLogin(false);
-        setTimeout(function () {
-            if (gd_settings.command_share === true) {
-                connectWebSocket(); // Initiate a websocket connection (used to send GrepoData push-notifications to client)
-            }
-        }, 800);
-
-        // Check for other scripts
-        var molehole_active = false;
-        try {
-            molehole_active = document.body.innerHTML.includes("grmh.pl")
-        }  catch (e) {}
 
         // Set locale
         var translate = {
@@ -176,6 +143,60 @@ var errorSubmissions = [];
                     break;
             }
         }
+
+        // Sscript settings
+        var world = Game.world_id;
+        var gd_settings = {
+            inbox: true,
+            forum: true,
+            stats: true,
+            context: true,
+            keys_enabled: true,
+            command_share: true,
+            command_cancel_time: true,
+            forum_reactions: true,
+            bug_reports: true,
+            key_inbox_prev: '[',
+            key_inbox_next: ']',
+        };
+        readSettingsCookie();
+
+        // Veriify authentication status and trigger startup events if authenticated
+        getAccessToken().then(access_token => {
+            if (access_token === false) {
+                console.log('GrepoData: Not authenticated')
+                showLoginNotification()
+            } else {
+                console.log("GrepoData: Succesful authentication for player "+Game.player_id)
+                onSignedIn()
+            }
+        });
+
+        function onSignedIn() {
+            /**
+             * This function is triggered when the user is signed in
+             */
+
+            // Get list of recently indexed report ids
+            setTimeout(function () {
+                if (gd_settings.inbox === true || gd_settings.forum === true || gd_settings.forum_reactions === true) {
+                    loadIndexHashlist(false, true, false);
+                }
+            }, 300);
+
+            // Initiate a websocket connection (used to send GrepoData push-notifications to client)
+            setTimeout(function () {
+                if (gd_settings.command_share === true) {
+                    connectWebSocket();
+                }
+            }, 800);
+        }
+
+        // Check for other scripts
+        var molehole_active = false;
+        try {
+            molehole_active = document.body.innerHTML.includes("grmh.pl")
+        }  catch (e) {}
 
         // Scan for inbox reports
         function parseInbox() {
@@ -1389,13 +1410,18 @@ var errorSubmissions = [];
             }
         }
 
+        var login_notified = false;
         function showLoginNotification() {
+            if (login_notified) {
+                return
+            }
             try {
                 if (7 < $("#notification_area>.notification").length) {
                     setTimeout(function() {
                         showLoginNotification();
                     }, 10000);
                 } else {
+                    login_notified = true;
                     var notificationHandler = ("undefined" == typeof Layout || "undefined" == typeof Layout.notify ? new NotificationHandler : Layout);
                     var notification = notificationHandler.notify(
                         $("#notification_area>.notification").length + 1,
@@ -1622,6 +1648,7 @@ var errorSubmissions = [];
                         $('#gd-login-container').hide();
                         $('#gd-script-linked').show();
                         clearInterval(script_token_interval);
+                        onSignedIn();
                     } else {
                         // Unable
                         loginError('Unknown error. Please try again later or let us know if this error persists.', verbose_check);
@@ -1653,24 +1680,6 @@ var errorSubmissions = [];
                     }
                 },
                 timeout: 30000
-            });
-        }
-
-        function checkLogin(show_login_popup = true) {
-            // Check if grepodata access token or refresh token is in local storage and use it to verify
-            // if not verified: login required!
-            getAccessToken().then(access_token => {
-                if (access_token === false) {
-                    if (show_login_popup === true) {
-                        // show login popup
-                        showLoginPopup();
-                    } else {
-                        // show login notification
-                        setTimeout(showLoginNotification, 2000);
-                    }
-                } else {
-                    console.log("GrepoData: Succesful authentication for player "+Game.player_id);
-                }
             });
         }
 
@@ -3437,13 +3446,20 @@ var errorSubmissions = [];
 
         var gd_websocket = null
         function connectWebSocket() {
-            gd_websocket = new WebSocket(websocket_url)
-            gd_websocket.onopen = function(e) {
-                console.log("GrepoData WebSocket Connection Established. Authenticating..")
-                authenticateWebSocket()
-            };
-            gd_websocket.onmessage = (e) => { handleWebSocketMessage(e) }
-            gd_websocket.onclose = (e) => { handleWebSocketClose(e) }
+            getAccessToken().then(access_token => {
+                if (access_token === false) {
+                    // Not logged in. abort connection
+                    console.log("Not signed in to GrepoData. Aborting WebSocket.")
+                } else {
+                    gd_websocket = new WebSocket(websocket_url)
+                    gd_websocket.onopen = function(e) {
+                        console.log("GrepoData WebSocket Connection Established. Authenticating..")
+                        authenticateWebSocket(access_token)
+                    };
+                    gd_websocket.onmessage = (e) => { handleWebSocketMessage(e) }
+                    gd_websocket.onclose = (e) => { handleWebSocketClose(e) }
+                }
+            });
         }
 
         function disconnectWebSocket() {
@@ -3451,55 +3467,107 @@ var errorSubmissions = [];
             gd_websocket = null
         }
 
-        function authenticateWebSocket() {
-            getAccessToken().then(access_token => {
-                if (access_token === false) {
-                    // Not logged in. abort connection
+        function authenticateWebSocket(access_token) {
+            $.ajax({
+                url: backend_url + "/auth/websocket",
+                data: {
+                    access_token: access_token
+                },
+                type: 'post',
+                crossDomain: true,
+                dataType: 'json',
+                success: function (data) {
+                    if (data && 'websocket_token' in data) {
+                        let websocket_token = data.websocket_token
+                        console.log("GrepoData WebSocket authenticating with token: ", websocket_token)
+                        gd_websocket.send(JSON.stringify({websocket_token: websocket_token}));
+                        // TODO: check if auth was successful; handle auth error codes?
+                    } else {
+                        console.error("Unable to get WebSocket token from backend. ", data)
+                        disconnectWebSocket()
+                    }
+                },
+                error: function (jqXHR, textStatus) {
+                    console.error("Error getting WebSocket token: ", jqXHR)
                     disconnectWebSocket()
-                } else {
-                    $.ajax({
-                        url: backend_url + "/auth/websocket",
-                        data: {
-                            access_token: access_token
-                        },
-                        type: 'post',
-                        crossDomain: true,
-                        dataType: 'json',
-                        success: function (data) {
-                            if (data && 'websocket_token' in data) {
-                                let websocket_token = data.websocket_token
-                                console.log("GrepoData WebSocket authenticating with token: ", websocket_token)
-                                gd_websocket.send({websocket_token: websocket_token});
-                                // TODO: check if auth was successful; handle auth error codes?
-                            } else {
-                                console.error("Unable to get WebSocket token from backend. ", data)
-                                disconnectWebSocket()
-                            }
-                        },
-                        error: function (jqXHR, textStatus) {
-                            console.error("Error getting WebSocket token: ", jqXHR)
-                            disconnectWebSocket()
-                            errorHandling(null, "getWebSocketToken", JSON.stringify({xhr: jqXHR, text: textStatus}))
-                        },
-                        timeout: 60000
-                    });
-                }
+                    errorHandling(null, "getWebSocketToken", JSON.stringify({xhr: jqXHR, text: textStatus}))
+                },
+                timeout: 60000
             });
         }
 
         function handleWebSocketMessage(message) {
-            console.log("GrepoData WebSocket message: ", message.data);
+            try {
+                console.log("GrepoData WebSocket message: ", message.data);
+                notification = JSON.parse(message.data);
+                let action = null
+                let showNotification = false
+                if ('action' in notification) {
+                    switch (notification.action) {
+                        case 'graceful_restart':
+                            // Server needs to restart and will close the connection. client needs to reconnect
+                            console.log("GrepoData WebSocket Server requires restart");
 
-            // TODO: handle message content & add notifications to UI
-            // - auth status/failure
-            // - notification: user/team
-            HumanMessage.success(message.data);
+                            // add a random timeout for 10 to 60 seconds
+                            let reconnect_wait = Math.floor(Math.random() * 60) + 10
+
+                            setTimeout(function() {
+                                // attempt to reconnect
+                                connectWebSocket()
+                            }, reconnect_wait * 1000);
+                            break;
+                        case 'ops_event':
+                        default:
+                            // Team Ops event: show msg and give a link to Ops view
+                            showNotification = true;
+                            action = function () {
+                                window.open(frontend_url+'/operations/'+notification.team+'/'+notification.world, '_blank')
+                            }
+                    }
+                }
+
+                if (showNotification) {
+                    showNotification(notification.msg, action)
+                }
+            } catch (e) {
+                errorHandling(e, "handleWebSocketMessage")
+            }
         }
 
         function handleWebSocketClose(message) {
             console.log("GrepoData WebSocket closed: ", message);
+        }
 
-            // TODO: add reconnect logic if connection was dropped by server
+        var notification_counter = 0
+        function showNotification(message, action_callback) {
+            try {
+                if (7 < $("#notification_area>.notification").length) {
+                    setTimeout(function() {
+                        showNotification()
+                    }, 10000);
+                } else {
+                    notification_counter += 1
+                    var identifier = 'gd_notification_'+notification_counter
+                    var notificationHandler = ("undefined" == typeof Layout || "undefined" == typeof Layout.notify ? new NotificationHandler : Layout);
+                    notificationHandler.notify(
+                        identifier,  // ID
+                        'gd_notification ' + identifier,  // CSS class
+                        '<strong>'+message+'</strong>',
+                        null
+                    );
+
+                    if (action_callback) {
+                        setTimeout(function() {
+                            $('.'+identifier).click(function () {
+                                action_callback()
+                                $('.'+identifier).hide()
+                            });
+                        }, 200);
+                    }
+                }
+            } catch (e) {
+                errorHandling(e, "showNotification")
+            }
         }
 
         /*
