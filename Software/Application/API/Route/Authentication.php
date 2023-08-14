@@ -238,7 +238,7 @@ class Authentication extends \Grepodata\Library\Router\BaseRoute
 
     // Create new websocket token for user (tokens are stored in Redis)
     $Token = Uuid::uuid4();
-    $RedisKey = 'wst-'.$Token;
+    $RedisKey = RedisClient::WEBSOCKET_TOKEN_PREFIX.$Token;
     $aPayload = array(
       'user_id' => $oUser->id,
       'client' => $_SERVER['REMOTE_ADDR'],

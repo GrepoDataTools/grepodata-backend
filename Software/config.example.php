@@ -33,3 +33,4 @@ define('PRIVATE_DEBUG_AUTH', '');
 
 define('REDIS_HOST', '');
 define('REDIS_PORT', 0);
+define('REDIS_BACKBONE_CHANNEL', '');

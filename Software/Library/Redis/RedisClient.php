@@ -12,6 +12,7 @@ class RedisClient
   const INDEXER_ALLIANCE_PREFIX = 'gd_indexer_alliance_intel_'; // followed by: {uid}{alliance_id{world}
   const COMMAND_STATE_PREFIX = 'cmd_state_'; // followed by: {team}
   const COMMAND_DATA_PREFIX = 'cmd_data_'; // followed by: {team}
+  const WEBSOCKET_TOKEN_PREFIX = 'wst-'; // followed by: {websocket_token}
 
   /**
    * @return Redis
@@ -61,6 +62,24 @@ class RedisClient
       return $oRedis->set($Key, $Data, ['ex'=>$TimeoutSeconds]);
     } catch (\Exception $e) {
       Logger::warning("Redis UpsertKey Exception: ".$e->getMessage()." [".$e->getTraceAsString()."]");
+    }
+    return false;
+  }
+
+  /**
+   * Publish a message to a channel
+   * @param $Channel
+   * @param $Message
+   * @return int Number of clients that received the message
+   */
+  public static function Publish($Channel, $Message): int
+  {
+    if (bDevelopmentMode) return false;
+    try {
+      $oRedis = self::GetInstance();
+      return $oRedis->publish($Channel, $Message);
+    } catch (\Exception $e) {
+      Logger::error("Redis Publish Exception: ".$e->getMessage()." [".$e->getTraceAsString()."]");
     }
     return false;
   }
