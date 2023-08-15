@@ -201,9 +201,9 @@ class SiegeParser
             }
             $oConquestOverview->num_attacks_counted += 1;
             if ($oConquestOverview->total_luck > 0) {
-              $oConquestOverview->total_luck += $oCity->luck > 0 ? $oCity->luck : 0;
+              $oConquestOverview->total_luck += !is_null($oCity->luck) && is_numeric($oCity->luck) ? $oCity->luck : 0;
             } else {
-              $oConquestOverview->total_luck = $oCity->luck > 0 ? $oCity->luck : 0;
+              $oConquestOverview->total_luck = !is_null($oCity->luck) && is_numeric($oCity->luck) ? $oCity->luck : 0;
             }
 
             $aTotalLossesAtt = array();
