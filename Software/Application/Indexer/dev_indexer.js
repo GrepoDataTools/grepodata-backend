@@ -7,7 +7,8 @@ var errorSubmissions = [];
     // Globals
     var backend_url = 'https://api.grepodata.com'
     var frontend_url = 'https://grepodata.com'
-    var websocket_url = 'ws://localhost:5080'
+    var websocket_url = 'wss://grepodata.com:8443'
+    // var websocket_url = 'wss://api.grepodata.com/socket'
     var time_regex = /([0-5]\d)(:)([0-5]\d)(:)([0-5]\d)(?!.*([0-5]\d)(:)([0-5]\d)(:)([0-5]\d))/gm;
     var gd_icon = "url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAXCAYAAAAV1F8QAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAYdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjAuNvyMY98AAAG0SURBVEhLYwACASA2AGIHGmGQ2SA7GGzf7oj4//5g7v/3B7L+vz+U///NVv//r9ZY/3+7K/b/683e/9/tSSTIf7M9DGhGzv8PR4r/v9uX9v/D0TKw+MdTzf9BdoAsSnm13gnEoQn+dLYLRKcAMUPBm62BYMH/f/9QFYPMfL3JE0QXQCzaFkIziz6d60FYBApvdIt07AJQ+ORgkJlfrs2DW1T9ar0jxRZJ7JkDxshiIDPf744B0dUgiwrebA8l2iJsBuISB5l5q58dREOC7u3OKJpZdHmKEsKi1xvdybIIpAamDpdFbze5ISzClrypZdGLZboIiz6d7cRrES4DibHozdYghEWfL0ygmUVvtwcjLPpwuJBmFj1ZpImw6N3uBNpZNE8ByaK9KXgtIheDzHy12gJuUfG7falYLSIHI5sBMvPlCiMQXQy2CFQPoVtEDQwy88VScByBLSqgpUVQH0HjaH8GWJAWGFR7A2mwRSkfjlUAM1bg/9cbXMAVFbhaBib5N9uCwGxQdU2ID662T9aDMag5AKrOQVX9u73JIIvANSyoPl8CxOdphEFmg9sMdGgFMQgAAH4W0yWXhEbUAAAAAElFTkSuQmCC')";
     var gd_icon_intel = "url('data:image/png;base64,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')";
@@ -3446,54 +3447,64 @@ var errorSubmissions = [];
 
         var gd_websocket = null
         function connectWebSocket() {
-            getAccessToken().then(access_token => {
-                if (access_token === false) {
-                    // Not logged in. abort connection
-                    console.log("Not signed in to GrepoData. Aborting WebSocket.")
-                } else {
-                    gd_websocket = new WebSocket(websocket_url)
-                    gd_websocket.onopen = function(e) {
-                        console.log("GrepoData WebSocket Connection Established. Authenticating..")
-                        authenticateWebSocket(access_token)
-                    };
-                    gd_websocket.onmessage = (e) => { handleWebSocketMessage(e) }
-                    gd_websocket.onclose = (e) => { handleWebSocketClose(e) }
+            try {
+                if (gd_websocket !== null) {
+                    console.log("GrepoDAta WebSocket is already connected!")
+                    return
                 }
-            });
-        }
-
-        function disconnectWebSocket() {
-            gd_websocket.close()
-            gd_websocket = null
+                getAccessToken().then(access_token => {
+                    if (access_token === false) {
+                        // Not logged in. abort connection
+                        console.log("Not signed in to GrepoData. Aborting WebSocket.")
+                    } else {
+                        gd_websocket = new WebSocket(websocket_url)
+                        gd_websocket.onopen = function(e) {
+                            console.log("GrepoData WebSocket Connection Established. Authenticating..")
+                            authenticateWebSocket(access_token)
+                        };
+                        gd_websocket.onmessage = (e) => { handleWebSocketMessage(e) }
+                        gd_websocket.onclose = (e) => { handleWebSocketClose(e) }
+                        gd_websocket.onerror = (e) => {
+                            console.error("GrepoData WebSocket error: ", e)
+                            retryWebSocketConnection()
+                        }
+                    }
+                });
+            } catch (e) {
+                errorHandling(e, "connectWebSocket")
+            }
         }
 
         function authenticateWebSocket(access_token) {
-            $.ajax({
-                url: backend_url + "/auth/websocket",
-                data: {
-                    access_token: access_token
-                },
-                type: 'post',
-                crossDomain: true,
-                dataType: 'json',
-                success: function (data) {
-                    if (data && 'websocket_token' in data) {
-                        let websocket_token = data.websocket_token
-                        console.log("GrepoData WebSocket authenticating with token: ", websocket_token)
-                        gd_websocket.send(JSON.stringify({websocket_token: websocket_token}));
-                        // TODO: check if auth was successful; handle auth error codes?
-                    } else {
-                        console.error("Unable to get WebSocket token from backend. ", data)
+            try {
+                $.ajax({
+                    url: backend_url + "/auth/websocket",
+                    data: {
+                        access_token: access_token
+                    },
+                    type: 'post',
+                    crossDomain: true,
+                    dataType: 'json',
+                    success: function (data) {
+                        if (data && 'websocket_token' in data) {
+                            let websocket_token = data.websocket_token
+                            console.log("GrepoData WebSocket authenticating with token: ", websocket_token)
+                            gd_websocket.send(JSON.stringify({websocket_token: websocket_token}));
+                        } else {
+                            console.error("Unable to get WebSocket token from backend. ", data)
+                            disconnectWebSocket()
+                        }
+                    },
+                    error: function (jqXHR, textStatus) {
+                        console.error("Error getting WebSocket token: ", jqXHR)
                         disconnectWebSocket()
-                    }
-                },
-                error: function (jqXHR, textStatus) {
-                    console.error("Error getting WebSocket token: ", jqXHR)
-                    disconnectWebSocket()
-                    errorHandling(null, "getWebSocketToken", JSON.stringify({xhr: jqXHR, text: textStatus}))
-                },
-                timeout: 60000
-            });
+                        errorHandling(null, "getWebSocketToken", JSON.stringify({xhr: jqXHR, text: textStatus}))
+                    },
+                    timeout: 60000
+                });
+            } catch (e) {
+                errorHandling(e, "authenticateWebSocket")
+            }
         }
 
         function handleWebSocketMessage(message) {
@@ -3501,32 +3512,20 @@ var errorSubmissions = [];
                 console.log("GrepoData WebSocket message: ", message.data);
                 notification = JSON.parse(message.data);
                 let action = null
-                let showNotification = false
+                let doShowNotification = false
                 if ('action' in notification) {
                     switch (notification.action) {
-                        case 'graceful_restart':
-                            // Server needs to restart and will close the connection. client needs to reconnect
-                            console.log("GrepoData WebSocket Server requires restart");
-
-                            // add a random timeout for 10 to 60 seconds
-                            let reconnect_wait = Math.floor(Math.random() * 60) + 10
-
-                            setTimeout(function() {
-                                // attempt to reconnect
-                                connectWebSocket()
-                            }, reconnect_wait * 1000);
-                            break;
                         case 'ops_event':
                         default:
                             // Team Ops event: show msg and give a link to Ops view
-                            showNotification = true;
+                            doShowNotification = true;
                             action = function () {
                                 window.open(frontend_url+'/operations/'+notification.team+'/'+notification.world, '_blank')
                             }
                     }
                 }
 
-                if (showNotification) {
+                if (doShowNotification) {
                     showNotification(notification.msg, action)
                 }
             } catch (e) {
@@ -3534,8 +3533,35 @@ var errorSubmissions = [];
             }
         }
 
+        function disconnectWebSocket() {
+            try {
+                gd_websocket.close() // (!) This will trigger handleWebSocketClose
+            } catch (e) {
+                errorHandling(e, "disconnectWebSocket")
+            }
+        }
+
         function handleWebSocketClose(message) {
-            console.log("GrepoData WebSocket closed: ", message);
+            console.log("GrepoData WebSocket closed: ", message)
+            retryWebSocketConnection()
+        }
+
+        var num_retries_websocket = 3;
+        function retryWebSocketConnection() {
+            try {
+                gd_websocket = null
+                if (num_retries_websocket > 0) {
+                    num_retries_websocket -= 1
+                    // add a random timeout for 10 to 60 seconds to prevent all clients connecting simultaneously
+                    let reconnect_wait = Math.floor(Math.random() * 60) + 10
+                    console.log("GrepoData WebSocket: attempting retry in "+reconnect_wait+" seconds. "+num_retries_websocket+" retries remaining.");
+                    setTimeout(function() {
+                        connectWebSocket()
+                    }, reconnect_wait * 1000);
+                }
+            } catch (e) {
+                errorHandling(e, "retryWebSocketConnection")
+            }
         }
 
         var notification_counter = 0
