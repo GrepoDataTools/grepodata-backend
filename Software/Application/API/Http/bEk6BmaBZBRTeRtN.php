@@ -8,6 +8,7 @@ use Grepodata\Library\Cron\InnoData;
 use Grepodata\Library\Elasticsearch\Client;
 use Grepodata\Library\Model\CronStatus;
 use Grepodata\Library\Model\Operation_log;
+use Grepodata\Library\Redis\RedisHelper;
 use Redis;
 
 require('./../../../config.php');
@@ -288,6 +289,25 @@ if (!isset($_SESSION['redis_html'])) {
 }
 echo $redis_html;
 
+// WebSocket
+$wss_html = '';
+if (!isset($_SESSION['wss_html'])) {
+  try {
+    $NumReceived = RedisHelper::SendBackboneHeartbeat();
+    if ($NumReceived>0) {
+      $wss_html =  '<span class="server-health green">WebSocket: OK</span>';
+    } else {
+      $wss_html =  '<span class="server-health red">WebSocket: OFFLINE</span>';
+    }
+  } catch (\Exception $e) {
+    $wss_html =  '<span class="server-health red">WebSocket: OFFLINE</span>';
+  }
+  $_SESSION['wss_html'] = $wss_html;
+} else {
+  $wss_html = $_SESSION['wss_html'];
+}
+echo $wss_html;
+
 echo '<a class="link" onclick="flush_session()">Refresh</a></p>';
 
 //exec("/home/vps/.nvm/versions/node/v8.9.4/bin/node /home/vps/.nvm/versions/node/v8.9.4/lib/node_modules/pm2/bin/pm2 list 2>&1", $pm2status);
@@ -297,6 +317,85 @@ if (isset($bAbort) && $bAbort == true) {
   echo '</br></br><table><tr class="error"><th>CRITICAL: SQL server is down</th></tr></table>';
   die();
 }
+
+?>
+
+<script>
+    function publish()
+    {
+        var pub_type = document.getElementById('pub_type').value;
+        var pub_team = document.getElementById('pub_team').value;
+        var pub_msg = document.getElementById('pub_msg').value;
+        var pub_world = document.getElementById('pub_world').value;
+        var pub_action = document.getElementById('pub_action').value;
+        var url = window.location.href.split('?')[0];
+        url += "?pubsub=1&pub_type="+pub_type+"&pub_team="+pub_team+"&pub_msg="+pub_msg+"&pub_world="+pub_world+"&pub_action="+pub_action;
+        window.location.href = url;
+    }
+    function test_publish()
+    {
+        var url = window.location.href.split('?')[0];
+        url += "?pubsub=1&pub_type=notify_team&pub_team=1z7ay7s5&pub_msg=JohnDoe uploaded 10 commands to team 1z7ay7s5&pub_world=nl108&pub_action=ops_event";
+        window.location.href = url;
+    }
+    function heartbeat()
+    {
+        var url = window.location.href.split('?')[0];
+        url += "?pubsub=2";
+        window.location.href = url;
+    }
+</script>
+
+Redis backbone:
+<select id="pub_type" name="pub_type">
+    <option value="notify_team" <?php echo isset($_GET['pub_type']) && $_GET['pub_type'] == 'notify_team' ? 'selected':''?>>notify_team</option>
+    <option value="notify_user" <?php echo isset($_GET['pub_type']) && $_GET['pub_type'] == 'notify_user' ? 'selected':''?>>notify_user</option>
+</select>
+<select id="pub_action" name="pub_action">
+    <option value="ops_event" <?php echo isset($_GET['pub_action']) && $_GET['pub_action'] == 'ops_event' ? 'selected':''?>>ops_event</option>
+</select>
+<input placeholder="pub_team" id="pub_team" type="text" name="pub_team" value="<?php echo $_GET['pub_team'];?>"/>
+<input placeholder="pub_msg" id="pub_msg" type="text" name="pub_msg" value="<?php echo $_GET['pub_msg'];?>"/>
+<input placeholder="pub_world" id="pub_world" type="text" name="pub_world" value="<?php echo $_GET['pub_world'];?>"/>
+
+<button onclick="publish()">Publish</button>
+<button onclick="test_publish()">Test message</button>
+<button onclick="heartbeat()">Heartbeat</button>
+
+<?php
+
+if (isset($_GET['pubsub'])) {
+  $NumReceived = 0;
+  switch ($_GET['pubsub']) {
+    case 1:
+      if (
+        !empty($_GET['pub_type']) &&
+        !empty($_GET['pub_team']) &&
+        !empty($_GET['pub_msg']) &&
+        !empty($_GET['pub_world']) &&
+        !empty($_GET['pub_action'])
+      ) {
+        $Message = json_encode(array(
+          'type' => $_GET['pub_type'],
+          'team' => $_GET['pub_team'],
+          'msg' => $_GET['pub_msg'],
+          'world' => $_GET['pub_world'],
+          'action' => $_GET['pub_action']
+        ));
+        $NumReceived = RedisHelper::SendBackboneMessage($Message);
+      }
+      break;
+    case 2:
+      $NumReceived = RedisHelper::SendBackboneHeartbeat();
+      break;
+  }
+  echo " Num receivers: ".$NumReceived;
+}
+
+?>
+
+<?php
+
 
 if ($aJobs !== false) {
   echo '<table style="width: 100%;">
@@ -526,11 +625,11 @@ if (!isset($_SESSION['redis_cmd_keys'])) {
     $cmd_keys = $redis->keys('cmd_state_*');
     $aOpLines = array();
     foreach ($cmd_keys as $key) {
-        $aOperationSate = $redis->get($key);
-        $team = end(explode('_', $key));
-        $IndexInfo = IndexInfo::first($team);
-        $world = $IndexInfo->world;
-        $aOpLines[] = array($key, $IndexInfo->index_name.' ('.$world.')', $aOperationSate);
+      $aOperationSate = $redis->get($key);
+      $team = end(explode('_', $key));
+      $IndexInfo = IndexInfo::first($team);
+      $world = $IndexInfo->world;
+      $aOpLines[] = array($key, $IndexInfo->index_name.' ('.$world.')', $aOperationSate);
     }
     $redis_keys = var_export($aOpLines, JSON_PRETTY_PRINT);
   } catch (\Exception $e) {

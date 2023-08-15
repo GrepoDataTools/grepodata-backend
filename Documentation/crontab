@@ -1,11 +1,13 @@
 */2 * * * * /usr/bin/php /home/vps/grepodata/production/grepodata-backend/active/Software/Cron/index_overview_builder.php >> /home/vps/grepodata/production/grepodata-backend/Logs/index_overview_log.err
 40 05 * * * /usr/bin/php /home/vps/grepodata/production/grepodata-backend/active/Software/Cron/index_enhancer.php >> /home/vps/grepodata/production/grepodata-backend/Logs/index_enhancer_log.err
 #03 04 * * * /usr/bin/php /home/vps/grepodata/production/grepodata-backend/active/Software/Cron/world_domination.php >> /home/vps/grepodata/production/grepodata-backend/Logs/world_domination_log.err
+*/2 * * * * /usr/bin/php /home/vps/grepodata/production/grepodata-backend/active/Software/Cron/websocket_heartbeat.php >> /home/vps/grepodata/production/grepodata-backend/Logs/websocket_heartbeat.err
+15 * * * * /usr/bin/php /home/vps/grepodata/production/grepodata-backend/active/Software/Cron/command_cleanup.php >> /home/vps/grepodata/production/grepodata-backend/Logs/command_cleanup.err
 52 0-23/2 * * * /usr/bin/php /home/vps/grepodata/production/grepodata-backend/active/Software/Cron/index_stats.php >> /home/vps/grepodata/production/grepodata-backend/Logs/index_stats_log.err
 32 08 * * * /usr/bin/php /home/vps/grepodata/production/grepodata-backend/active/Software/Cron/index_daily_report.php >> /home/vps/grepodata/production/grepodata-backend/Logs/index_daily_report_log.err
 02 1-23/2 * * * /usr/bin/php /home/vps/grepodata/production/grepodata-backend/active/Software/Cron/data_import_daily.php >> /home/vps/grepodata/production/grepodata-backend/Logs/daily_log.err
 22 0-23/4 * * * /usr/bin/php /home/vps/grepodata/production/grepodata-backend/active/Software/Cron/data_import_towns.php >> /home/vps/grepodata/production/grepodata-backend/Logs/town_log.err
-32 2,5,9,13,17,21,23 * * * /usr/bin/php /home/vps/grepodata/production/grepodata-backend/active/Software/Cron/data_import_elasticsearch.php >> /home/vps/grepodata/production/grepodata-backend/Logs/elasticsearch.err
+32 2,5,9,13,17,21 * * * /usr/bin/php /home/vps/grepodata/production/grepodata-backend/active/Software/Cron/data_import_elasticsearch.php >> /home/vps/grepodata/production/grepodata-backend/Logs/elasticsearch.err
 41 */4 * * * /usr/bin/php /home/vps/grepodata/production/grepodata-backend/active/Software/Cron/detect_worlds.php >> /home/vps/grepodata/production/grepodata-backend/Logs/world_detect.err
 13 06 * * * /usr/bin/php /home/vps/grepodata/production/grepodata-backend/active/Software/Cron/process_diffs.php >> /home/vps/grepodata/production/grepodata-backend/Logs/process_diffs.err
 51 03 * * * /usr/bin/php /home/vps/grepodata/production/grepodata-backend/active/Software/Cron/data_import_cleanup.php >> /home/vps/grepodata/production/grepodata-backend/Logs/cleanup_log.err
@@ -16,5 +18,3 @@
 33 07 * * * /usr/bin/php /home/vps/grepodata/production/grepodata-backend/active/Software/Cron/data_import_ranks.php >> /home/vps/grepodata/production/grepodata-backend/Logs/data_ranks.err
 01 * * * * /usr/bin/php /home/vps/grepodata/production/grepodata-backend/active/Software/Cron/data_import_reset.php >> /home/vps/grepodata/production/grepodata-backend/Logs/reset_log.err
 * * * * * /usr/bin/php /home/vps/grepodata/production/grepodata-backend/active/Software/Cron/mailer.php >> /home/vps/grepodata/production/grepodata-backend/Logs/mailer_log.err
-
-MAILTO=admin@grepodata.com

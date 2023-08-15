@@ -91,11 +91,7 @@ error_reporting(0);
 <script>
   function clearFilters()
   {
-    var url = window.location.href;
-    if(url.indexOf("?") > 0) {
-      url = url.substring(0,url.indexOf("?"));
-      window.location.href = url;
-    }
+    window.location.href = window.location.href.split('?')[0];
   }
   function search()
   {
