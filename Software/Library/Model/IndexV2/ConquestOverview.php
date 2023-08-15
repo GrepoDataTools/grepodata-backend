@@ -16,6 +16,7 @@ use \Illuminate\Database\Eloquent\Model;
  * @property mixed total_losses_att
  * @property mixed total_losses_def
  * @property mixed num_attacks_counted
+ * @property mixed total_luck
  */
 class ConquestOverview extends Model
 {

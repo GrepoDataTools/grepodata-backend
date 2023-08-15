@@ -57,6 +57,7 @@ class Conquest extends Model
       'conquest_uid'  => $oMixedConquest->uid,
       'index_key'     => $oMixedConquest->index_key,
       'num_attacks_counted' => $oMixedConquest->num_attacks_counted,
+      'average_luck' => $oMixedConquest->total_luck>0 && $oMixedConquest->num_attacks_counted > 0 ? $oMixedConquest->total_luck / $oMixedConquest->num_attacks_counted : null,
       'total_losses_att' => json_decode($oMixedConquest->total_losses_att, true),
       'total_losses_def' => json_decode($oMixedConquest->total_losses_def, true),
       'belligerent_all'  => is_array($aBelligerentsAll) ? array_values($aBelligerentsAll) : array()
