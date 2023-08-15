@@ -200,7 +200,7 @@ class SiegeParser
               $oConquestOverview->uid = md5(IndexBuilderV2::generateIndexKey(32) . time());
             }
             $oConquestOverview->num_attacks_counted += 1;
-            if ($oConquestOverview->total_luck > 0) {
+            if (!is_null($oConquestOverview->total_luck) && is_numeric($oConquestOverview->total_luck)) {
               $oConquestOverview->total_luck += !is_null($oCity->luck) && is_numeric($oCity->luck) ? $oCity->luck : 0;
             } else {
               $oConquestOverview->total_luck = !is_null($oCity->luck) && is_numeric($oCity->luck) ? $oCity->luck : 0;
