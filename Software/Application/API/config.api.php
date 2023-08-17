@@ -220,6 +220,12 @@ $oRouter->Add('getIslands', new Route('/islands', array(
   '_method'     => 'Islands'
 )));
 
+// Search
+$oRouter->Add('searchV2', new Route('/search', array(
+  '_controller' => '\Grepodata\Application\API\Route\Search',
+  '_method'     => 'SearchAll'
+)));
+
 // Player
 $oRouter->Add('playerInfo', new Route('/player/info', array(
   '_controller' => '\Grepodata\Application\API\Route\Player',

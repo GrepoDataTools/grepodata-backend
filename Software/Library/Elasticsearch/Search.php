@@ -16,6 +16,26 @@ class Search
   const TypeAlliance    = "alliance";
   const TypeTown        = "town";
 
+  public static function FindPlayersAndAlliances($aOptions = array(), $buildForm = false)
+  {
+    $aElasticsearchResult = self::SearchPlayersEs($aOptions, true);
+    $aAggResult = $aElasticsearchResult;
+
+    // Build aggregation form using only the query if custom filters are used
+    if ($buildForm && isset($aOptions['query']) && (isset($aOptions['world']) || isset($aOptions['server']))) {
+      $aAggResult = self::SearchPlayersEs(array('query' => $aOptions['query']), true);
+    }
+
+    $aSearchOutput = array(
+      'success' => true,
+      'count'   => $aElasticsearchResult['hits']['total'],
+      'results' => self::RenderResults($aElasticsearchResult, true),
+      'form'    => self::RenderForm($aAggResult),
+    );
+
+    return $aSearchOutput;
+  }
+
   public static function FindPlayers($aOptions = array(), $buildForm = false)
   {
     $aElasticsearchResult = self::SearchPlayersEs($aOptions);
@@ -29,7 +49,7 @@ class Search
     $aSearchOutput = array(
       'success' => true,
       'count'   => $aElasticsearchResult['hits']['total'],
-      'results' => self::RenderPlayerResults($aElasticsearchResult),
+      'results' => self::RenderResults($aElasticsearchResult),
       'form'    => self::RenderForm($aAggResult),
     );
 
@@ -179,7 +199,7 @@ class Search
     $aSearchOutput = array(
       'success' => true,
       'count'   => $aElasticsearchResult['hits']['total'],
-      'results' => self::RenderAllianceResults($aElasticsearchResult),
+      'results' => self::RenderResults($aElasticsearchResult),
       'form'    => self::RenderForm($aElasticsearchResult),
     );
 
@@ -281,14 +301,14 @@ class Search
     $aSearchOutput = array(
       'success' => true,
       'count'   => $aElasticsearchResult['hits']['total'],
-      'results' => self::RenderTownResults($aElasticsearchResult),
-      'form'    => self::RenderTownForm($aElasticsearchResult),
+      'results' => self::RenderResults($aElasticsearchResult),
+      'form'    => self::RenderForm($aElasticsearchResult, false),
     );
 
     return $aSearchOutput;
   }
 
-  private static function SearchPlayersEs($aOptions) {
+  private static function SearchPlayersEs($aOptions, $bIncludeAlliances=False) {
     $oElasticsearchClient = \Grepodata\Library\Elasticsearch\Client::GetInstance(3);
     if (!$oElasticsearchClient->indices()->exists(array('index' => self::IndexIdentifier))) return false;
 
@@ -474,33 +494,70 @@ class Search
     // Make sure empty filter has the right type
     if (sizeof($aSearchParams['query']['function_score']['query']['bool']['filter']) == 0) $aSearchParams['query']['function_score']['query']['bool']['filter'] = (object)[];
 
+    // Search type
+    $Type = self::TypePlayer;
+    if ($bIncludeAlliances===true) {
+      $Type = null; // Search in all types
+    }
+
+    // TODO: we can include towns by setting index->_all and updating the active filter. but then town scores are outranking players too often...
+//    {
+//      "bool": {
+//        "should": [
+//          {
+//            "term": {
+//            "Active": true
+//            }
+//          },
+//          {
+//            "bool": {
+//            "must_not": [
+//                {
+//                  "exists": {
+//                  "field": "Active"
+//                  }
+//                }
+//              ]
+//            }
+//          }
+//        ]
+//      }
+//    },
+
     // Execute
     $aElasticsearchResult = $oElasticsearchClient->search(array(
       'index' => self::IndexIdentifier,
-      'type'  => self::TypePlayer,
+      'type'  => $Type,
       'body'  => $aSearchParams
     ));
 
     return $aElasticsearchResult;
   }
 
-  private static function RenderForm($aElasticsearchResults) {
-    $aForm = array(
-      'servers' => $aElasticsearchResults['aggregations']['server']['buckets'],
-      'worlds'  => $aElasticsearchResults['aggregations']['world']['buckets'],
-      'cities'  => array(
-        'min'   => $aElasticsearchResults['aggregations']['min_towns']['value'],
-        'max'   => $aElasticsearchResults['aggregations']['max_towns']['value'],
-      ),
-      'rank'  => array(
-        'min'   => $aElasticsearchResults['aggregations']['min_rank']['value'],
-        'max'   => $aElasticsearchResults['aggregations']['max_rank']['value'],
-      ),
-      'points'  => array(
-        'min'   => $aElasticsearchResults['aggregations']['min_points']['value'],
-        'max'   => $aElasticsearchResults['aggregations']['max_points']['value'],
-      ),
-    );
+  private static function RenderForm($aElasticsearchResults, $bDetailed=true) {
+    if ($bDetailed) {
+      $aForm = array(
+        'servers' => $aElasticsearchResults['aggregations']['server']['buckets'],
+        'worlds'  => $aElasticsearchResults['aggregations']['world']['buckets'],
+        'cities'  => array(
+          'min'   => $aElasticsearchResults['aggregations']['min_towns']['value'],
+          'max'   => $aElasticsearchResults['aggregations']['max_towns']['value'],
+        ),
+        'rank'  => array(
+          'min'   => $aElasticsearchResults['aggregations']['min_rank']['value'],
+          'max'   => $aElasticsearchResults['aggregations']['max_rank']['value'],
+        ),
+        'points'  => array(
+          'min'   => $aElasticsearchResults['aggregations']['min_points']['value'],
+          'max'   => $aElasticsearchResults['aggregations']['max_points']['value'],
+        ),
+      );
+    } else {
+      $aForm = array(
+        'servers' => $aElasticsearchResults['aggregations']['server']['buckets'],
+        'worlds'  => $aElasticsearchResults['aggregations']['world']['buckets']
+      );
+    }
 
     usort($aForm['worlds'], function ($a, $b){
       if ($a['key'] == $b['key']) {
@@ -519,82 +576,64 @@ class Search
     return $aForm;
   }
 
-  private static function RenderTownForm($aElasticsearchResults) {
-    $aForm = array(
-      'servers' => $aElasticsearchResults['aggregations']['server']['buckets'],
-      'worlds'  => $aElasticsearchResults['aggregations']['world']['buckets']
-    );
+  private static function RenderResults($aElasticsearchResults, $bMinimal=false) {
+    $aResults = array();
+    foreach ($aElasticsearchResults['hits']['hits'] as $aHit) {
+      // Common fields
+      $aCommonFields = array(
+        'type'          => $aHit['_type'],
+        'id'            => $aHit['_source']['GrepId'],
+        'world'         => $aHit['_source']['WorldId'],
+        'server'        => ($aHit['_source']['Server']!=''?$aHit['_source']['Server']:substr($aHit['_source']['WorldId'], 0, 2)),
+        'name'          => $aHit['_source']['Name'],
+        'points'        => $aHit['_source']['Points'],
+      );
 
-    usort($aForm['worlds'], function ($a, $b){
-      if ($a['key'] == $b['key']) {
-        return 0;
+      $aFields = array();
+      if ($bMinimal===false) {
+        // Type specific fields
+        switch ($aHit['_type']) {
+          case self::TypePlayer:
+            $aFields = array(
+              'score'            => $aHit['_score'],
+              'alliance_id'   => $aHit['_source']['AllianceId'],
+              'alliance_name' => $aHit['_source']['AllianceName'],
+              'rank'          => $aHit['_source']['Rank'],
+              'towns'         => $aHit['_source']['Towns'],
+              'att'           => $aHit['_source']['Att'],
+              'def'           => $aHit['_source']['Def'],
+              'active'        => $aHit['_source']['Active'],
+            );
+            break;
+          case self::TypeAlliance:
+            $aFields = array(
+              'rank'          => $aHit['_source']['Rank'],
+              'members'       => $aHit['_source']['Members'],
+              'towns'         => $aHit['_source']['Towns'],
+              'att'           => $aHit['_source']['Att'],
+              'def'           => $aHit['_source']['Def'],
+              'active'        => $aHit['_source']['Active'],
+            );
+            break;
+          case self::TypeTown:
+            $aFields = array(
+              'player_id'     => $aHit['_source']['PlayerId'],
+              'player_name'   => $aHit['_source']['PlayerName'],
+              'alliance_id'   => $aHit['_source']['AllianceId'],
+              'alliance_name' => $aHit['_source']['AllianceName'],
+              'island_x'      => $aHit['_source']['IslandX'],
+              'island_y'      => $aHit['_source']['IslandY'],
+              'island_i'      => $aHit['_source']['IslandI'],
+              'updated_at'    => $aHit['_source']['UpdatedAt'],
+            );
+            break;
+          default:
+            break;
+        }
       }
-      return ($a['key'] < $b['key']) ? 1 : -1;
-    });
 
-    return $aForm;
-  }
-
-  private static function RenderPlayerResults($aElasticsearchResults) {
-    $aResults = array();
-    foreach ($aElasticsearchResults['hits']['hits'] as $aHit) {
-      $aResults[] = array(
-        'score'            => $aHit['_score'],
-        'id'            => $aHit['_source']['GrepId'],
-        'world'         => $aHit['_source']['WorldId'],
-        'server'        => $aHit['_source']['Server'],
-        'name'          => $aHit['_source']['Name'],
-        'alliance_id'   => $aHit['_source']['AllianceId'],
-        'alliance_name' => $aHit['_source']['AllianceName'],
-        'rank'          => $aHit['_source']['Rank'],
-        'points'        => $aHit['_source']['Points'],
-        'towns'         => $aHit['_source']['Towns'],
-        'att'           => $aHit['_source']['Att'],
-        'def'           => $aHit['_source']['Def'],
-        'active'        => $aHit['_source']['Active'],
-      );
-    }
-    return $aResults;
-  }
-
-  private static function RenderAllianceResults($aElasticsearchResults) {
-    $aResults = array();
-    foreach ($aElasticsearchResults['hits']['hits'] as $aHit) {
-      $aResults[] = array(
-        'id'            => $aHit['_source']['GrepId'],
-        'world'         => $aHit['_source']['WorldId'],
-        'server'        => ($aHit['_source']['Server']!=''?$aHit['_source']['Server']:substr($aHit['_source']['WorldId'], 0, 2)),
-        'name'          => $aHit['_source']['Name'],
-        'rank'          => $aHit['_source']['Rank'],
-        'points'        => $aHit['_source']['Points'],
-        'members'       => $aHit['_source']['Members'],
-        'towns'         => $aHit['_source']['Towns'],
-        'att'           => $aHit['_source']['Att'],
-        'def'           => $aHit['_source']['Def'],
-        'active'        => $aHit['_source']['Active'],
-      );
-    }
-    return $aResults;
-  }
-
-  private static function RenderTownResults($aElasticsearchResults) {
-    $aResults = array();
-    foreach ($aElasticsearchResults['hits']['hits'] as $aHit) {
-      $aResults[] = array(
-        'id'            => $aHit['_source']['GrepId'],
-        'world'         => $aHit['_source']['WorldId'],
-        'server'        => ($aHit['_source']['Server']!=''?$aHit['_source']['Server']:substr($aHit['_source']['WorldId'], 0, 2)),
-        'player_id'     => $aHit['_source']['PlayerId'],
-        'player_name'   => $aHit['_source']['PlayerName'],
-        'alliance_id'   => $aHit['_source']['AllianceId'],
-        'alliance_name' => $aHit['_source']['AllianceName'],
-        'island_x'      => $aHit['_source']['IslandX'],
-        'island_y'      => $aHit['_source']['IslandY'],
-        'island_i'      => $aHit['_source']['IslandI'],
-        'points'        => $aHit['_source']['Points'],
-        'updated_at'    => $aHit['_source']['UpdatedAt'],
-        'name'          => $aHit['_source']['Name'],
-      );
+      $aRenderedResult = array_merge($aCommonFields, $aFields);
+      $aResults[] = $aRenderedResult;
     }
     return $aResults;
   }
