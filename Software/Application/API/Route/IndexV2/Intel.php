@@ -373,6 +373,7 @@ class Intel extends \Grepodata\Library\Router\BaseRoute
             'player_id' => $oCity->player_id,
             'player_name' => $oCity->player_name,
             'alliance_id' => $oCity->alliance_id,
+            'luck' => $oCity->luck,
             'attack_type' => 'attack',
             'friendly' => false,
             'units' => \Grepodata\Library\Controller\IndexV2\Intel::parseUnitLossCount(\Grepodata\Library\Controller\IndexV2\Intel::getMergedUnits($oCity)),

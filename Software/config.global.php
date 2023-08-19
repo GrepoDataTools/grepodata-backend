@@ -18,7 +18,7 @@ define('INNO_DATA_CONQUERS',      'conquers.txt.gz');
 define('USERSCRIPT_VERSION',      '5.0.0');
 define('USERSCRIPT_UPDATE_INFO',  '');
 
-define('OPERATIONS_KILLSWITCH', '');
+define('OPERATIONS_KILLSWITCH', '');  # All Team Ops endpoints will instantly return http 503 with this message if string is non-empty
 
 define('DEFAULT_SERVER',  'en');
 define('DEFAULT_WORLD',   'en32');

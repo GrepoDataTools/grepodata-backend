@@ -12,6 +12,7 @@ use Grepodata\Library\Controller\World;
 use Grepodata\Library\IndexV2\IndexManagement;
 use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Redis\RedisClient;
+use Grepodata\Library\Redis\RedisHelper;
 use Grepodata\Library\Router\ResponseCode;
 
 class Commands extends \Grepodata\Library\Router\BaseRoute
@@ -517,6 +518,12 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
         }
       }
 
+      // Check if these are planned commands
+      $bIsPlanUpload = false;
+      if (key_exists('is_plan_upload', $aParams)) {
+        // TODO: cronjob to aggregate targets? or do it here in real-time? could track it in redis cache?
+        $bIsPlanUpload = true;
+      }
 
       // Parse commands and persist to database
       $MaxUploadCount = 1000;
@@ -531,6 +538,7 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
       $MaxArrival = 0;
       foreach ($aCommandsList as $aCommand) {
         if (!isset($aCommand['id']) || empty($aCommand['id'])) {
+          // ID is required. if it is not given, we skip the command
           continue;
         }
         $aNewCommands[] = $aCommand;
@@ -569,6 +577,11 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
         // Upsert command batch in elasticasearch
         $NumCreated = 0;
         try {
+          if ($bIsPlanUpload) {
+            // 1: Delete all previous planned commands uploaded to this team by this user (clean slate)
+            $NumDeleted = \Grepodata\Library\Elasticsearch\Commands::DeletePlannedCommands($oUser->id, $oTeam->key_code);
+          }
+
           $NumCreated = \Grepodata\Library\Elasticsearch\Commands::UpsertCommandBatch(
             $oWorld, $oTeam->key_code, $oUser->id, $aParams['player_id'], $aParams['player_name'], $aNewCommands, $aDelCommands, $aTeamShareSettings);
         } catch (NoNodesAvailableException $e) {
@@ -644,6 +657,9 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
         'added_teams' => $aAddedTeams,
         'skipped_teams' => $aSkippedTeams
       );
+
+      // TODO: publish message to team on backbone
+      //RedisHelper::SendBackboneMessage();
 
       ResponseCode::success($aResponse, 8000);
 

@@ -119,6 +119,14 @@ class Commands
           }
         }
 
+        // Check if it is a planned command and do preprocessing
+        $bPlannedCommand = false;
+        if (key_exists('plan_name', $aCommand) && !empty($aCommand['plan_name'])) {
+          $bPlannedCommand = true;
+          $aCommand['id'] = 'pcmd'.$aCommand['id']; // Prepend id with 'pcmd' (planned command) to make it unique in the context of real commands
+          $aCommand['return'] = false;
+        }
+
         // Generate id (_id --> {arrival_at}{cmd_id}{team})
         $_id = self::BuildCommandId($aCommand, $Team);
 
@@ -138,7 +146,11 @@ class Commands
           $Units = $aCommand['payed_iron']??'';
         } else {
           $aUnits = array();
-          foreach ($aCommand as $Key => $Value) {
+          $aUnitArray = $aCommand;
+          if ($bPlannedCommand && key_exists('units', $aCommand)) {
+            $aUnitArray = $aCommand['units'];
+          }
+          foreach ($aUnitArray as $Key => $Value) {
             if (key_exists($Key, UnitStats::units) && $Value > 0) {
               $aUnits[$Key] = $Value;
             }
@@ -216,7 +228,7 @@ class Commands
         }
 
         // Target town & foundation override
-        $TargetTown = $aCommand['destination_town_name']??'';
+        $TargetTown = $aCommand['destination_town_name']??$aCommand['target_town_name']??'';
         if (strpos($aCommand['id'], 'colonization_') !== false && $CommandType == 'colonization') {
           if (key_exists('islandurl_destination', $aCommand)) {
             $TargetTown = strip_tags($aCommand['islandurl_destination']??'');
@@ -234,31 +246,31 @@ class Commands
           'arrival_at' => $aCommand['arrival_at']??0,
           'arrival_human' => $ArrivalHuman,
           'cancel_human' => $CancelHuman,
-          'started_at' => $aCommand['started_at']??0,
+          'started_at' => $aCommand['started_at']??$aCommand['send_at']??0,
           'upload_uid' => $UserId,
           'upload_id'  => $PlayerId,
           'upload_n'   => $PlayerName,
           'cmd_id'     => $aCommand['id'],
           'type'       => $CommandType,
           'subtype'    => $subtype??'default',
-          'own_command' => $aCommand['own_command']??true,
+          'own_command' => $aCommand['own_command']??$aCommand['can_edit']??true,
           'return'     => $aCommand['return']===true,
           'attacking_strategy' => $aCommand['attacking_strategies'][0]??'regular',
           'units'      => $Units,
           'comments'   => $aComments,
           'delete_status' => '',
           'src_twn_id' => $aCommand['origin_town_id']??0,
-          'src_all_id' => $aCommand['origin_town_player_alliance_id']??0,
-          'src_ply_id' => $aCommand['origin_town_player_id']??0,
+          'src_all_id' => $aCommand['origin_town_player_alliance_id']??$aCommand['origin_alliance_id']??0,
+          'src_ply_id' => $aCommand['origin_town_player_id']??$aCommand['origin_player_id']??0,
           'src_twn_n'  => $aCommand['origin_town_name']??'',
-          'src_all_n'  => $aCommand['origin_town_player_alliance_name']??'',
+          'src_all_n'  => $aCommand['origin_town_player_alliance_name']??$aCommand['origin_alliance_name']??'',
           'src_ply_n'  => $aCommand['origin_town_player_name']??$aCommand['origin_player_name']??'',
-          'trg_twn_id' => $aCommand['destination_town_id']??0,
-          'trg_all_id' => $aCommand['destination_town_player_alliance_id']??0,
-          'trg_ply_id' => $aCommand['destination_town_player_id']??0,
+          'trg_twn_id' => $aCommand['destination_town_id']??$aCommand['target_town_id']??0,
+          'trg_all_id' => $aCommand['destination_town_player_alliance_id']??$aCommand['target_alliance_id']??0,
+          'trg_ply_id' => $aCommand['destination_town_player_id']??$aCommand['target_player_id']??0,
           'trg_twn_n'  => $TargetTown,
-          'trg_all_n'  => $aCommand['destination_town_player_alliance_name']??'',
-          'trg_ply_n'  => $aCommand['destination_town_player_name']??'',
+          'trg_all_n'  => $aCommand['destination_town_player_alliance_name']??$aCommand['target_alliance_name']??'',
+          'trg_ply_n'  => $aCommand['destination_town_player_name']??$aCommand['target_player_name']??'',
         );
         $aParams['body'][] = $aParsedCommand;
         $bHasRecords = true;
@@ -600,7 +612,76 @@ class Commands
     if ($aResponse !== false && is_array($aResponse) && isset($aResponse['total']) && $aResponse['total'] >= 0) {
       return $aResponse['total'];
     } else {
-      throw new \Exception('Unable to delete old diff records in elasticsearch. invalid response.');
+      throw new \Exception('Unable to delete expired commands in elasticsearch. invalid response.');
+    }
+  }
+
+  /**
+   * Delete all planned commands uploaded by the given user within a specific team)
+   * @throws \Exception
+   */
+  public static function DeletePlannedCommands($UserId, $Team)
+  {
+    $ElasticsearchClient = \Grepodata\Library\Elasticsearch\Client::GetInstance(3);
+    $IndexName = self::IndexIdentifier;
+
+    $aSearchParams = array(
+      'query' => array(
+        'bool' => array(
+          'must' => array(
+            array('match' => array('team' => $Team)),
+            array('match' => array('upload_uid' => $UserId)),
+            array('match' => array('is_planned' => true))
+          )
+        )
+      )
+    );
+    $aResponse = $ElasticsearchClient->deleteByQuery(array(
+      'index' => $IndexName,
+      'type' => self::TypeCommand,
+      'body' => $aSearchParams
+    ));
+
+    if ($aResponse !== false && is_array($aResponse) && isset($aResponse['total']) && $aResponse['total'] >= 0) {
+      return $aResponse['total'];
+    } else {
+      throw new \Exception('Unable to delete planned commands in elasticsearch. invalid response.');
+    }
+  }
+
+  /**
+   * Delete all commands that are converging on a conquest
+   * @throws \Exception
+   */
+  public static function DeleteConquestCommands($ConquestTownId, $Team)
+  {
+    $ElasticsearchClient = \Grepodata\Library\Elasticsearch\Client::GetInstance(3);
+    $IndexName = self::IndexIdentifier;
+
+    if (empty($ConquestTownId) || $ConquestTownId <= 0) {
+      throw new \Exception('Invalid conquest town id in ES delete request: '.$ConquestTownId);
+    }
+
+    $aSearchParams = array(
+      'query' => array(
+        'bool' => array(
+          'must' => array(
+            array('match' => array('team' => $Team)),
+            array('match' => array('conquest_town_id' => $ConquestTownId)),
+          )
+        )
+      )
+    );
+    $aResponse = $ElasticsearchClient->deleteByQuery(array(
+      'index' => $IndexName,
+      'type' => self::TypeCommand,
+      'body' => $aSearchParams
+    ));
+
+    if ($aResponse !== false && is_array($aResponse) && isset($aResponse['total']) && $aResponse['total'] >= 0) {
+      return $aResponse['total'];
+    } else {
+      throw new \Exception('Unable to delete planned commands in elasticsearch. invalid response.');
     }
   }
 
@@ -612,8 +693,12 @@ class Commands
      * arrival_at --> integer; used to filter on active commands only
      * updated_at --> integer; used to filter updated commands only
      * upload_uid --> integer; used to verify user when deleting untracked commands
+     * is_planned --> boolean; used to drop all planned commands for a user
+     * conquest_town_id --> exact string match; used to get/drop all commands for a conquest
      *
      * _id --> {arrival_at}{cmd_id}{team}
+     *
+     * Note: updating existing fields is not possible without dropping the old index but you can add new fields via the API: https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-put-mapping.html
      */
     $ElasticsearchClient = \Grepodata\Library\Elasticsearch\Client::GetInstance(3);
 
@@ -643,8 +728,10 @@ class Commands
                   'upload_n'   => array('type' => 'keyword', 'index' => false),
 
                   'cmd_id'  => array('type' => 'keyword', 'index' => false),
+                  'conquest_town_id' => array('type' => 'integer', 'index' => true),
                   'type'    => array('type' => 'keyword', 'index' => false),
                   'subtype' => array('type' => 'keyword', 'index' => false),
+                  'is_planned' => array('type' => 'boolean', 'index' => true),
                   'return'  => array('type' => 'boolean', 'index' => false),
                   'own_command' => array('type' => 'boolean', 'index' => false),
                   'delete_status' => array('type' => 'keyword', 'index' => false),
@@ -698,6 +785,9 @@ class Commands
     $aData['es_id'] = $esID;
     if (key_exists('cancel_human', $aData) && $aData['cancel_human'] != '') {
       $aData['cancelable'] = true;
+    }
+    if (!key_exists('is_planned', $aData)) {
+      $aData['is_planned'] = false;
     }
 
     // Parse comments
