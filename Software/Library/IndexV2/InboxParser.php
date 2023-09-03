@@ -261,6 +261,7 @@ class InboxParser
       // === Receiver
       $bPlayerIsReceiver = false;
       $bReceiverIsGhost = false;
+      $bReceiverIsTemple = false;
       // Town
       $ReceiverTown = $ReportReceiver["content"][1]["content"][1];
       if ($ReceiverTown !== null && isset($ReceiverTown['attributes']['href'])) {
@@ -268,6 +269,9 @@ class InboxParser
         $aLinkData = json_decode(base64_decode($LinkDataEncoded), true);
         $ReceiverTownId = $aLinkData['id'];
         $ReceiverTownName = $aLinkData['name'];
+        if (key_exists('tp', $aLinkData) && $aLinkData['tp']=='temple') {
+          $bReceiverIsTemple = true;
+        }
       } else {
         throw new InboxParserExceptionWarning("receiver town not found in report");
       }
@@ -277,7 +281,10 @@ class InboxParser
       if ($ReceiverPlayer == null || (isset($ReceiverPlayer['type']) && $ReceiverPlayer['type'] == 'SPAM')) {
         $ReceiverPlayer = $ReportReceiver["content"][3]["content"][2] ?? null;
       }
-      if ($ReceiverPlayer !== null && isset($ReceiverPlayer['attributes']['href'])) {
+      if ($bReceiverIsTemple) {
+        $ReceiverPlayerId = 0;
+        $ReceiverPlayerName = 'Temple';
+      } else if ($ReceiverPlayer !== null && isset($ReceiverPlayer['attributes']['href'])) {
         $LinkDataEncoded = $ReceiverPlayer['attributes']['href'];
         $aLinkData = json_decode(base64_decode($LinkDataEncoded), true);
         $ReceiverPlayerId = $aLinkData['id'];
@@ -429,7 +436,7 @@ class InboxParser
         }
 
         $bParseConquestDetails = false;
-        if ((!$bPlayerIsSender && $bPlayerIsReceiver) || (!$bPlayerIsSender && !$bPlayerIsReceiver) || ($bPlayerIsReceiver && $bPlayerIsSender) || (!$bPlayerIsSender && $bReceiverIsGhost)) {
+        if ((!$bPlayerIsSender && $bPlayerIsReceiver) || (!$bPlayerIsSender && !$bPlayerIsReceiver) || ($bPlayerIsReceiver && $bPlayerIsSender) || (!$bPlayerIsSender && ($bReceiverIsGhost || $bReceiverIsTemple))) {
           // if owner can not be found, or if player is receiver, it could be an attack on conquest: check if there is a cs in defender units
           if (strpos(json_encode($aCityUnitsDef),self::kolo) !== false) {
             if ((!$bPlayerIsSender && $bPlayerIsReceiver)) {
@@ -467,7 +474,7 @@ class InboxParser
                 Logger::warning("InboxParser $ReportHash: error parsing ongoing conquest details; " . $e->getMessage());
               }
             }
-          } else if ((!$bPlayerIsSender && !$bPlayerIsReceiver) || ($bPlayerIsReceiver && $bPlayerIsSender) || (!$bPlayerIsSender && $bReceiverIsGhost)) {
+          } else if ((!$bPlayerIsSender && !$bPlayerIsReceiver) || ($bPlayerIsReceiver && $bPlayerIsSender) || (!$bPlayerIsSender && ($bReceiverIsGhost || $bReceiverIsTemple))) {
             // unable to identify owner!
             throw new InboxParserExceptionWarning("inbox report owner not found");
           }

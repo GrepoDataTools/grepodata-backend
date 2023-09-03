@@ -647,6 +647,7 @@ class ForumParser
         break;
       case 'town-player-town-player':
       case 'town-player-player-town':
+      case 'town-player-temple-player':
         //case sizeof($aHeaderChainType) === 4:
         $ReportType = self::report_types['conquest'];
         $bParseLuck = true;
@@ -1171,7 +1172,7 @@ class ForumParser
         // Conquest details
         $oConquestDetails = new ConquestDetails();
         try {
-          if ($ReportChainString == 'town-player-town-player') {
+          if ($ReportChainString == 'town-player-town-player' || $ReportChainString == 'town-player-temple-player') {
             // Dutch version
             $BesiegedTown = $aHeaderChainData[2];
             $SiegeLeadBy = $aHeaderChainData[3];
