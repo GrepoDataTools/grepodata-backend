@@ -376,11 +376,12 @@ if (isset($_GET['pubsub'])) {
         !empty($_GET['pub_action'])
       ) {
         $Message = json_encode(array(
-          'type' => $_GET['pub_type'],
-          'team' => $_GET['pub_team'],
-          'msg' => $_GET['pub_msg'],
+          'id' => 0,
+          'type' => $_GET['pub_type'],  # notify_team, notify_user
+          'team' => $_GET['pub_team'],  # index_key
+          'msg' => $_GET['pub_msg'],  # message (can be text or json encode)
           'world' => $_GET['pub_world'],
-          'action' => $_GET['pub_action']
+          'action' => $_GET['pub_action']  # ops_event
         ));
         $NumReceived = RedisHelper::SendBackboneMessage($Message);
       }

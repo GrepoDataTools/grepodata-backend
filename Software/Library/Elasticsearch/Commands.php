@@ -102,6 +102,7 @@ class Commands
 
         // main type
         $CommandType = $aCommand['type']??'default';
+        $CancelHuman = '';
 
         // Check user filters
         if (isset($aShareSettings)) {
@@ -125,6 +126,11 @@ class Commands
           $bPlannedCommand = true;
           $aCommand['id'] = 'pcmd'.$aCommand['id']; // Prepend id with 'pcmd' (planned command) to make it unique in the context of real commands
           $aCommand['return'] = false;
+
+          // We use the cancel_human property to store the expected departure time (otherwise we have to add another field to the index)
+          $TargetedDeparture = Carbon::createFromFormat('H:i:s M d', date('H:i:s M d', $aCommand['send_at']), 'UTC');
+          $TargetedDeparture->setTimezone($oWorld->php_timezone);
+          $CancelHuman = $TargetedDeparture->format('H:i:s M d');
         }
 
         // Generate id (_id --> {arrival_at}{cmd_id}{team})
@@ -164,7 +170,6 @@ class Commands
         $ArrivalHuman = $ArrivalHuman->format('H:i:s M d');
 
         // parse cancel time
-        $CancelHuman = '';
         if (key_exists('cancelable', $aCommand) && $aCommand['cancelable'] === true) {
           $CancelTime = 600; // default 10 minutes
           if (strpos($aCommand['id'], 'espionage_') !== false) {
@@ -191,6 +196,7 @@ class Commands
 
         // Subtype
         $subtype = 'default';
+        $ConquestTownId = null;
         if (key_exists('is_attack_spot', $aCommand) && $aCommand['is_attack_spot'] === true) {
           $subtype = 'attack_spot';
         } elseif (key_exists('is_quest', $aCommand) && $aCommand['is_quest'] === true) {
@@ -204,6 +210,7 @@ class Commands
           // if travelling cs, then command_type is 'command'
           // if landed cs, then command_type is 'attack_takeover'
           $subtype = $aCommand['command_type'];
+          $ConquestTownId = $aCommand['destination_town_id'];
         } else if ($CommandType == 'revolt' && key_exists('started_at', $aCommand) && key_exists('finished_at', $aCommand) && !key_exists('sword', $aCommand)) {
           // Parse ongoing revolt
           // The started_at property indicates the phase 2 start, the finished_at property indicates the phase 2 end.
@@ -254,6 +261,7 @@ class Commands
           'type'       => $CommandType,
           'subtype'    => $subtype??'default',
           'own_command' => $aCommand['own_command']??$aCommand['can_edit']??true,
+          'is_planned' => $bPlannedCommand,
           'return'     => $aCommand['return']===true,
           'attacking_strategy' => $aCommand['attacking_strategies'][0]??'regular',
           'units'      => $Units,
@@ -272,6 +280,10 @@ class Commands
           'trg_all_n'  => $aCommand['destination_town_player_alliance_name']??$aCommand['target_alliance_name']??'',
           'trg_ply_n'  => $aCommand['destination_town_player_name']??$aCommand['target_player_name']??'',
         );
+        if ($ConquestTownId!=null) {
+          // Needed to keep track of conquest master command
+          $aParsedCommand['conquest_town_id']=$ConquestTownId;
+        }
         $aParams['body'][] = $aParsedCommand;
         $bHasRecords = true;
         $NumUploaded += 1;

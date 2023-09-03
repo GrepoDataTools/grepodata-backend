@@ -643,6 +643,17 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
         } catch (Exception $e) {
           Logger::warning('OPS: Error updating operation state in Redis ' .$e->getMessage());
         }
+
+        // Save notification
+        if ($NumCreated > 0) {
+          try {
+            // TODO: encode player metadata?
+            $Message = "[player]".$aParams['player_name']."[/player] shared ".$NumCreated." live commands";
+            \Grepodata\Library\Controller\IndexV2\Notification::notifyTeam($oWorld->grep_id, $oTeam->key_code, $Message);
+          } catch (Exception $e) {
+            Logger::warning('OPS: Error saving notification ' .$e->getMessage());
+          }
+        }
       }
 
       $duration = (int) (microtime(true) * 1000 - $start);
@@ -657,9 +668,6 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
         'added_teams' => $aAddedTeams,
         'skipped_teams' => $aSkippedTeams
       );
-
-      // TODO: publish message to team on backbone
-      //RedisHelper::SendBackboneMessage();
 
       ResponseCode::success($aResponse, 8000);
 

@@ -106,6 +106,12 @@ $oRouter->Add('sharecommandsupdate', new Route('/commands/update', array(
   '_ratelimit'  => $limit50PerMin,
   '_killswitch' => OPERATIONS_KILLSWITCH
 )));
+$oRouter->Add('getopsnotifications', new Route('/notifications/get', array(
+  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Notification',
+  '_method'     => 'AllByUser',
+  '_ratelimit'  => $limit50PerMin,
+  '_killswitch' => OPERATIONS_KILLSWITCH
+)));
 
 // Events
 $oRouter->Add('getusereventsindexer', new Route('/events/user', array(
