@@ -68,7 +68,7 @@ var errorSubmissions = [];
             FORUM_REACTIONS_INFO: 'Add team reactions to the in-game alliance forum. All users on the same GrepoData team can see eachothers reactions.',
             CMD_OVERVIEW_TITLE: 'Share command overview',
             CMD_DEPARTURE_INFO: 'Add the return and cancel time to your own movements and add a link to town intel for incoming enemy movements.',
-            CMD_SHARING_INFO: 'Add a button to share your commands with your GrepoData teams.',
+            CMD_SHARING_INFO: 'Add buttons to share commands and enable Team Ops notifications.',
             CONTEXT_TITLE: 'Expand context menu',
             CONTEXT_INFO: 'Add an intel shortcut to the town context menu. The shortcut opens the intel for this town.',
             BUG_REPORTS: 'Upload anonymous bug reports to help improve our script.',
@@ -125,7 +125,7 @@ var errorSubmissions = [];
                         FORUM_REACTIONS_INFO: 'Voeg team reacties toe aan het alliantie forum. Alle leden van een GrepoData team kunnen elkaars reacties zien op het forum.',
                         CMD_OVERVIEW_TITLE: 'Beveloverzicht delen',
                         CMD_DEPARTURE_INFO: 'Voeg de annuleer en terugkeer tijd toe aan eigen bevelen. Voeg een intel link toe aan vijandige bevelen.',
-                        CMD_SHARING_INFO: 'Knop toevoegen om bevelen te uploaden naar je GrepoData teams.',
+                        CMD_SHARING_INFO: 'Knoppen toevoegen om bevelen te uploaden en zet Team Ops notificaties aan.',
                         CONTEXT_TITLE: 'Context menu uitbreiden',
                         CONTEXT_INFO: 'Voeg een intel snelkoppeling toe aan het context menu als je op een stad klikt. De snelkoppeling verwijst naar de verzamelde intel van de stad.',
                         BUG_REPORTS: 'Anonieme bug reports uploaden om het script te verbeteren.',
@@ -219,6 +219,15 @@ var errorSubmissions = [];
                     console.log(action);
                 }
                 switch (action) {
+                    case "/data/get":
+                        // Game finished loading
+
+                        // Add team ops main menu item
+                        if (gd_settings.command_share === true) {
+                            setTimeout(function () {
+                                addControlPanel()
+                            }, 200);
+                        }
                     case "/report/view":
                         // Parse reports straight from inbox
                         parseInbox();
@@ -271,6 +280,225 @@ var errorSubmissions = [];
                 errorHandling(error, "handleAjaxCompleteObserver");
             }
         });
+
+        /*
+        Team Operations
+         */
+
+        function addControlPanel() {
+            if ($('.gd-team-ops-cp').length != 0) {
+                // Already added
+                return;
+            }
+            verbose ? console.log("Adding team ops control panel to main menu") : null;
+            var gd_menu_item = `
+                <li class="gd-team-ops-cp main_menu_item  last " data-option-id="teamops">
+                    <span class="content_wrapper">
+                        <span class="button_wrapper">
+                            <div class="btn_settings circle_button" style="right: 0px; top: 0 !important;">
+                                <div style="margin: 7px 0px 0px 4px; width: 24px; height: 24px;">${gd_icon_svg}</div>
+                            </div>
+                            <span class="indicator gd-teamops-indicator" data-indicator-id="teamops" style="display: none;"></span>
+                        </span>
+                        <span class="name_wrapper"><span class="name">Team Ops</span></span>
+                    </span>
+                </li>`;
+            var forum_menu_item = $('li.forum.main_menu_item.last')
+            console.log(forum_menu_item)
+            forum_menu_item.after(gd_menu_item)
+            forum_menu_item.removeClass('last')
+
+            // Event listener for click
+            $('.gd-team-ops-cp').click(function () {
+                openTeamOpsControlPanel()
+            });
+        }
+
+        var openControlPanel;
+        var notifications_count_indicator = 0;
+        function openTeamOpsControlPanel() {
+            try {
+                notifications_count_indicator = 0
+                $('.gd-teamops-indicator').get(0).style.display = 'none';
+                getAccessToken().then(access_token => {
+                    if (access_token === false) {
+                        HumanMessage.error('GrepoData: login is required to use Team Operations');
+                        showLoginPopup();
+                    } else {
+                        if (openControlPanel) {
+                            try {
+                                openControlPanel.close();
+                            } catch (e) {console.log("unable to close window", e);}
+                        }
+                        openControlPanel = Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG,
+                            'Team Operations',
+                            {width: 660, height: 490, minimizable: true});
+
+                        // Window content
+                        var content = `<div class="teamops-control-panel" style="width: 660px; height: 400px;">
+                            <div class="teamops-container">
+                                <div class="teamops-header" style="height: 40px; padding-bottom: 5px;">
+                                    These are your active GrepoData Team Operations. <a href="${frontend_url}/profile/ops" target="_blank" style="">View on grepodata.com</a>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                <div style="width: 50%;">
+                                    <ul class="teamops-active-ops-list" style="list-style: none; margin: 0 auto; padding: 0; height: 350px; overflow: auto;">
+                                        <strong>Loading active operations...</strong>
+                                    </ul>
+                                </div>
+                                <div class="teamops-activeops" style="width: 50%;">
+                                    <div class="game_border">
+                                        <div class="game_border_top"></div>
+                                        <div class="game_border_bottom"></div>
+                                        <div class="game_border_left"></div>
+                                        <div class="game_border_right"></div>
+                                        <div class="game_border_corner corner1"></div>
+                                        <div class="game_border_corner corner2"></div>
+                                        <div class="game_border_corner corner3"></div>
+                                        <div class="game_border_corner corner4"></div>
+                                        <div class="game_header bold">Team Notifications</div>
+                                        <div id="active_ops_table" class="game_inner_box">
+                                            <ul class="teamops-notification-list game_list" style="max-height: 320px; overflow-y: auto;">
+                                                <strong>Loading notifications...</strong>
+                                            </ul>
+                                            <div class="game_list_footer"><span class="small">
+                                            <span style="color: green;">●</span>
+                                            Connected to GrepoData push notification service
+                                            </span></div>
+                                        </div>
+                                    </div>
+                                </div></div>
+                            </div>
+                        </div>`;
+
+                        openControlPanel.setContent(content);
+
+                        // Get Operation status from backend
+                        $.ajax({
+                            method: "get",
+                            headers: { 'access_token': access_token},
+                            url: backend_url + "/commands/activeteams"
+                        }).error(function (err) {
+                            console.error(err);
+                            renderTeamOpsError('.teamops-active-ops-list', 'Error loading active operations');
+                        }).done(function (response) {
+                            renderTeamOpsOperations(response);
+                        });
+
+                        // Get Notifications from backend
+                        if (ops_notifications.length <= 0) {
+                            $.ajax({
+                                method: "get",
+                                headers: { 'access_token': access_token},
+                                url: backend_url + "/notifications/get"
+                            }).error(function (err) {
+                                console.error(err);
+                                renderTeamOpsError('.teamops-notification-list', 'Error loading notifications');
+                            }).done(function (response) {
+                                renderTeamOpsNotificationsResponse(response);
+                            });
+                        } else {
+                            renderTeamOpsNotifications(ops_notifications)
+                        }
+                    }
+                });
+            } catch (error) {
+                errorHandling(error, "openTeamOpsControlPanel");
+            }
+        }
+
+        function renderTeamOpsError(target, message) {
+            $(target).empty();
+            $(target).append('<div style="text-align: center">' +
+                '<p style="padding-top: 100px;">Sorry, '+message+'.<br/>Please <a href="https://grepodata.com/message" target="_blank" style="">contact us</a> if this error persists.</p>' +
+                '</div>');
+        }
+
+        let ops_notifications = [];
+        function renderTeamOpsNotificationsResponse(data) {
+            ops_notifications = data.data
+            renderTeamOpsNotifications(ops_notifications)
+        }
+
+        function renderTeamOpsNotifications(notifications) {
+            if ($('.teamops-notification-list').length <= 0) {
+                // Control panel is not open, no need to render
+                return;
+            }
+            function renderPushPart(part) {
+                try {
+                    switch (part['type']) {
+                        case 'town':
+                            var townHash = getTownHash(parseInt(part['params']['id']), part['text'], part['params']['ix'], part['params']['iy']);
+                            return '<a href="#'+townHash+'" class="gp_town_link"><img alt="" src="/images/game/icons/town.png" style="padding-right: 2px; vertical-align: top;">'+ part['text'] +'</a>';
+                            break;
+                        case 'player':
+                            var playerHash = getPlayerHash(parseInt(part['params']['id']), part['text']);
+                            return '<a href="#'+playerHash+'" class="gp_player_link"> <img alt="" src="/images/game/icons/player.png" style="padding-right: 2px; vertical-align: top;">'+ part['text'] +'</a>';
+                            break;
+                        case 'text':
+                        default:
+                            return part['text'];
+                            break;
+                    }
+                } catch (error) {
+                    console.log(error)
+                    return '';
+                }
+            }
+            function renderPushRow(notification) {
+                let row = `<li class="odd top" style="clear:both;">
+                    <a title="View Operation" class="button simulate_units" href="${frontend_url}/operations/${notification.team}/${notification.world}" target="_blank" style="float: right;"></a>`
+                row += `<span class="title small">`
+                for(var i = 0; i < notification.msg.length; i++) {
+                    row += renderPushPart(notification.msg[i]);
+                }
+                row += `<br/>${notification.date} - Team: <a href="${frontend_url}/operations/${notification.team}/${notification.world}" target="_blank" style="">${notification.team_name}</a></span></li>`;
+                return row
+            }
+            let push_row_html = ''
+            for(var i = 0; i < notifications.length; i++) {
+                push_row_html += renderPushRow(notifications[i]);
+            }
+            $('.teamops-notification-list').empty();
+            $('.teamops-notification-list').append(push_row_html);
+        }
+
+        function renderTeamOpsOperations(data) {
+            function renderOpsRow(op) {
+                // let player_html = ''
+                // for (const [player, count] of Object.entries(op.players)) {
+                //     player_html += `<div class=""><a class="gp_player_link"> <img alt="" src="/images/game/icons/player.png" style="padding-right: 2px; vertical-align: top;">${player}</a> ${count} commands</div>`;
+                // }
+                if (op.active==true) {
+                    return `
+                        <li class="trade_town_wrapper ui-draggable ui-draggable-handle" style="width: 85%;">
+                            <div unselectable="on" class="trade_town" id="tradetown_5828">
+                                <a title="View Operation" class="button simulate_units" href="${frontend_url}/operations/${op.index}/${op.world}" target="_blank" style="float: right;"></a>
+                                <a href="${frontend_url}/operations/${op.index}/${op.world}" target="_blank" style="">Active Operation</a>
+                                <br><span class="small">${op.commands} commands uploaded</span>
+                                <div class="trade_town_info clearfix">
+                                    Team: <a href="${frontend_url}/operations/${op.index}/${op.world}" target="_blank" style="">${op.team}</a><br/>
+                                    World: ${op.world}<br/>
+                                    Active Players: ${Object.entries(op.players).length}
+                                </div>
+                            </div>
+                        </li>
+                    `;
+                }
+                return '';
+            }
+            let ops_row_html = ''
+            for(var i = 0; i < data.operations.length; i++) {
+                ops_row_html += renderOpsRow(data.operations[i]);
+            }
+            if (ops_row_html == '') {
+                ops_row_html = '<strong>No active operations. Share your command overview or upload your attack planner to start a Team Operation.</strong>'
+            }
+
+            $('.teamops-active-ops-list').empty();
+            $('.teamops-active-ops-list').append(ops_row_html);
+        }
 
         function getCommandId(command) {
             // command hash format: {command.id}_{command.return}_{command.power_id}
@@ -2800,6 +3028,11 @@ var errorSubmissions = [];
                     });
                     $(".command_share_gd_enabled").click(function () {
                         settingsCbx('command_share', !gd_settings.command_share);
+
+                        // Reload page to ensure proper startup functionality
+                        setTimeout(function() {
+                            location.reload()
+                        }, 500);
                     });
                     $(".command_cancel_time_gd_enabled").click(function () {
                         settingsCbx('command_cancel_time', !gd_settings.command_cancel_time);
@@ -3607,7 +3840,6 @@ var errorSubmissions = [];
                         gd_websocket.onclose = (e) => { handleWebSocketClose(e) }
                         gd_websocket.onerror = (e) => {
                             console.error("GrepoData WebSocket error: ", e)
-                            retryWebSocketConnection()
                         }
                     }
                 });
@@ -3661,13 +3893,19 @@ var errorSubmissions = [];
                             // Team Ops event: show msg and give a link to Ops view
                             doShowNotification = true;
                             action = function () {
-                                window.open(frontend_url+'/operations/'+notification.team+'/'+notification.world, '_blank')
+                                openTeamOpsControlPanel()
                             }
                     }
                 }
 
                 if (doShowNotification) {
-                    showNotification(notification.msg, action)
+                    let plain_text = '';
+                    for (var i = 0; i < notification.msg.length; i++) {
+                        plain_text += notification.msg[i]['text'] + ' ';
+                    }
+                    showNotification(plain_text, action)
+                    ops_notifications.unshift(notification)
+                    renderTeamOpsNotifications(ops_notifications)
                 }
             } catch (e) {
                 errorHandling(e, "handleWebSocketMessage")
@@ -3693,8 +3931,8 @@ var errorSubmissions = [];
                 gd_websocket = null
                 if (num_retries_websocket > 0) {
                     num_retries_websocket -= 1
-                    // add a random timeout for 10 to 60 seconds to prevent all clients connecting simultaneously
-                    let reconnect_wait = Math.floor(Math.random() * 60) + 10
+                    // add a random timeout for 20 to 80 seconds to prevent all clients connecting simultaneously
+                    let reconnect_wait = Math.floor(Math.random() * 60) + 20
                     console.log("GrepoData WebSocket: attempting retry in "+reconnect_wait+" seconds. "+num_retries_websocket+" retries remaining.");
                     setTimeout(function() {
                         connectWebSocket()
@@ -3731,6 +3969,10 @@ var errorSubmissions = [];
                             });
                         }, 200);
                     }
+
+                    notifications_count_indicator += 1;
+                    $('.gd-teamops-indicator').get(0).innerText = notifications_count_indicator;
+                    $('.gd-teamops-indicator').get(0).style.display = 'inline';
                 }
             } catch (e) {
                 errorHandling(e, "showNotification")

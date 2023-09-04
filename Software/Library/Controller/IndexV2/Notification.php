@@ -4,6 +4,7 @@ namespace Grepodata\Library\Controller\IndexV2;
 
 use Grepodata\Library\Model\Indexer\IndexInfo;
 use Grepodata\Library\Model\User;
+use Grepodata\Library\Model\World;
 use Grepodata\Library\Redis\RedisHelper;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -43,7 +44,7 @@ class Notification
       ->get();
   }
 
-  public static function notifyCommandsUploaded(string $World, string $Team, string $PlayerName, int $PlayerId, int $NumCommands, bool $bIsPlanned)
+  public static function notifyCommandsUploaded(World $oWorld, IndexInfo $oTeam, string $PlayerName, int $PlayerId, int $NumCommands, bool $bIsPlanned)
   {
     $postfix = $bIsPlanned ? ' planned commands' : ' live commands';
     $aPayload = array(
@@ -51,65 +52,52 @@ class Notification
       self::notificationPart('text', " shared " . $NumCommands . $postfix),
     );
     $Message = json_encode($aPayload);
-    self::notifyTeam($World, $Team, $Message);
+    self::notifyTeam($oWorld, $oTeam, $Message);
   }
 
   /**
    * Save notification to DB and push msg over backbone to team
-   * @param string $World
-   * @param string $Team
+   * @param World $oWorld
+   * @param IndexInfo $oTeam
    * @param string $Message
    */
-  private static function notifyTeam(string $World, string $Team, string $Message)
+  private static function notifyTeam(World $oWorld, IndexInfo $oTeam, string $Message)
   {
     // Save notification to SQL
     $oNotification = new \Grepodata\Library\Model\IndexV2\Notification();
-    $oNotification->world = $World;
-    $oNotification->team = $Team;
+    $oNotification->world = $oWorld->grep_id;
+    $oNotification->team = $oTeam->key_code;
+    $oNotification->team_name = $oTeam->index_name;
     $oNotification->message = $Message;
     $oNotification->type = 'notify_team';
     $oNotification->action = 'ops_event';
+    $oNotification->server_time = $oWorld->getServerTime()->format('d M y H:i');
     $oNotification->save();
 
     // Push notification over Redis backbone (All current websocket listeners will be notified)
-    $aBackboneMessage = array(
-      'id'      => $oNotification->id,
-      'type'    => $oNotification->type,
-      'team'    => $oNotification->team,
-      'msg'     => $oNotification->message,
-      'world'   => $oNotification->world,
-      'action'  => $oNotification->action
-    );
-    RedisHelper::SendBackboneMessage($aBackboneMessage);
+    RedisHelper::SendBackboneMessage($oNotification->getPublicFields());
   }
 
   /**
    * Save notification to DB and push msg over backbone to user
-   * @param string $World
-   * @param int $UserId
+   * @param World $oWorld
+   * @param User $oUser
    * @param string $Message
    */
-  private static function notifyUser(string $World, int $UserId, string $Message)
+  private static function notifyUser(World $oWorld, User $oUser, string $Message)
   {
     // Save notification to SQL
     $oNotification = new \Grepodata\Library\Model\IndexV2\Notification();
-    $oNotification->world = $World;
-    $oNotification->user_id = $UserId;
+    $oNotification->world = $oWorld->grep_id;
+    $oNotification->user_id = $oUser->id;
     $oNotification->message = $Message;
     $oNotification->type = 'notify_user';
     $oNotification->action = 'ops_event';
+    $oNotification->server_time = $oWorld->getServerTime()->format('d M y H:i');
     $oNotification->save();
 
     // Push notification over Redis backbone (All current websocket listeners will be notified)
-    $aBackboneMessage = array(
-      'id'      => $oNotification->id,
-      'type'    => $oNotification->type,
-      'user_id' => $oNotification->user_id,
-      'msg'     => $oNotification->message,
-      'world'   => $oNotification->world,
-      'action'  => $oNotification->action
-    );
-    RedisHelper::SendBackboneMessage($aBackboneMessage);
+    RedisHelper::SendBackboneMessage($oNotification->getPublicFields());
   }
 
   private static function notificationPart($Type = 'text', $Text = '', $Params = array())
