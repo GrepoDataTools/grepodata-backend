@@ -43,13 +43,24 @@ class Notification
       ->get();
   }
 
+  public static function notifyCommandsUploaded(string $World, string $Team, string $PlayerName, int $PlayerId, int $NumCommands, bool $bIsPlanned)
+  {
+    $postfix = $bIsPlanned ? ' planned commands' : ' live commands';
+    $aPayload = array(
+      self::notificationPart('player', $PlayerName, array('id'=>$PlayerId)),
+      self::notificationPart('text', " shared " . $NumCommands . $postfix),
+    );
+    $Message = json_encode($aPayload);
+    self::notifyTeam($World, $Team, $Message);
+  }
+
   /**
    * Save notification to DB and push msg over backbone to team
    * @param string $World
    * @param string $Team
    * @param string $Message
    */
-  public static function notifyTeam(string $World, string $Team, string $Message)
+  private static function notifyTeam(string $World, string $Team, string $Message)
   {
     // Save notification to SQL
     $oNotification = new \Grepodata\Library\Model\IndexV2\Notification();
@@ -78,7 +89,7 @@ class Notification
    * @param int $UserId
    * @param string $Message
    */
-  public static function notifyUser(string $World, int $UserId, string $Message)
+  private static function notifyUser(string $World, int $UserId, string $Message)
   {
     // Save notification to SQL
     $oNotification = new \Grepodata\Library\Model\IndexV2\Notification();
@@ -99,6 +110,15 @@ class Notification
       'action'  => $oNotification->action
     );
     RedisHelper::SendBackboneMessage($aBackboneMessage);
+  }
+
+  private static function notificationPart($Type = 'text', $Text = '', $Params = array())
+  {
+    return array(
+      'type' => $Type,
+      'text' => $Text,
+      'params' => $Params,
+    );
   }
 
 }

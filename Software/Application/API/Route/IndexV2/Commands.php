@@ -647,9 +647,7 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
         // Save notification
         if ($NumCreated > 0) {
           try {
-            // TODO: encode player metadata?
-            $Message = "[player]".$aParams['player_name']."[/player] shared ".$NumCreated." live commands";
-            \Grepodata\Library\Controller\IndexV2\Notification::notifyTeam($oWorld->grep_id, $oTeam->key_code, $Message);
+            \Grepodata\Library\Controller\IndexV2\Notification::notifyCommandsUploaded($oWorld->grep_id, $oTeam->key_code, $aParams['player_name'], $aParams['player_id'], $NumCreated, $bIsPlanUpload);
           } catch (Exception $e) {
             Logger::warning('OPS: Error saving notification ' .$e->getMessage());
           }
