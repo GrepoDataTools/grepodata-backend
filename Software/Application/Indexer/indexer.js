@@ -66,8 +66,9 @@ var errorSubmissions = [];
             FORUM_REACTIONS_TITLE: 'Forum reactions',
             FORUM_REACTIONS_INFO: 'Add team reactions to the in-game alliance forum. All users on the same GrepoData team can see eachothers reactions.',
             CMD_OVERVIEW_TITLE: 'Share command overview (Team Operations)',
+            CMD_NOTIFICATION_INFO: 'Enable push notifications when team members share their commands.',
             CMD_DEPARTURE_INFO: 'Add the return and cancel time to your own movements and add a link to town intel for incoming enemy movements.',
-            CMD_SHARING_INFO: 'Add buttons to share commands and enable Team Ops notifications.',
+            CMD_SHARING_INFO: 'Add buttons to share commands (command overview and attack planner).',
             CONTEXT_TITLE: 'Expand context menu',
             CONTEXT_INFO: 'Add an intel shortcut to the town context menu. The shortcut opens the intel for this town.',
             BUG_REPORTS: 'Upload anonymous bug reports to help improve our script.',
@@ -123,8 +124,9 @@ var errorSubmissions = [];
                         FORUM_REACTIONS_TITLE: 'Forum reacties',
                         FORUM_REACTIONS_INFO: 'Voeg team reacties toe aan het alliantie forum. Alle leden van een GrepoData team kunnen elkaars reacties zien op het forum.',
                         CMD_OVERVIEW_TITLE: 'Beveloverzicht delen (Team Operations)',
+                        CMD_NOTIFICATION_INFO: 'Krijg push notificaties als teamgenoten hun bevelen delen.',
                         CMD_DEPARTURE_INFO: 'Voeg de annuleer en terugkeer tijd toe aan eigen bevelen. Voeg een intel link toe aan vijandige bevelen.',
-                        CMD_SHARING_INFO: 'Knoppen toevoegen om bevelen te uploaden en zet Team Ops notificaties aan.',
+                        CMD_SHARING_INFO: 'Knoppen toevoegen om bevelen te uploaden (beveloverzicht en aanvalsplanner).',
                         CONTEXT_TITLE: 'Context menu uitbreiden',
                         CONTEXT_INFO: 'Voeg een intel snelkoppeling toe aan het context menu als je op een stad klikt. De snelkoppeling verwijst naar de verzamelde intel van de stad.',
                         BUG_REPORTS: 'Anonieme bug reports uploaden om het script te verbeteren.',
@@ -152,6 +154,7 @@ var errorSubmissions = [];
             stats: true,
             context: true,
             keys_enabled: true,
+            command_notification: true,
             command_share: true,
             command_cancel_time: true,
             forum_reactions: true,
@@ -186,7 +189,7 @@ var errorSubmissions = [];
 
             // Initiate a websocket connection (used to send GrepoData push-notifications to client)
             setTimeout(function () {
-                if (gd_settings.command_share === true) {
+                if (gd_settings.command_notification === true) {
                     connectWebSocket();
                 }
             }, 800);
@@ -222,7 +225,7 @@ var errorSubmissions = [];
                         // Game finished loading
 
                         // Add team ops main menu item
-                        if (gd_settings.command_share === true) {
+                        if (gd_settings.command_notification === true) {
                             setTimeout(function () {
                                 addControlPanel()
                             }, 200);
@@ -1518,6 +1521,9 @@ var errorSubmissions = [];
                         }
                         if (!('command_share' in result)) {
                             result.command_share = true;
+                        }
+                        if (!('command_notification' in result)) {
+                            result.command_notification = true;
                         }
                         if ('departure_time' in result && !('command_cancel_time' in result)) {
                             result.command_cancel_time = result.departure_time;
@@ -2925,6 +2931,9 @@ var errorSubmissions = [];
 
                     // Command overview settings
                     settingsHtml += '\t\t\t<p style="margin-left: 10px;"><strong>' + translate.CMD_OVERVIEW_TITLE + '</strong></p>\n' +
+                        '\t\t\t<div style="margin-left: 30px; margin-bottom: 10px;" class="checkbox_new command_notification_gd_enabled' + (gd_settings.command_notification === true ? ' checked' : '') + '">\n' +
+                        '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.CMD_NOTIFICATION_INFO + '</div>\n' +
+                        '\t\t\t</div>\n' +
                         '\t\t\t<div style="margin-left: 30px; margin-bottom: 10px;" class="checkbox_new command_share_gd_enabled' + (gd_settings.command_share === true ? ' checked' : '') + '">\n' +
                         '\t\t\t\t<div class="cbx_icon"></div><div class="cbx_caption">' + translate.CMD_SHARING_INFO + '</div>\n' +
                         '\t\t\t</div>\n' +
@@ -3025,6 +3034,14 @@ var errorSubmissions = [];
                     });
                     $(".command_share_gd_enabled").click(function () {
                         settingsCbx('command_share', !gd_settings.command_share);
+
+                        // Reload page to ensure proper startup functionality
+                        setTimeout(function() {
+                            location.reload()
+                        }, 500);
+                    });
+                    $(".command_notification_gd_enabled").click(function () {
+                        settingsCbx('command_notification', !gd_settings.command_notification);
 
                         // Reload page to ensure proper startup functionality
                         setTimeout(function() {
