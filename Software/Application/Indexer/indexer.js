@@ -7,6 +7,7 @@ var errorSubmissions = [];
     // Globals
     var backend_url = 'https://api.grepodata.com'
     var frontend_url = 'https://grepodata.com'
+    var websocket_url = 'wss://grepodata.com:8443'
     var time_regex = /([0-5]\d)(:)([0-5]\d)(:)([0-5]\d)(?!.*([0-5]\d)(:)([0-5]\d)(:)([0-5]\d))/gm;
     var gd_icon = "url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAXCAYAAAAV1F8QAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAYdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjAuNvyMY98AAAG0SURBVEhLYwACASA2AGIHGmGQ2SA7GGzf7oj4//5g7v/3B7L+vz+U///NVv//r9ZY/3+7K/b/683e/9/tSSTIf7M9DGhGzv8PR4r/v9uX9v/D0TKw+MdTzf9BdoAsSnm13gnEoQn+dLYLRKcAMUPBm62BYMH/f/9QFYPMfL3JE0QXQCzaFkIziz6d60FYBApvdIt07AJQ+ORgkJlfrs2DW1T9ar0jxRZJ7JkDxshiIDPf744B0dUgiwrebA8l2iJsBuISB5l5q58dREOC7u3OKJpZdHmKEsKi1xvdybIIpAamDpdFbze5ISzClrypZdGLZboIiz6d7cRrES4DibHozdYghEWfL0ygmUVvtwcjLPpwuJBmFj1ZpImw6N3uBNpZNE8ByaK9KXgtIheDzHy12gJuUfG7falYLSIHI5sBMvPlCiMQXQy2CFQPoVtEDQwy88VScByBLSqgpUVQH0HjaH8GWJAWGFR7A2mwRSkfjlUAM1bg/9cbXMAVFbhaBib5N9uCwGxQdU2ID662T9aDMag5AKrOQVX9u73JIIvANSyoPl8CxOdphEFmg9sMdGgFMQgAAH4W0yWXhEbUAAAAAElFTkSuQmCC')";
     var gd_icon_intel = "url('data:image/png;base64,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')";
@@ -24,34 +25,6 @@ var errorSubmissions = [];
     }
 
     function loadCityIndex(globals) {
-        // Settings
-        var world = Game.world_id;
-        var gd_settings = {
-            inbox: true,
-            forum: true,
-            stats: true,
-            context: true,
-            keys_enabled: true,
-            command_share: true,
-            command_cancel_time: true,
-            forum_reactions: true,
-            bug_reports: true,
-            key_inbox_prev: '[',
-            key_inbox_next: ']',
-        };
-        readSettingsCookie();
-        setTimeout(function () {
-            if (gd_settings.inbox === true || gd_settings.forum === true || gd_settings.forum_reactions === true) {
-                loadIndexHashlist(false, true, false); // Get list of recently indexed report ids
-            }
-        }, 300);
-        checkLogin(false);
-
-        // Check for other scripts
-        var molehole_active = false;
-        try {
-            molehole_active = document.body.innerHTML.includes("grmh.pl")
-        }  catch (e) {}
 
         // Set locale
         var translate = {
@@ -92,9 +65,9 @@ var errorSubmissions = [];
             SHARE: 'Share',
             FORUM_REACTIONS_TITLE: 'Forum reactions',
             FORUM_REACTIONS_INFO: 'Add team reactions to the in-game alliance forum. All users on the same GrepoData team can see eachothers reactions.',
-            CMD_OVERVIEW_TITLE: 'Share command overview',
+            CMD_OVERVIEW_TITLE: 'Share command overview (Team Operations)',
             CMD_DEPARTURE_INFO: 'Add the return and cancel time to your own movements and add a link to town intel for incoming enemy movements.',
-            CMD_SHARING_INFO: 'Add a button to share your commands with your GrepoData teams.',
+            CMD_SHARING_INFO: 'Add buttons to share commands and enable Team Ops notifications.',
             CONTEXT_TITLE: 'Expand context menu',
             CONTEXT_INFO: 'Add an intel shortcut to the town context menu. The shortcut opens the intel for this town.',
             BUG_REPORTS: 'Upload anonymous bug reports to help improve our script.',
@@ -149,9 +122,9 @@ var errorSubmissions = [];
                         SHARE: 'Delen',
                         FORUM_REACTIONS_TITLE: 'Forum reacties',
                         FORUM_REACTIONS_INFO: 'Voeg team reacties toe aan het alliantie forum. Alle leden van een GrepoData team kunnen elkaars reacties zien op het forum.',
-                        CMD_OVERVIEW_TITLE: 'Beveloverzicht delen',
+                        CMD_OVERVIEW_TITLE: 'Beveloverzicht delen (Team Operations)',
                         CMD_DEPARTURE_INFO: 'Voeg de annuleer en terugkeer tijd toe aan eigen bevelen. Voeg een intel link toe aan vijandige bevelen.',
-                        CMD_SHARING_INFO: 'Knop toevoegen om bevelen te uploaden naar je GrepoData teams.',
+                        CMD_SHARING_INFO: 'Knoppen toevoegen om bevelen te uploaden en zet Team Ops notificaties aan.',
                         CONTEXT_TITLE: 'Context menu uitbreiden',
                         CONTEXT_INFO: 'Voeg een intel snelkoppeling toe aan het context menu als je op een stad klikt. De snelkoppeling verwijst naar de verzamelde intel van de stad.',
                         BUG_REPORTS: 'Anonieme bug reports uploaden om het script te verbeteren.',
@@ -170,6 +143,60 @@ var errorSubmissions = [];
                     break;
             }
         }
+
+        // Sscript settings
+        var world = Game.world_id;
+        var gd_settings = {
+            inbox: true,
+            forum: true,
+            stats: true,
+            context: true,
+            keys_enabled: true,
+            command_share: true,
+            command_cancel_time: true,
+            forum_reactions: true,
+            bug_reports: true,
+            key_inbox_prev: '[',
+            key_inbox_next: ']',
+        };
+        readSettingsCookie();
+
+        // Veriify authentication status and trigger startup events if authenticated
+        getAccessToken().then(access_token => {
+            if (access_token === false) {
+                console.log('GrepoData: Not authenticated')
+                showLoginNotification()
+            } else {
+                console.log("GrepoData: Succesful authentication for player "+Game.player_id)
+                onSignedIn()
+            }
+        });
+
+        function onSignedIn() {
+            /**
+             * This function is triggered when the user is signed in
+             */
+
+            // Get list of recently indexed report ids
+            setTimeout(function () {
+                if (gd_settings.inbox === true || gd_settings.forum === true || gd_settings.forum_reactions === true) {
+                    loadIndexHashlist(false, true, false);
+                }
+            }, 300);
+
+            // Initiate a websocket connection (used to send GrepoData push-notifications to client)
+            setTimeout(function () {
+                if (gd_settings.command_share === true) {
+                    connectWebSocket();
+                }
+            }, 800);
+        }
+
+        // Check for other scripts
+        var molehole_active = false;
+        try {
+            molehole_active = document.body.innerHTML.includes("grmh.pl")
+        }  catch (e) {}
 
         // Scan for inbox reports
         function parseInbox() {
@@ -191,6 +218,15 @@ var errorSubmissions = [];
                     console.log(action);
                 }
                 switch (action) {
+                    case "/data/get":
+                        // Game finished loading
+
+                        // Add team ops main menu item
+                        if (gd_settings.command_share === true) {
+                            setTimeout(function () {
+                                addControlPanel()
+                            }, 200);
+                        }
                     case "/report/view":
                         // Parse reports straight from inbox
                         parseInbox();
@@ -202,7 +238,7 @@ var errorSubmissions = [];
                     case "/message/preview": // catch inbox messages
                     case "/alliance_forum/forum": // catch forum messages
                         // Reload hashlist if last refresh was more than 10 minutes ago
-                        if (Date.now() - last_hashlist_refresh >= 10 * 60 * 1000) {
+                        if (gd_settings.forum === true && (Date.now() - last_hashlist_refresh >= 10 * 60 * 1000)) {
                             last_hashlist_refresh = Date.now();
                             loadIndexHashlist(false, false, false);
                         }
@@ -232,11 +268,235 @@ var errorSubmissions = [];
                             setTimeout(enhanceCommandOverview, 50);
                         }
                         break;
+                    case "/attack_planer/attacks":
+                        if (gd_settings.command_share === true) {
+                            setTimeout(_ => {parseAttackPlanner(xhr)}, 20);
+                        }
+                        break;
                 }
             } catch (error) {
                 errorHandling(error, "handleAjaxCompleteObserver");
             }
         });
+
+        /*
+        Team Operations
+         */
+
+        function addControlPanel() {
+            if ($('.gd-team-ops-cp').length != 0) {
+                // Already added
+                return;
+            }
+            verbose ? console.log("Adding team ops control panel to main menu") : null;
+            var gd_menu_item = `
+                <li class="gd-team-ops-cp main_menu_item  last " data-option-id="teamops">
+                    <span class="content_wrapper">
+                        <span class="button_wrapper">
+                            <div class="btn_settings circle_button" style="right: 0px; top: 0 !important;">
+                                <div style="margin: 7px 0px 0px 4px; width: 24px; height: 24px;">${gd_icon_svg}</div>
+                            </div>
+                            <span class="indicator gd-teamops-indicator" data-indicator-id="teamops" style="display: none;"></span>
+                        </span>
+                        <span class="name_wrapper"><span class="name">Team Ops</span></span>
+                    </span>
+                </li>`;
+            var forum_menu_item = $('li.forum.main_menu_item.last')
+            console.log(forum_menu_item)
+            forum_menu_item.after(gd_menu_item)
+            forum_menu_item.removeClass('last')
+
+            // Event listener for click
+            $('.gd-team-ops-cp').click(function () {
+                openTeamOpsControlPanel()
+            });
+        }
+
+        var openControlPanel;
+        var notifications_count_indicator = 0;
+        function openTeamOpsControlPanel() {
+            try {
+                notifications_count_indicator = 0
+                $('.gd-teamops-indicator').get(0).style.display = 'none';
+                getAccessToken().then(access_token => {
+                    if (access_token === false) {
+                        HumanMessage.error('GrepoData: login is required to use Team Operations');
+                        showLoginPopup();
+                    } else {
+                        if (openControlPanel) {
+                            try {
+                                openControlPanel.close();
+                            } catch (e) {console.log("unable to close window", e);}
+                        }
+                        openControlPanel = Layout.wnd.Create(GPWindowMgr.TYPE_DIALOG,
+                            'Team Operations',
+                            {width: 660, height: 490, minimizable: true});
+
+                        // Window content
+                        var content = `<div class="teamops-control-panel" style="width: 660px; height: 400px;">
+                            <div class="teamops-container">
+                                <div class="teamops-header" style="height: 40px; padding-bottom: 5px;">
+                                    These are your active GrepoData Team Operations. <a href="${frontend_url}/profile/ops" target="_blank" style="">View on grepodata.com</a>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                <div style="width: 50%;">
+                                    <ul class="teamops-active-ops-list" style="list-style: none; margin: 0 auto; padding: 0; height: 350px; overflow: auto;">
+                                        <strong>Loading active operations...</strong>
+                                    </ul>
+                                </div>
+                                <div class="teamops-activeops" style="width: 50%;">
+                                    <div class="game_border">
+                                        <div class="game_border_top"></div>
+                                        <div class="game_border_bottom"></div>
+                                        <div class="game_border_left"></div>
+                                        <div class="game_border_right"></div>
+                                        <div class="game_border_corner corner1"></div>
+                                        <div class="game_border_corner corner2"></div>
+                                        <div class="game_border_corner corner3"></div>
+                                        <div class="game_border_corner corner4"></div>
+                                        <div class="game_header bold">Team Notifications</div>
+                                        <div id="active_ops_table" class="game_inner_box">
+                                            <ul class="teamops-notification-list game_list" style="max-height: 320px; overflow-y: auto;">
+                                                <strong>Loading notifications...</strong>
+                                            </ul>
+                                            <div class="game_list_footer"><span class="small">
+                                            <span style="color: green;">●</span>
+                                            Connected to GrepoData push notification service
+                                            </span></div>
+                                        </div>
+                                    </div>
+                                </div></div>
+                            </div>
+                        </div>`;
+
+                        openControlPanel.setContent(content);
+
+                        // Get Operation status from backend
+                        $.ajax({
+                            method: "get",
+                            headers: { 'access_token': access_token},
+                            url: backend_url + "/commands/activeteams"
+                        }).error(function (err) {
+                            console.error(err);
+                            renderTeamOpsError('.teamops-active-ops-list', 'Error loading active operations');
+                        }).done(function (response) {
+                            renderTeamOpsOperations(response);
+                        });
+
+                        // Get Notifications from backend
+                        if (ops_notifications.length <= 0) {
+                            $.ajax({
+                                method: "get",
+                                headers: { 'access_token': access_token},
+                                url: backend_url + "/notifications/get"
+                            }).error(function (err) {
+                                console.error(err);
+                                renderTeamOpsError('.teamops-notification-list', 'Error loading notifications');
+                            }).done(function (response) {
+                                renderTeamOpsNotificationsResponse(response);
+                            });
+                        } else {
+                            renderTeamOpsNotifications(ops_notifications)
+                        }
+                    }
+                });
+            } catch (error) {
+                errorHandling(error, "openTeamOpsControlPanel");
+            }
+        }
+
+        function renderTeamOpsError(target, message) {
+            $(target).empty();
+            $(target).append('<div style="text-align: center">' +
+                '<p style="padding-top: 100px;">Sorry, '+message+'.<br/>Please <a href="https://grepodata.com/message" target="_blank" style="">contact us</a> if this error persists.</p>' +
+                '</div>');
+        }
+
+        let ops_notifications = [];
+        function renderTeamOpsNotificationsResponse(data) {
+            ops_notifications = data.data
+            renderTeamOpsNotifications(ops_notifications)
+        }
+
+        function renderTeamOpsNotifications(notifications) {
+            if ($('.teamops-notification-list').length <= 0) {
+                // Control panel is not open, no need to render
+                return;
+            }
+            function renderPushPart(part) {
+                try {
+                    switch (part['type']) {
+                        case 'town':
+                            var townHash = getTownHash(parseInt(part['params']['id']), part['text'], part['params']['ix'], part['params']['iy']);
+                            return '<a href="#'+townHash+'" class="gp_town_link"><img alt="" src="/images/game/icons/town.png" style="padding-right: 2px; vertical-align: top;">'+ part['text'] +'</a>';
+                            break;
+                        case 'player':
+                            var playerHash = getPlayerHash(parseInt(part['params']['id']), part['text']);
+                            return '<a href="#'+playerHash+'" class="gp_player_link"> <img alt="" src="/images/game/icons/player.png" style="padding-right: 2px; vertical-align: top;">'+ part['text'] +'</a>';
+                            break;
+                        case 'text':
+                        default:
+                            return part['text'];
+                            break;
+                    }
+                } catch (error) {
+                    console.log(error)
+                    return '';
+                }
+            }
+            function renderPushRow(notification) {
+                let row = `<li class="odd top" style="clear:both;">
+                    <a title="View Operation" class="button simulate_units" href="${frontend_url}/operations/${notification.team}/${notification.world}" target="_blank" style="float: right;"></a>`
+                row += `<span class="title small">`
+                for(var i = 0; i < notification.msg.length; i++) {
+                    row += renderPushPart(notification.msg[i]);
+                }
+                row += `<br/>${notification.date} - Team: <a href="${frontend_url}/operations/${notification.team}/${notification.world}" target="_blank" style="">${notification.team_name}</a></span></li>`;
+                return row
+            }
+            let push_row_html = ''
+            for(var i = 0; i < notifications.length; i++) {
+                push_row_html += renderPushRow(notifications[i]);
+            }
+            $('.teamops-notification-list').empty();
+            $('.teamops-notification-list').append(push_row_html);
+        }
+
+        function renderTeamOpsOperations(data) {
+            function renderOpsRow(op) {
+                // let player_html = ''
+                // for (const [player, count] of Object.entries(op.players)) {
+                //     player_html += `<div class=""><a class="gp_player_link"> <img alt="" src="/images/game/icons/player.png" style="padding-right: 2px; vertical-align: top;">${player}</a> ${count} commands</div>`;
+                // }
+                if (op.active==true) {
+                    return `
+                        <li class="trade_town_wrapper ui-draggable ui-draggable-handle" style="width: 85%;">
+                            <div unselectable="on" class="trade_town" id="tradetown_5828">
+                                <a title="View Operation" class="button simulate_units" href="${frontend_url}/operations/${op.index}/${op.world}" target="_blank" style="float: right;"></a>
+                                <a href="${frontend_url}/operations/${op.index}/${op.world}" target="_blank" style="">Active Operation</a>
+                                <br><span class="small">${op.commands} commands uploaded</span>
+                                <div class="trade_town_info clearfix">
+                                    Team: <a href="${frontend_url}/operations/${op.index}/${op.world}" target="_blank" style="">${op.team}</a><br/>
+                                    World: ${op.world}<br/>
+                                    Active Players: ${Object.entries(op.players).length}
+                                </div>
+                            </div>
+                        </li>
+                    `;
+                }
+                return '';
+            }
+            let ops_row_html = ''
+            for(var i = 0; i < data.operations.length; i++) {
+                ops_row_html += renderOpsRow(data.operations[i]);
+            }
+            if (ops_row_html == '') {
+                ops_row_html = '<strong>No active operations. Share your command overview or upload your attack planner to start a Team Operation.</strong>'
+            }
+
+            $('.teamops-active-ops-list').empty();
+            $('.teamops-active-ops-list').append(ops_row_html);
+        }
 
         function getCommandId(command) {
             // command hash format: {command.id}_{command.return}_{command.power_id}
@@ -247,27 +507,27 @@ var errorSubmissions = [];
             return command.id + '_' + command.arrival_at + '_' + command.return + '_' + command.power_id;
         }
 
-        function updateOpsSyncButton(text, enabled = true, status = 'ok', callback = (_ => { return 1 })) {
-            $('#gd_cmd_vrvw_share_txt').html(text);
+        function updateOpsSyncButton(text, enabled = true, status = 'ok', callback = (_ => { return 1 }), target='#gd_cmd_vrvw_share') {
+            $(target + ' .gd_text:first').html(text);
             if (enabled && callback != null) {
-                $('#gd_cmd_vrvw_share').removeClass("disabled");
-                $('#gd_cmd_vrvw_share').unbind("click").bind("click", callback);
+                $(target).removeClass("disabled");
+                $(target).unbind("click").bind("click", callback);
             } else if (!enabled) {
-                $('#gd_cmd_vrvw_share').addClass("disabled");
-                $('#gd_cmd_vrvw_share').off("click");
+                $(target).addClass("disabled");
+                $(target).off("click");
             }
             if (status == 'ok') {
-                $('#gd_cmd_vrvw_share_txt').css("color", '#36cd5b');
+                $(target + ' .gd_text:first').css("color", '#36cd5b');
             } else if (status == 'error') {
-                $('#gd_cmd_vrvw_share_txt').css("color", '#ff5252');
+                $(target + ' .gd_text:first').css("color", '#ff5252');
             } else {
-                $('#gd_cmd_vrvw_share_txt').css("color", '#fc6');
+                $(target + ' .gd_text:first').css("color", '#fc6');
             }
         }
 
         function showSyncStatusToast(toastHtml, timeout = 20000) {
             if ($('#gd_cmd_vrvw_toast').length == 0) {
-                $('#place_defense').append(`<div id="gd_cmd_vrvw_toast"></div>`)
+                $('#ui_box').append(`<div id="gd_cmd_vrvw_toast"></div>`)
             }
             $('#gd_cmd_vrvw_toast').html(toastHtml);
             $('#gd_cmd_vrvw_toast').show();
@@ -297,7 +557,7 @@ var errorSubmissions = [];
                         <div class="left"></div><div class="right"></div>
                         <div class="caption js-caption">
                             <div style="width: 23px; height: 20px; margin-left: -17px; position: absolute; background: `+gd_icon+`"></div>
-                            <div id="gd_cmd_vrvw_share_txt" style="margin-left: 17px;">Loading ♻</div>
+                            <div class="gd_text" style="margin-left: 17px;">Loading ♻</div>
                             <div class="effect js-effect"></div>
                         </div>
                     </div>`;
@@ -350,6 +610,54 @@ var errorSubmissions = [];
 
             } catch (error) {
                 errorHandling(error, "parseCommandOverview");
+            }
+        }
+
+        var uploaded_planned_attacks = -1;
+        function parseAttackPlanner(xhr) {
+            try {
+                if (xhr === undefined || !('responseText' in xhr) || xhr.responseText === undefined) {
+                    // Request aborted or failed
+                    return;
+                }
+                var xhr_data = JSON.parse(xhr.responseText);
+                if (!('json' in xhr_data) || !('data' in  xhr_data.json) || !('attacks' in  xhr_data.json.data) || xhr_data.json.data.attacks === undefined) {
+                    // if no advisor or city is being conquered, then commands is undefined
+                    return;
+                }
+                var commands = xhr_data.json.data.attacks;
+                verbose ? console.log('parsing attack planner', commands) : null;
+
+                if ($('#gd_cmd_plan_share').length == 0) {
+                    let share_html = `
+                    <div class="button_new disabled" id="gd_cmd_plan_share" name="Share with team" style="" rel="#gpwnd_1000">
+                        <div class="left"></div><div class="right"></div>
+                        <div class="caption js-caption">
+                            <div style="width: 23px; height: 20px; margin-left: -17px; position: absolute; background: `+gd_icon+`"></div>
+                            <div class="gd_text" style="margin-left: 17px;">Loading ♻</div>
+                            <div class="effect js-effect"></div>
+                        </div>
+                    </div>`;
+                    $(".attack_planner .buttons_bar").append(share_html);
+                }
+
+                // Upload callback
+                let upload_callback = function () {
+                    uploaded_planned_attacks = commands.length;
+                    uploadPlannedCommands(commands);
+                }
+
+                // Check if there are any updates
+                if (commands.length <= 0) {
+                    updateOpsSyncButton(translate.CMD_SHARE_NONE, false, '', null, '#gd_cmd_plan_share');
+                } else if (uploaded_planned_attacks == commands.length) {
+                    updateOpsSyncButton(translate.CMD_SHARE_NONEW, true, '', upload_callback, '#gd_cmd_plan_share');
+                } else {
+                    updateOpsSyncButton(`${translate.CMD_SHARE_UPLOAD} (${commands.length})`, true, '', upload_callback, '#gd_cmd_plan_share');
+                }
+
+            } catch (error) {
+                errorHandling(error, "parseAttackPlanner");
             }
         }
 
@@ -506,6 +814,92 @@ var errorSubmissions = [];
             }
         }
 
+        let uploading_plan = false;
+        function uploadPlannedCommands(planned_commands) {
+            if (uploading_plan) {
+                console.log('already uploading plan')
+                return;
+            }
+            uploading_plan = true;
+            updateOpsSyncButton('Uploading ♻', true, '', null, '#gd_cmd_plan_share');
+
+            getAccessToken().then(access_token => {
+                if (access_token === false) {
+                    HumanMessage.error('GrepoData: login required to upload planned commands');
+                    uploading_commands = false;
+                    updateOpsSyncButton('Login required', true, 'error', null);
+                    showLoginPopup();
+                } else {
+                    var data = {
+                        'access_token': access_token,
+                        'world': Game.world_id,
+                        'is_plan_upload': true,
+                        'del_commands': JSON.stringify([]),
+                        'commands': JSON.stringify(planned_commands),
+                        'player_name': Game.player_name || '',
+                        'player_id': Game.player_id || 0,
+                        'alliance_id': Game.alliance_id || 0
+                    };
+
+                    $.ajax({
+                        url: "https://api.grepodata.com/commands/upload",
+                        data: data,
+                        type: 'post',
+                        crossDomain: true,
+                        dataType: 'json',
+                        success: function (data) {
+                            console.log('plan upload complete', data);
+
+                            if ('error_code' in data) {
+                                switch (data.error_code) {
+                                    case 7201:
+                                        // no teams
+                                        HumanMessage.error('GrepoData: you are not part of any GrepoData teams on this world. Join or create a team to share your planned attacks.');
+                                        updateOpsSyncButton('Not in a team', true, 'error', null, '#gd_cmd_plan_share');
+                                        break;
+                                    default:
+                                        HumanMessage.error('GrepoData: unexpected error. Please try again later or contact us if this error persists.');
+                                        updateOpsSyncButton('Error. Try again', true, 'error', null, '#gd_cmd_plan_share');
+                                }
+                            } else {
+                                if ('added_teams' in data && data.added_teams.length <= 0) {
+                                    HumanMessage.error('GrepoData: you are not contributing to any teams. Enable contributions to synchronize your planned attacks');
+                                    updateOpsSyncButton(translate.CMD_SHARE_UPLOAD, true, '', null, '#gd_cmd_plan_share');
+                                } else {
+                                    // Show operation link toast
+                                    if (data.added_teams.length == 1) {
+                                        // Show notification with link to Ops center
+                                        let team = data.added_teams[0];
+                                        toastHtml = `<a class="gd_cmd_toast_a" href="https://grepodata.com/operations/`+team+`/`+world+`" target="_blank">View Operation</a>`;
+                                    } else {
+                                        // Show notification with link to Ops center
+                                        toastHtml = `<a class="gd_cmd_toast_a" href="https://grepodata.com/profile/ops" target="_blank">View Operations</a>`;
+                                    }
+                                    showSyncStatusToast(toastHtml);
+
+                                    updateOpsSyncButton(translate.CMD_SHARE_SYNCED, true, 'ok', null, '#gd_cmd_plan_share');
+                                }
+                            }
+
+                            uploading_plan = false;
+                        },
+                        error: function (jqXHR, textStatus) {
+                            console.error("error saving planned commands", jqXHR);
+                            if (jqXHR && 'status' in jqXHR && jqXHR.status == 503 && jqXHR.responseJSON && 'message' in jqXHR.responseJSON) {
+                                HumanMessage.error('GrepoData: '+jqXHR.responseJSON.message);
+                                updateOpsSyncButton('Service Unavailable', false, 'error', null, '#gd_cmd_plan_share');
+                            } else {
+                                HumanMessage.error('GrepoData: unexpected error. Please try again later or contact us if this error persists.');
+                                updateOpsSyncButton('Error. Try again', true, 'error', null, '#gd_cmd_plan_share');
+                            }
+                            uploading_plan = false;
+                        },
+                        timeout: 120000
+                    });
+                }
+            });
+        }
+
         var tracked_commands = {}; // dict format: {getCommandId(command): {arrival_at: command.arrival_at, id: command.id}}
         let uploading_commands = false;
         function uploadCommands(new_commands, del_commands, del_commands_ids, share_settings=null) {
@@ -528,6 +922,11 @@ var errorSubmissions = [];
                     is_filtered_upload = true;
                 }
             }
+
+            // new_commands = [{"id":3129887,"units_id":1971351,"destination_town_id":9,"origin_town_id":2235,"farm_town_id":null,"type":"portal_support_olympus","attacking_strategies":["regular"],"started_at":1679734298,"arrival_at":	1679750844,"booty_id":null,"return":false,"cancelable":true,"cap_notification_sent":false,"cmd_return":false,"sword":0,"slinger":0,"archer":0,"hoplite":0,"rider":0,"chariot":0,"catapult":0,"minotaur":0,"manticore":0,"zyklop":0,"harpy":0,"medusa":0,"centaur":0,"pegasus":0,"cerberus":0,"fury":0,"griffin":0,"calydonian_boar":0,"satyr":0,"spartoi":0,"ladon":0,"godsent":0,"big_transporter":0,"bireme":0,"attack_ship":416,"demolition_ship":0,"small_transporter":0,"trireme":0,"colonize_ship":0,"sea_monster":0,"siren":0,"militia":0,"heroes":null,"farm_town_name":null,"destination_town_name":"Dorylaion","destination_town_player_id":null,"destination_town_alliance_id":127,"origin_town_name":"053 RATIO","origin_town_player_id":848974960,"origin_town_alliance_id":null,"origin_town_player_name":"PipouAres","destination_town_player_name":null,"origin_town_player_alliance_name":"La domi pour Billy","origin_town_player_alliance_id":127,"destination_town_player_alliance_name":null,"destination_town_player_alliance_id":null,"booty_wood":null,"booty_stone":null,"booty_iron":null,"booty_favor":null,"ot_number_on_island":5,"dt_number_on_island":1262,"custom_command_name":null,"own_command":true,"power_id":null,"cap_of_invisibility_effective_until":1679734790,"command_name":"Soutenir Olympus via le portail","command_type":"command","is_temple":true,"townurl_base64_origin":"053 RATIO<\/a>","townurl_base64_destination":"Dorylaion<\/a>","userurl_base64_origin":"PipouAres<\/a>","userurl_base64_destination":"La domi pour...<\/a>","is_quest":false,"is_attack_spot":false}]
+            // new_commands = [{"id":31219241,"units_id":1965491,"destination_town_id":90,"origin_town_id":26591,"farm_town_id":null,"type":"portal_attack_olympus","attacking_strategies":["regular"],"started_at":1679722821,"arrival_at":1679750846,"booty_id":null,"return":false,"cancelable":false,"cap_notification_sent":false,"cmd_return":false,"sword":0,"slinger":0,"archer":0,"hoplite":0,"rider":694,"chariot":0,"catapult":0,"minotaur":0,"manticore":0,"zyklop":0,"harpy":0,"medusa":0,"centaur":0,"pegasus":0,"cerberus":0,"fury":0,"griffin":0,"calydonian_boar":0,"satyr":0,"spartoi":0,"ladon":0,"godsent":0,"big_transporter":0,"bireme":0,"attack_ship":0,"demolition_ship":0,"small_transporter":131,"trireme":0,"colonize_ship":0,"sea_monster":0,"siren":0,"militia":0,"heroes":null,"farm_town_name":null,"destination_town_name":"Panticapaeum","destination_town_player_id":null,"destination_town_alliance_id":627,"origin_town_player_alliance_name":"Bumblebee Farm","origin_town_player_alliance_id":627,"destination_town_player_alliance_name":null,"destination_town_player_alliance_id":null,"origin_town_name":"Portail 66-013 AC","origin_town_player_id":4676154,"origin_town_player_name":"Jetkiller76","origin_town_alliance_id":null,"destination_town_player_name":null,"booty_wood":null,"booty_stone":null,"booty_iron":null,"booty_favor":null,"ot_number_on_island":7,"dt_number_on_island":1112,"custom_command_name":null,"own_command":true,"power_id":"strength_of_heroes","cap_of_invisibility_effective_until":1679722938,"casted_power":{"id":"strength_of_heroes","name":null,"description":null,"short_effect":null,"favor":0,"fury_percentage_cost":0,"god_id":null,"temple_level_sum_dependency":null,"targets":[],"only_own_towns":false,"boost":false,"is_fake_power":false,"area_of_effect":[],"destructive":false,"negative":false,"extendible":false,"power_group":"","power_group_level":0,"seeds_to":[],"images":{"mini":"\/images\/game\/temple\/power_strength_of_heroes_16x48.png","small":"\/images\/game\/temple\/power_strength_of_heroes_24x24.png","medium":"\/images\/game\/temple\/power_strength_of_heroes_45x135.png","large":"\/images\/game\/temple\/power_strength_of_heroes.png"},"effects":[],"is_valid_for_happenings":false,"meta_fields":[],"meta_defaults":null,"removed_on_target_loss":true,"needs_level":false,"requires_god":false,"ignores_democritus":false,"display_amount":false,"wasteable":false,"is_ritual":false,"recreate_on_restart":false,"transfer_to_casual_world":false,"is_onetime_power":false,"is_upgradable":false,"is_capped":false,"compatible_powers":[],"no_lifetime":false,"passive":false},"command_name":"Attaquer Olympus via le portail","command_type":"command","is_temple":true,"townurl_base64_origin":"Portail 66-013 AC<\/a>","townurl_base64_destination":"Panticapaeum<\/a>","userurl_base64_origin":"Jetkiller76<\/a>","userurl_base64_destination":"Bumblebee Farm<\/a>","is_quest":false,"is_attack_spot":false}]
+            // new_commands = [{"id":3038647,"units_id":1912696,"destination_town_id":25226,"origin_town_id":25220,"farm_town_id":null,"type":"illusion","attacking_strategies":["regular"],"started_at":1679396156,"arrival_at":1679750846,"booty_id":null,"return":false,"cancelable":false,"cap_notification_sent":false,"cmd_return":false,"sword":0,"slinger":0,"archer":0,"hoplite":0,"rider":0,"chariot":0,"catapult":0,"minotaur":0,"manticore":0,"zyklop":0,"harpy":0,"medusa":0,"centaur":0,"pegasus":0,"cerberus":0,"fury":0,"griffin":0,"calydonian_boar":0,"satyr":0,"spartoi":0,"ladon":0,"godsent":0,"big_transporter":0,"bireme":0,"attack_ship":1,"demolition_ship":0,"small_transporter":0,"trireme":0,"colonize_ship":0,"sea_monster":0,"siren":0,"militia":0,"heroes":null,"farm_town_name":null,"destination_town_name":"64 Borderland 002","destination_town_player_id":849026760,"destination_town_alliance_id":null,"origin_town_player_alliance_name":"MIAOU CORP","origin_town_player_alliance_id":1229,"destination_town_player_alliance_name":"MIAOU CORP","destination_town_player_alliance_id":1229,"origin_town_name":"64 Borderland 001","origin_town_player_id":849026760,"origin_town_player_name":"LaGrosseDinde","origin_town_alliance_id":null,"destination_town_player_name":"LaGrosseDinde","booty_wood":null,"booty_stone":null,"booty_iron":null,"booty_favor":null,"ot_number_on_island":17,"dt_number_on_island":5,"custom_command_name":null,"own_command":true,"power_id":null,"cap_of_invisibility_effective_until":1679396344,"command_name":"Illusion","command_type":"command","is_temple":false,"townurl_base64_origin":"64 Borderland 001<\/a>","townurl_base64_destination":"64 Borderland 002<\/a>","userurl_base64_origin":"LaGrosseDinde<\/a>","userurl_base64_destination":"LaGrosseDinde<\/a>","is_quest":false,"is_attack_spot":false}]
+            // new_commands = [{"id":35947432,"units_id":0,"destination_town_id":23001,"origin_town_id":33673,"farm_town_id":null,"type":"attack","started_at":0,"arrival_at":1679936717,"booty_id":null,"return":false,"cancelable":false,"cap_notification_sent":false,"attacking_strategies":[false],"cmd_return":true,"sword":1,"slinger":1,"archer":1,"hoplite":1,"rider":1,"chariot":1,"catapult":1,"minotaur":1,"manticore":1,"zyklop":1,"harpy":1,"medusa":1,"centaur":1,"pegasus":1,"cerberus":1,"fury":1,"griffin":1,"calydonian_boar":1,"godsent":1,"big_transporter":1,"bireme":1,"attack_ship":1,"demolition_ship":1,"small_transporter":1,"trireme":1,"colonize_ship":1,"sea_monster":1,"militia":1,"heroes":null,"farm_town_name":null,"destination_town_name":"Crescente B\u00e1rcida011","destination_town_player_id":82480265,"destination_town_alliance_id":null,"origin_town_player_alliance_name":"ABUTRES","origin_town_player_alliance_id":1083,"destination_town_player_alliance_name":"ABUTRES","destination_town_player_alliance_id":1083,"origin_town_name":"BASS - 090","origin_town_player_id":82228040,"origin_town_player_name":"kakabass","origin_town_alliance_id":null,"destination_town_player_name":"Fantasma Das Trevas","booty_wood":null,"booty_stone":null,"booty_iron":null,"booty_favor":null,"ot_number_on_island":14,"dt_number_on_island":6,"custom_command_name":null,"own_command":false,"power_id":null,"command_name":"Ataque","command_type":"command","is_temple":false,"townurl_base64_origin":"BASS - 090<\/a>","townurl_base64_destination":"Crescente B\u00e1rcida011<\/a>","userurl_base64_origin":"kakabass<\/a>","userurl_base64_destination":"Fantasma Das Trevas<\/a>","is_quest":false,"is_attack_spot":false}]
 
             getAccessToken().then(access_token => {
                 if (access_token === false) {
@@ -1378,13 +1777,18 @@ var errorSubmissions = [];
             }
         }
 
+        var login_notified = false;
         function showLoginNotification() {
+            if (login_notified) {
+                return
+            }
             try {
                 if (7 < $("#notification_area>.notification").length) {
                     setTimeout(function() {
                         showLoginNotification();
                     }, 10000);
                 } else {
+                    login_notified = true;
                     var notificationHandler = ("undefined" == typeof Layout || "undefined" == typeof Layout.notify ? new NotificationHandler : Layout);
                     var notification = notificationHandler.notify(
                         $("#notification_area>.notification").length + 1,
@@ -1611,6 +2015,7 @@ var errorSubmissions = [];
                         $('#gd-login-container').hide();
                         $('#gd-script-linked').show();
                         clearInterval(script_token_interval);
+                        onSignedIn();
                     } else {
                         // Unable
                         loginError('Unknown error. Please try again later or let us know if this error persists.', verbose_check);
@@ -1642,24 +2047,6 @@ var errorSubmissions = [];
                     }
                 },
                 timeout: 30000
-            });
-        }
-
-        function checkLogin(show_login_popup = true) {
-            // Check if grepodata access token or refresh token is in local storage and use it to verify
-            // if not verified: login required!
-            getAccessToken().then(access_token => {
-                if (access_token === false) {
-                    if (show_login_popup === true) {
-                        // show login popup
-                        showLoginPopup();
-                    } else {
-                        // show login notification
-                        setTimeout(showLoginNotification, 2000);
-                    }
-                } else {
-                    console.log("GrepoData: Succesful authentication for player "+Game.player_id);
-                }
             });
         }
 
@@ -2638,6 +3025,11 @@ var errorSubmissions = [];
                     });
                     $(".command_share_gd_enabled").click(function () {
                         settingsCbx('command_share', !gd_settings.command_share);
+
+                        // Reload page to ensure proper startup functionality
+                        setTimeout(function() {
+                            location.reload()
+                        }, 500);
                     });
                     $(".command_cancel_time_gd_enabled").click(function () {
                         settingsCbx('command_cancel_time', !gd_settings.command_cancel_time);
@@ -3419,6 +3811,174 @@ var errorSubmissions = [];
                 errorHandling(error, "loadIndexHashlist");
             }
         }
+
+        /*
+        WebSocket push-notifications
+         */
+
+        var gd_websocket = null
+        function connectWebSocket() {
+            try {
+                if (gd_websocket !== null) {
+                    console.log("GrepoDAta WebSocket is already connected!")
+                    return
+                }
+                getAccessToken().then(access_token => {
+                    if (access_token === false) {
+                        // Not logged in. abort connection
+                        console.log("Not signed in to GrepoData. Aborting WebSocket.")
+                    } else {
+                        gd_websocket = new WebSocket(websocket_url)
+                        gd_websocket.onopen = function(e) {
+                            console.log("GrepoData WebSocket Connection Established. Authenticating..")
+                            authenticateWebSocket(access_token)
+                        };
+                        gd_websocket.onmessage = (e) => { handleWebSocketMessage(e) }
+                        gd_websocket.onclose = (e) => { handleWebSocketClose(e) }
+                        gd_websocket.onerror = (e) => {
+                            console.error("GrepoData WebSocket error: ", e)
+                        }
+                    }
+                });
+            } catch (e) {
+                errorHandling(e, "connectWebSocket")
+            }
+        }
+
+        function authenticateWebSocket(access_token) {
+            try {
+                $.ajax({
+                    url: backend_url + "/auth/websocket",
+                    data: {
+                        access_token: access_token
+                    },
+                    type: 'post',
+                    crossDomain: true,
+                    dataType: 'json',
+                    success: function (data) {
+                        if (data && 'websocket_token' in data) {
+                            let websocket_token = data.websocket_token
+                            console.log("GrepoData WebSocket authenticating with token: ", websocket_token)
+                            gd_websocket.send(JSON.stringify({websocket_token: websocket_token}));
+                        } else {
+                            console.error("Unable to get WebSocket token from backend. ", data)
+                            disconnectWebSocket()
+                        }
+                    },
+                    error: function (jqXHR, textStatus) {
+                        console.error("Error getting WebSocket token: ", jqXHR)
+                        disconnectWebSocket()
+                        errorHandling(null, "getWebSocketToken", JSON.stringify({xhr: jqXHR, text: textStatus}))
+                    },
+                    timeout: 60000
+                });
+            } catch (e) {
+                errorHandling(e, "authenticateWebSocket")
+            }
+        }
+
+        function handleWebSocketMessage(message) {
+            try {
+                console.log("GrepoData WebSocket message: ", message.data);
+                notification = JSON.parse(message.data);
+                let action = null
+                let doShowNotification = false
+                if ('action' in notification) {
+                    switch (notification.action) {
+                        case 'ops_event':
+                        default:
+                            // Team Ops event: show msg and give a link to Ops view
+                            doShowNotification = true;
+                            action = function () {
+                                openTeamOpsControlPanel()
+                            }
+                    }
+                }
+
+                if (doShowNotification) {
+                    let plain_text = '';
+                    for (var i = 0; i < notification.msg.length; i++) {
+                        plain_text += notification.msg[i]['text'] + ' ';
+                    }
+                    showNotification(plain_text, action)
+                    ops_notifications.unshift(notification)
+                    renderTeamOpsNotifications(ops_notifications)
+                }
+            } catch (e) {
+                errorHandling(e, "handleWebSocketMessage")
+            }
+        }
+
+        function disconnectWebSocket() {
+            try {
+                gd_websocket.close() // (!) This will trigger handleWebSocketClose
+            } catch (e) {
+                errorHandling(e, "disconnectWebSocket")
+            }
+        }
+
+        function handleWebSocketClose(message) {
+            console.log("GrepoData WebSocket closed: ", message)
+            retryWebSocketConnection()
+        }
+
+        var num_retries_websocket = 3;
+        function retryWebSocketConnection() {
+            try {
+                gd_websocket = null
+                if (num_retries_websocket > 0) {
+                    num_retries_websocket -= 1
+                    // add a random timeout for 20 to 80 seconds to prevent all clients connecting simultaneously
+                    let reconnect_wait = Math.floor(Math.random() * 60) + 20
+                    console.log("GrepoData WebSocket: attempting retry in "+reconnect_wait+" seconds. "+num_retries_websocket+" retries remaining.");
+                    setTimeout(function() {
+                        connectWebSocket()
+                    }, reconnect_wait * 1000);
+                }
+            } catch (e) {
+                errorHandling(e, "retryWebSocketConnection")
+            }
+        }
+
+        var notification_counter = 0
+        function showNotification(message, action_callback) {
+            try {
+                if (7 < $("#notification_area>.notification").length) {
+                    setTimeout(function() {
+                        showNotification()
+                    }, 10000);
+                } else {
+                    notification_counter += 1
+                    var identifier = 'gd_notification_'+notification_counter
+                    var notificationHandler = ("undefined" == typeof Layout || "undefined" == typeof Layout.notify ? new NotificationHandler : Layout);
+                    notificationHandler.notify(
+                        identifier,  // ID
+                        'gd_notification ' + identifier,  // CSS class
+                        '<strong>'+message+'</strong>',
+                        null
+                    );
+
+                    if (action_callback) {
+                        setTimeout(function() {
+                            $('.'+identifier).click(function () {
+                                action_callback()
+                                $('.'+identifier).hide()
+                            });
+                        }, 200);
+                    }
+
+                    notifications_count_indicator += 1;
+                    $('.gd-teamops-indicator').get(0).innerText = notifications_count_indicator;
+                    $('.gd-teamops-indicator').get(0).style.display = 'inline';
+                }
+            } catch (e) {
+                errorHandling(e, "showNotification")
+            }
+        }
+
+        /*
+        Error handling & logging
+         */
 
         function getBrowser() {
             var browser = 'unknown';

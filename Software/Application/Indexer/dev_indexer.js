@@ -66,7 +66,7 @@ var errorSubmissions = [];
             SHARE: 'Share',
             FORUM_REACTIONS_TITLE: 'Forum reactions',
             FORUM_REACTIONS_INFO: 'Add team reactions to the in-game alliance forum. All users on the same GrepoData team can see eachothers reactions.',
-            CMD_OVERVIEW_TITLE: 'Share command overview',
+            CMD_OVERVIEW_TITLE: 'Share command overview (Team Operations)',
             CMD_DEPARTURE_INFO: 'Add the return and cancel time to your own movements and add a link to town intel for incoming enemy movements.',
             CMD_SHARING_INFO: 'Add buttons to share commands and enable Team Ops notifications.',
             CONTEXT_TITLE: 'Expand context menu',
@@ -123,7 +123,7 @@ var errorSubmissions = [];
                         SHARE: 'Delen',
                         FORUM_REACTIONS_TITLE: 'Forum reacties',
                         FORUM_REACTIONS_INFO: 'Voeg team reacties toe aan het alliantie forum. Alle leden van een GrepoData team kunnen elkaars reacties zien op het forum.',
-                        CMD_OVERVIEW_TITLE: 'Beveloverzicht delen',
+                        CMD_OVERVIEW_TITLE: 'Beveloverzicht delen (Team Operations)',
                         CMD_DEPARTURE_INFO: 'Voeg de annuleer en terugkeer tijd toe aan eigen bevelen. Voeg een intel link toe aan vijandige bevelen.',
                         CMD_SHARING_INFO: 'Knoppen toevoegen om bevelen te uploaden en zet Team Ops notificaties aan.',
                         CONTEXT_TITLE: 'Context menu uitbreiden',
@@ -871,7 +871,6 @@ var errorSubmissions = [];
                                     // Show operation link toast
                                     if (data.added_teams.length == 1) {
                                         // Show notification with link to Ops center
-                                        // TODO: we don't have to show this if we are connected to websocket; push notification will come via that route
                                         let team = data.added_teams[0];
                                         toastHtml = `<a class="gd_cmd_toast_a" href="https://grepodata.com/operations/`+team+`/`+world+`" target="_blank">View Operation</a>`;
                                     } else {

@@ -35,6 +35,11 @@
 .gd-settings-team-table tr:hover {
     background: #18bc9c20;
 }
+.gd-wide {
+    text-align: left;
+    width: 60px;
+    padding: 0 3px;
+}
 .gd-title {
     color: #18bc9c;
     margin: 5px;
