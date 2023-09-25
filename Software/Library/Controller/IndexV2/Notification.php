@@ -7,6 +7,7 @@ use Grepodata\Library\Model\User;
 use Grepodata\Library\Model\World;
 use Grepodata\Library\Redis\RedisHelper;
 use Illuminate\Database\Eloquent\Collection;
+use Ramsey\Uuid\Uuid;
 
 class Notification
 {
@@ -44,7 +45,7 @@ class Notification
       ->get();
   }
 
-  public static function notifyCommandsUploaded(World $oWorld, IndexInfo $oTeam, string $PlayerName, int $PlayerId, int $NumCommands, bool $bIsPlanned)
+  public static function notifyCommandsUploaded(World $oWorld, IndexInfo $oTeam, string $PlayerName, int $PlayerId, int $NumCommands, bool $bIsPlanned, $MessageUuid = null)
   {
     $postfix = $bIsPlanned ? ' planned commands' : ' live commands';
     $aPayload = array(
@@ -52,7 +53,7 @@ class Notification
       self::notificationPart('text', " shared " . $NumCommands . $postfix),
     );
     $Message = json_encode($aPayload);
-    self::notifyTeam($oWorld, $oTeam, $Message);
+    self::notifyTeam($oWorld, $oTeam, $Message, $MessageUuid);
   }
 
   /**
@@ -60,15 +61,20 @@ class Notification
    * @param World $oWorld
    * @param IndexInfo $oTeam
    * @param string $Message
+   * @param null $MessageUuid
    */
-  private static function notifyTeam(World $oWorld, IndexInfo $oTeam, string $Message)
+  private static function notifyTeam(World $oWorld, IndexInfo $oTeam, string $Message, $MessageUuid = null)
   {
     // Save notification to SQL
+    if (is_null($MessageUuid)) {
+      $MessageUuid = Uuid::uuid4();
+    }
     $oNotification = new \Grepodata\Library\Model\IndexV2\Notification();
     $oNotification->world = $oWorld->grep_id;
     $oNotification->team = $oTeam->key_code;
     $oNotification->team_name = $oTeam->index_name;
     $oNotification->message = $Message;
+    $oNotification->message_uuid = $MessageUuid;
     $oNotification->type = 'notify_team';
     $oNotification->action = 'ops_event';
     $oNotification->server_time = $oWorld->getServerTime()->format('d M y H:i');
@@ -83,14 +89,20 @@ class Notification
    * @param World $oWorld
    * @param User $oUser
    * @param string $Message
+   * @param null $MessageUuid
+   * @throws \Exception
    */
-  private static function notifyUser(World $oWorld, User $oUser, string $Message)
+  private static function notifyUser(World $oWorld, User $oUser, string $Message, $MessageUuid = null)
   {
     // Save notification to SQL
+    if (is_null($MessageUuid)) {
+      $MessageUuid = Uuid::uuid4();
+    }
     $oNotification = new \Grepodata\Library\Model\IndexV2\Notification();
     $oNotification->world = $oWorld->grep_id;
     $oNotification->user_id = $oUser->id;
     $oNotification->message = $Message;
+    $oNotification->message_uuid = $MessageUuid;
     $oNotification->type = 'notify_user';
     $oNotification->action = 'ops_event';
     $oNotification->server_time = $oWorld->getServerTime()->format('d M y H:i');

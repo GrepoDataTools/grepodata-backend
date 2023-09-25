@@ -193,6 +193,13 @@ var errorSubmissions = [];
                     connectWebSocket();
                 }
             }, 800);
+
+            // Show menu option (only used as fallback if userscript is loaded AFTER /data/get is already completed)
+            setTimeout(function () {
+                if (gd_settings.command_notification === true) {
+                    addControlPanel()
+                }
+            }, 3000);
         }
 
         // Check for other scripts
@@ -387,7 +394,7 @@ var errorSubmissions = [];
                         });
 
                         // Get Notifications from backend
-                        if (ops_notifications.length <= 0) {
+                        if (notification_backlog_loaded == false) {
                             $.ajax({
                                 method: "get",
                                 headers: { 'access_token': access_token},
@@ -396,6 +403,7 @@ var errorSubmissions = [];
                                 console.error(err);
                                 renderTeamOpsError('.teamops-notification-list', 'Error loading notifications');
                             }).done(function (response) {
+                                notification_backlog_loaded = true;
                                 renderTeamOpsNotificationsResponse(response);
                             });
                         } else {
@@ -416,6 +424,7 @@ var errorSubmissions = [];
         }
 
         let ops_notifications = [];
+        let notification_backlog_loaded = false;
         function renderTeamOpsNotificationsResponse(data) {
             ops_notifications = data.data
             renderTeamOpsNotifications(ops_notifications)
@@ -3894,17 +3903,20 @@ var errorSubmissions = [];
             }
         }
 
+        let shown_message_uuids = []; // Ignore message that we have already shown
         function handleWebSocketMessage(message) {
             try {
                 console.log("GrepoData WebSocket message: ", message.data);
                 notification = JSON.parse(message.data);
                 let action = null
                 let doShowNotification = false
+                let ops_notificaiton = false
                 if ('action' in notification) {
                     switch (notification.action) {
                         case 'ops_event':
                         default:
                             // Team Ops event: show msg and give a link to Ops view
+                            ops_notificaiton = true;
                             doShowNotification = true;
                             action = function () {
                                 openTeamOpsControlPanel()
@@ -3912,13 +3924,28 @@ var errorSubmissions = [];
                     }
                 }
 
+                // Check for duplications
+                if ('uuid' in notification && notification.uuid != null) {
+                    if (shown_message_uuids.includes(notification.uuid)) {
+                        // Already shown this message; ignore (can happen if player is in multiple teams)
+                        doShowNotification = false;
+                    } else {
+                        shown_message_uuids.push(notification.uuid)
+                    }
+                }
+
+                // Add to in-memory notification list
+                if (ops_notificaiton) {
+                    ops_notifications.unshift(notification)
+                }
+
+                // Show visual notification
                 if (doShowNotification) {
                     let plain_text = '';
                     for (var i = 0; i < notification.msg.length; i++) {
                         plain_text += notification.msg[i]['text'] + ' ';
                     }
                     showNotification(plain_text, action)
-                    ops_notifications.unshift(notification)
                     renderTeamOpsNotifications(ops_notifications)
                 }
             } catch (e) {

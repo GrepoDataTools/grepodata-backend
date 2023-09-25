@@ -14,6 +14,7 @@ use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Redis\RedisClient;
 use Grepodata\Library\Redis\RedisHelper;
 use Grepodata\Library\Router\ResponseCode;
+use Ramsey\Uuid\Uuid;
 
 class Commands extends \Grepodata\Library\Router\BaseRoute
 {
@@ -547,6 +548,9 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
         }
       }
 
+      // Get UID to prevent duplicate notifications
+      $UploadUid = Uuid::uuid4();
+
       // Index
       $aSkippedTeams = array();
       $aAddedTeams = array();
@@ -647,7 +651,7 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
         // Save notification
         if ($NumCreated > 0) {
           try {
-            \Grepodata\Library\Controller\IndexV2\Notification::notifyCommandsUploaded($oWorld, $oTeam, $aParams['player_name'], $aParams['player_id'], $NumCreated, $bIsPlanUpload);
+            \Grepodata\Library\Controller\IndexV2\Notification::notifyCommandsUploaded($oWorld, $oTeam, $aParams['player_name'], $aParams['player_id'], $NumCreated, $bIsPlanUpload, $UploadUid);
           } catch (Exception $e) {
             Logger::warning('OPS: Error saving notification ' .$e->getMessage());
           }

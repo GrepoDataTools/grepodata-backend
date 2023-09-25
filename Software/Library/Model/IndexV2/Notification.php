@@ -11,6 +11,7 @@ use \Illuminate\Database\Eloquent\Model;
  * @property mixed team_name
  * @property mixed user_id
  * @property mixed message
+ * @property mixed message_uuid
  * @property mixed action  # ops_event
  * @property mixed type  # notify_team, notify_user
  * @property mixed server_time
@@ -28,6 +29,7 @@ class Notification extends Model
       'team_name' => $this->team_name,
       'user_id' => $this->user_id,
       'msg'     => json_decode($this->message, true),
+      'uuid'    => $this->message_uuid,
       'action'  => $this->action,
       'type'    => $this->type,
       'date'    => $this->server_time,
