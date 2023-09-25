@@ -3946,8 +3946,9 @@ var errorSubmissions = [];
                 gd_websocket = null
                 if (num_retries_websocket > 0) {
                     num_retries_websocket -= 1
-                    // add a random timeout for 20 to 80 seconds to prevent all clients connecting simultaneously
-                    let reconnect_wait = Math.floor(Math.random() * 60) + 20
+                    // add a random timeout for 10 to 300 seconds to prevent all clients connecting simultaneously
+                    // TODO: Apache is being overloaded when the websocket server restarts; we should add more workers
+                    let reconnect_wait = Math.floor(Math.random() * 300) + 10
                     console.log("GrepoData WebSocket: attempting retry in "+reconnect_wait+" seconds. "+num_retries_websocket+" retries remaining.");
                     setTimeout(function() {
                         connectWebSocket()
