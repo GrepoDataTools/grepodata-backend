@@ -660,4 +660,27 @@ class Hourly
     Logger::silly("Finished processing hourly import for world ".$oWorld->grep_id.".");
     return true;
   }
+
+  /**
+   * Create a json file with player activity levels for the given world
+   * @param \Grepodata\Library\Model\World $oWorld
+   * @return bool
+   */
+  public static function ExportPlayerActivity(\Grepodata\Library\Model\World $oWorld)
+  {
+    // get all player ids and their activity
+    $aPlayers = Player::allActiveByWorld($oWorld->grep_id);
+
+    // Create idle times data
+    $aIdleTimes = array();
+    foreach ($aPlayers as $oPlayer) {
+      $aIdleTimes[$oPlayer->grep_id] = $oPlayer->getHoursInactive(); // How many hours since last att or town point
+    }
+
+    // Save to file
+    LocalData::savePlayerIdleTimes($oWorld->grep_id, $aIdleTimes);
+
+    return true;
+  }
+
 }

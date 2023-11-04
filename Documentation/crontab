@@ -4,6 +4,7 @@
 #03 04 * * * /usr/bin/php /home/vps/grepodata/production/grepodata-backend/active/Software/Cron/world_domination.php >> /home/vps/grepodata/production/grepodata-backend/Logs/world_domination_log.err
 */2 * * * * /usr/bin/php /home/vps/grepodata/production/grepodata-backend/active/Software/Cron/websocket_heartbeat.php >> /home/vps/grepodata/production/grepodata-backend/Logs/websocket_heartbeat.err
 15 * * * * /usr/bin/php /home/vps/grepodata/production/grepodata-backend/active/Software/Cron/command_cleanup.php >> /home/vps/grepodata/production/grepodata-backend/Logs/command_cleanup.err
+31 * * * * /usr/bin/php /home/vps/grepodata/production/grepodata-backend/active/Software/Cron/export_player_activity.php >> /home/vps/grepodata/production/grepodata-backend/Logs/export_player_activity.err
 52 0-23/2 * * * /usr/bin/php /home/vps/grepodata/production/grepodata-backend/active/Software/Cron/index_stats.php >> /home/vps/grepodata/production/grepodata-backend/Logs/index_stats_log.err
 32 08 * * * /usr/bin/php /home/vps/grepodata/production/grepodata-backend/active/Software/Cron/index_daily_report.php >> /home/vps/grepodata/production/grepodata-backend/Logs/index_daily_report_log.err
 02 1-23/2 * * * /usr/bin/php /home/vps/grepodata/production/grepodata-backend/active/Software/Cron/data_import_daily.php >> /home/vps/grepodata/production/grepodata-backend/Logs/daily_log.err

@@ -8,11 +8,13 @@ class LocalData
 {
   const local_storage_dir   = TEMP_DIRECTORY;
   const local_map_dir       = MAP_DIRECTORY;
+  const local_data_dir      = DATA_DIRECTORY;
   const town_file           = 'towns.csv';
   const player_file         = 'players.csv';
   const alliance_file       = 'alliances.csv';
   const player_att_file     = 'players_att.csv';
   const player_def_file     = 'players_def.csv';
+  const player_idle_file    = 'player_idle.json';
 
   /**
    * Load local town data for given world
@@ -122,6 +124,17 @@ class LocalData
   public static function setLocalAllianceData($World, $aData)
   {
     self::saveFileData($World, self::alliance_file, $aData);
+  }
+
+  /**
+   * Save player idle times data for given world
+   *
+   * @param String $World Grepolis world id
+   * @param array $aData Player idle times
+   */
+  public static function savePlayerIdleTimes($World, $aData)
+  {
+    self::saveJsonData($World, self::player_idle_file, $aData);
   }
 
   private static function loadFileData($World, $Endpoint)
@@ -247,6 +260,43 @@ class LocalData
     return true;
   }
 
+  /**
+   * @param $World
+   * @param $Endpoint
+   * @param $aData
+   * @return bool
+   */
+  private static function saveJsonData($World, $Endpoint, $aData)
+  {
+    $Filename = self::local_data_dir . $World . '/' . $Endpoint;
+
+    try {
+      // Delete old data
+      if (file_exists($Filename)) {
+        unlink($Filename);
+      }
+
+      // Ensure directory
+      self::ensureDataDirectory($World);
+
+      // Write data
+      $fp = fopen($Filename, 'w');
+      if ($fp !== false) {
+        $JsonData = json_encode($aData);
+        fwrite($fp, $JsonData);
+        fclose($fp);
+        Logger::silly("Json file saved to: " . $Filename);
+      } else {
+        Logger::error("Unable to open json file for writing.");
+        return false;
+      }
+    } catch (\Exception $e) {
+      Logger::error("Error saving json data to disk: " . $e->getMessage());
+      return false;
+    }
+    return true;
+  }
+
   public static function saveMap($img, $World, $DateString) {
     // Ensure directory
     self::ensureMapDirectory($World);
@@ -260,6 +310,15 @@ class LocalData
 
     imagepng($img, $Filename);
     return $Filename;
+  }
+
+  private static function ensureDataDirectory($World)
+  {
+    $Dir = self::local_data_dir . $World;
+    if (!is_dir($Dir)) {
+      Logger::warning("Created world directory in data folder: " . $Dir);
+      mkdir($Dir);
+    }
   }
 
   private static function ensureWorldDirectory($World)

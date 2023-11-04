@@ -83,8 +83,12 @@ class Player extends Model
     );
   }
 
-  public function getHoursInactive()
+  public function getHoursInactive($ReferenceTime = null)
   {
+    if (is_null($ReferenceTime)) {
+      $ReferenceTime = Carbon::now();
+    }
+
     // Hours inactive
     $HoursInactive = null;
     try {
@@ -93,8 +97,7 @@ class Player extends Model
         if ($this->town_point_date > $LastActivity) {
           $LastActivity = $this->town_point_date;
         }
-        $Now = Carbon::now();
-        $HoursInactive = $Now->diffInHours($LastActivity);
+        $HoursInactive = $ReferenceTime->diffInHours($LastActivity);
       }
     } catch (Exception $e) {}
     return $HoursInactive;
