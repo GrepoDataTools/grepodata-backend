@@ -1,3 +1,4 @@
+11 02 */2 * * /usr/bin/supervisorctl restart ratchet:Ratchet
 */2 * * * * /usr/bin/php /home/vps/grepodata/production/grepodata-backend/active/Software/Cron/index_overview_builder.php >> /home/vps/grepodata/production/grepodata-backend/Logs/index_overview_log.err
 40 05 * * * /usr/bin/php /home/vps/grepodata/production/grepodata-backend/active/Software/Cron/index_enhancer.php >> /home/vps/grepodata/production/grepodata-backend/Logs/index_enhancer_log.err
 #03 04 * * * /usr/bin/php /home/vps/grepodata/production/grepodata-backend/active/Software/Cron/world_domination.php >> /home/vps/grepodata/production/grepodata-backend/Logs/world_domination_log.err

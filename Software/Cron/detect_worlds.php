@@ -28,6 +28,12 @@ Common::markAsRunning(__FILE__, 20*60);
 
 $aServers = World::getServers();
 
+$ManualOverride = null;
+if (isset($argv[1]) && $argv[1]!=null && $argv[1]!='') {
+  $ManualOverride = $argv[1];
+  $aServers = array(substr($ManualOverride, 0, 2));
+};
+
 foreach ($aServers as $Server) {
 
   // Check new world
@@ -40,6 +46,9 @@ foreach ($aServers as $Server) {
 
   // Increment world id
   $PreviousWorldNum = substr($oWorld->grep_id, 2);
+  if (!is_null($ManualOverride)) {
+    $PreviousWorldNum = substr($ManualOverride, 2);
+  }
 
   for ($i = 1; $i < 5; $i++) {
     $WorldNum = $PreviousWorldNum + $i;
