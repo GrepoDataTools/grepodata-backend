@@ -527,7 +527,7 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
       }
 
       // Parse commands and persist to database
-      $MaxUploadCount = 1000;
+      $MaxUploadCount = 5000;
       $aCommandsList = json_decode($aParams['commands'], true);
       $aCommandsList = array_slice($aCommandsList,0, $MaxUploadCount);
 
