@@ -549,7 +549,11 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
       }
 
       // Get UID to prevent duplicate notifications
-      $UploadUid = Uuid::uuid4();
+      if (count($aNewCommands)>0 || count($aDelCommands)>0) {
+        $UploadUid = md5(json_encode($aNewCommands).json_encode($aDelCommands).$oUser->id); // get hash of upload content to ensure ID is the same for duplicate uploads
+      } else {
+        $UploadUid = Uuid::uuid4();
+      }
 
       // Index
       $aSkippedTeams = array();
@@ -580,6 +584,7 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
 
         // Upsert command batch in elasticasearch
         $NumCreated = 0;
+        $UpsertStart = microtime(true) * 1000;
         try {
           if ($bIsPlanUpload) {
             // 1: Delete all previous planned commands uploaded to this team by this user (clean slate)
@@ -594,6 +599,11 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
           ResponseCode::errorCode(8300, array(), 503);
         } catch (Exception $e) {
           Logger::warning('OPS: Error indexing commands ' .$e->getMessage());
+        }
+        $UpsertDuration = (int) (microtime(true) * 1000 - $UpsertStart);
+        if ($UpsertDuration > 1) {
+          $logmsg = "OPS: CMD ES upsert time: ". $UpsertDuration . "ms, " . count($aNewCommands) . " new commands, " . count($aDelCommands) . " del commands";
+          Logger::warning($logmsg);
         }
 
         // Update cache state
