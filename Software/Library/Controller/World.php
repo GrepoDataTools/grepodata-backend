@@ -39,9 +39,10 @@ class World
    */
   public static function getLatestByServer($Server)
   {
-    return \Grepodata\Library\Model\World::where('grep_id', 'LIKE', '%'.$Server.'%')
-      ->orderBy('created_at', 'desc')
-      ->first();
+    return \Grepodata\Library\Model\World::where('grep_id', 'LIKE', '%'.$Server.'%', 'and')
+        ->where('stopped', '=', 0)
+        ->orderBy('created_at', 'desc')
+        ->first();
   }
 
   /**
