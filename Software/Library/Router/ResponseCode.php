@@ -92,6 +92,7 @@ define('GD_ERROR_8010', 'No active operations');
 define('GD_ERROR_8020', 'No active commands in operation');
 define('GD_ERROR_8110', 'Invalid command action');
 define('GD_ERROR_8120', 'Admin rights required to perform this action');
+define('GD_ERROR_8130', 'Invalid conquest action');
 define('GD_ERROR_8200', 'Command update failed');
 define('GD_ERROR_8210', 'No commands were updated');
 define('GD_ERROR_8220', 'Invalid update input content');
@@ -124,6 +125,7 @@ define('GD_SUCCESS_1300', 'User index access revoked');
 define('GD_SUCCESS_1400', 'V1 index key import successful');
 define('GD_SUCCESS_1410', 'Intel commit successful');
 define('GD_SUCCESS_1500', 'User left index successfully');
+define('GD_SUCCESS_1600', 'Conquest update successful');
 
 // Profile
 define('GD_SUCCESS_4000', 'Profile request processed successfully');

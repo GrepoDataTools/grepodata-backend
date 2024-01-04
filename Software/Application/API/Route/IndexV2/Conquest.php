@@ -4,22 +4,48 @@ namespace Grepodata\Application\API\Route\IndexV2;
 
 use Carbon\Carbon;
 use Grepodata\Library\Controller\World;
+use Grepodata\Library\IndexV2\IndexManagement;
+use Grepodata\Library\Logger\Logger;
+use Grepodata\Library\Router\ResponseCode;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class Conquest extends \Grepodata\Library\Router\BaseRoute
 {
 
-    public static function PublishConquestOverviewPOST()
+    public static function UpdateConquestOverviewPOST()
     {
         try {
-            $aParams = self::validateParams(array('access_token', 'conquest_id', 'publish'));
+            $aParams = self::validateParams(array('access_token', 'conquest_uid', 'action'));
             $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
 
+            // Get the conquest overview
+            $oConquestOverview = \Grepodata\Library\Controller\IndexV2\Conquest::firstByUid($aParams['conquest_uid']);
 
+            // Verify if the user is indeed an admin that can edit this overview
+            IndexManagement::verifyUserIsAdmin($oUser, $oConquestOverview->index_key);
+
+            switch ($aParams['action']) {
+                case 'publish':
+                    $oConquestOverview->published = true;
+                    $oConquestOverview->save();
+                    break;
+                case 'unpublish':
+                    $oConquestOverview->published = false;
+                    $oConquestOverview->save();
+                    break;
+                default:
+                    // Invalid command action
+                    Logger::warning('Unhandled update action for conquest overview: ' .$aParams['action']);
+                    ResponseCode::errorCode(8130);
+            }
+
+            ResponseCode::success(array(
+                'published' => $oConquestOverview->published
+            ), 1600);
 
         } catch (ModelNotFoundException $e) {
             die(self::OutputJson(array(
-                'message'     => 'No conquest overview found for this conquest_id.',
+                'message'     => 'No conquest overview found for this conquest uid.',
                 'parameters'  => $aParams
             ), 404));
         }

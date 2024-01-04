@@ -12,6 +12,7 @@ use \Illuminate\Database\Eloquent\Model;
  * @property mixed uid
  * @property mixed conquest_id
  * @property mixed index_key
+ * @property mixed published
  * @property mixed belligerent_all
  * @property mixed total_losses_att
  * @property mixed total_losses_def

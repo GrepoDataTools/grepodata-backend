@@ -414,7 +414,7 @@ $oRouter->Add('v2conquestreports', new Route('/indexer/v2/conquest', array(
 )));
 $oRouter->Add('v2conquestpublish', new Route('/indexer/v2/publishconquest', array(
     '_controller' => '\Grepodata\Application\API\Route\IndexV2\Conquest',
-    '_method'     => 'PublishConquestOverview'
+    '_method'     => 'UpdateConquestOverview'
 )));
 
 // Indexer settings (V2)

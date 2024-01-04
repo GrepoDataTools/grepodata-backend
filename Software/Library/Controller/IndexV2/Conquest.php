@@ -31,11 +31,10 @@ class Conquest
 
   /**
    * @param $Uid
-   * @return \Grepodata\Library\Model\IndexV2\Conquest
+   * @return \Grepodata\Library\Model\IndexV2\ConquestOverview
    */
   public static function firstByUid($Uid)
   {
-    // TODO
     return ConquestOverview::where('uid', '=', $Uid)
       ->firstOrFail();
   }
