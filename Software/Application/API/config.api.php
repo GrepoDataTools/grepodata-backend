@@ -394,14 +394,6 @@ $oRouter->Add('getallianceintelV2', new Route('/indexer/v2/alliance', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Browse',
   '_method'     => 'GetAlliance'
 )));
-$oRouter->Add('v2conquestreports', new Route('/indexer/v2/conquest', array(
-  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Intel',
-  '_method'     => 'GetConquestReports'
-)));
-$oRouter->Add('v2conquestsiegelist', new Route('/indexer/v2/siegelist', array(
-  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Intel',
-  '_method'     => 'GetSiegelist'
-)));
 $oRouter->Add('indexaddnotev2', new Route('/indexer/v2/addnote', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Notes',
   '_method'     => 'AddNote'
@@ -409,6 +401,20 @@ $oRouter->Add('indexaddnotev2', new Route('/indexer/v2/addnote', array(
 $oRouter->Add('indexdelnotev2', new Route('/indexer/v2/delnote', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Notes',
   '_method'     => 'DeleteNote'
+)));
+
+// Indexer Sieges / Conquests (V2)
+$oRouter->Add('v2conquestsiegelist', new Route('/indexer/v2/siegelist', array(
+    '_controller' => '\Grepodata\Application\API\Route\IndexV2\Conquest',
+    '_method'     => 'GetSiegelist'
+)));
+$oRouter->Add('v2conquestreports', new Route('/indexer/v2/conquest', array(
+    '_controller' => '\Grepodata\Application\API\Route\IndexV2\Conquest',
+    '_method'     => 'GetConquestReports'
+)));
+$oRouter->Add('v2conquestpublish', new Route('/indexer/v2/publishconquest', array(
+    '_controller' => '\Grepodata\Application\API\Route\IndexV2\Conquest',
+    '_method'     => 'PublishConquestOverview'
 )));
 
 // Indexer settings (V2)
