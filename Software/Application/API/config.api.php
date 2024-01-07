@@ -412,7 +412,7 @@ $oRouter->Add('v2conquestreports', new Route('/indexer/v2/conquest', array(
     '_controller' => '\Grepodata\Application\API\Route\IndexV2\Conquest',
     '_method'     => 'GetConquestReports'
 )));
-$oRouter->Add('v2conquestpublish', new Route('/indexer/v2/publishconquest', array(
+$oRouter->Add('v2conquestpublish', new Route('/indexer/v2/updateconquest', array(
     '_controller' => '\Grepodata\Application\API\Route\IndexV2\Conquest',
     '_method'     => 'UpdateConquestOverview'
 )));

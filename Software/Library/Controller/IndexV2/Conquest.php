@@ -61,6 +61,8 @@ class Conquest
    */
   public static function getByUserByConquestId($oUser, $ConquestId)
   {
+    // Even though Indexer_conquest_overview.conquest_id may match to multiple records, security is maintained due to the Indexer_roles.user_id check.
+    // In case there are duplicates, the overview with the most num_attacks_counted is returned; this ensures we always return the most complete overview.
     return ConquestOverview::select(['*'])
       ->leftJoin('Indexer_conquest', 'Indexer_conquest.id', '=', 'Indexer_conquest_overview.conquest_id')
       ->leftJoin('Indexer_roles', 'Indexer_roles.index_key', '=', 'Indexer_conquest_overview.index_key')

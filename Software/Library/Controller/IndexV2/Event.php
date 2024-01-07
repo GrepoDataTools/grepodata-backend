@@ -317,6 +317,38 @@ class Event
     }
   }
 
+  /**
+   * Add siege update event
+   * @param IndexInfo $oIndex
+   * @param User $EditingUser
+   * @param $Action
+   * @param \Grepodata\Library\Model\IndexV2\Conquest $oConquest
+   */
+  public static function addSiegeUpdateEvent(IndexInfo $oIndex, User $EditingUser, $Action, \Grepodata\Library\Model\IndexV2\Conquest $oConquest)
+  {
+    try {
+      $oWorld = World::getWorldById($oIndex->world);
+      $oEvent = new \Grepodata\Library\Model\IndexV2\Event();
+      $oEvent->world = $oIndex->world;
+      $oEvent->local_time = $oWorld->getServerTime();
+      $oEvent->admin_only = false;
+      $oEvent->index_key = $oIndex->key_code;
+      $ConquestDate = Carbon::parse($oConquest->first_attack_date, $oWorld->php_timezone)->format('d M');
+      $aEvent = array(
+        self::eventPart('text', 'User '),
+        self::eventPart('user', $EditingUser->username),
+        self::eventPart('text', ' has '.$Action.'ed the siege overview for '),
+        self::eventPart('town', $oConquest->town_name),
+        self::eventPart('bold', ' ('.$ConquestDate.')'),
+        self::eventPart('text', '.'),
+      );
+      $oEvent->json = json_encode($aEvent);
+      $oEvent->save();
+    } catch (\Exception $e) {
+      Logger::warning("Error saving siege update event: ".$e->getMessage());
+    }
+  }
+
   private static function eventPart($Type = 'text', $Text = '', $Params = array())
   {
     return array(

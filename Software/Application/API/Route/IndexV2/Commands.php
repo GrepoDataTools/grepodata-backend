@@ -529,7 +529,12 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
       // Parse commands and persist to database
       $MaxUploadCount = 5000;
       $aCommandsList = json_decode($aParams['commands'], true);
-      $aCommandsList = array_slice($aCommandsList,0, $MaxUploadCount);
+      $UploadedCount = count($aCommandsList);
+      if ($UploadedCount > $MaxUploadCount) {
+        // Limit the amount of commands that can be synced to prevent large batches from overloading the ES cluster
+        Logger::warning('OPS: Enforcing max command upload limit: ' . $UploadedCount . " exceeds threshold " . $MaxUploadCount);
+        $aCommandsList = array_slice($aCommandsList,0, $MaxUploadCount);
+      }
 
       // Parse commands that should be deleted
       $aDelCommands = json_decode($aParams['del_commands'], true);
@@ -602,7 +607,7 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
         }
         $UpsertDuration = (int) (microtime(true) * 1000 - $UpsertStart);
         if ($UpsertDuration > 1) {
-          $logmsg = "OPS: CMD ES upsert time: ". $UpsertDuration . "ms, " . count($aNewCommands) . " new commands, " . count($aDelCommands) . " del commands";
+          $logmsg = "OPS: CMD ES upsert time: ". $UpsertDuration . "ms, " . count($aNewCommands) . " new commands, " . count($aDelCommands) . " del commands. User:  ".$oUser->id.", Team: ".$oTeam->key_code;
           Logger::warning($logmsg);
         }
 
