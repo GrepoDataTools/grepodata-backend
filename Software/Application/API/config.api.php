@@ -416,6 +416,10 @@ $oRouter->Add('v2conquestpublish', new Route('/indexer/v2/updateconquest', array
     '_controller' => '\Grepodata\Application\API\Route\IndexV2\Conquest',
     '_method'     => 'UpdateConquestOverview'
 )));
+$oRouter->Add('v2siegestoday', new Route('/indexer/v2/siegestoday', array(
+    '_controller' => '\Grepodata\Application\API\Route\IndexV2\Conquest',
+    '_method'     => 'SiegesToday'
+)));
 
 // Indexer settings (V2)
 $oRouter->Add('indexsettingsgetusers', new Route('/indexer/settings/users', array(

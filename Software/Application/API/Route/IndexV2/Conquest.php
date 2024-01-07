@@ -193,4 +193,71 @@ class Conquest extends \Grepodata\Library\Router\BaseRoute
     }
   }
 
+  /**
+   * Return a list of published sieges to display on the daily scoreboard
+   * API route: /indexer/v2/siegestoday
+   * Method: GET
+   */
+  public static function SiegesTodayGET()
+  {
+    $aParams = array();
+
+    try {
+      // Validate params
+      $aParams = self::validateParams(array());
+
+      // Optional world
+      if (!isset($aParams['world']) || $aParams['world'] == '') {
+        $aParams['world'] = DEFAULT_WORLD;
+        try {
+          // optional server
+          $Server = DEFAULT_SERVER;
+          if (isset($aParams['server']) && $aParams['server'] != '') {
+            $Server = $aParams['server'];
+          }
+
+          $oLatestWorld = \Grepodata\Library\Controller\World::getLatestByServer($Server);
+          $aParams['world'] = $oLatestWorld->grep_id;
+        } catch (\Exception $e) {
+          $aParams['world'] = DEFAULT_WORLD;
+        }
+      }
+
+      $oWorld = \Grepodata\Library\Controller\World::getWorldById($aParams['world']);
+
+      $MaxDate = Carbon::now($oWorld->php_timezone);
+      try {
+        if (isset($aParams['date'])) {
+          $MaxDate = Carbon::parse($aParams['date'], $oWorld->php_timezone)->addHours(24);
+        }
+      } catch (\Exception $e) {
+        Logger::warning("Error parsing sieges date: ".$e->getMessage());
+      }
+
+      // Get published sieges
+      $aConquestsList = array();
+      try {
+        $aConquests = \Grepodata\Library\Controller\IndexV2\Conquest::allRecentByWorld($aParams['world'], $MaxDate);
+        foreach ($aConquests as $oConquestOverview) {
+          $aConquestOverview = \Grepodata\Library\Model\IndexV2\Conquest::getMixedConquestFields($oConquestOverview, $oWorld);
+          $aConquestsList[] = $aConquestOverview;
+        }
+      } catch (\Exception $e) {
+        Logger::warning("Error loading recent sieges: ".$e->getMessage());
+      }
+
+      // Format output
+      $aResponse = array(
+        'count' => count($aConquestsList),
+        'items' => $aConquestsList
+      );
+      return self::OutputJson($aResponse);
+    } catch (ModelNotFoundException $e) {
+      die(self::OutputJson(array(
+        'message'     => 'No recent sieges found for these parameters.',
+        'parameters'  => $aParams
+      ), 404));
+    }
+  }
+
 }

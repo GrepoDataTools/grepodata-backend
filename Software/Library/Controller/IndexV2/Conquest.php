@@ -5,6 +5,7 @@ namespace Grepodata\Library\Controller\IndexV2;
 use Grepodata\Library\Model\Indexer\IndexInfo;
 use Grepodata\Library\Model\IndexV2\ConquestOverview;
 use Grepodata\Library\Model\World;
+use Illuminate\Support\Str;
 
 class Conquest
 {
@@ -110,6 +111,26 @@ class Conquest
       ->orderBy('first_attack_date', 'desc')
       ->limit($Limit)
       ->get();
+  }
+
+  /**
+   * @param $World
+   * @param $MaxDate
+   * @return ConquestOverview[]
+   */
+  public static function allRecentByWorld($World, $MaxDate)
+  {
+    // first_attack_date is not in UTC but in server time! so watch out what MaxDate you use.
+    $query = ConquestOverview::select(['*'])
+      ->leftJoin('Indexer_conquest', 'Indexer_conquest.id', '=', 'Indexer_conquest_overview.conquest_id')
+      ->where('Indexer_conquest.world', '=', $World)
+      ->where('Indexer_conquest_overview.published', '=', 1)
+      ->where('Indexer_conquest.first_attack_date','<=', $MaxDate)
+      ->where('Indexer_conquest.first_attack_date','>', $MaxDate->copy()->subHours(48))
+      ->orderBy('Indexer_conquest_overview.num_attacks_counted', 'desc');
+    //$sql = Str::replaceArray('?', $query->getBindings(), $query->toSql());
+    return $query->get();
+    //select * from `Indexer_conquest_overview` left join `Indexer_conquest` on `Indexer_conquest`.`id` = `Indexer_conquest_overview`.`conquest_id` where `Indexer_conquest`.`world` = "nl108" and `Indexer_conquest_overview`.`published` = 1 and `Indexer_conquest`.`first_attack_date` <= "2023-11-04 00:00:00" and `Indexer_conquest`.`first_attack_date` > "2023-11-02 00:00:00" order by `Indexer_conquest_overview`.`num_attacks_counted` desc
   }
 
 }

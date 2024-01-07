@@ -101,7 +101,10 @@ class Scoreboard extends \Grepodata\Library\Router\BaseRoute
       // Default
       $bFallback = false;
       if (!isset($aScoreboard) || is_null($aScoreboard) || !isset($aScoreboard['date'])) {
-        if (isset($aParams['date']) && $aParams['date'] != '') $bFallback = true; // Detect fallback usage
+        if (isset($aParams['date']) && $aParams['date'] != '') {
+          Logger::warning("Possible scoreboard date parsing issue: no scoreboard found for input date. Input date: ".$aParams['date'].", world: ".$aParams['world']);
+          $bFallback = true; // Detect fallback usage
+        }
         try {
           $aScoreboard = PlayerScoreboard::latestByWorldOrFail($aParams['world']);
         } catch (\Exception $e) {
@@ -403,7 +406,7 @@ class Scoreboard extends \Grepodata\Library\Router\BaseRoute
           $MaxDate = Carbon::parse($aParams['date'], $oWorld->php_timezone)->addHours(24);
         }
       } catch (\Exception $e) {
-        Logger::warning("Error parsing ghost date: ".$e->getMessage());
+        Logger::warning("Error parsing ghost date: ".$e->getMessage(). ". Input date: ".$aParams['date'].", world: ".$aParams['world']);
       }
 
       // Get player resets

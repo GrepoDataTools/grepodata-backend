@@ -333,7 +333,7 @@ class Event
       $oEvent->local_time = $oWorld->getServerTime();
       $oEvent->admin_only = false;
       $oEvent->index_key = $oIndex->key_code;
-      $ConquestDate = Carbon::parse($oConquest->first_attack_date, $oWorld->php_timezone)->format('d M');
+      $ConquestDate = Carbon::parse($oConquest->first_attack_date)->format('d M');
       $aEvent = array(
         self::eventPart('text', 'User '),
         self::eventPart('user', $EditingUser->username),

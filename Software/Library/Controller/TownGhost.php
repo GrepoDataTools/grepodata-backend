@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Model;
 class TownGhost
 {
 
-
   /**
    * @param $World
    * @param $Id
@@ -22,7 +21,6 @@ class TownGhost
       ->orderBy('name', 'asc')
       ->get();
   }
-
 
   /**
    * @param $World

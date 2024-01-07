@@ -45,7 +45,7 @@ class Conquest extends Model
       'player_name'   => $oMixedConquest->player_name,
       'alliance_id'   => $oMixedConquest->alliance_id,
       'alliance_name' => $oMixedConquest->alliance_name,
-      'last_attack_date' => $oMixedConquest->first_attack_date,
+      'last_attack_date' => $oMixedConquest->first_attack_date,  // first_attack_date is actually the last attack date (max of intel->parsed_date); this is already in local server time! do not convert from UTC
       'belligerent_player_id'     => $oMixedConquest->belligerent_player_id,
       'belligerent_player_name'   => $oMixedConquest->belligerent_player_name,
       'belligerent_alliance_id'   => $oMixedConquest->belligerent_alliance_id,
