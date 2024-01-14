@@ -55,12 +55,11 @@ class InnoData
     }
 
     if (sizeof($aData) <= 0) {
-      Logger::error("Found 0 valid data rows while loading inno data for endpoint " . $Endpoint);
-//      die();
+      Logger::error("Found 0 valid data rows while loading inno data for player endpoint " . $Url);
     }
 
     if ($InvalidRows > 0) {
-      Logger::warning("Retrieved ".$InvalidRows." invalid rows from endpoint: " . $Endpoint);
+      Logger::warning("Retrieved ".$InvalidRows." invalid rows from player endpoint: " . $Url);
     }
 
     return $aData;
@@ -101,12 +100,12 @@ class InnoData
     }
 
     if (sizeof($aData) <= 0) {
-      Logger::error("Found 0 valid data rows while loading inno data for endpoint " . $Endpoint);
+      Logger::error("Found 0 valid data rows while loading inno data for alliance endpoint " . $Url);
       return array();
     }
 
     if ($InvalidRows > 0) {
-      Logger::warning("Retrieved ".$InvalidRows." invalid rows from endpoint: " . $Endpoint);
+      Logger::warning("Retrieved ".$InvalidRows." invalid rows from alliance endpoint: " . $Url);
     }
 
     return $aData;
@@ -148,12 +147,12 @@ class InnoData
     }
 
     if (sizeof($aData) <= 0) {
-      Logger::error("Found 0 valid data rows while loading inno data for endpoint " . $Endpoint);
+      Logger::error("Found 0 valid data rows while loading inno data for town endpoint " . $Url);
 //      die();
     }
 
     if ($InvalidRows > 0) {
-      Logger::warning("Retrieved ".$InvalidRows." invalid rows from endpoint: " . $Endpoint);
+      Logger::warning("Retrieved ".$InvalidRows." invalid rows from town endpoint: " . $Url);
     }
 
     return $aData;
@@ -196,12 +195,12 @@ class InnoData
     }
 
     if (sizeof($aData) <= 0) {
-      Logger::error("Found 0 valid data rows while loading inno data for endpoint " . $Endpoint);
+      Logger::error("Found 0 valid data rows while loading inno data for island endpoint " . $Url);
 //      die();
     }
 
     if ($InvalidRows > 0) {
-      Logger::warning("Retrieved ".$InvalidRows." invalid rows from endpoint: " . $Endpoint);
+      Logger::warning("Retrieved ".$InvalidRows." invalid rows from island endpoint: " . $Url);
     }
 
     return $aData;
@@ -244,12 +243,12 @@ class InnoData
     }
 
     if (sizeof($aData) <= 0) {
-      Logger::error("Found 0 valid data rows while loading inno data for endpoint " . $Endpoint);
+      Logger::error("Found 0 valid data rows while loading inno data for conquers endpoint " . $Url);
       die();
     }
 
     if ($InvalidRows > 0) {
-      Logger::warning("Retrieved ".$InvalidRows." invalid rows from endpoint: " . $Endpoint);
+      Logger::warning("Retrieved ".$InvalidRows." invalid rows from conquers endpoint: " . $Url);
     }
 
     return $aData;
@@ -289,13 +288,13 @@ class InnoData
     }
 
     if (sizeof($aData) <= 0) {
-      Logger::error("Found 0 valid data rows while loading inno data for endpoint " . $Endpoint);
+      Logger::error("Found 0 valid data rows while loading inno data for player_att endpoint " . $Url);
       return false;
       //      die();
     }
 
     if ($InvalidRows > 0) {
-      Logger::warning("Retrieved ".$InvalidRows." invalid rows from endpoint: " . $Endpoint);
+      Logger::warning("Retrieved ".$InvalidRows." invalid rows from player_att endpoint: " . $Url);
     }
 
     return $aData;
@@ -334,13 +333,13 @@ class InnoData
     }
 
     if (sizeof($aData) <= 0) {
-      Logger::error("Found 0 valid data rows while loading inno data for endpoint " . $Endpoint);
+      Logger::error("Found 0 valid data rows while loading inno data for player_kills endpoint " . $Url);
 //      die();
       return false;
     }
 
     if ($InvalidRows > 0) {
-      Logger::warning("Retrieved ".$InvalidRows." invalid rows from endpoint: " . $Endpoint);
+      Logger::warning("Retrieved ".$InvalidRows." invalid rows from player_kills endpoint: " . $Url);
     }
 
     return $aData;
@@ -378,13 +377,13 @@ class InnoData
     }
 
     if (sizeof($aData) <= 0) {
-      Logger::error("Found 0 valid data rows while loading inno data for endpoint " . $Endpoint);
+      Logger::error("Found 0 valid data rows while loading inno data for player_def endpoint " . $Url);
       return false;
 //      die();
     }
 
     if ($InvalidRows > 0) {
-      Logger::warning("Retrieved ".$InvalidRows." invalid rows from endpoint: " . $Endpoint);
+      Logger::warning("Retrieved ".$InvalidRows." invalid rows from player_def endpoint: " . $Url);
     }
 
     return $aData;
@@ -422,12 +421,12 @@ class InnoData
     }
 
     if (sizeof($aData) <= 0) {
-      Logger::error("Found 0 valid data rows while loading inno data for endpoint " . $Endpoint);
+      Logger::error("Found 0 valid data rows while loading inno data for alliance_att endpoint " . $Url);
       die();
     }
 
     if ($InvalidRows > 0) {
-      Logger::warning("Retrieved ".$InvalidRows." invalid rows from endpoint: " . $Endpoint);
+      Logger::warning("Retrieved ".$InvalidRows." invalid rows from alliance_att endpoint: " . $Url);
     }
 
     return $aData;
@@ -465,12 +464,12 @@ class InnoData
     }
 
     if (sizeof($aData) <= 0) {
-      Logger::error("Found 0 valid data rows while loading inno data for endpoint " . $Endpoint);
+      Logger::error("Found 0 valid data rows while loading inno data for alliance_def endpoint " . $Url);
       die();
     }
 
     if ($InvalidRows > 0) {
-      Logger::warning("Retrieved ".$InvalidRows." invalid rows from endpoint: " . $Endpoint);
+      Logger::warning("Retrieved ".$InvalidRows." invalid rows from alliance_def endpoint: " . $Url);
     }
 
     return $aData;
