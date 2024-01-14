@@ -8,8 +8,7 @@ use Grepodata\Library\Logger\Logger;
 
 class World
 {
-  private static $aServers = array('ar', 'br', 'cz', 'de', 'dk', 'en', 'es', 'fr', 'gr', 'hu', 'it',
-    'nl', 'no', 'pl', 'pt', 'ro', 'ru', 'se', 'sk', 'tr', 'us', 'zz');
+  private static $aServers = array('ar', 'br', 'cz', 'de', 'en', 'es', 'fr', 'gr', 'hu', 'it', 'nl', 'no', 'pl', 'pt', 'ro', 'ru', 'se', 'sk', 'tr', 'us', 'zz');
 
   /**
    * @param $WorldId
