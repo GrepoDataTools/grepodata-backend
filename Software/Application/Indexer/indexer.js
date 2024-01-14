@@ -463,7 +463,7 @@ var errorSubmissions = [];
                 for(var i = 0; i < notification.msg.length; i++) {
                     row += renderPushPart(notification.msg[i]);
                 }
-                row += `<br/>${notification.date} - Team: <a href="${frontend_url}/operations/${notification.team}/${notification.world}" target="_blank" style="">${notification.team_name}</a></span></li>`;
+                row += `<br/>${notification.date} - Team: <a href="${frontend_url}/operations/${notification.team}/${notification.world}" target="_blank" style="">${notification.team_name}</a> (${notification.world})</span></li>`;
                 return row
             }
             let push_row_html = ''
@@ -3934,8 +3934,21 @@ var errorSubmissions = [];
                     }
                 }
 
-                // Add to in-memory notification list
+                // Check for world mismatch
+                if (doShowNotification && 'world' in notification && notification.world != null && Game.world_id != null) {
+                    if (Game.world_id != notification.world) {
+                        // Event happened on another world; do not show notification
+                        doShowNotification = false;
+                    }
+                }
+
                 if (ops_notificaiton) {
+                    // Increment passive ops event counter
+                    notifications_count_indicator += 1;
+                    $('.gd-teamops-indicator').get(0).innerText = notifications_count_indicator;
+                    $('.gd-teamops-indicator').get(0).style.display = 'inline';
+
+                    // Add to in-memory notification list
                     ops_notifications.unshift(notification)
                 }
 
@@ -4011,10 +4024,6 @@ var errorSubmissions = [];
                             });
                         }, 200);
                     }
-
-                    notifications_count_indicator += 1;
-                    $('.gd-teamops-indicator').get(0).innerText = notifications_count_indicator;
-                    $('.gd-teamops-indicator').get(0).style.display = 'inline';
                 }
             } catch (e) {
                 errorHandling(e, "showNotification")
