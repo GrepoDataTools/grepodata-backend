@@ -55,6 +55,40 @@ class Town
   }
 
   /**
+   * Return a list of all towns within a certain range from a given target. Also expands the response with player and alliance names
+   * @param string $World
+   * @param int $FromX
+   * @param int $FromY
+   * @param int $Margin
+   * @return \Grepodata\Library\Model\Town[]
+   */
+  public static function allInRangeExpanded(string $World, int $FromX, int $FromY, int $Margin)
+  {
+    // Uses index: world, absolute_x, absolute_y
+    return \Grepodata\Library\Model\Town::select([
+      'Town.*',
+      'Player.alliance_id',
+      'Player.name AS player_name',
+      'Alliance.name AS alliance_name',
+    ])
+      ->leftJoin('Player', function($join)
+      {
+        $join->on('Player.grep_id', '=', 'Town.player_id')
+          ->on('Player.world', '=', 'Town.world');
+      })
+      ->leftJoin('Alliance', function($join)
+      {
+        $join->on('Alliance.grep_id', '=', 'Player.alliance_id')
+          ->on('Player.world', '=', 'Alliance.world');
+      })
+      ->where('Town.world', '=', $World)
+      ->whereRaw('ABS(Town.absolute_x-'.$FromX.') + ABS(Town.absolute_y-'.$FromY.') <= '.($Margin*1.5))
+      ->get();
+
+    // We could use ST_Distance but it is too slow on big query sets ->whereRaw('ST_Distance(point('.$FromX.', '.$FromY.'), point(Town.absolute_x, Town.absolute_y)) <= '.$Margin)
+  }
+
+  /**
    * @param $World
    * @param $TownName
    * @param $PlayerId

@@ -40,6 +40,74 @@ class Town extends \Grepodata\Library\Router\BaseRoute
     }
   }
 
+  /**
+   * Route: /town/radar
+   * Method: GET
+   * Params: world, town_id, margin
+   * E.g.: https://api.grepodata.com/town/radar?world=fr159&town_id=1124&margin=1000
+   */
+  public static function TownRadarGET()
+  {
+    $aParams = array();
+    try {
+      // Validate params
+      $aParams = self::validateParams(array('world', 'town_id', 'margin'));
+
+      $TownFrom = \Grepodata\Library\Controller\Town::firstById($aParams['world'], $aParams['town_id']);
+      $aTowns = \Grepodata\Library\Controller\Town::allInRangeExpanded($aParams['world'], $TownFrom->absolute_x, $TownFrom->absolute_y, (int) $aParams['margin']);
+
+      $aResponse = array();
+      $margin = (int) $aParams['margin'];
+      foreach ($aTowns as $oTown) {
+
+        $dist = (int) sqrt(pow(($TownFrom->absolute_x - $oTown->absolute_x), 2) + pow(($TownFrom->absolute_y - $oTown->absolute_y), 2));
+
+        if ($dist > $margin) {
+          continue;
+        }
+
+        $aTownData = array(
+          "alliance_id" => $oTown->alliance_id,
+          "alliance_name" => $oTown->alliance_name,
+          //"dir" => "sw",
+          //"fc" => "BB5511",
+          //"fx" => 65,
+          //"fy" => 15,
+          "id" => $oTown->grep_id,
+          "name" => $oTown->name,
+          "nr" => $oTown->island_i,
+          //"ox" => $oTown->island_x,
+          //"oy" => $oTown->island_y,
+          "player_id" => $oTown->player_id,
+          "player_name" => $oTown->player_name,
+          "points" => $oTown->points,
+          //"reservation" => null,
+          "x" => $oTown->island_x,
+          "y" => $oTown->island_y,
+          "tp" => "town",
+          "abs_x" => $oTown->absolute_x,
+          "abs_y" => $oTown->absolute_y,
+          "distance" => $dist
+        );
+        $aResponse[] = $aTownData;
+      }
+
+      usort($aResponse, function ($a, $b) {
+        return ($a['distance'] < $b['distance']) ? -1 : 1;
+      });
+
+      $aResponse = array(
+        'towns' => $aResponse
+      );
+      return self::OutputJson($aResponse);
+    } catch (ModelNotFoundException $e) {
+      die(self::OutputJson(array(
+        'message'     => 'No towns found for these parameters.',
+        'parameters'  => $aParams
+      ), 404));
+    }
+  }
+
   public static function PlayerTownsGET()
   {
     $aParams = array();

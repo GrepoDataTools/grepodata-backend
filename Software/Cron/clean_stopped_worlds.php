@@ -40,6 +40,8 @@ $Worlds = World::where('stopped', '=', 1, 'and')
   ->where('updated_at', '<', $Limit)
   ->get();
 
+// Skipped cleaning: nl66, nl92, zz9, zz17 (as of 01-2024)
+
 /** @var World $oWorld */
 foreach ($Worlds as $oWorld) {
   // Check commands 'php SCRIPTNAME[=0] WORLD[=1]'

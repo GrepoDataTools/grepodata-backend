@@ -345,6 +345,10 @@ $oRouter->Add('townSearch', new Route('/town/search', array(
   '_controller' => '\Grepodata\Application\API\Route\Town',
   '_method'     => 'Search'
 )));
+$oRouter->Add('townRadar', new Route('/town/radar', array(
+  '_controller' => '\Grepodata\Application\API\Route\Town',
+  '_method'     => 'TownRadar'
+)));
 
 // Indexer routes (V2)
 $oRouter->Add('getWorlds', new Route('/indexer/worlds', array(

@@ -14,6 +14,9 @@ use \Illuminate\Database\Eloquent\Model;
  * @property mixed island_x
  * @property mixed island_y
  * @property mixed island_i
+ * @property mixed island_type
+ * @property mixed absolute_x
+ * @property mixed absolute_y
  */
 class Town extends Model
 {

@@ -139,11 +139,11 @@ class Daily
         } else {
           // Player is no longer listed in server data > no longer playing: soft delete
           $oPlayer->points = 0;
-          $oPlayer->active = false;
+          $oPlayer->active = false; // setting active to false will prevent the ES import from reindexing the player
           $oPlayer->save();
           $NumDeleted++;
 
-          Import::DeletePlayer($oPlayer);
+          Import::DeletePlayer($oPlayer);  // player is deleted from ES to hide them from search results & ranking
         }
 
       } catch (\Exception $e) {
