@@ -1,0 +1,48 @@
+{
+    "towns": [
+        {
+            "alliance_id": 126,
+            "alliance_name": "het Verzet",
+            "dir": "se",
+            "fc": "BB5511",
+            "fx": 44,
+            "fy": 6,
+            "id": 1121,
+            "name": "koekjes",
+            "nr": 9,
+            "ox": 447,
+            "oy": 213,
+            "player_id": 1388868,
+            "player_name": "koekje erbij",
+            "points": 1921,
+            "reservation": null,
+            "x": 516,
+            "y": 476,
+            "tp": "town",
+            "abs_x": 66510,
+            "abs_y": 61144
+        },
+        {
+            "alliance_id": 7,
+            "alliance_name": "Bloempot kapsel",
+            "dir": "ne",
+            "fc": "BB5511",
+            "fx": 17,
+            "fy": 21,
+            "id": 840,
+            "name": "54.02 Silver City",
+            "nr": 8,
+            "ox": 508,
+            "oy": 187,
+            "player_id": 437764,
+            "player_name": "Marten",
+            "points": 9443,
+            "reservation": null,
+            "x": 516,
+            "y": 476,
+            "tp": "town",
+            "abs_x": 66573,
+            "abs_y": 61126
+        }
+    ]
+}
