@@ -44,14 +44,4 @@ class Search extends \Grepodata\Library\Router\BaseRoute
     }
   }
 
-  public static function SearchPlayersGET()
-  {
-    die(self::OutputJson(array('deprecated' => true), 200));
-  }
-
-  public static function SearchTownsGET()
-  {
-    die(self::OutputJson(array('deprecated' => true), 200));
-  }
-
 }

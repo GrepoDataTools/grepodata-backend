@@ -221,10 +221,6 @@ $oRouter->Add('getTowns', new Route('/towns', array(
   '_controller' => '\Grepodata\Application\API\Route\Town',
   '_method'     => 'Towns'
 )));
-$oRouter->Add('getIslands', new Route('/islands', array(
-  '_controller' => '\Grepodata\Application\API\Route\Island',
-  '_method'     => 'Islands'
-)));
 
 // Search
 $oRouter->Add('searchV2', new Route('/search', array(
@@ -456,18 +452,6 @@ $oRouter->Add('leaveindex', new Route('/indexer/settings/leave', array(
 )));
 
 // Intel search (V2)
-$oRouter->Add('searchindexplayers', new Route('/indexer/search/player', array(
-  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Search',
-  '_method'     => 'SearchPlayers'
-)));
-$oRouter->Add('searchindextowns', new Route('/indexer/search/town', array(
-  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Search',
-  '_method'     => 'SearchTowns'
-)));
-$oRouter->Add('searchindexislands', new Route('/indexer/search/island', array(
-  '_controller' => '\Grepodata\Application\API\Route\IndexV2\Search',
-  '_method'     => 'SearchIslands'
-)));
 $oRouter->Add('searchindexusers', new Route('/indexer/search/user', array(
   '_controller' => '\Grepodata\Application\API\Route\IndexV2\Search',
   '_method'     => 'SearchUsers'

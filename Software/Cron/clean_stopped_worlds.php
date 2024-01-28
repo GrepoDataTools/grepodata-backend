@@ -14,7 +14,6 @@ use Grepodata\Library\Model\Conquest;
 use Grepodata\Library\Model\IndexV2\Intel;
 use Grepodata\Library\Model\IndexV2\IntelShared;
 use Grepodata\Library\Controller\IndexV2\DailyReport;
-use Grepodata\Library\Model\Island;
 use Grepodata\Library\Model\Player;
 use Grepodata\Library\Model\PlayerHistory;
 use Grepodata\Library\Model\PlayerScoreboard;
@@ -95,10 +94,6 @@ foreach ($Worlds as $oWorld) {
     // Towns
     $Deleted = Town::where('world', '=', $oWorld->grep_id)->delete();
     Logger::debugInfo("Deleted $Deleted towns");
-
-    // Islands
-    $Deleted = Island::where('world', '=', $oWorld->grep_id)->delete();
-    Logger::debugInfo("Deleted $Deleted islands");
 
     // Conquests
     $Deleted = Conquest::where('world', '=', $oWorld->grep_id)->delete();

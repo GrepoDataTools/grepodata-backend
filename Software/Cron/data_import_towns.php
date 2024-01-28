@@ -63,8 +63,6 @@ foreach ($worlds as $world) {
     Logger::debugInfo("Processing world " . $world->grep_id);
     Logger::debugInfo("Towns import memory usage: used=" . round(memory_get_usage(false)/1048576,2) . "MB, real=" . round(memory_get_usage(true)/1048576,2) . "MB");
 
-    Towns::DataImportIslands($world);
-
     Towns::DataImportTowns($world, $aUnconfirmedLinks, $aTownOffsets);
 
     Logger::silly("Finished updating towns.");

@@ -3,6 +3,7 @@
 namespace Grepodata\Library\Import;
 
 use Carbon\Carbon;
+use Exception;
 use Grepodata\Library\Controller\Alliance;
 use Grepodata\Library\Controller\Island;
 use Grepodata\Library\Controller\Player;
@@ -19,51 +20,6 @@ use Grepodata\Library\Model\World;
 class Towns
 {
 
-  public static function DataImportIslands(World $oWorld)
-  {
-    $oIsland = Island::firstByWorld($oWorld->grep_id);
-    if ($oIsland !== null && $oIsland !== false) {
-      // Is indexed
-      return true;
-    }
-    Logger::warning("Importing islands for world: " . $oWorld->grep_id);
-
-    // get endpoint data
-    $aIslandData = InnoData::loadIslandData($oWorld->grep_id);
-    $Total = sizeof($aIslandData);
-    Logger::silly("Downloaded island data for world " . $oWorld->grep_id . ": ".$Total." Islands.");
-
-    // handle island data
-    $num = 0;
-    $batchSize = 5000;
-    $aRows = array();
-    $now = Carbon::now()->toDateTimeString();
-    foreach ($aIslandData as $aData) {
-      try {
-        $num++;
-        $aData['world'] = $oWorld->grep_id;
-        $aData['created_at'] = $now;
-        $aData['updated_at'] = $now;
-        $aRows[] = $aData;
-
-        if (sizeof($aRows) > 0 && sizeof($aRows) % $batchSize == 0) {
-          // batch insert
-          $batch_insert = \Grepodata\Library\Model\Island::insert($aRows);
-          $aRows = array();
-          if ($batch_insert === false) {
-            Logger::warning("island batch insert result is false");
-          }
-        }
-      } catch (\Exception $e) {
-        Logger::warning("Exception while updating island with id " . (isset($aData['grep_id'])?$aData['grep_id']:'?') . " (world ".$oWorld->grep_id.") [".$e->getMessage()."]");
-      }
-    }
-    Logger::silly("Updated " . $num . " islands");
-
-    unset($aIslandsData);
-    return true;
-  }
-
   public static function DataImportTowns(World $oWorld, $aUnconfirmedLinks = array(), $aTownOffsets = null)
   {
     // get endpoint data
@@ -76,10 +32,15 @@ class Towns
     Logger::silly("Loaded local town data for world " . $oWorld->grep_id . ": ".sizeof($aPreviousData)." Towns.");
 
     // Hashmaps
-    $aIslandCache = array();
     if ($aTownOffsets == null) {
       $aTownOffsets = TownOffset::getAllAsHasmap();
     }
+    $aIslandData = InnoData::loadIslandData($oWorld->grep_id);
+    $aIslandTypeMap = array();
+    foreach ($aIslandData as $aIsland) {
+      $aIslandTypeMap[$aIsland['island_x']."_".$aIsland['island_y']] = $aIsland['island_type'];
+    }
+    unset($aIslandData);
 
     // handle town data
     $NumNew = 0;
@@ -147,30 +108,31 @@ class Towns
           // Calculate absolute coordinates for new town
           if ($bNew) {
 
-            // Get island
-            $IslandId = $oTown->island_x . "_" . $oTown->island_y . "_" . $oTown->world;
-            if (key_exists($IslandId, $aIslandCache)) {
-              $oIsland = $aIslandCache[$IslandId];
-            } else {
-              $oIsland = Island::firstByXY($oTown->island_x, $oTown->island_y, $oTown->world);
-              $aIslandCache[$IslandId] = $oIsland;
+            try {
+              if ($oTown->island_x == null || $oTown->island_y == null || $oTown->island_i == null) {
+                throw new Exception("Invalid data for new town. " . json_encode($oTown));
+              }
+
+              // Get island
+              $IslandId = $oTown->island_x . "_" . $oTown->island_y;
+              if (key_exists($IslandId, $aIslandTypeMap)) {
+                $IslandType = $aIslandTypeMap[$IslandId];
+
+                // Get offset
+                $OffsetKey = TownOffset::getKeyForTown($oTown);
+                $oOffset = $aTownOffsets[$OffsetKey];
+
+                // Calculate coordinates
+                $aCoordinates = TownOffset::getAbsoluteTownCoordinates($oTown, $oOffset);
+                $oTown->absolute_x = $aCoordinates[0];
+                $oTown->absolute_y = $aCoordinates[1];
+                $oTown->island_type = $IslandType;
+              } else {
+                Logger::warning("New town import; island not found: [$oTown->grep_id] -> $oTown->island_x, $oTown->island_y, $oTown->world");
+              }
+            } catch (\Exception $e) {
+              Logger::error("New town import; unexpected error: ". $e->getMessage() . "[".$e->getTraceAsString()."]");
             }
-
-            if ($oIsland == false) {
-              Logger::warning("New town import; island not found: [$oTown->grep_id] -> $oTown->island_x, $oTown->island_y, $oTown->world");
-            } else {
-
-              // Get offset
-              $OffsetKey = TownOffset::getKeyForTown($oTown, $oIsland);
-              $oOffset = $aTownOffsets[$OffsetKey];
-
-              // Calculate coordinates
-              $aCoordinates = Island::getAbsoluteTownCoordinates($oIsland, $oOffset);
-              $oTown->absolute_x = $aCoordinates[0];
-              $oTown->absolute_y = $aCoordinates[1];
-              $oTown->island_type = $oIsland->island_type;
-            }
-
           }
 
           $oTown->save();
@@ -196,6 +158,7 @@ class Towns
       }
     }
     unset($aPreviousData);
+    unset($aIslandTypeMap);
 
     // Parse ghosted players
     try {

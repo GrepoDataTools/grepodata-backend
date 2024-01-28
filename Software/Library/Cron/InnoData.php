@@ -184,7 +184,7 @@ class InnoData
       }
 
       $aData[] = array(
-        'grep_id'  => $parts[0],
+//        'grep_id'  => $parts[0], // unused for now
         'island_x' => $parts[1],
         'island_y' => $parts[2],
         'island_type' => $parts[3],

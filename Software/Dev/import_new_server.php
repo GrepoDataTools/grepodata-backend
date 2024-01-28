@@ -90,10 +90,6 @@ foreach ($aRows as $aColumns) {
       if (Towns::DataImportTowns($oWorld) !== true) {
         throw new \Exception("Towns import failed for new world.");
       }
-      Logger::debugInfo('Towns import completed. Starting islands import for new world.');
-      if (Towns::DataImportIslands($oWorld) !== true) {
-        throw new \Exception("Islands import failed for new world.");
-      }
       Logger::debugInfo('Towns import completed. Starting elasticsearch import for new world.');
       if (Elasticsearch::DataImportElasticsearch($oWorld, true) !== true) {
         throw new \Exception("Elasticsearch import failed for new world.");

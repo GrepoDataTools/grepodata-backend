@@ -21,18 +21,6 @@ class Town
   }
 
   /**
-   * @param \Grepodata\Library\Model\Island oIsland
-   * @return \Grepodata\Library\Model\Town[]
-   */
-  public static function allByIsland(\Grepodata\Library\Model\Island $oIsland)
-  {
-    return \Grepodata\Library\Model\Town::where('world', '=', $oIsland->world, 'and')
-      ->where('island_x', '=', $oIsland->island_x, 'and')
-      ->where('island_y', '=', $oIsland->island_y)
-      ->get();
-  }
-
-  /**
    * @param $World
    * @param $UpdateLimit
    * @return \Grepodata\Library\Model\Town[]
