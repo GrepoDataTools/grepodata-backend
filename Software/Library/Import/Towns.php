@@ -117,6 +117,7 @@ class Towns
               $IslandId = $oTown->island_x . "_" . $oTown->island_y;
               if (key_exists($IslandId, $aIslandTypeMap)) {
                 $IslandType = $aIslandTypeMap[$IslandId];
+                $oTown->island_type = $IslandType;
 
                 // Get offset
                 $OffsetKey = TownOffset::getKeyForTown($oTown);
@@ -126,7 +127,6 @@ class Towns
                 $aCoordinates = TownOffset::getAbsoluteTownCoordinates($oTown, $oOffset);
                 $oTown->absolute_x = $aCoordinates[0];
                 $oTown->absolute_y = $aCoordinates[1];
-                $oTown->island_type = $IslandType;
               } else {
                 Logger::warning("New town import; island not found: [$oTown->grep_id] -> $oTown->island_x, $oTown->island_y, $oTown->world");
               }
