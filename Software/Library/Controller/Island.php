@@ -2,6 +2,7 @@
 
 namespace Grepodata\Library\Controller;
 
+use Grepodata\Library\Model\TownOffset;
 use Illuminate\Database\Eloquent\Model;
 
 class Island
@@ -85,5 +86,24 @@ class Island
       ->where('island_y','>=', $y_min)
       ->where('island_y','<=', $y_max)
       ->cursor();
+  }
+
+  /**
+   * Helper function to give the absolute coordinates of a town based on the island and town offset
+   * @param \Grepodata\Library\Model\Island $oIsland
+   * @param TownOffset $oTownOffset
+   * @return array [x, y]
+   */
+  public static function getAbsoluteTownCoordinates(\Grepodata\Library\Model\Island $oIsland, TownOffset $oTownOffset)
+  {
+    $IslandAbsX = 128 * $oIsland->island_x;
+    $IslandAbsY = 128 * $oIsland->island_y;
+    $TownAbsX = $IslandAbsX + $oTownOffset->town_offset_x;
+    $TownAbsY = $IslandAbsY + $oTownOffset->town_offset_y;
+
+    return array(
+      $TownAbsX, //
+      $oIsland->island_x % 2 == 1 ? $TownAbsY+64 : $TownAbsY, // add 64 (= half of ytile size) if islandx is odd
+    );
   }
 }

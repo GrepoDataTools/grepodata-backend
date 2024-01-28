@@ -4,6 +4,7 @@ namespace Grepodata\Cron;
 
 use Carbon\Carbon;
 use Grepodata\Library\Controller\IndexV2\Linked;
+use Grepodata\Library\Controller\TownOffset;
 use Grepodata\Library\Cron\Common;
 use Grepodata\Library\Import\Towns;
 use Grepodata\Library\Logger\Logger;
@@ -51,6 +52,9 @@ try {
   Logger::error("Town import: Unable to retrieve unconfirmed account links");
 }
 
+// Get town offset hashmap
+$aTownOffsets = TownOffset::getAllAsHasmap();
+
 foreach ($worlds as $world) {
   // Check commands 'php SCRIPTNAME[=0] WORLD[=1]'
   if (isset($argv[1]) && $argv[1]!=null && $argv[1]!='' && $argv[1]!=$world->grep_id) continue;
@@ -61,7 +65,7 @@ foreach ($worlds as $world) {
 
     Towns::DataImportIslands($world);
 
-    Towns::DataImportTowns($world, $aUnconfirmedLinks);
+    Towns::DataImportTowns($world, $aUnconfirmedLinks, $aTownOffsets);
 
     Logger::silly("Finished updating towns.");
 
