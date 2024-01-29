@@ -51,7 +51,7 @@ foreach ($aWorlds as $oWorld) {
       echo $oWorld->grep_id . " " . $j . "/" . count($aWorlds) . " -> towns: " . $i . "/" . count($aTowns) . " (corrupt: ".$corrupt.")" . PHP_EOL;
     }
 
-    if ($oTown->island_x == null || $oTown->island_y == null || $oTown->island_i == null) {
+    if (is_null($oTown->island_x) || is_null($oTown->island_y) || is_null($oTown->island_i)) {
       $corrupt++;
       continue;
     }
