@@ -3,7 +3,6 @@
 namespace Grepodata\Cron;
 
 use Carbon\Carbon;
-use Grepodata\Library\Controller\IndexV2\Linked;
 use Grepodata\Library\Controller\TownOffset;
 use Grepodata\Library\Cron\Common;
 use Grepodata\Library\Import\Towns;
@@ -30,28 +29,6 @@ if ($worlds === false) {
   Common::endExecution(__FILE__);
 }
 
-// Get unconfirmed link requests
-$aUnconfirmedLinks = array();
-try {
-  $aUnconfirmedLinksRaw = Linked::getAllUnconfirmed();
-
-  // Check expiration
-  $Limit = Carbon::now();
-  $Limit = $Limit->subDays(30);
-  /** @var \Grepodata\Library\Model\IndexV2\Linked $oLinked */
-  foreach ($aUnconfirmedLinksRaw as $oLinked) {
-    if ($oLinked->created_at < $Limit) {
-      // Account link request expired
-      Logger::warning("Account link request expired for user ".$oLinked->user_id);
-      $oLinked->delete();
-    } else {
-      $aUnconfirmedLinks[] = $oLinked;
-    }
-  }
-} catch (\Exception $e) {
-  Logger::error("Town import: Unable to retrieve unconfirmed account links");
-}
-
 // Get town offset hashmap
 $aTownOffsets = TownOffset::getAllAsHasmap();
 
@@ -63,7 +40,7 @@ foreach ($worlds as $world) {
     Logger::debugInfo("Processing world " . $world->grep_id);
     Logger::debugInfo("Towns import memory usage: used=" . round(memory_get_usage(false)/1048576,2) . "MB, real=" . round(memory_get_usage(true)/1048576,2) . "MB");
 
-    Towns::DataImportTowns($world, $aUnconfirmedLinks, $aTownOffsets);
+    Towns::DataImportTowns($world, $aTownOffsets);
 
     Logger::silly("Finished updating towns.");
 

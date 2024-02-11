@@ -28,8 +28,11 @@ if ($aWorlds === false) {
 $aOffsetMap = TownOffset::getAllAsHasmap();
 
 $j=0;
+$NumSkipped = 0;
 foreach ($aWorlds as $oWorld) {
   $j++;
+  if ($j < $NumSkipped) continue;
+
   // Check commands 'php SCRIPTNAME[=0] WORLD[=1]'
   if (isset($argv[1]) && $argv[1] != null && $argv[1] != '' && $argv[1] != $oWorld->grep_id) continue;
 
@@ -69,6 +72,11 @@ foreach ($aWorlds as $oWorld) {
 
     // Get offset
     $OffsetKey = TownOffset::getKeyForTown($oTown);
+    if (!key_exists($OffsetKey, $aOffsetMap)) {
+        echo "Offset not found: [$oTown->grep_id] -> $oTown->island_type _ $oTown->island_i, $oTown->world".PHP_EOL;
+        $corrupt++;
+        continue;
+    }
     $oOffset = $aOffsetMap[$OffsetKey];
 
     // Calculate abs x y

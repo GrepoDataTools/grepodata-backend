@@ -128,6 +128,7 @@ class Town extends \Grepodata\Library\Router\BaseRoute
     }
   }
 
+  /** @Unused */
   public static function GetTownInfoGET()
   {
     $aParams = array();

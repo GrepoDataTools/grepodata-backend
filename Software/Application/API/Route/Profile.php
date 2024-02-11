@@ -3,13 +3,11 @@
 namespace Grepodata\Application\API\Route;
 
 use Grepodata\Library\Controller\IndexV2\IndexOverview;
-use Grepodata\Library\Controller\IndexV2\Linked;
 use Grepodata\Library\Controller\IndexV2\Roles;
 use Grepodata\Library\Controller\World;
 use Grepodata\Library\Logger\Logger;
 use Grepodata\Library\Router\BaseRoute;
 use Grepodata\Library\Router\ResponseCode;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class Profile extends BaseRoute
 {

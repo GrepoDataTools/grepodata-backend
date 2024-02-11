@@ -135,7 +135,7 @@ class InnoData
         continue;
       }
 
-      $aData[] = array(
+      $aData[$parts[0]] = array(
         'grep_id'           => $parts[0],
         'player_id'         => (($parts[1]=='') ? '0' : $parts[1]),
         'name'              => urldecode($parts[2]),
@@ -148,7 +148,6 @@ class InnoData
 
     if (sizeof($aData) <= 0) {
       Logger::error("Found 0 valid data rows while loading inno data for town endpoint " . $Url);
-//      die();
     }
 
     if ($InvalidRows > 0) {

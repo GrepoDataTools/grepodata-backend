@@ -88,6 +88,7 @@ class Elasticsearch
     unset($aPlayers);
 
     // Import towns
+    // TODO: add abs x/y and island type to towns (+ historic fix)
     if ($bForceAllObjects) {
       $aTowns = Town::allByWorld($oWorld->grep_id);
     } else {
