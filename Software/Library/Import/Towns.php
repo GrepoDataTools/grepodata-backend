@@ -39,7 +39,7 @@ class Towns
     if ($Total < (.90 * $DatabaseTowns)) {
       Logger::warning("Remote town data size too small! Database count: " . $DatabaseTowns . ", remote count: " . $Total);
     }
-    if ($Total < (.50 * $DatabaseTowns)) {
+    if ($Total < (.1 * $DatabaseTowns)) {
       Logger::error("Remote town data size mismatch! Database count: " . $DatabaseTowns . ", remote count: " . $Total . ". Stopping town import for world ".$oWorld->grep_id);
       return false;
     }
@@ -62,7 +62,13 @@ class Towns
     $NumDeleted = 0;
     $NumGhosts = 0;
     $aGhostedPlayers = array();
+    $i=0;
+    $log_steps = (int) $DatabaseTowns / 5;
     foreach ($aTowns as $oTown) {
+      $i++;
+      if ($i % $log_steps == 0) {
+        Logger::silly("Progress: ".$i."/".$DatabaseTowns);
+      }
       try {
         // Find database town in server town data
         if ($aData = $aTownData[$oTown->grep_id] ?? null) {
@@ -72,15 +78,8 @@ class Towns
             || $oTown->points != $aData['points']
             || $oTown->name != $aData['name']
           ) {
-            // Update town data
-            $NumUpdated++;
-            foreach ($aData as $Key => $Value) {
-              $oTown->$Key = $Value;
-            }
-            $oTown->save();
-
             // Check if town is ghost town
-            if ($aData['player_id'] == 0 && $oTown->player_id) {
+            if ($aData['player_id'] == 0 && $oTown->player_id > 0) {
               // player ghosted. trigger ghost event
               $NumGhosts++;
               try {
@@ -104,6 +103,13 @@ class Towns
                 Logger::warning("Error handling ghost town event ". $oWorld->grep_id." ".$oTown->grep_id. " - ".$e->getMessage());
               }
             }
+
+            // Update town data
+            $NumUpdated++;
+            foreach ($aData as $Key => $Value) {
+                $oTown->$Key = $Value;
+            }
+            $oTown->save();
           } else {
             // No data updates; skip
             $NumSkipped++;
@@ -193,7 +199,7 @@ class Towns
     if ($NumSkipped + $NumNew + $NumUpdated != $Total) {
       Logger::warning("Town import: Update count mismatch");
     }
-    Logger::silly("Town update stats for world " .$oWorld->grep_id. ". Total: ".$Total.", Skipped: ".$NumSkipped.", Updated: ".$NumUpdated.", New: " . $NumNew);
+    Logger::silly("Town update stats for world " .$oWorld->grep_id. ". Total: ".$Total.", Skipped: ".$NumSkipped.", Updated: ".$NumUpdated.", Deleted: ".$NumDeleted.", New: " . $NumNew.", Ghosts: " . $NumGhosts);
 
     unset($aIslandTypeMap);
     unset($aTownData);
