@@ -283,7 +283,6 @@ var errorSubmissions = [];
                             setTimeout(_ => {parseAttackPlanner(xhr)}, 20);
                         }
                         break;
-                    // TODO: index own units: MM.getModels().Units
                 }
             } catch (error) {
                 errorHandling(error, "handleAjaxCompleteObserver");
@@ -2980,8 +2979,8 @@ var errorSubmissions = [];
                         '\t\t\t</div><br/><br/>\n' +
                         '\t\t\t<div class="gd_shortcut_settings" style="margin-left: 45px; margin-right: 20px; border: 1px solid black;"><table style="width: 100%;">\n' +
                         '\t\t\t\t<tr><th style="width: 50%;">' + translate.SHORTCUT_FUNCTION + '</th><th>Shortcut</th></tr>\n' +
-                        '\t\t\t\t<tr><td>' + translate.SHORTCUTS_INBOX_PREV + '</td><td>' + gd_settings.key_inbox_prev + '</td></tr>\n' +
-                        '\t\t\t\t<tr><td>' + translate.SHORTCUTS_INBOX_NEXT + '</td><td>' + gd_settings.key_inbox_next + '</td></tr>\n' +
+                        '\t\t\t\t<tr><td>' + translate.SHORTCUTS_INBOX_PREV + '</td><td><span class="gd_edit_prev">' + gd_settings.key_inbox_prev + '</span><button class="gd_edit gd_edit_prev_btn" style="margin-left: 20px;">Edit</button></td></tr>\n' +
+                        '\t\t\t\t<tr><td>' + translate.SHORTCUTS_INBOX_NEXT + '</td><td><span class="gd_edit_next">' + gd_settings.key_inbox_next + '</span><button class="gd_edit gd_edit_next_btn" style="margin-left: 20px;">Edit</button></td></tr>\n' +
                         '\t\t\t</table></div>\n' +
                         '\t\t\t<br/><hr>';
 
@@ -3030,6 +3029,26 @@ var errorSubmissions = [];
                         $('#gd_settings_container').get(0).style.display = "block";
                     });
 
+                    $(".gd_edit_prev_btn").click(function () {
+                        $(".gd_edit_prev_btn").get(0).innerText = "Press a key";
+                        changeKeyListener(function (key) {
+                            console.log('new key: ', key);
+                            gd_settings.key_inbox_prev = key;
+                            saveSettings();
+                            $(".gd_edit_prev").get(0).innerText = key;
+                            $(".gd_edit_prev_btn").get(0).innerText = "Edit";
+                        });
+                    });
+                    $(".gd_edit_next_btn").click(function () {
+                        $(".gd_edit_next_btn").get(0).innerText = "Press a key";
+                        changeKeyListener(function (key) {
+                            console.log('new key: ', key);
+                            gd_settings.key_inbox_next = key;
+                            saveSettings();
+                            $(".gd_edit_next").get(0).innerText = key;
+                            $(".gd_edit_next_btn").get(0).innerText = "Edit";
+                        });
+                    });
                     $(".inbox_gd_enabled").click(function () {
                         settingsCbx('inbox', !gd_settings.inbox);
                         if (!gd_settings.inbox) {
@@ -3084,6 +3103,14 @@ var errorSubmissions = [];
             } catch (error) {
                 errorHandling(error, "settings");
             }
+        }
+
+        function changeKeyListener(callback) {
+            function keydownListener(event) {
+                callback(event.key);
+                document.removeEventListener('keydown', keydownListener);
+            }
+            document.addEventListener('keydown', keydownListener);
         }
 
         function settingsCbx(type, value) {
