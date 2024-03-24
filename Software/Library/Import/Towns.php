@@ -63,7 +63,7 @@ class Towns
     $NumGhosts = 0;
     $aGhostedPlayers = array();
     $i=0;
-    $log_steps = (int) $DatabaseTowns / 5;
+    $log_steps = (int) max(1, $DatabaseTowns / 5);
     foreach ($aTowns as $oTown) {
       $i++;
       if ($i % $log_steps == 0) {

@@ -475,6 +475,16 @@ var errorSubmissions = [];
         }
 
         function renderTeamOpsOperations(data) {
+            if ('error_code' in data) {
+                if (data.error_code == 7202) {
+                    // user has no teams
+                    $('.teamops-active-ops-list').html(`You have not yet joined any teams on world ${Game.world_id}. <a className="gd-login-btn"
+                       href="https://grepodata.com/profile?action=new_team&world=`+Game.world_id+`" target="_blank">Create a new team</a>`);
+                } else {
+                    $('.teamops-active-ops-list').html(`Sorry, we were unable to load your active operations. Please try again later or contact us if this error persists`);
+                }
+                return;
+            }
             function renderOpsRow(op) {
                 // let player_html = ''
                 // for (const [player, count] of Object.entries(op.players)) {
