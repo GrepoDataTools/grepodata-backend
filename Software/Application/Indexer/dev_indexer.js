@@ -1113,13 +1113,14 @@ var errorSubmissions = [];
         var emojilist = [
             128077, // Thumbs up
             128078, // Thumbs down
+            10084, // Hearth
             128516, // happy eyes
             128533, // unhappy
             128525, // love
+            129315, // rofl
             127881, // party popper
             128640, // rocket
             128064, // eyes
-            129315, // rofl
             // 128512, // happy
             // 128528, // poker face
             // 128533, // unhappy
@@ -1128,6 +1129,25 @@ var errorSubmissions = [];
             // 128525, // love
             // 128540, // crazy face
         ]
+        var emojimap = {
+            128077: '&#128077;', // Thumbs up
+            128078: '&#128078;', // Thumbs down
+            10084: '&#10084&#65039;', // Hearth
+            128516: '&#128516;', // happy eyes
+            128533: '&#128533;', // unhappy
+            128525: '&#128525;', // love
+            127881: '&#127881;', // party popper
+            128640: '&#128640;', // rocket
+            128064: '&#128064;', // eyes
+            129315: '&#129315;', // rofl
+            // 128512: '&#128512;', // happy
+            // 128528: '&#128528;', // poker face
+            // 128533: '&#128533;', // unhappy
+            // 129300: '&#129300;', // think
+            // 128517: '&#128517;', // cold sweat
+            // 128525: '&#128525;', // love
+            // 128540: '&#128540;', // crazy face
+        }
         function renderForumReactions(thread_id) {
             try {
                 // Popup html
@@ -1153,16 +1173,16 @@ var errorSubmissions = [];
                 $('#gd_react_close').click(function () {$('#gd_new_reactions').hide();});
 
                 // Populate reaction popup
-                for (var i = 0; i < emojilist.length; i++) {
-                    var emoteHtml = `<div id="gd_react_new_${emojilist[i]}" data-emote="${emojilist[i]}" class="emote">&#${emojilist[i]};</div>`
+                emojilist.forEach((key) => {
+                    var emoteHtml = `<div id="gd_react_new_${key}" data-emote="${key}" class="emote">${emojimap[key]}</div>`
                     $('#gd_new_reactions_options').append(emoteHtml);
 
-                    $(`#gd_react_new_${emojilist[i]}`).click(function () {
+                    $(`#gd_react_new_${key}`).click(function () {
                         var reaction = $(this).data('emote')
                         addPostReaction(thread_id, active_react_post, reaction);
                         $('#gd_new_reactions').hide();
                     })
-                }
+                });
 
                 // Parse forum posts
                 $('#postlist>li').each(function () {
@@ -1204,17 +1224,17 @@ var errorSubmissions = [];
                 post_header.append(reactionsHtml);
 
                 // Add each emote
-                for (var i = emojilist.length-1; i >= 0; i--) {
-                    var emote = emojilist[i]
+                emojilist.slice().reverse().forEach((key) => {
+                    var emote = key
                     if (!(emote in data)) {
-                        continue;
+                        return;
                     }
                     var player_list = data[emote].players.join(", ");
                     var num_players = data[emote].players.length;
                     var react_class = 'gd_react_box' + (data[emote].active ? ' active':'');
-                    var emote_html = `<div id="gd_reactions_${post_id}_${emote}" data-emote="${emote}" class="${react_class}"><div>&#${emote}; <span class="count">${num_players}</span></div></div>`
+                    var emote_html = `<div id="gd_reactions_${post_id}_${emote}" data-emote="${emote}" class="${react_class}"><div>${emojimap[key]} <span class="count">${num_players}</span></div></div>`
                     $(`#gd_react_${post_id}`).prepend(emote_html);
-                    $(`#gd_reactions_${post_id}_${emote}`).tooltip(`${player_list} reacted with &#${emote};`);
+                    $(`#gd_reactions_${post_id}_${emote}`).tooltip(`${player_list} reacted with ${emojimap[key]}`);
 
                     $(`#gd_reactions_${post_id}_${emote}`).click(function () {
                         var toggled = !($(this).hasClass('active') ? true : false);
@@ -1236,7 +1256,7 @@ var errorSubmissions = [];
                         }
 
                     });
-                }
+                });
 
                 // Listerner for new reaction popup
                 $(`#gd_reactions_add_${post_id}`).click(function (event) {
