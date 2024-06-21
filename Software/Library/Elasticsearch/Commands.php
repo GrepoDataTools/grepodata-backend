@@ -345,6 +345,7 @@ class Commands
       try {
         // scenario 1: units changed after spell was applied to command --> doc exists but units update is required
         // scenario 2: hidden command reappears, but user already hard deleted the original upload --> doc exists but delete status needs to be reset
+        // scenario 3: friendly attack on a friendly town (e.g. under siege) --> duplicate command uploads by the attacker and the friendly defender --> only the attacker's command has unit info
 
         $aRetryParams = array(
           'index' => self::IndexIdentifier,
@@ -370,6 +371,7 @@ class Commands
           // Command may have reappeared after being hidden or the units might have changed after a spell was applied
           // script update (only deletion status, units and updated_at should be changed; the original doc is maintained in case the command reappears later)
           // https://www.elastic.co/guide/en/elasticsearch/painless/current/painless-lang-spec.html
+          // The units are only updated if the unit value has changed but the number of units (derived from colons) is greater or equal. This allows for spell updates but ignores duplicate friendly overrides.
           $aRetryParams['body'][] = array(
             'script' => array(
               'source' => "
@@ -378,7 +380,10 @@ class Commands
                 ctx._source.delete_status = ''; 
                 noop = false
               }
-              if (ctx._source.units != params.units) { 
+              int countColons(String s) {
+                return s.chars().filter(ch -> ch == ':').count();
+              }
+              if (ctx._source.units != params.units && countColons(params.units) >= countColons(ctx._source.units)) { 
                 ctx._source.units = params.units; 
                 noop = false
               }
