@@ -374,25 +374,7 @@ class Commands
           // The units are only updated if the unit value has changed but the number of units (derived from colons) is greater or equal. This allows for spell updates but ignores duplicate friendly overrides.
           $aRetryParams['body'][] = array(
             'script' => array(
-              'source' => "
-              boolean noop = true; 
-              if (ctx._source.delete_status == 'hard') { 
-                ctx._source.delete_status = ''; 
-                noop = false
-              }
-              int countColons(String s) {
-                return s.chars().filter(ch -> ch == ':').count();
-              }
-              if (ctx._source.units != params.units && countColons(params.units) >= countColons(ctx._source.units)) { 
-                ctx._source.units = params.units; 
-                noop = false
-              }
-              if (noop === true) {
-                ctx.op = 'noop'
-              } else {
-                ctx._source.updated_at = params.updated_at
-              }
-            ",
+              'source' => "boolean noop = true; if (ctx._source.delete_status == 'hard') { ctx._source.delete_status = ''; noop = false; } int countSourceColons = 0; int countParamColons = 0; for (int i = 0; i < ctx._source.units.length(); i++) { if (ctx._source.units.charAt(i).toString() == ':') { countSourceColons++; } } for (int i = 0; i < params.units.length(); i++) { if (params.units.charAt(i).toString() == ':') { countParamColons++; } } if (ctx._source.units != params.units && countParamColons >= countSourceColons) { ctx._source.units = params.units; noop = false; } if (noop === true) { ctx.op = 'noop'; } else { ctx._source.updated_at = params.updated_at; }",
               'lang' => 'painless',
               'params' => array(
                 'units' => $aCommand['units'],
