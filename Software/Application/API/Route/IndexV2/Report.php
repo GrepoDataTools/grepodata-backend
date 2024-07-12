@@ -16,8 +16,11 @@ use Grepodata\Library\Exception\InboxParserExceptionWarning;
 use Grepodata\Library\Indexer\IndexBuilderV2;
 use Grepodata\Library\Logger\Logger;
 
+use Grepodata\Library\Redis\RedisClient;
+use Grepodata\Library\Router\BaseRoute;
 use Grepodata\Library\Router\ResponseCode;
 use Illuminate\Database\Capsule\Manager as DB;
+use RateLimit\Exception\RateLimitExceededException;
 
 class Report extends \Grepodata\Library\Router\BaseRoute
 {
@@ -132,12 +135,55 @@ class Report extends \Grepodata\Library\Router\BaseRoute
     }
   }
 
+  private static function checkIndexRateLimit($aParams)
+  {
+    try {
+      $RateLimit = 3; // max X requests
+      $RateWindow = 60; // per Y seconds
+
+      if ($RateLimit !== null) {
+        $ReportContent = json_encode($aParams['report_json']);
+        $ResourceId = "indexReport-". $_SERVER['REMOTE_ADDR'] ."-". md5($ReportContent) ."-". strlen($ReportContent);
+        $RateLimiter = \RateLimit\RateLimiterFactory::createRedisBackedRateLimiter([
+          'host' => REDIS_HOST,
+          'port' => REDIS_PORT,
+        ], $RateLimit, $RateWindow);
+        $bRateExceeded = false;
+        try {
+          $RateLimiter->hit($ResourceId);
+        } catch (RateLimitExceededException $e) {
+          try {
+            $TTL = RedisClient::GetTTL($ResourceId);
+            if ($TTL <= 0) {
+              $Deleted = RedisClient::Delete($ResourceId);
+              Logger::warning("Deleted expired redis indexReport " . $ResourceId . " (ttl: ".$TTL.", deleted: ".$Deleted.")");
+            } else {
+              $bRateExceeded = true;
+            }
+          } catch (\Exception $exc) {
+            Logger::error("Uncaught exception checking rate limit expiry on indexReport " . $ResourceId . " => " . $exc->getMessage());
+          }
+        }
+
+        if ($bRateExceeded === true) {
+          Logger::error("Rate limit for report indexing id " . $ResourceId);
+          error_log("rate limit exceeded for indexReport. uid ". $oUser->id . " IP ". $_SERVER['REMOTE_ADDR'] . " report hash " . md5($aParams['report_hash']) . " report md5 " . md5($aParams['report_text']) . " report strlen " . strlen($aParams['report_text']));
+          header('Access-Control-Allow-Origin: *');
+          die(BaseRoute::OutputJson(array('message' => 'Too many requests. You have exceeded the rate limit for this specific resource. Please try again in a minute.'), 429));
+        }
+      }
+    } catch (\Exception $e) {
+      Logger::error("CRITICAL: Exception caught while handling redis indexReport rate limit => " . $e->getMessage() . "[".$e->getTraceAsString()."]");
+    }
+  }
+
   public static function indexReportPOST()
   {
     $aParams = array();
     try {
       // Validate params
       $aParams = self::validateParams(array('report_type', 'access_token', 'world', 'report_hash', 'report_text', 'report_json', 'report_poster', 'report_poster_id', 'report_poster_ally_id', 'script_version'));
+      self::checkIndexRateLimit($aParams);
       $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token'], true, false, true);
 
       // Get data
