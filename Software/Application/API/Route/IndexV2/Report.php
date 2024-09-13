@@ -166,8 +166,7 @@ class Report extends \Grepodata\Library\Router\BaseRoute
         }
 
         if ($bRateExceeded === true) {
-          Logger::error("Rate limit for report indexing id " . $ResourceId);
-          error_log("rate limit exceeded for indexReport. uid ". $oUser->id . " IP ". $_SERVER['REMOTE_ADDR'] . " report hash " . md5($aParams['report_hash']) . " report md5 " . md5($aParams['report_text']) . " report strlen " . strlen($aParams['report_text']));
+          error_log("Rate limit for report indexing id " . $ResourceId . " user: " . $aParams['access_token']);
           header('Access-Control-Allow-Origin: *');
           die(BaseRoute::OutputJson(array('message' => 'Too many requests. You have exceeded the rate limit for this specific resource. Please try again in a minute.'), 429));
         }
