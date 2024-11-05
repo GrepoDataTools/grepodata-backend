@@ -2109,7 +2109,7 @@ var errorSubmissions = [];
             }
 
             var data = atob(hash);
-            var json = JSON.parse(data);
+            var json = (JSON.parse(decodeURIComponent(escape(data))));
 
             if (verbose) {
                 console.log("parsed from hash " + hash, json);
@@ -2119,7 +2119,7 @@ var errorSubmissions = [];
 
         // Encode entity hash
         function encodeJsonToHash(json) {
-            var hash = btoa(JSON.stringify(json));
+            var hash = btoa(unescape(encodeURIComponent(JSON.stringify(json))));
             if (verbose) {
                 console.log("parsed to hash " + hash, json);
             }
