@@ -2117,9 +2117,17 @@ var errorSubmissions = [];
             return json;
         }
 
+        // Encode non-latin1 chars
+        function toUnicodeEscapes(str) {
+            return str.split('').map(char => {
+                const code = char.charCodeAt(0);
+                return code > 127 ? `\\u${code.toString(16).padStart(4, '0')}` : char;
+            }).join('');
+        }
+
         // Encode entity hash
         function encodeJsonToHash(json) {
-            var hash = btoa(JSON.stringify(json));
+            var hash = btoa(toUnicodeEscapes(JSON.stringify(json)));
             if (verbose) {
                 console.log("parsed to hash " + hash, json);
             }
