@@ -303,8 +303,8 @@ var errorSubmissions = [];
                 <li class="gd-team-ops-cp main_menu_item  last " data-option-id="teamops">
                     <span class="content_wrapper">
                         <span class="button_wrapper">
-                            <div class="btn_settings circle_button" style="right: 0px; top: 0 !important;">
-                                <div style="margin: 7px 0px 0px 4px; width: 24px; height: 24px;">${gd_icon_svg}</div>
+                            <div class="button">
+                                <div style="left: 20px; margin-top: 6px;">${gd_icon_svg}</div>
                             </div>
                             <span class="indicator gd-teamops-indicator" data-indicator-id="teamops" style="display: none;"></span>
                         </span>
