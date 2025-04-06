@@ -146,6 +146,7 @@ class Browse extends \Grepodata\Library\Router\BaseRoute
       }
 
       // Get intel
+      ini_set('memory_limit','256M');
       $Start = round(microtime(true) * 1000);
       $aIntel = \Grepodata\Library\Controller\IndexV2\Intel::allByUserForPlayer($oUser, $oWorld->grep_id, $aParams['player_id'], true);
       $ElapsedMs = round(microtime(true) * 1000) - $Start;
