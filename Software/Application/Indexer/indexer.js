@@ -303,8 +303,8 @@ var errorSubmissions = [];
                 <li class="gd-team-ops-cp main_menu_item  last " data-option-id="teamops">
                     <span class="content_wrapper">
                         <span class="button_wrapper">
-                            <div class="btn_settings circle_button" style="right: 0px; top: 0 !important;">
-                                <div style="margin: 7px 0px 0px 4px; width: 24px; height: 24px;">${gd_icon_svg}</div>
+                            <div class="button">
+                                <div style="left: 20px; margin-top: 6px;">${gd_icon_svg}</div>
                             </div>
                             <span class="indicator gd-teamops-indicator" data-indicator-id="teamops" style="display: none;"></span>
                         </span>
@@ -2117,9 +2117,17 @@ var errorSubmissions = [];
             return json;
         }
 
+        // Encode non-latin1 chars
+        function toUnicodeEscapes(str) {
+            return str.split('').map(char => {
+                const code = char.charCodeAt(0);
+                return code > 127 ? `\\u${code.toString(16).padStart(4, '0')}` : char;
+            }).join('');
+        }
+
         // Encode entity hash
         function encodeJsonToHash(json) {
-            var hash = btoa(JSON.stringify(json));
+            var hash = btoa(toUnicodeEscapes(JSON.stringify(json)));
             if (verbose) {
                 console.log("parsed to hash " + hash, json);
             }
