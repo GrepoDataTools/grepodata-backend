@@ -207,6 +207,13 @@ class Intel
       $aCityFields['date'] = $aCityFields['sort_date']->format('d-m-y H:i:s');
     }
 
+    // Fix building class (ding_main > main)
+    $aBuildingsClean = array();
+    foreach ($aCityFields['buildings'] as $Building => $Value) {
+      $aBuildingsClean[str_replace('ding_', '', $Building)] = $Value;
+    }
+    $aCityFields['buildings'] = $aBuildingsClean;
+
     $DaysAgo = 0;
     try {
       $oNow = Carbon::now();
@@ -222,6 +229,7 @@ class Intel
         $NumBuildings = sizeof($aBuild);
         if (is_array($aBuild) && $NumBuildings > 0) {
           foreach ($aBuild as $Name => $Value) {
+            $Name = str_replace('ding_', '', $Name);
             if ($Name === 'wall' && $Value !== '?') {
               $Wall = str_replace(' (-0)','',$Value);
             } elseif ($NumBuildings <= 2) {

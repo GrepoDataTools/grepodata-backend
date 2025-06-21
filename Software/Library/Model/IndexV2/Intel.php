@@ -50,7 +50,7 @@ class Intel extends Model
 
   public function getPublicFields()
   {
-    return array(
+    $aCityFields = array(
       'id'          => $this->id,
       'hash'        => $this->hash,
       'world'       => $this->world,
@@ -76,11 +76,20 @@ class Intel extends Model
       'parsed'      => $this->parsing_failed==0,
       'is_previous_owner_intel' => $this->is_previous_owner_intel==1
     );
+
+    // Fix building class (ding_main > main)
+    $aBuildings = array();
+    foreach ($aCityFields['buildings'] as $Building => $Value) {
+      $aBuildings[str_replace('ding_', '', $Building)] = $Value;
+    }
+    $aCityFields['buildings'] = $aBuildings;
+
+    return $aCityFields;
   }
 
   public function getMinimalFields()
   {
-    return array(
+    $aCityFields = array(
       'id'          => $this->id,
       'date'        => $this->report_date,
       'type'        => $this->report_type,
@@ -96,6 +105,15 @@ class Intel extends Model
       'deleted'     => $this->soft_deleted!=null,
       'is_previous_owner_intel' => $this->is_previous_owner_intel==1
     );
+
+    // Fix building class (ding_main > main)
+    $aBuildings = array();
+    foreach ($aCityFields['buildings'] as $Building => $Value) {
+      $aBuildings[str_replace('ding_', '', $Building)] = $Value;
+    }
+    $aCityFields['buildings'] = $aBuildings;
+
+    return $aCityFields;
   }
 
   /**
