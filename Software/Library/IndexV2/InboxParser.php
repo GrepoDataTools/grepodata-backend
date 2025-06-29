@@ -912,7 +912,8 @@ class InboxParser
                 foreach ($aBuildingElement["content"] as $Building) {
                   if (is_array($Building) && key_exists('attributes', $Building)) {
                     $Name = $Building['attributes']['class'];
-                    $Name = substr($Name, strlen("report_unit building_"));
+                    preg_match('/building_(\w+)/', $Name, $Matches);
+                    $Name = $Matches[1];
                     $Level = $Building["content"][1]["content"][0];
                     if ($Name === 'wall') {
                       $bHasWall = true;
