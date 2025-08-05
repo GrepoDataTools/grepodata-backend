@@ -23,6 +23,7 @@ class InboxParser
     'en' => array('date_format' => 'Y-m-d H:i:s'),
     'us' => array('date_format' => 'Y-m-d H:i:s'),
     'se' => array('date_format' => 'Y-m-d H:i:s'), // 2020-05-09 23:54:53
+    'ts' => array('date_format' => 'd.m.Y H:i:s'),
     'de' => array('date_format' => 'd.m.Y H:i:s'),
     'fi' => array('date_format' => 'd.m.Y H:i:s'),
     'ro' => array('date_format' => 'd.m.Y H:i:s'),
@@ -98,6 +99,10 @@ class InboxParser
   {
     try {
       $ReportText = json_encode($aReportData);
+
+      if (!key_exists('content', $aReportData) || !key_exists('content', $aReportData["content"][1]) || !key_exists('content', $aReportData["content"][1]["content"][19])) {
+        error_log($ReportText);
+      }
 
       // Find header
 //      $ReportHeaderText = $aReportData["content"][1]["content"][17]["content"];
@@ -533,7 +538,7 @@ class InboxParser
           $aBuildingNames = array(
             'main' => 'Sénat', 'hide' => 'Grotte', 'place' => 'Agora', 'lumber' => 'Scierie', 'stoner' => 'Carrière', 'ironer' => "Mine d'argent", 'market' => 'Marché', 'docks' => 'Port', 'barracks' => 'Caserne', 'wall' => 'Remparts', 'storage' => 'Entrepôt ', 'farm' => 'Ferme', 'academy' => 'Académie', 'temple' => 'Temple', 'theater' => 'Théâtre', 'thermal' => 'Thermes', 'library' => 'Bibliothèque', 'lighthouse' => 'Phare', 'tower' => 'Tour', 'statue' => 'Statue divine', 'oracle' => 'Oracle', 'trade_office' => 'Comptoir commercial', 
           );
-        } else if ($Locale == 'en') {
+        } else if ($Locale == 'en' || $Locale == 'ts') {
           $aBuildingNames = array(
             "main" => "Senate", "hide" => "Cave", "place" => "Agora", "lumber" => "Timber camp", "stoner" => "Quarry", "ironer" => "Silver mine", "market" => "Marketplace", "docks" => "Harbor", "barracks" => "Barracks", "wall" => "City wall", "storage" => "Warehouse", "farm" => "Farm", "academy" => "Academy", "temple" => "Temple", "theater" => "Theater", "thermal" => "Thermal baths", "library" => "Library", "lighthouse" => "Lighthouse", "tower" => "Tower", "statue" => "Divine statue", "oracle" => "Oracle", "trade_office" => "Merchant's shop",
           );
