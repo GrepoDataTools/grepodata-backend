@@ -56,6 +56,7 @@ class Client
       // Don't create en email object for invalid receivers
       throw new InvalidEmailAddressError($e->getMessage());
     } catch (\Exception $e) {
+      Logger::warning("Initial SendMail failed (adding to mail queue): " . $e->getMessage());
       try {
         if ($oMail !== null || $bCreateMailObject == true) {
           // Save new mail object
@@ -129,7 +130,7 @@ class Client
   {
     try {
       // Create the Transport
-      $transport = (new \Swift_SmtpTransport(MAIL_TRANSPORT_HOST, 465, 'ssl'))
+      $transport = (new \Swift_SmtpTransport(MAIL_TRANSPORT_HOST, 587, 'tls'))
         ->setUsername(MAIL_TRANSPORT_NAME)
         ->setPassword(MAIL_TRANSPORT_KEY);
 

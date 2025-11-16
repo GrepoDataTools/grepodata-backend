@@ -43,6 +43,7 @@ class Logger
 
   public static function warning($Message)
   {
+    error_log('Logger.warning: '.$Message);
     self::writeLogMessage(array(
       'message' => $Message,
       'level'   => self::level_warning,
@@ -70,7 +71,7 @@ class Logger
 
   public static function error($Message)
   {
-    error_log($Message);
+    error_log('Logger.error: '.$Message);
     self::writeLogMessage(array(
       'message' => $Message,
       'level'   => self::level_error,
