@@ -57,7 +57,7 @@ foreach ($aServers as $Server) {
       $oExistingWorld = World::getWorldById($WorldNum);
       // world exists, skip to next world
       if (!empty($oExistingWorld) || $oExistingWorld->grep_id == null) {
-        if ($oExistingWorld->stopped == 1 && !in_array($Server, array('zz'))) {
+        if ($oExistingWorld->stopped == 1 && !in_array($Server, array('zz', 'ts'))) {
           Logger::error("Possible new world import failure: recently created world is still/already in stopped state: " . $WorldNum);
         }
         Logger::debugInfo("World already exists: " . $WorldNum);
