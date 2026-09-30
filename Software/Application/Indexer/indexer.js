@@ -650,9 +650,9 @@ var errorSubmissions = [];
                 var commands = xhr_data.json.data.attacks;
                 verbose ? console.log('parsing attack planner', commands) : null;
 
-                if ($('#gd_cmd_plan_share').length == 0) {
+                if ($('#gd_cmd_plan_share_id').length == 0) {
                     let share_html = `
-                    <div class="button_new disabled" id="gd_cmd_plan_share" name="Share with team" style="" rel="#gpwnd_1000">
+                    <div class="button_new disabled" id="gd_cmd_plan_share_id" name="Share with team" style="" rel="#gpwnd_1000">
                         <div class="left"></div><div class="right"></div>
                         <div class="caption js-caption">
                             <div style="width: 23px; height: 20px; margin-left: -17px; position: absolute; background: `+gd_icon+`"></div>
@@ -671,11 +671,11 @@ var errorSubmissions = [];
 
                 // Check if there are any updates
                 if (commands.length <= 0) {
-                    updateOpsSyncButton(translate.CMD_SHARE_NONE, false, '', null, '#gd_cmd_plan_share');
+                    updateOpsSyncButton(translate.CMD_SHARE_NONE, false, '', null, '#gd_cmd_plan_share_id');
                 } else if (uploaded_planned_attacks == commands.length) {
-                    updateOpsSyncButton(translate.CMD_SHARE_NONEW, true, '', upload_callback, '#gd_cmd_plan_share');
+                    updateOpsSyncButton(translate.CMD_SHARE_NONEW, true, '', upload_callback, '#gd_cmd_plan_share_id');
                 } else {
-                    updateOpsSyncButton(`${translate.CMD_SHARE_UPLOAD} (${commands.length})`, true, '', upload_callback, '#gd_cmd_plan_share');
+                    updateOpsSyncButton(`${translate.CMD_SHARE_UPLOAD} (${commands.length})`, true, '', upload_callback, '#gd_cmd_plan_share_id');
                 }
 
             } catch (error) {
@@ -843,7 +843,7 @@ var errorSubmissions = [];
                 return;
             }
             uploading_plan = true;
-            updateOpsSyncButton('Uploading ♻', true, '', null, '#gd_cmd_plan_share');
+            updateOpsSyncButton('Uploading ♻', true, '', null, '#gd_cmd_plan_share_id');
 
             getAccessToken().then(access_token => {
                 if (access_token === false) {
@@ -877,16 +877,16 @@ var errorSubmissions = [];
                                     case 7201:
                                         // no teams
                                         HumanMessage.error('GrepoData: you are not part of any GrepoData teams on this world. Join or create a team to share your planned attacks.');
-                                        updateOpsSyncButton('Not in a team', true, 'error', null, '#gd_cmd_plan_share');
+                                        updateOpsSyncButton('Not in a team', true, 'error', null, '#gd_cmd_plan_share_id');
                                         break;
                                     default:
                                         HumanMessage.error('GrepoData: unexpected error. Please try again later or contact us if this error persists.');
-                                        updateOpsSyncButton('Error. Try again', true, 'error', null, '#gd_cmd_plan_share');
+                                        updateOpsSyncButton('Error. Try again', true, 'error', null, '#gd_cmd_plan_share_id');
                                 }
                             } else {
                                 if ('added_teams' in data && data.added_teams.length <= 0) {
                                     HumanMessage.error('GrepoData: you are not contributing to any teams. Enable contributions to synchronize your planned attacks');
-                                    updateOpsSyncButton(translate.CMD_SHARE_UPLOAD, true, '', null, '#gd_cmd_plan_share');
+                                    updateOpsSyncButton(translate.CMD_SHARE_UPLOAD, true, '', null, '#gd_cmd_plan_share_id');
                                 } else {
                                     // Show operation link toast
                                     if (data.added_teams.length == 1) {
@@ -899,7 +899,7 @@ var errorSubmissions = [];
                                     }
                                     showSyncStatusToast(toastHtml);
 
-                                    updateOpsSyncButton(translate.CMD_SHARE_SYNCED, true, 'ok', null, '#gd_cmd_plan_share');
+                                    updateOpsSyncButton(translate.CMD_SHARE_SYNCED, true, 'ok', null, '#gd_cmd_plan_share_id');
                                 }
                             }
 
@@ -909,10 +909,10 @@ var errorSubmissions = [];
                             console.error("error saving planned commands", jqXHR);
                             if (jqXHR && 'status' in jqXHR && jqXHR.status == 503 && jqXHR.responseJSON && 'message' in jqXHR.responseJSON) {
                                 HumanMessage.error('GrepoData: '+jqXHR.responseJSON.message);
-                                updateOpsSyncButton('Service Unavailable', false, 'error', null, '#gd_cmd_plan_share');
+                                updateOpsSyncButton('Service Unavailable', false, 'error', null, '#gd_cmd_plan_share_id');
                             } else {
                                 HumanMessage.error('GrepoData: unexpected error. Please try again later or contact us if this error persists.');
-                                updateOpsSyncButton('Error. Try again', true, 'error', null, '#gd_cmd_plan_share');
+                                updateOpsSyncButton('Error. Try again', true, 'error', null, '#gd_cmd_plan_share_id');
                             }
                             uploading_plan = false;
                         },
@@ -2291,7 +2291,7 @@ var errorSubmissions = [];
                 if (access_token === false) {
                     HumanMessage.error('GrepoData: login required to index reports');
                     showLoginPopup();
-                    $('#gd_index_rep_txt').get(0).innerText = translate.ADD + ' +';
+                    $('#gd_index_rep_txt_id').get(0).innerText = translate.ADD + ' +';
                 } else {
                     var data = {
                         'report_type': 'inbox',
@@ -2308,7 +2308,7 @@ var errorSubmissions = [];
                     };
 
                     if (gd_settings.inbox === true) {
-                        var btn = document.getElementById("gd_index_rep_txt");
+                        var btn = document.getElementById("gd_index_rep_txt_id");
                         var btnC = document.getElementById("gd_index_rep_");
                         btnC.setAttribute('style', 'color: #36cd5b; float: right;');
                         btn.innerText = translate.ADDED + ' ✓';
@@ -2334,7 +2334,7 @@ var errorSubmissions = [];
                                         // If the force refresh was not succesful, we need a new explicit login from the user
                                         HumanMessage.error('GrepoData: login required to index reports');
                                         showLoginPopup();
-                                        var btn = document.getElementById("gd_index_rep_txt");
+                                        var btn = document.getElementById("gd_index_rep_txt_id");
                                         var btnC = document.getElementById("gd_index_rep_");
                                         btnC.setAttribute('style', 'color: #ea6153; float: right;');
                                         btn.innerText = translate.ERROR + ' ✗';
@@ -2345,7 +2345,7 @@ var errorSubmissions = [];
                                 });
                             } else {
                                 errorHandling(Error(error.responseText), 'ajaxIndexForumReport');
-                                var btn = document.getElementById("gd_index_rep_txt");
+                                var btn = document.getElementById("gd_index_rep_txt_id");
                                 var btnC = document.getElementById("gd_index_rep_");
                                 btnC.setAttribute('style', 'color: #ea6153; float: right;');
                                 btn.innerText = translate.ERROR + ' ✗';
@@ -2502,7 +2502,7 @@ var errorSubmissions = [];
                         addBtn.setAttribute('id', 'gd_index_rep_');
                         addBtn.setAttribute('class', 'button gd_btn_index');
                         addBtn.setAttribute('style', 'float: right;');
-                        txtSpan.setAttribute('id', 'gd_index_rep_txt');
+                        txtSpan.setAttribute('id', 'gd_index_rep_txt_id');
                         txtSpan.setAttribute('style', 'min-width: 50px; margin: 0 3px;');
                         txtSpan.setAttribute('class', 'middle');
                         rightSpan.setAttribute('class', 'right');
@@ -2527,8 +2527,8 @@ var errorSubmissions = [];
                             txtSpan.innerText = translate.ADDED + ' ✓';
                         } else {
                             addBtn.addEventListener('click', function () {
-                                if ($('#gd_index_rep_txt').get(0)) {
-                                    $('#gd_index_rep_txt').get(0).innerText = translate.SEND;
+                                if ($('#gd_index_rep_txt_id').get(0)) {
+                                    $('#gd_index_rep_txt_id').get(0).innerText = translate.SEND;
                                 }
                                 addToIndexFromInbox(reportHash, reportElement, false);
                             }, false);
@@ -3217,7 +3217,7 @@ var errorSubmissions = [];
                     if (access_token === false) {
                         HumanMessage.error('GrepoData: login is required to view intel');
                         showLoginPopup();
-                        $('#gd_index_rep_txt').get(0).innerText = translate.ADD + ' +';
+                        $('#gd_index_rep_txt_id').get(0).innerText = translate.ADD + ' +';
                     } else {
 
                         // Create a new dialog
