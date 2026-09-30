@@ -50,6 +50,47 @@ class IndexOverview
     return $aOwnerIds;
   }
 
+  private static function getEmptyStats()
+  {
+    return array(
+      'indexed' => array(),
+      'last_report' => 0,
+      'report_types' => array(
+        'friendly_attack' => 0,
+        'enemy_attack' => 0,
+        'spy' => 0,
+        'other' => 0
+      )
+    );
+  }
+
+  private static function addTargetReport(&$aStats, $TargetId, $IndexedId, $oCity)
+  {
+    if (!isset($aStats[$TargetId])) {
+      $aStats[$TargetId] = self::getEmptyStats();
+    }
+
+    if ($IndexedId !== null) {
+      $aStats[$TargetId]['indexed'][$IndexedId] = true;
+    }
+
+    $aStats[$TargetId]['last_report'] = max($aStats[$TargetId]['last_report'], strtotime($oCity->created_at));
+
+    switch ($oCity->report_type) {
+      case 'friendly_attack':
+        $Type = 'friendly_attack'; break;
+      case 'enemy_attack':
+      case 'attack_on_conquest':
+        $Type = 'enemy_attack'; break;
+      case 'spy':
+        $Type = 'spy'; break;
+      default:
+        $Type = 'other';
+    }
+
+    $aStats[$TargetId]['report_types'][$Type] += 1;
+  }
+
   /**
    * @param $oIndex \Grepodata\Library\Model\Indexer\IndexInfo
    * @throws \Exception
@@ -68,6 +109,8 @@ class IndexOverview
     $aContributorsActual = array();
     $aIndexedAlliances = array();
     $aIndexedPlayers = array();
+    $aAllianceStats = array();
+    $aPlayerStats = array();
     $aRecentIntel = array();
     $LatestUpdate = '0';
     $numSpies = 0;
@@ -102,12 +145,14 @@ class IndexOverview
       if ($oCity->alliance_id !== null) {
         if (isset($aIndexedAlliances[$oCity->alliance_id])) $aIndexedAlliances[$oCity->alliance_id] += 1;
         else $aIndexedAlliances[$oCity->alliance_id] = 1;
+        self::addTargetReport($aAllianceStats, $oCity->alliance_id, null, $oCity);
       }
 
       // Check indexed players
       if ($oCity->player_id !== null) {
         if (isset($aIndexedPlayers[$oCity->player_id])) $aIndexedPlayers[$oCity->player_id] += 1;
         else $aIndexedPlayers[$oCity->player_id] = 1;
+        self::addTargetReport($aPlayerStats, $oCity->player_id, $oCity->town_id, $oCity);
       }
 
       // Counts
@@ -312,10 +357,25 @@ class IndexOverview
         try {
           $oAlliance = Alliance::first($Alliance, $oIndex->world);
           if ($oAlliance !== null) {
+            $aMemberIds = \Grepodata\Library\Model\Player::where('world', '=', $oIndex->world)
+              ->where('alliance_id', '=', $Alliance)
+              ->where('active', '=', 1)
+              ->pluck('grep_id')
+              ->toArray();
+            $MembersIndexed = 0;
+
+            foreach ($aMemberIds as $MemberId) {
+              if (isset($aPlayerStats[$MemberId])) $MembersIndexed += 1;
+            }
+
             $aRealAlliancesIndexed[] = array(
               'alliance_id' => $Alliance,
               'alliance_name' => $oAlliance->name,
               'count' => $Count,
+              'members' => sizeof($aMemberIds),
+              'members_indexed' => $MembersIndexed,
+              'last_report' => $aAllianceStats[$Alliance]['last_report'],
+              'report_types' => $aAllianceStats[$Alliance]['report_types'],
             );
           }
         } catch (\Exception $e) {}
@@ -331,6 +391,8 @@ class IndexOverview
           'player_id' => $Player,
           'player_name' => 'Ghost',
           'count' => $Count,
+          'last_report' => $aPlayerStats[$Player]['last_report'],
+          'report_types' => $aPlayerStats[$Player]['report_types'],
         );
         continue;
       }
@@ -342,10 +404,27 @@ class IndexOverview
             if ($oPlayer->alliance_id == $Owner['alliance_id']) $isOwner = true;
           }
           if (!$isOwner) {
+            $aTownIds = \Grepodata\Library\Model\Town::where('world', '=', $oIndex->world)
+              ->where('player_id', '=', $Player)
+              ->pluck('grep_id')
+              ->toArray();
+            $TownsIndexed = 0;
+
+            foreach ($aTownIds as $TownId) {
+              if (isset($aPlayerStats[$Player]['indexed'][$TownId])) $TownsIndexed += 1;
+            }
+
+            $oPlayerAlliance = $oPlayer->alliance_id ? Alliance::first($oPlayer->alliance_id, $oIndex->world) : null;
             $aRealPlayersIndexed[] = array(
               'player_id' => $Player,
               'player_name' => $oPlayer->name,
               'count' => $Count,
+              'alliance_id' => $oPlayer->alliance_id,
+              'alliance_name' => $oPlayerAlliance->name ?? '',
+              'towns' => sizeof($aTownIds),
+              'towns_indexed' => $TownsIndexed,
+              'last_report' => $aPlayerStats[$Player]['last_report'],
+              'report_types' => $aPlayerStats[$Player]['report_types'],
             );
           }
         }
