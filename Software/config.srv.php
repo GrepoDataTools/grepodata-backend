@@ -183,4 +183,13 @@ $SqlCapsule->setFetchMode(PDO::FETCH_ASSOC);
 // Elasticsearch
 \Grepodata\Library\Elasticsearch\Client::SetConfiguration($g_aConfiguration['elasticsearch']);
 
+//// Log a warning if we spend more than 1000ms on a single SQL query.
+//use Grepodata\Library\Logger\Logger;
+//use Illuminate\Support\Facades\DB as DB;
+//DB::listen(function ($query) {
+//  if ($query->time > 1) {
+//    Logger::warning("A DB query exceeded 1 second: ".$query->sql);
+//  }
+//});
+
 unset($g_aConfiguration);

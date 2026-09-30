@@ -520,9 +520,9 @@ class ForumParser
         // Get current day in locale timezone
         $oWorld = World::getWorldById($World);
         $Day = $oWorld->getServerTime()->format(self::format[$Locale]['day']);
-        if ($Locale == 'ts') {
-          Logger::error("ForumParser " . $ReportHash . ": TODO check day format for " . $Locale . ". date example: " . $ReportDate);
-        }
+//        if ($Locale == 'ts') {
+//          Logger::error("ForumParser " . $ReportHash . ": TODO check day format for " . $Locale . ". date example: " . $ReportDate);
+//        }
       }
       preg_match(self::format[$Locale]['time_regex'], $ReportDate, $TimeMatches);
       if (isset($TimeMatches[0])) {

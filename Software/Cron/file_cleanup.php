@@ -12,6 +12,11 @@
 # Count reports older than 2 years: find /home/vps/grepodata/production/grepodata-frontend/reports/ -mtime +730 | wc -l
 # Delete: find /home/vps/grepodata/production/grepodata-frontend/reports/ -mtime +730 ! -name "report_notfound.png" -delete
 
+## Elasticsearch logs
+# Elasticsearch has very large logfiles 100MB+ per day
+# located in: /var/log/elasticsearch/
+# rm -- Grepodata-202*.log
+
 
 ## COMMANDS:
 # total filesystem usage: df -h
