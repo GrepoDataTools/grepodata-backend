@@ -16,7 +16,17 @@ class WorldData
   public static function loadWorldNames()
   {
     $url = self::endpoint_prefix;
-    $htmlContent = file_get_contents($url);
+    $aContext = stream_context_create(array(
+      'http' => array(
+        'header' => "User-Agent: Mozilla/5.0\r\n",
+        'timeout' => 15,
+      ),
+    ));
+    $htmlContent = file_get_contents($url, false, $aContext);
+    if ($htmlContent === false) {
+      Logger::warning('WorldData::loadWorldNames - failed to fetch ' . $url);
+      return array();
+    }
     $DOM = new DOMDocument();
     libxml_use_internal_errors(true);
     $DOM->loadHTML($htmlContent);
