@@ -21,3 +21,4 @@
 33 07 * * * /usr/bin/php /home/vps/grepodata/production/grepodata-backend/active/Software/Cron/data_import_ranks.php >> /home/vps/grepodata/production/grepodata-backend/Logs/data_ranks.err
 01 * * * * /usr/bin/php /home/vps/grepodata/production/grepodata-backend/active/Software/Cron/data_import_reset.php >> /home/vps/grepodata/production/grepodata-backend/Logs/reset_log.err
 * * * * * /usr/bin/php /home/vps/grepodata/production/grepodata-backend/active/Software/Cron/mailer.php >> /home/vps/grepodata/production/grepodata-backend/Logs/mailer_log.err
+*/10 * * * * /usr/bin/php /home/vps/grepodata/production/grepodata-backend/active/Software/Cron/check_donations.php >> /home/vps/grepodata/production/grepodata-backend/Logs/check_donations.err

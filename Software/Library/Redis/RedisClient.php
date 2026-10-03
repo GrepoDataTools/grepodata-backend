@@ -13,6 +13,8 @@ class RedisClient
   const COMMAND_STATE_PREFIX = 'cmd_state_'; // followed by: {team}
   const COMMAND_DATA_PREFIX = 'cmd_data_'; // followed by: {team}
   const WEBSOCKET_TOKEN_PREFIX = 'wst-'; // followed by: {websocket_token}
+  const DONATIONS_LIST_KEY = 'gd_donations_list';
+  const DONATIONS_MONTH_SUM_PREFIX = 'gd_donations_month_sum_'; // followed by: {Y-m}
 
   /**
    * @return Redis

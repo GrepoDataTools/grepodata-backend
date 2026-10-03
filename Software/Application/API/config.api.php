@@ -222,6 +222,16 @@ $oRouter->Add('getTowns', new Route('/towns', array(
   '_method'     => 'Towns'
 )));
 
+// Donations
+$oRouter->Add('getAllDonations', new Route('/donations/get-all-donations', array(
+  '_controller' => '\Grepodata\Application\API\Route\Donation',
+  '_method'     => 'GetAllDonations'
+)));
+$oRouter->Add('getDonationState', new Route('/donations/get-donation-state', array(
+  '_controller' => '\Grepodata\Application\API\Route\Donation',
+  '_method'     => 'GetDonationState'
+)));
+
 // Search
 $oRouter->Add('searchV2', new Route('/search', array(
   '_controller' => '\Grepodata\Application\API\Route\Search',

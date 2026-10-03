@@ -28,6 +28,8 @@ define('PRIVATE_MAIL_TRANSPORT_KEY',  '');
 
 define('PRIVATE_MAIL_WEBAPI_KEY',  ''); // Web API
 
+define('PRIVATE_BUYMEACOFFEE_TOKEN', '');
+
 define('PRIVATE_LOG_AUTH', '');
 define('PRIVATE_DEBUG_AUTH', '');
 
