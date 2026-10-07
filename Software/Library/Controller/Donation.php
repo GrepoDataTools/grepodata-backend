@@ -76,4 +76,30 @@ class Donation
     }
   }
 
+  /**
+   * Creates or updates the single row representing a month's AdSense estimated earnings
+   * @param string $MonthKey Format: YYYY-MM
+   * @param float $Amount
+   * @return \Grepodata\Library\Model\Donation|bool
+   */
+  public static function UpsertAdsenseEarnings($MonthKey, $Amount)
+  {
+    try {
+      $Date = Carbon::createFromFormat('Y-m', $MonthKey)->startOfMonth();
+      return \Grepodata\Library\Model\Donation::updateOrCreate(
+        array('donation_id' => 'adsense-' . $MonthKey),
+        array(
+          'donation' => $Amount,
+          'name'     => 'Google AdSense',
+          'date'     => $Date,
+          'source'   => 'adsense',
+          'note'     => 'Ad revenue ' . $Date->format('F Y'),
+        )
+      );
+    } catch (\Exception $e) {
+      Logger::error('Error saving adsense earnings entry (' . $MonthKey . '): ' . $e->getMessage());
+      return false;
+    }
+  }
+
 }

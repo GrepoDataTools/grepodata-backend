@@ -22,7 +22,7 @@ class Donation extends \Grepodata\Library\Router\BaseRoute
       'items' => $aDonations
     );
 
-    RedisClient::SetKey(RedisClient::DONATIONS_LIST_KEY, json_encode($aResponse), 3600);
+    RedisClient::SetKey(RedisClient::DONATIONS_LIST_KEY, json_encode($aResponse), 300);
     return self::OutputJson($aResponse);
   }
 
@@ -38,7 +38,7 @@ class Donation extends \Grepodata\Library\Router\BaseRoute
       'total' => round(DonationController::SumCurrentMonth(), 2)
     );
 
-    RedisClient::SetKey($CacheKey, json_encode($aResponse), 3600);
+    RedisClient::SetKey($CacheKey, json_encode($aResponse), 300);
     return self::OutputJson($aResponse);
   }
 
