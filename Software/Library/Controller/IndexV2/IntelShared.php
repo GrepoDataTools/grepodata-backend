@@ -76,10 +76,10 @@ class IntelShared
    */
   public static function countUncommitted($UserId, $World, $IndexKey)
   {
-    $aUncommited = DB::select( DB::raw("
-        SELECT count(*) as count FROM `Indexer_intel_shared` WHERE `user_id` = ".$UserId." AND `world` LIKE '".$World."'
-        AND intel_id NOT IN (SELECT intel_id FROM Indexer_intel_shared WHERE index_key = '".$IndexKey."')
-      "));
+    $aUncommited = DB::select("
+        SELECT count(*) as count FROM `Indexer_intel_shared` WHERE `user_id` = ? AND `world` LIKE ?
+        AND intel_id NOT IN (SELECT intel_id FROM Indexer_intel_shared WHERE index_key = ?)
+      ", [$UserId, $World, $IndexKey]);
 
     $Uncommitted = 0;
     if (count($aUncommited)>0) {
@@ -101,10 +101,10 @@ class IntelShared
    */
   public static function getUncommitted($UserId, $World, $IndexKey)
   {
-    return DB::select( DB::raw("
-        SELECT * FROM `Indexer_intel_shared` WHERE `user_id` = ".$UserId." AND `world` LIKE '".$World."'
-        AND intel_id NOT IN (SELECT intel_id FROM Indexer_intel_shared WHERE index_key = '".$IndexKey."')
-      "));
+    return DB::select("
+        SELECT * FROM `Indexer_intel_shared` WHERE `user_id` = ? AND `world` LIKE ?
+        AND intel_id NOT IN (SELECT intel_id FROM Indexer_intel_shared WHERE index_key = ?)
+      ", [$UserId, $World, $IndexKey]);
   }
 
   public static function saveHashToIndex($ReportHash, $IntelId, IndexInfo $oIndex, $PlayerId = null, $UploadUid = null)

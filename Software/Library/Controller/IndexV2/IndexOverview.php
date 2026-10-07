@@ -449,14 +449,14 @@ class IndexOverview
                MAX(created_at) as last_contribution, 
                MIN(created_at) as first_contribution
         FROM Indexer_intel_shared
-        WHERE index_key = '".$oIndex->key_code."' AND upload_uid IS NOT NULL
+        WHERE index_key = ? AND upload_uid IS NOT NULL
         group by player_id, upload_uid
         order by contributions DESC
         ) as raw
-      LEFT JOIN Player ON Player.world = '".$oIndex->world."' AND Player.grep_id = raw.player_id
+      LEFT JOIN Player ON Player.world = ? AND Player.grep_id = raw.player_id
       LEFT JOIN `User` ON `User`.id = raw.user_id
       ";
-      $aContributorsActual = DB::select(DB::raw($Query));
+      $aContributorsActual = DB::select($Query, [$oIndex->key_code, $oIndex->world]);
     } catch (\Exception $e) {
       $aContributorsActual = array();
     }

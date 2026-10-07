@@ -89,10 +89,10 @@ class Notes
    */
   public static function getUncommitted($UserId, $World, $IndexKey)
   {
-    return DB::select( DB::raw("
-        SELECT * FROM `Indexer_notes` WHERE `user_id` = ".$UserId." AND `world` LIKE '".$World."'
-        AND note_id NOT IN (SELECT note_id FROM Indexer_notes WHERE index_key = '".$IndexKey."')
-      "));
+    return DB::select("
+        SELECT * FROM `Indexer_notes` WHERE `user_id` = ? AND `world` LIKE ?
+        AND note_id NOT IN (SELECT note_id FROM Indexer_notes WHERE index_key = ?)
+      ", [$UserId, $World, $IndexKey]);
   }
 
 }
