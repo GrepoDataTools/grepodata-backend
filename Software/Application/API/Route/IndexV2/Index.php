@@ -297,8 +297,11 @@ class Index extends BaseRoute
       // Verify token
       $oUser = \Grepodata\Library\Router\Authentication::verifyJWT($aParams['access_token']);
 
+      // Validate world against known worlds before it is persisted and reused elsewhere
+      $oWorld = \Grepodata\Library\Controller\World::getWorldById($aParams['world']);
+
       // New index
-      $oIndex = IndexBuilderV2::buildNewIndex($aParams['world'], $aParams['index_name'], $oUser->id);
+      $oIndex = IndexBuilderV2::buildNewIndex($oWorld->grep_id, $aParams['index_name'], $oUser->id);
       if ($oIndex !== false && $oIndex !== null) {
 
         $oActiveRole = Roles::SetUserIndexRole($oUser, $oIndex, Roles::ROLE_OWNER);
