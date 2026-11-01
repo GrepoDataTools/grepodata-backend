@@ -368,27 +368,26 @@ if (isset($_GET['pubsub'])) {
   $NumReceived = 0;
   switch ($_GET['pubsub']) {
     case 1:
-      if (
-        !empty($_GET['pub_type']) &&
-        !empty($_GET['pub_team']) &&
-        !empty($_GET['pub_msg']) &&
-        !empty($_GET['pub_world']) &&
-        !empty($_GET['pub_action'])
-      ) {
-        $Message = json_encode(array(
-          'id' => 0,
-          'type' => $_GET['pub_type'],  # notify_team, notify_user
-          'team' => $_GET['pub_team'],  # index_key
-          'msg' => $_GET['pub_msg'],  # message (can be text or json encode)
-          'world' => $_GET['pub_world'],
-          'action' => $_GET['pub_action']  # ops_event
-        ));
-        $NumReceived = RedisHelper::SendBackboneMessage($Message);
-      }
-      break;
+        if (
+            !empty($_GET['pub_type']) &&
+            !empty($_GET['pub_team']) &&
+            !empty($_GET['pub_msg']) &&
+            !empty($_GET['pub_world']) &&
+            !empty($_GET['pub_action'])
+        ) {
+          $Message = json_encode(array(
+            'type' => $_GET['pub_type'],
+            'team' => $_GET['pub_team'],
+            'msg' => $_GET['pub_msg'],
+            'world' => $_GET['pub_world'],
+            'action' => $_GET['pub_action']
+          ));
+          $NumReceived = RedisHelper::SendBackboneMessage($Message);
+        }
+        break;
     case 2:
-      $NumReceived = RedisHelper::SendBackboneHeartbeat();
-      break;
+        $NumReceived = RedisHelper::SendBackboneHeartbeat();
+        break;
   }
   echo " Num receivers: ".$NumReceived;
 }
@@ -626,11 +625,11 @@ if (!isset($_SESSION['redis_cmd_keys'])) {
     $cmd_keys = $redis->keys('cmd_state_*');
     $aOpLines = array();
     foreach ($cmd_keys as $key) {
-      $aOperationSate = $redis->get($key);
-      $team = end(explode('_', $key));
-      $IndexInfo = IndexInfo::first($team);
-      $world = $IndexInfo->world;
-      $aOpLines[] = array($key, $IndexInfo->index_name.' ('.$world.')', $aOperationSate);
+        $aOperationSate = $redis->get($key);
+        $team = end(explode('_', $key));
+        $IndexInfo = IndexInfo::first($team);
+        $world = $IndexInfo->world;
+        $aOpLines[] = array($key, $IndexInfo->index_name.' ('.$world.')', $aOperationSate);
     }
     $redis_keys = var_export($aOpLines, JSON_PRETTY_PRINT);
   } catch (\Exception $e) {
