@@ -16,6 +16,9 @@ require('./../config.api.php');
 
 error_reporting(0);
 
+// Fail fast on unreachable services (default is 60s per call)
+ini_set('default_socket_timeout', 3);
+
 session_start();
 
 if (isset($_GET['flush'])) {
@@ -225,7 +228,7 @@ if (!stristr(PHP_OS, "win")) {
 }
 if (!isset($_SESSION['es_html'])) {
   try {
-    $client = Client::GetInstance(5);
+    $client = Client::GetInstance(1);
     $es_health = $client->cat()->health();
   } catch (\Exception $e) {
     $es_health = false;
@@ -277,7 +280,7 @@ $redis_html = '';
 if (!isset($_SESSION['redis_html'])) {
   try {
     $redis = new Redis();
-    $redis->connect(REDIS_HOST, REDIS_PORT, 0);
+    $redis->connect(REDIS_HOST, REDIS_PORT, 2);
     $redis->ping();
     $redis_html =  '<span class="server-health green">REDIS: OK</span>';
   } catch (\Exception $e) {
@@ -551,7 +554,8 @@ if ($aJobs !== false) {
 <?php
 
 // Logs
-$Logs = Operation_log::orderBy('created_at', 'desc')->orderBy('microtime', 'desc');
+// Order by the auto-increment PK (same order as created_at/microtime) so no filesort over the whole table is needed
+$Logs = Operation_log::orderBy('id', 'desc');
 if (isset($_GET['level']) && $_GET['level'] != '' && $_GET['level'] != 0) {
   $Logs->where('level', $_GET['level']);
 } else {
@@ -564,7 +568,9 @@ if (isset($_GET['query']) && $_GET['query'] != '') {
   $Logs->where('message', 'LIKE', '%'.$_GET['query'].'%');
 }
 if (isset($_GET['date']) && $_GET['date'] != '') {
-  $Logs->whereDate('created_at', '=', date('Y-m-d', strtotime($_GET['date'])));
+  // Range instead of whereDate() so an index on created_at can be used
+  $Day = date('Y-m-d', strtotime($_GET['date']));
+  $Logs->whereBetween('created_at', [$Day . ' 00:00:00', $Day . ' 23:59:59']);
 }
 
 $Logs = $Logs->limit(500)->get();
@@ -603,7 +609,7 @@ $redis_info = '';
 if (!isset($_SESSION['redis_info'])) {
   try {
     $redis = new Redis();
-    $redis->connect(REDIS_HOST, REDIS_PORT, 0);
+    $redis->connect(REDIS_HOST, REDIS_PORT, 2);
     $info = $redis->info();
     $redis_info = json_encode($info, JSON_PRETTY_PRINT);
   } catch (\Exception $e) {
@@ -621,15 +627,19 @@ $redis_keys = '';
 if (!isset($_SESSION['redis_cmd_keys'])) {
   try {
     $redis = new Redis();
-    $redis->connect(REDIS_HOST, REDIS_PORT, 0);
-    $cmd_keys = $redis->keys('cmd_state_*');
+    $redis->connect(REDIS_HOST, REDIS_PORT, 2);
     $aOpLines = array();
-    foreach ($cmd_keys as $key) {
+    // SCAN instead of KEYS: KEYS blocks the whole Redis server
+    $iter = null;
+    $redis->setOption(Redis::OPT_SCAN, Redis::SCAN_RETRY);
+    while (($cmd_keys = $redis->scan($iter, 'cmd_state_*', 500)) !== false) {
+      foreach ($cmd_keys as $key) {
         $aOperationSate = $redis->get($key);
-        $team = end(explode('_', $key));
+        $parts = explode('_', $key);
+        $team = end($parts);
         $IndexInfo = IndexInfo::first($team);
-        $world = $IndexInfo->world;
-        $aOpLines[] = array($key, $IndexInfo->index_name.' ('.$world.')', $aOperationSate);
+        $aOpLines[] = array($key, $IndexInfo->index_name.' ('.$IndexInfo->world.')', $aOperationSate);
+      }
     }
     $redis_keys = var_export($aOpLines, JSON_PRETTY_PRINT);
   } catch (\Exception $e) {
