@@ -606,7 +606,7 @@ class Commands extends \Grepodata\Library\Router\BaseRoute
           Logger::warning('OPS: Error indexing commands ' .$e->getMessage());
         }
         $UpsertDuration = (int) (microtime(true) * 1000 - $UpsertStart);
-        if ($UpsertDuration > 1) {
+        if ($UpsertDuration > 500) {
           $logmsg = "OPS: CMD ES upsert time: ". $UpsertDuration . "ms, " . count($aNewCommands) . " new commands, " . count($aDelCommands) . " del commands. User:  ".$oUser->id.", Team: ".$oTeam->key_code;
           Logger::warning($logmsg);
         }
