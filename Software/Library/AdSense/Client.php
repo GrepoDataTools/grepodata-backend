@@ -3,7 +3,7 @@
 namespace Grepodata\Library\AdSense;
 
 use Carbon\Carbon;
-use Google\Service\AdSense;
+use Google\Service\Adsense;
 
 class Client
 {
@@ -19,7 +19,7 @@ class Client
   {
     $client = new \Google\Client();
     $client->setApplicationName(self::APP_NAME);
-    $client->setScopes(array(AdSense::ADSENSE_READONLY));
+    $client->setScopes(array(Adsense::ADSENSE_READONLY));
     $client->setAuthConfig(array(
       'client_id'     => PRIVATE_ADSENSE_CLIENT_ID,
       'client_secret' => PRIVATE_ADSENSE_CLIENT_SECRET,
@@ -49,7 +49,7 @@ class Client
     $Now = Carbon::now();
 
     $client = self::getClient();
-    $service = new AdSense($client);
+    $service = new Adsense($client);
 
     $Accounts = $service->accounts->listAccounts()->getAccounts();
     if (empty($Accounts)) {

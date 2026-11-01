@@ -35,7 +35,7 @@ $Start = Carbon::now();
 Common::markAsRunning(__FILE__, 55);
 
 try {
-  $From = Carbon::now()->subMonths(2)->startOfMonth(); // last 3 months
+  $From = Carbon::now()->startOfMonth(); // current month only
   // $From = Carbon::now()->subYears(2)->startOfMonth(); // force override: last 2 years
   $MonthlyEarnings = Client::getMonthlyEarnings($From);
   foreach ($MonthlyEarnings as $MonthKey => $Amount) {
