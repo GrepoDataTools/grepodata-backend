@@ -11,6 +11,7 @@ use ReallySimpleJWT\Token;
 
 class Authentication
 {
+  const REASON_EXPIRED = 'expired';
 
   /**
    * @param User $oUser
@@ -72,7 +73,7 @@ class Authentication
     $bValid = Token::validate($JWT, $bIsRefreshToken ? REFRESH_SECRET : JWT_SECRET);
     if ($bValid === false) {
       if ($bDieIfInvalid) {
-        self::invalidJWT();
+        self::invalidJWT(self::describeInvalidToken($JWT, $bIsRefreshToken), $JWT, $bIsRefreshToken);
       } else {
         return false;
       }
@@ -84,7 +85,7 @@ class Authentication
       $oUser = \Grepodata\Library\Controller\User::GetUserById($aPayload['uid']);
 
       if ($oUser->is_deleted === 1) {
-        self::invalidJWT();
+        self::invalidJWT('user is deleted', $JWT, $bIsRefreshToken);
       }
 
       if ($bUpdateActivity) {
@@ -102,7 +103,7 @@ class Authentication
       return $oUser;
     } catch (ModelNotFoundException $e) {
       if ($bDieIfInvalid) {
-        self::invalidJWT();
+        self::invalidJWT('user not found', $JWT, $bIsRefreshToken);
       } else {
         return false;
       }
@@ -135,15 +136,54 @@ class Authentication
     return $oUser;
   }
 
-  private static function invalidJWT()
+  /**
+   * Reason why the signature/structure/expiration check failed.
+   */
+  private static function describeInvalidToken($JWT, $bIsRefreshToken)
   {
     try {
-      $aTrace = debug_backtrace();
-      foreach ($aTrace as $aCall) {
-        if ($aCall['function'] == 'verifyJWT') {
-          Logger::warning("InvalidJWT called: ".json_encode($aCall));
+      $oParser = Token::parser((string) $JWT, $bIsRefreshToken ? REFRESH_SECRET : JWT_SECRET);
+      $oParser->validate()->validateExpiration();
+      $oParser->validateNotBefore();
+      return 'unknown validation failure';
+    } catch (ValidateException $e) {
+      // Code 4 is only thrown after the signature check passed
+      return $e->getCode() === 4 ? self::REASON_EXPIRED : 'token rejected: ' . $e->getMessage();
+    } catch (\Exception $e) {
+      return 'token rejected: ' . $e->getMessage();
+    }
+  }
+
+  private static function invalidJWT($sReason = 'unknown', $JWT = null, $bIsRefreshToken = false)
+  {
+    if ($sReason === self::REASON_EXPIRED) {
+      ResponseCode::errorCode(3003, array(), 401);
+    }
+
+    try {
+      // Claims are read without signature verification; for diagnostics only. The token itself is never logged.
+      $aClaims = array();
+      $aParts = explode('.', (string) $JWT);
+      if (count($aParts) === 3) {
+        $aDecoded = json_decode(base64_decode(strtr($aParts[1], '-_', '+/')), true);
+        if (is_array($aDecoded)) {
+          $aClaims = $aDecoded;
         }
       }
+      $sUid = isset($aClaims['uid']) ? $aClaims['uid'] : 'n/a';
+      $sExp = isset($aClaims['exp']) ? date('Y-m-d H:i:s', (int) $aClaims['exp']) : 'n/a';
+      $sIp = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : 'n/a';
+
+      $sCaller = 'n/a';
+      foreach (debug_backtrace() as $aCall) {
+        if ($aCall['function'] == 'verifyJWT') {
+          $sCaller = (isset($aCall['file']) ? $aCall['file'] : '?') . ':' . (isset($aCall['line']) ? $aCall['line'] : '?');
+          break;
+        }
+      }
+
+      Logger::warning("InvalidJWT called: reason='" . $sReason . "' uid=" . $sUid . ' exp=' . $sExp
+        . ' refresh_token=' . ($bIsRefreshToken ? 'true' : 'false') . ' ip=' . $sIp . ' caller=' . $sCaller);
     } catch (\Exception $e) {
       Logger::warning("Error tracing JWT failure: ".$e->getMessage());
     }
